@@ -8383,6 +8383,14 @@
   "xs0844": {
    "source": "A subtitle file just put beside the video is not a track until Plex has scanned its folder: Plex is asked to scan just the folders of these videos, and they are read again once it is done - up to two minutes.",
    "text": "Soubor s titulky právě vložený vedle videa není stopou, dokud Plex neprohledá jeho složku: Plex se požádá o prohledání jen složek těchto videí a ta se přečtou znovu, jakmile skončí - nejvýš dvě minuty."
+  },
+  "xs0845": {
+   "source": "Scan the library",
+   "text": "Prohledat knihovnu"
+  },
+  "xs0846": {
+   "source": "Refresh all metadata",
+   "text": "Obnovit všechna metadata"
   }
  },
  "patterns": {
@@ -10625,6 +10633,14 @@
   "xp0177": {
    "source": "Plex scans {0} folder(s) of these videos",
    "text": "Plex prohledává {0} složek těchto videí"
+  },
+  "xp0178": {
+   "source": "F5 - Plex scans the files of {0}: what is new on the disk comes in, what is gone goes. Nothing already there is changed.",
+   "text": "F5 - Plex prohledá soubory knihovny {0}: co je na disku nového, přibude, co zmizelo, odejde. Nic, co už tam je, se nezmění."
+  },
+  "xp0179": {
+   "source": "F9 - Plex downloads the metadata, posters and backgrounds of every item of {0} again (asked first).",
+   "text": "F9 - Plex znovu stáhne metadata, plakáty a pozadí každé položky knihovny {0} (nejdřív se zeptá)."
   }
  },
  "rich": {

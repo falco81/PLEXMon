@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.4.3'
+__version__ = '2.4.4'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -8201,7 +8201,9 @@ def build_parser():
     g.add_argument('--plex-watchlist-add', metavar='TITLE', nargs='+', help='put on it')
     g.add_argument('--plex-watchlist-remove', metavar='TITLE', nargs='+', help='take off it')
     g.add_argument('--plex-refresh', metavar='TITLE', nargs='+', help='refresh their metadata')
-    g.add_argument('--plex-scan', metavar='LIB', help='scan the files of a library')
+    g.add_argument('--plex-scan', metavar='LIB', help='scan the files of a library (plex_tools\' F5)')
+    g.add_argument('--plex-refresh-all', metavar='LIB', help='refresh all the metadata of a '
+                   'library (plex_tools\' F9; asked first)')
     g.add_argument('--dry-run', action='store_true', help='show the plan, write nothing')
     g = p.add_argument_group('MAINTENANCE AND UPGRADES')
     g.add_argument('--maintenance', choices=('on', 'off', 'status'), help='this server out of '
@@ -8706,7 +8708,8 @@ def cli_plex(args, store, pal):
     """The Plex library: None when nothing of it was asked."""
     asked = [a for a in ('plex', 'plex_items', 'plex_show', 'plex_tracks', 'plex_watched',
                          'plex_unwatched', 'plex_labels', 'plex_label', 'plex_titles',
-                         'plex_ratings', 'plex_refresh', 'plex_scan', 'plex_watchlist',
+                         'plex_ratings', 'plex_refresh', 'plex_scan', 'plex_refresh_all',
+                         'plex_watchlist',
                          'plex_watchlist_add', 'plex_watchlist_remove')
              if getattr(args, a, None)]
     if not asked:
@@ -8932,6 +8935,13 @@ def _cli_plex(args, store, pal, what, by):
     if what == 'plex_scan':
         lib = _px_lib(args.plex_scan)
         print(pal.ok_line(PX.scan_library(store, lib['key'], by)['message']))
+        return 0
+    if what == 'plex_refresh_all':
+        lib = _px_lib(args.plex_refresh_all)
+        if not _cli_sure(args, 'Plex downloads the metadata, posters and backgrounds of every '
+                         'item of %s again - long, and it loads the server' % lib['title']):
+            return 1
+        print(pal.ok_line(PX.scan_library(store, lib['key'], by, force=True)['message']))
         return 0
     return None
 
@@ -11757,6 +11767,13 @@ class Console(object):
             lib = self._plex_lib('Scan the files of which library')
             if lib:
                 self.act('--plex-scan', lib)
+
+        def refresh_all():
+            lib = self._plex_lib('Refresh all the metadata of which library')
+            if lib and self.confirm('Refresh all metadata', 'Plex downloads the metadata, posters '
+                                    'and backgrounds of every item again - long, and it loads '
+                                    'the server.', 'Refresh it all'):
+                self.act('--plex-refresh-all', lib, '--yes')
         return self.sub('The Plex library', [
             ('1', 'The server and its libraries', lambda: self.act('--plex')),
             ('2', 'Browse a library - a title: watched, tracks, labels…', browse),
@@ -11764,7 +11781,8 @@ class Console(object):
             ('4', 'Ratings: fill the missing in', ratings),
             ('5', 'The labels of a library', labels),
             ('6', 'The watchlist', lambda: self.act('--plex-watchlist')),
-            ('7', 'Scan the files of a library', scan),
+            ('7', 'Scan the files of a library (F5)', scan),
+            ('8', 'Refresh all the metadata of a library (F9)', refresh_all),
         ])
 
     # ---- 12 the machine and the data (2.2.0) -------------------------------------------

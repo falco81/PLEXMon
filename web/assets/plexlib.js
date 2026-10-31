@@ -466,9 +466,17 @@ function toolbar(bar, d) {
   more.onclick = function () { items(PX.lib, true).then(function (dd) { toolbar(bar, dd); grid(null, dd); toast('read again', 'good'); }).catch(oops); };
   bar.appendChild(more);
   if (ADMIN) {
-    var scan = iconButton('search', 'Scan the library files - what is new on the disk comes in');
+    /* As plex_tools' F5 and F9 (2.4.4): the whole library, named and in
+       sight - the keys work too while the library is in front. */
+    var scan = cmdButton('Scan the library', 'search', 'small');
+    explain(scan, 'F5 - Plex scans the files of ' + d.section.title + ': what is new on the disk comes in, what is gone goes. Nothing already there is changed.');
     scan.onclick = function () { libraryScan(d.section, false); };
     bar.appendChild(scan);
+    var all = cmdButton('Refresh all metadata', 'refresh', 'small');
+    explain(all, 'F9 - Plex downloads the metadata, posters and backgrounds of every item of ' + d.section.title + ' again (asked first).');
+    all.onclick = function () { libraryScan(d.section, true); };
+    bar.appendChild(all);
+    PX.keysSection = d.section;
   }
   var c = el('span', 'px-count');
   c.id = 'px-count';
@@ -2132,6 +2140,22 @@ function labelRename(lib, lab) {
     }).catch(oops);
   }}], true);
 }
+
+/* F5 and F9 over the library in front (2.4.4), as in plex_tools: F5 scans its
+   files, F9 refreshes all its metadata (asked first). Only on the Plex library
+   tab, with no popup open and nothing being typed; Ctrl+F5 / Ctrl+R still
+   reload the page. */
+document.addEventListener('keydown', function (e) {
+  if ((e.key !== 'F5' && e.key !== 'F9') || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  if (typeof TAB === 'undefined' || TAB !== 'library' || !ADMIN) return;
+  if (PX.view !== 'library' || !PX.keysSection) return;
+  var m = document.getElementById('modal');
+  if (m && !m.hidden) return;
+  var t = document.activeElement;
+  if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+  e.preventDefault();
+  libraryScan(PX.keysSection, e.key === 'F9');
+});
 
 /* ---- the page asks ---------------------------------------------------------------- */
 window.PXLIB = {

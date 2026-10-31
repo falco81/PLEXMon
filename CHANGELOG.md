@@ -4,6 +4,20 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.4.4 - 2026-10-31
+
+- **Plex library: plex_tools' F5 and F9 over the whole library**, named and in
+  sight in the library's toolbar: *Scan the library* (F5 - Plex scans its
+  files: what is new comes in, what is gone goes) and *Refresh all metadata*
+  (F9 - every item's metadata, posters and backgrounds downloaded again,
+  asked first). The keys F5 and F9 do the same while the library is in front
+  (no popup open, nothing being typed); Ctrl+F5 / Ctrl+R still reload the
+  page. Before, the scan was an unlabelled magnifier and *Refresh all
+  metadata* was not on the page at all.
+- `plexmon --plex-refresh-all LIB` (asked first, or `--yes`); the console's
+  Plex library menu: *Scan the files of a library (F5)*, *Refresh all the
+  metadata of a library (F9)*.
+
 ## 2.4.3 - 2026-10-31
 
 - **Plex library → Audio and subtitles → Scan the files again** works:
