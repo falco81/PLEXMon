@@ -4,6 +4,15 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.2.8 - 2026-10-31
+
+- **Automatic certificates → In your DNS**: the copy buttons no longer
+  flicker when the page refreshes, and they stand one under the other right
+  after the text. Each sits in a narrow column of its own after the record
+  and after the value, so the table lines them up by itself - before, the
+  text was measured after every redraw and the buttons jumped into place.
+- The sentence over the table in Czech too.
+
 ## 2.2.7 - 2026-10-31
 
 - **Automatic certificates → The CA's own certificate** is a proper memo:

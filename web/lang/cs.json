@@ -546,7 +546,7 @@
   },
   "s0666": {
    "source": "DNS-01 by hand: the CA reads a TXT record you put in at every order.",
-   "text": "DNS-01 ručně: CA čte záznam TXT, který vložíte při každé objednávce."
+   "text": "DNS-01 ručně: CA čte TXT záznam, který vložíte při každé objednávce."
   },
   "s0669": {
    "source": "Data",
@@ -5702,7 +5702,7 @@
   },
   "rs00057": {
    "source": "HTTP-01: the CA asks port 80 of the name - so the name points at this server, and port 80 is open to the CA.",
-   "text": "HTTP-01: CA se ptá na port 80 jména - takže jméno ukazuje na tento server a port 80 je pro CA otevřený."
+   "text": "HTTP-01: CA se ptá na port 80 jména - jméno tedy ukazuje na tento server a port 80 je pro CA otevřený."
   },
   "rs00058": {
    "source": "This server cannot put a version in by itself yet: plexmon-upgrade.path is not installed. Upgrade it once on the command line (install.sh --upgrade), which puts it in.",
@@ -8163,6 +8163,10 @@
   "xs0789": {
    "source": "the file is bigger than a certificate (256 kB at most)",
    "text": "soubor je větší než certifikát (nejvýš 256 kB)"
+  },
+  "xs0790": {
+   "source": "DNS-01: the CA reads a TXT record plexmon puts in. What has to be in your DNS for it - once - is below.",
+   "text": "DNS-01: CA čte TXT záznam, který vloží plexmon. Co pro to musí být ve vašem DNS - jednou - je níže."
   }
  },
  "patterns": {

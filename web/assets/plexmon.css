@@ -3292,10 +3292,10 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .acme-steps{margin:6px 0 12px 18px;padding:0;display:flex;flex-direction:column;gap:4px;color:var(--muted)}
 /* the records and their copy buttons: the text left, the button at the column's right edge, one under the other */
 .acme-dns td{vertical-align:middle}
-.acme-dns .dns-val{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.acme-dns .dns-val > span:first-child{overflow-wrap:anywhere;min-width:0;flex:0 1 auto}
-.acme-dns .dns-val > button{flex:none}
-.acme-dns .dns-val > div{flex-basis:100%}
+.acme-dns td.dns-text{width:1%;white-space:nowrap;padding-right:6px}
+.acme-dns td.dns-text > div{white-space:normal}
+.acme-dns td.dns-copy{width:1%;padding-left:0;padding-right:18px;white-space:nowrap}
+.acme-dns td.dns-copy > button{vertical-align:middle}
 .node-other .node-now{font-size:12px}
 /* A setting's name: the words wrap, the (i) and the tags of a node stay one
    block at the right (1.0.172) */
