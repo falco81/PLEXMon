@@ -4,6 +4,16 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.2.3 - 2026-10-31
+
+- **Backups to SMB (Windows / Samba share)**: *smbclient: ERROR: Could not
+  determine network interfaces, you must use a interfaces config line* no
+  longer stops them. smbclient lists the machine's network interfaces (for
+  NetBIOS broadcasts) and gives up when the service's sandbox does not let it
+  (a limit carried over from plex-status.service.d, say); it is then told, as
+  it asks, the one address this machine reaches the SMB server from
+  (`interfaces = IP/32`), and the connection goes on.
+
 ## 2.2.2 - 2026-10-31
 
 - **System updates after a restart by itself**: the page no longer stays in

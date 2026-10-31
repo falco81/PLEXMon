@@ -2057,10 +2057,35 @@ class RbSmb(object):
             cmds.append('mkdir "%s"' % acc)
         self._run(cmds + ['cd "\\%s"' % self.dir, 'ls'], ignore=('NT_STATUS_OBJECT_NAME_COLLISION',))
 
+    def _local_ip(self):
+        """The address of this machine the SMB server is reached from."""
+        t = self.t
+        for fam, _t, _p, _c, addr in socket.getaddrinfo(t['host'], int(t['port']), 0,
+                                                        socket.SOCK_DGRAM):
+            s = socket.socket(fam, socket.SOCK_DGRAM)
+            try:
+                s.connect(addr[:2] if fam == socket.AF_INET else addr)
+                return s.getsockname()[0], fam
+            except OSError:
+                continue
+            finally:
+                s.close()
+        return '127.0.0.1', socket.AF_INET
+
     def _run(self, cmds, ignore=(), timeout=3600):
         got = subprocess.run(self.args + ['-c', '; '.join(cmds)], capture_output=True, text=True,
                              timeout=timeout, cwd=self.d, start_new_session=True)
         text = (got.stdout or '') + (got.stderr or '')
+        # smbclient lists the machine's interfaces for NetBIOS broadcasts and gives
+        # up when it cannot (a service sandbox without netlink, say): it is told the
+        # one address it goes out from, as it asks (2.2.3).
+        if 'Could not determine network interfaces' in text and \
+                not any(a.startswith('--option=interfaces') for a in self.args):
+            ip, fam = self._local_ip()
+            self.args += ['--option=interfaces=%s/%d' % (ip, 32 if fam == socket.AF_INET
+                                                         else 128),
+                          '--option=bind interfaces only=no']
+            return self._run(cmds, ignore, timeout)
         bad = [x for x in text.splitlines() if 'NT_STATUS_' in x and
                not any(i in x for i in ignore)]
         if got.returncode != 0 or bad:
