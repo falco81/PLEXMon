@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.4.1'
+__version__ = '2.4.2'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -129,7 +129,13 @@ DEFAULTS = {
     'proxy_user': '',
     'proxy_password': '',
     'proxy_no': 'localhost, 127.0.0.1, ::1',
-    'proxy_os': 1,
+    # What goes through it - each one by choice, none by default (2.4.2).
+    'proxy_upgrade': 0,
+    'proxy_os': 0,
+    'proxy_acme': 0,
+    'proxy_dnsapi': 0,
+    'proxy_discover': 0,
+    'proxy_ratings': 0,
     'acme_account_key': 'ec',
     'acme_challenge': 'http-01',
     'acme_dns': 'manual',
@@ -215,7 +221,8 @@ TUNABLE = {
     'session_hours': (1, 168), 'session_idle_min': (5, 1440),
     'login_tries': (1, 100), 'login_wait_min': (1, 1440),
     'admin_2fa': (0, 1), 'admin_2fa_app': (0, 1),
-    'proxy': (0, 1), 'proxy_os': (0, 1),
+    'proxy': (0, 1), 'proxy_upgrade': (0, 1), 'proxy_os': (0, 1), 'proxy_acme': (0, 1),
+    'proxy_dnsapi': (0, 1), 'proxy_discover': (0, 1), 'proxy_ratings': (0, 1),
     'plex_cert': (0, 1), 'plex_cert_restart': (0, 1),
     'upgrade_check': (0, 1), 'upgrade_downgrade': (0, 1),
     'acme': (0, 1), 'acme_ca': ('letsencrypt', 'letsencrypt-staging', 'custom'),
@@ -314,7 +321,12 @@ NAMES = {
     'proxy_user': 'User name at the proxy',
     'proxy_password': 'Password at the proxy',
     'proxy_no': 'Straight, not through the proxy',
-    'proxy_os': 'The system updates through it too',
+    'proxy_upgrade': 'New versions of plexmon',
+    'proxy_os': 'System updates (dnf)',
+    'proxy_acme': 'Certificates from the ACME CA',
+    'proxy_dnsapi': 'The DNS API for DNS-01',
+    'proxy_discover': 'Plex Discover and posters',
+    'proxy_ratings': 'The rating databases',
     'acme_account_key': 'The key of the ACME account',
     'acme_challenge': 'How the CA checks the name',
     'acme_dns': 'Who puts the TXT record in DNS',
@@ -369,16 +381,23 @@ NAMES = {
 }
 
 SAYS = {
-    'proxy': 'An HTTP proxy for the updates alone: the new versions of plexmon and, where '
-             'switched on below, the system updates (dnf). Nothing else plexmon does goes '
-             'through it - not Plex, the certificates, the ratings, the televisions or the '
-             'backups.',
+    'proxy': 'An HTTP proxy, used only by what is switched on below - each one by choice, '
+             'none of them by default. Whatever is left off goes out exactly as without a '
+             'proxy.',
     'proxy_url': '<code>http://proxy.example.cz:3128</code>',
     'proxy_user': 'Where the proxy asks for one. Empty: none.',
     'proxy_password': 'Kept sealed, like the other passwords.',
     'proxy_no': 'Names and addresses reached without it, separated by commas: '
                 '<code>.example.cz</code> is every name under it, <code>10.0.0.0/8</code> a net.',
+    'proxy_upgrade': 'Upgrades → From the web: the look for a newer plexmon and its download.',
     'proxy_os': 'dnf fetches the updates of System updates through it.',
+    'proxy_acme': 'Automatic certificates: every request to Let’s Encrypt (or the CA set there) - '
+                  'the account, the order, the certificate.',
+    'proxy_dnsapi': 'DNS-01 by an API: deSEC, Cloudflare, acme-dns - the TXT record put in and '
+                    'taken away. RFC 2136 (nsupdate) speaks DNS and never goes through it.',
+    'proxy_discover': 'Plex library: the watchlist (discover.provider.plex.tv) and the posters '
+                      'fetched from plex.tv and TMDB.',
+    'proxy_ratings': 'Plex library → Ratings: TMDB, OMDb, Trakt and TVmaze.',
     'session_hours': 'How long an administrator stays signed in, however busy.',
     'session_idle_min': 'How long a sign-in may sit without anything being asked before it '
                         'has to be done again.',
@@ -543,7 +562,8 @@ SAYS_SHORT = {}
 
 # Which settings sit on which page of Settings, in order.
 PANES = {
-    'proxy': ['proxy', 'proxy_url', 'proxy_user', 'proxy_password', 'proxy_no', 'proxy_os'],
+    'proxy': ['proxy', 'proxy_url', 'proxy_user', 'proxy_password', 'proxy_no', 'proxy_upgrade',
+              'proxy_os', 'proxy_acme', 'proxy_dnsapi', 'proxy_discover', 'proxy_ratings'],
     'people': ['session_hours', 'session_idle_min', 'login_tries', 'login_wait_min',
                'admin_2fa', 'admin_2fa_app'],
     'web': ['plex_cert', 'plex_cert_domain', 'plex_cert_restart'],
@@ -569,7 +589,9 @@ PANES = {
 
 ONLY_WHEN = {
     'proxy_url': ['proxy', '1'], 'proxy_user': ['proxy', '1'], 'proxy_password': ['proxy', '1'],
-    'proxy_no': ['proxy', '1'], 'proxy_os': ['proxy', '1'],
+    'proxy_no': ['proxy', '1'], 'proxy_upgrade': ['proxy', '1'], 'proxy_os': ['proxy', '1'],
+    'proxy_acme': ['proxy', '1'], 'proxy_dnsapi': ['proxy', '1'], 'proxy_discover': ['proxy', '1'],
+    'proxy_ratings': ['proxy', '1'],
     'backup_keep': ['backup_daily', '1'], 'backup_at': ['backup_daily', '1'],
     'plex_db_every': ['plex_db_daily', '1'], 'plex_db_day': ['plex_db_every', 'weekly'],
     'plex_db_at': ['plex_db_daily', '1'],
@@ -2956,18 +2978,22 @@ def plex_view(store):
 
 
 # ---- the web, asked by this daemon (new versions, the CA, the DNS APIs) ----------------
-# ---- going out through a proxy (2.4.0, otp's 1.0.166; the updates alone since 2.4.1) ---
-# Settings → Proxy is for the updates alone: the new versions of plexmon
-# (purpose 'upgrade') and dnf fetching the system updates (purpose 'os', handed
-# over in a file only root reads, never on a command line). Nothing else plexmon
-# does goes through it - the ACME CA, the DNS APIs, Plex Discover, the ratings
-# go out exactly as before 2.4.0, whatever is set here.
+# ---- going out through a proxy (2.4.0, otp's 1.0.166; by choice since 2.4.2) ------------
+# Settings → Proxy: off, and used nowhere, until it is switched on - and then only
+# by what is switched on beside it, each a purpose of url_open: 'upgrade' (the
+# new versions), 'os' (dnf, handed over in a file only root reads, never on a
+# command line), 'acme' (the ACME CA), 'dnsapi' (deSEC, Cloudflare, acme-dns),
+# 'discover' (Plex Discover, posters from the internet), 'ratings' (TMDB, OMDb,
+# Trakt, TVmaze). Whatever is left off goes out exactly as before 2.4.0.
+PROXY_PURPOSES = ('upgrade', 'os', 'acme', 'dnsapi', 'discover', 'ratings')
 def proxy_on(purpose='upgrade'):
+    """Whether this purpose goes through the proxy: the proxy on, with an
+    address, and this purpose switched on. 'any' - the proxy itself, for Try it."""
     if not CONFIG.get('proxy') or not str(CONFIG.get('proxy_url') or '').strip():
         return False
-    if purpose == 'os':
-        return bool(CONFIG.get('proxy_os', 1))
-    return purpose == 'upgrade'
+    if purpose == 'any':
+        return True
+    return purpose in PROXY_PURPOSES and bool(CONFIG.get('proxy_' + purpose))
 
 
 def proxy_full(purpose='upgrade'):
@@ -3031,19 +3057,18 @@ class _ProxyOnly(urllib.request.ProxyHandler):
         return None
 
 
-def url_open(req, timeout=30, context=None, purpose='web'):
-    """urllib.request.urlopen. purpose='upgrade' (the new versions): through
-    Settings → Proxy where one is set and the host is not one reached straight.
+def url_open(req, timeout=30, context=None, purpose='other'):
+    """urllib.request.urlopen. Through Settings → Proxy where it is on and this
+    purpose is switched on there, and the host is not one reached straight.
     Anything else: exactly as before 2.4.0 - the service's environment alone."""
     if not isinstance(req, urllib.request.Request):
         req = urllib.request.Request(req)
     proxy = proxy_full(purpose)
     host = urllib.parse.urlsplit(req.full_url).hostname or ''
-    if purpose != 'upgrade' or not CONFIG.get('proxy'):
-        # Anything but the updates - and the updates where no proxy is set
-        # here: as before 2.4.0, the service's own environment
-        # (systemctl edit plexmon: Environment=https_proxy=…). Settings → Proxy
-        # changes nothing of it (2.4.1).
+    if not proxy_on(purpose):
+        # Not switched on for this (or no proxy at all): exactly as before
+        # 2.4.0 - the service's own environment (systemctl edit plexmon:
+        # Environment=https_proxy=…), Settings → Proxy changing nothing of it.
         handlers = [urllib.request.ProxyHandler()]
     else:
         handlers = [_ProxyOnly(
@@ -3067,12 +3092,12 @@ def proxy_try(url=''):
     tls_on = u.scheme == 'https'
     port = u.port or (443 if tls_on else 80)
     via, why = '', ''
-    if not proxy_on('upgrade'):
+    if not proxy_on('any'):
         why = 'no proxy is set' if not CONFIG.get('proxy') else 'the proxy has no address'
     elif proxy_skips(host):
         why = '%s is in the list reached straight' % host
     else:
-        via = proxy_full('upgrade')
+        via = proxy_full('any')
     px = urllib.parse.urlsplit(via) if via else None
     out = {'url': url, 'host': host, 'port': port, 'mode': 'proxy' if via else 'direct',
            'why_direct': why, 'node': node_name(), 'steps': [], 'ok': False,
@@ -3357,7 +3382,7 @@ class Acme(object):
         if data is not None:
             req.add_header('Content-Type', 'application/jose+json')
         try:
-            with url_open(req, timeout=30, context=_acme_ctx()) as r:
+            with url_open(req, timeout=30, context=_acme_ctx(), purpose='acme') as r:
                 body, headers, status = r.read(1 << 20), r.headers, r.status
         except urllib.error.HTTPError as e:
             body, headers, status = e.read(1 << 20), e.headers, e.code
@@ -4127,7 +4152,7 @@ def _cf(method, path, body=None):
                                           'User-Agent': 'plexmon/%s (acme)' % __version__})
     try:
         with url_open(req, timeout=30, context=ssl.create_default_context()
-                      if base.startswith('https') else None) as r:
+                      if base.startswith('https') else None, purpose='dnsapi') as r:
             got = json.loads(r.read(1 << 20).decode())
     except urllib.error.HTTPError as e:
         try:
@@ -4169,7 +4194,7 @@ def _dns_acmedns(txt):
                  'Content-Type': 'application/json'})
     try:
         with url_open(req, timeout=30, context=ssl.create_default_context()
-                      if url.startswith('https') else None) as r:
+                      if url.startswith('https') else None, purpose='dnsapi') as r:
             r.read(4096)
     except urllib.error.HTTPError as e:
         raise AcmeError('acme-dns said %d: %s' % (e.code, e.read(300).decode('utf-8', 'replace')))
@@ -4193,7 +4218,7 @@ def _desec(method, path, body=None):
                                               'User-Agent': 'plexmon/%s (acme)' % __version__})
         try:
             with url_open(req, timeout=30, context=ssl.create_default_context()
-                          if base.startswith('https') else None) as r:
+                          if base.startswith('https') else None, purpose='dnsapi') as r:
                 raw = r.read(1 << 20)
                 return json.loads(raw.decode()) if raw.strip() else None
         except urllib.error.HTTPError as e:

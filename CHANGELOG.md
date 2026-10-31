@@ -4,6 +4,18 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.4.2 - 2026-10-31
+
+- **Settings → Proxy: what uses it, chosen one by one.** The proxy is off and
+  used nowhere by default; switched on, only what is switched on beside it
+  goes through it - each off by default:
+  *New versions of plexmon*, *System updates (dnf)*, *Certificates from the
+  ACME CA*, *The DNS API for DNS-01* (deSEC, Cloudflare, acme-dns), *Plex
+  Discover and posters*, *The rating databases* (TMDB, OMDb, Trakt, TVmaze).
+  What is left off goes out exactly as without a proxy. Plex Media Server, the
+  dashboard, the televisions, the backups and RFC 2136 (nsupdate) never use
+  it. *Try it* tries the proxy itself, whatever is switched on.
+
 ## 2.4.1 - 2026-10-31
 
 - **Settings → Proxy is for the updates alone**: the new versions of plexmon

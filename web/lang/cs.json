@@ -8315,6 +8315,66 @@
   "xs0827": {
    "source": "An address asked from this server the way plexmon fetches its new versions: through the proxy as it is saved, or straight where none is set or the address is in the list. Each step is shown. Empty: where the new versions are looked for.",
    "text": "Adresa dotázaná z tohoto serveru tak, jak plexmon stahuje své nové verze: přes proxy, jak je uložená, nebo přímo, kde žádná nastavená není nebo je adresa v seznamu. Ukáže se každý krok. Prázdné: kde se hledají nové verze."
+  },
+  "xs0828": {
+   "source": "New versions of plexmon",
+   "text": "Nové verze plexmonu"
+  },
+  "xs0829": {
+   "source": "System updates (dnf)",
+   "text": "Aktualizace systému (dnf)"
+  },
+  "xs0830": {
+   "source": "Certificates from the ACME CA",
+   "text": "Certifikáty od ACME CA"
+  },
+  "xs0831": {
+   "source": "The DNS API for DNS-01",
+   "text": "DNS API pro DNS-01"
+  },
+  "xs0832": {
+   "source": "Plex Discover and posters",
+   "text": "Plex Discover a plakáty"
+  },
+  "xs0833": {
+   "source": "The rating databases",
+   "text": "Databáze hodnocení"
+  },
+  "xs0834": {
+   "source": "An HTTP proxy, used only by what is switched on below - each one by choice, none of them by default. Whatever is left off goes out exactly as without a proxy.",
+   "text": "HTTP proxy, kterou používá jen to, co je níže zapnuté - každé podle volby, ve výchozím stavu nic. Co zůstane vypnuté, jde ven přesně jako bez proxy."
+  },
+  "xs0835": {
+   "source": "Upgrades → From the web: the look for a newer plexmon and its download.",
+   "text": "Aktualizace → Z webu: hledání novějšího plexmonu a jeho stažení."
+  },
+  "xs0836": {
+   "source": "Automatic certificates: every request to Let’s Encrypt (or the CA set there) - the account, the order, the certificate.",
+   "text": "Automatické certifikáty: každý dotaz na Let’s Encrypt (nebo CA tam nastavenou) - účet, objednávka, certifikát."
+  },
+  "xs0837": {
+   "source": "DNS-01 by an API: deSEC, Cloudflare, acme-dns - the TXT record put in and taken away. RFC 2136 (nsupdate) speaks DNS and never goes through it.",
+   "text": "DNS-01 přes API: deSEC, Cloudflare, acme-dns - vložení a odebrání TXT záznamu. RFC 2136 (nsupdate) mluví protokolem DNS a přes proxy nikdy nejde."
+  },
+  "xs0838": {
+   "source": "Plex library: the watchlist (discover.provider.plex.tv) and the posters fetched from plex.tv and TMDB.",
+   "text": "Knihovna Plexu: seznam ke zhlédnutí (discover.provider.plex.tv) a plakáty stahované z plex.tv a TMDB."
+  },
+  "xs0839": {
+   "source": "Plex library → Ratings: TMDB, OMDb, Trakt and TVmaze.",
+   "text": "Knihovna Plexu → Hodnocení: TMDB, OMDb, Trakt a TVmaze."
+  },
+  "xs0840": {
+   "source": "An HTTP proxy - used only by what you switch on: upgrades, system updates, ACME, the DNS API, Plex Discover, the ratings.",
+   "text": "HTTP proxy - používá ji jen to, co zapnete: aktualizace, aktualizace systému, ACME, DNS API, Plex Discover, hodnocení."
+  },
+  "xs0841": {
+   "source": "Where the server may reach the web only through an HTTP proxy. Off, and used nowhere, until it is switched on - and then only by what is switched on beside it: the new versions of plexmon, the system updates (dnf), the certificates from the ACME CA, the DNS API of DNS-01, Plex Discover and its posters, the rating databases. What is left off goes out as without a proxy. Plex Media Server, the dashboard, the televisions and the backups never use it.",
+   "text": "Když server smí na web jen přes HTTP proxy. Vypnutá a nikde nepoužitá, dokud se nezapne - a pak jen tím, co je u ní zapnuté: nové verze plexmonu, aktualizace systému (dnf), certifikáty od ACME CA, DNS API pro DNS-01, Plex Discover a jeho plakáty, databáze hodnocení. Co zůstane vypnuté, jde ven jako bez proxy. Plex Media Server, dashboard, televize a zálohy ji nepoužívají nikdy."
+  },
+  "xs0842": {
+   "source": "An address asked from this server through the proxy as it is saved - whatever is switched on below it - or straight where none is set or the address is in the list. Each step is shown. Empty: where the new versions are looked for.",
+   "text": "Adresa dotázaná z tohoto serveru přes proxy, jak je uložená - ať je u ní zapnuté cokoli - nebo přímo, kde žádná nastavená není nebo je adresa v seznamu. Ukáže se každý krok. Prázdné: kde se hledají nové verze."
   }
  },
  "patterns": {

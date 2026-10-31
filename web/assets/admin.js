@@ -3733,7 +3733,7 @@ function drawProxy() {
   clear(host);
   var c = el('div', 'card full');
   c.appendChild(el('h2', '', 'Try it'));
-  c.appendChild(el('p', 'note', 'An address asked from this server the way plexmon fetches its new versions: through the proxy as it is saved, or straight where none is set or the address is in the list. Each step is shown. Empty: where the new versions are looked for.'));
+  c.appendChild(el('p', 'note', 'An address asked from this server through the proxy as it is saved - whatever is switched on below it - or straight where none is set or the address is in the list. Each step is shown. Empty: where the new versions are looked for.'));
   var row = el('div', 'btnrow');
   var url = el('input');
   url.type = 'text';

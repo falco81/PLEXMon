@@ -138,10 +138,22 @@ plexmon --maintenance status
 
 ## Proxy (since 2.4.0)
 
-Settings → Proxy: an HTTP proxy for the updates alone - the new versions of plexmon and
-(optionally) the system updates through dnf. Nothing else plexmon does goes through it or
-changes with it: Plex, the certificates (ACME), the ratings, the televisions and the backups go
-out exactly as before. "Try it" shows each step of the way. On the command line:
+Settings → Proxy: an HTTP proxy for a server that may reach the web only through one. It is
+off and used nowhere by default. Switched on, it is used only by what is switched on beside
+it, each by choice (all off by default):
+
+| Switch | What goes through the proxy |
+|---|---|
+| New versions of plexmon | Upgrades → From the web: the look for a newer plexmon and its download |
+| System updates (dnf) | dnf, given the proxy in a file only root reads |
+| Certificates from the ACME CA | every request to Let's Encrypt (or the CA set) |
+| The DNS API for DNS-01 | deSEC, Cloudflare, acme-dns (RFC 2136 / nsupdate speaks DNS and never can) |
+| Plex Discover and posters | the watchlist and posters from plex.tv and TMDB |
+| The rating databases | TMDB, OMDb, Trakt, TVmaze |
+
+What is left off goes out exactly as without a proxy (the service's own environment, as
+before). Plex Media Server, the dashboard, the televisions and the backups never use it.
+"Try it" shows each step of the way through the proxy. On the command line:
 `plexmon --proxy-test https://github.com/`.
 
 ## Files
