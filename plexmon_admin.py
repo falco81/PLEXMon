@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.0.1'
+__version__ = '2.0.2'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -615,14 +615,24 @@ def plain_ip(text, what='address'):
         raise ValueError('%r is not an %s' % (text, what))
 
 
-def secret_shown(plain):
-    """What the page sees of a secret: dots, as many as there are letters (at
-    most 12), so a box is seen to be filled - never the secret itself."""
-    return '•' * min(12, len(plain)) if plain else ''
+def secret_shown(value, last=True):
+    """A secret as the page may see it: dots and its last two characters, so
+    that "the one I set" can be told from "something else" (otp's). Only a
+    full administrator is ever given this (everybody else gets nothing);
+    `last=False` - dots only. Typed on the page, a secret shows dots alone."""
+    said = str(value or '')
+    if not said:
+        return ''
+    if not last:
+        return '•' * 8
+    return '•' * min(10, max(4, len(said) - 2)) + said[-2:] if len(said) > 4 \
+        else '•' * 6
 
 
 def is_masked(value):
-    return isinstance(value, str) and value != '' and set(value) == {'•'}
+    """What the page sent back as it was given it (dots and the last two):
+    the secret kept stays kept, never replaced by its own picture."""
+    return isinstance(value, str) and value.startswith('•')
 
 
 # ---------------------------------------------------------------------------

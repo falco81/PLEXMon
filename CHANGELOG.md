@@ -4,6 +4,14 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.0.2 - 2026-10-31
+
+- A secret kept in Settings (the ACME DNS tokens, keys and passwords) is shown
+  to a full administrator as otp shows it: dots and its last two characters
+  (`••••••••XY`), so the one set can be told from another; while one is being
+  typed, only dots. A read-only account sees nothing of it. Saved back
+  unchanged, the kept one stays.
+
 ## 2.0.1 - 2026-10-31
 
 The command line and the console, as otp's.
