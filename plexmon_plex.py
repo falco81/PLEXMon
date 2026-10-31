@@ -1105,14 +1105,26 @@ def tracks_rescan(store, ident, by, wait_s=120):
             else:
                 raw('GET', '/library/sections/%s/refresh' % lib)   # the whole library
                 asked += 1
-        step(0, len(items), 'Plex scans %d folder(s) of these videos' % asked)
+        # The bar is Plex's own scan (its activity), the words what it found
+        # so far (2.5.1): before, the bar counted the videos with new tracks
+        # and stood at 0 the whole time when there were none.
+        step(0, 100, 'Plex scans %d folder(s) of these videos' % asked)
         began = time.time()
         seen_busy = False
         changed = 0
+        done_pct = 0
         while time.time() - began < wait_s and not stopped():
             time.sleep(3)
             busy = _libs_scanning(libs)
             seen_busy = seen_busy or busy
+            acts = [a for a in activities() if str(a.get('type') or '').startswith('library')]
+            pcts = [int(a['progress']) for a in acts if isinstance(a.get('progress'), (int, float))]
+            if pcts:
+                done_pct = max(done_pct, min(99, max(pcts)))
+            elif seen_busy and not busy:
+                done_pct = 100
+            else:
+                done_pct = max(done_pct, min(90, int((time.time() - began) * 4)))
             md_map = metadata_many(rks)
             changed = 0
             for d in items:
@@ -1121,7 +1133,8 @@ def tracks_rescan(store, ident, by, wait_s=120):
                     d['parts'] = list(iter_parts(m))
                     if count(d) != before[d['rk']]:
                         changed += 1
-            step(changed, None, '%d video(s) have new tracks so far' % changed)
+            step(done_pct, 100, ('Plex is scanning - ' if busy else 'Plex has scanned - ') +
+                 ('%d of %d video(s) have new tracks so far' % (changed, len(items))))
             if changed == len(items):
                 break
             # Done once Plex has scanned (or never had to: a few seconds of quiet).

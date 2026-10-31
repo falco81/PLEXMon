@@ -225,7 +225,7 @@ function follow(start, host) {
         if (!box) return;
         box._bar.querySelector('span').style.width = j.whole ? Math.round(100 * j.done / j.whole) + '%' : '8%';
         box._says.textContent = j.says || '';
-        box._n.textContent = j.whole ? ' - ' + j.done + ' / ' + j.whole : '';
+        box._n.textContent = !j.whole ? '' : (j.kind === 'rescan' ? ' - ' + j.done + ' %' : ' - ' + j.done + ' / ' + j.whole);
         if ((j.lines || []).length) {
           box._log.hidden = false;
           box._log.textContent = j.lines.join('\n');

@@ -10808,7 +10808,7 @@
   },
   "xp0177": {
    "source": "Plex scans {0} folder(s) of these videos",
-   "text": "Plex prohledává {0} složek těchto videí"
+   "text": "Plex prohledává složky těchto videí: {0}"
   },
   "xp0178": {
    "source": "F5 - Plex scans the files of {0}: what is new on the disk comes in, what is gone goes. Nothing already there is changed.",
@@ -10889,6 +10889,14 @@
   "xp0197": {
    "source": "Plex Discover has nothing more: {0}",
    "text": "Plex Discover nemá nic dalšího: {0}"
+  },
+  "xp0198": {
+   "source": "Plex is scanning - {0} of {1} video(s) have new tracks so far",
+   "text": "Plex prohledává - nové stopy má zatím {0} z {1} videí"
+  },
+  "xp0199": {
+   "source": "Plex has scanned - {0} of {1} video(s) have new tracks so far",
+   "text": "Plex dohledal - nové stopy má {0} z {1} videí"
   }
  },
  "rich": {

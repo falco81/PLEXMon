@@ -4,6 +4,14 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.5.1 - 2026-10-31
+
+- **Audio and subtitles → Scan the files again** shows how far Plex is: the
+  bar follows Plex's own scan (its activity, in per cent), and the words say
+  how many videos have new tracks so far ("Plex is scanning - 0 of 16 videos
+  have new tracks so far"). Before, the bar counted only the videos with new
+  tracks, so with none it stood at 0 / 16 the whole time and looked stuck.
+
 ## 2.5.0 - 2026-10-31
 
 **Plex library: the rest of plex_tools.** Gone through plex_tools.py again
