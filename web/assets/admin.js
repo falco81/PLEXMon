@@ -1674,6 +1674,172 @@ $('us-add').onclick = function () {
 };
 
 
+
+/* ---- the certificate taken away, in the format wanted (2.1.1) -------------- */
+var CX_FORMATS = [
+  {k: 'crt', head: 'Certificate', ext: '.crt', icon: 'lock', key: false,
+   words: 'The certificate alone, PEM - for a browser, a client that has to trust it, or to look at.'},
+  {k: 'fullchain', head: 'Certificate and chain', ext: '.pem', icon: 'list', key: false,
+   words: 'The certificate with its intermediate certificates, PEM - what nginx, Apache, HAProxy and most servers want.'},
+  {k: 'der', head: 'Certificate, DER', ext: '.cer', icon: 'lock', key: false,
+   words: 'The certificate alone, binary - what Windows opens with a double click.'},
+  {k: 'p7b', head: 'PKCS#7', ext: '.p7b', icon: 'archive', key: false,
+   words: 'The certificate and its chain in one binary file - Windows, Java keystores.'},
+  {k: 'pfx', head: 'PFX / PKCS#12', ext: '.pfx', icon: 'key', key: true,
+   words: 'Certificate, chain and private key in one file locked with a password - Windows (IIS), macOS, Plex, Java, Synology, routers.'},
+  {k: 'pem', head: 'PEM with the key', ext: '.pem', icon: 'key', key: true,
+   words: 'Certificate, chain and private key in one PEM file - HAProxy, Home Assistant, Proxmox.'},
+  {k: 'key', head: 'Private key', ext: '.key', icon: 'key', key: true,
+   words: 'The private key alone, PEM - beside the certificate, for nginx or Apache on another machine.'}
+];
+function certExport(target, prof) {
+  var st = {fmt: 'fullchain', legacy: false};
+  var info = (prof && prof.info) || {};
+  var draw = function (body) {
+    clear(body);
+    var head = el('div', 'cx-head');
+    var ic = el('div', 'cx-ic');
+    ic.innerHTML = iconMarkup('lock', 22);
+    head.appendChild(ic);
+    var hw = el('div');
+    hw.appendChild(noI18n(el('b', '', info.cn || webTargetWords(target))));
+    var sub = el('small', 'muted');
+    if (info.issuer_cn || info.issuer) { sub.appendChild(el('span', '', 'issued by')); sub.appendChild(document.createTextNode(' ')); sub.appendChild(noI18n(el('span', '', info.issuer_cn || info.issuer))); }
+    if (info.not_after) { sub.appendChild(document.createTextNode(' · ')); sub.appendChild(el('span', '', 'valid until')); sub.appendChild(document.createTextNode(' ')); sub.appendChild(el('span', '', stamp(info.not_after))); }
+    hw.appendChild(sub);
+    head.appendChild(hw);
+    body.appendChild(head);
+    var group = function (words, withKey) {
+      body.appendChild(el('div', 'cx-group', words));
+      var g = el('div', 'cx-grid');
+      CX_FORMATS.filter(function (f) { return f.key === withKey; }).forEach(function (f) {
+        var c = el('button', 'cx-fmt' + (st.fmt === f.k ? ' on' : '') + (f.key ? ' withkey' : ''));
+        c.type = 'button';
+        var top = el('div', 'cx-top');
+        var i2 = el('span', 'cx-fi'); i2.innerHTML = iconMarkup(f.icon, 17); top.appendChild(i2);
+        top.appendChild(el('b', '', f.head));
+        top.appendChild(noI18n(el('span', 'cx-ext', f.ext)));
+        c.appendChild(top);
+        c.appendChild(el('p', '', f.words));
+        c.onclick = function () { st.fmt = f.k; draw(body); };
+        g.appendChild(c);
+      });
+      body.appendChild(g);
+    };
+    group('Without the private key - safe to hand to anybody', false);
+    if (ADMIN) group('With the private key - whoever has it can be this server', true);
+    var f = CX_FORMATS.filter(function (x) { return x.k === st.fmt; })[0];
+    if (f.key) {
+      var box = el('div', 'cx-keybox');
+      var warn = el('div', 'cx-warn');
+      warn.innerHTML = iconMarkup('shield', 18);
+      warn.appendChild(el('span', '', 'The private key leaves the server. Keep the file where nobody else can read it, and send it only over a channel you trust; the export is written into the events.'));
+      box.appendChild(warn);
+      var grid = el('div', 'cx-pw');
+      var pwField = function (id, label, help, auto) {
+        var w = el('div', 'cx-field');
+        var l = el('label', '', label);
+        l.htmlFor = id;
+        w.appendChild(l);
+        var row = el('div', 'cx-inrow');
+        var inp = el('input');
+        inp.type = 'password'; inp.id = id; inp.autocomplete = auto || 'new-password';
+        inp.value = st[id] || '';
+        inp.oninput = function () { st[id] = inp.value; check(); };
+        noI18n(inp);
+        var eye = iconButton('eye', 'Show it');
+        eye.onclick = function () { inp.type = inp.type === 'password' ? 'text' : 'password'; };
+        row.appendChild(inp); row.appendChild(eye);
+        w.appendChild(row);
+        if (help) w.appendChild(el('small', 'muted', help));
+        grid.appendChild(w);
+        return inp;
+      };
+      var need = st.fmt === 'pfx';
+      pwField('cx-pw1', need ? 'Password of the file' : 'Lock the key with a password (optional)',
+              need ? 'Asked when the file is opened or imported - 4 characters at least.' : 'Empty: the key is written unlocked (as nginx reads it).');
+      pwField('cx-pw2', 'The same password again', '');
+      var meter = el('div', 'cx-meter'); meter.appendChild(el('span'));
+      grid.appendChild(meter);
+      box.appendChild(grid);
+      if (st.fmt === 'pfx') {
+        var lg = el('label', 'check small cx-legacy');
+        var cb = el('input'); cb.type = 'checkbox'; cb.checked = st.legacy;
+        cb.onchange = function () { st.legacy = cb.checked; };
+        lg.appendChild(cb);
+        lg.appendChild(el('span', '', 'For older systems (3DES, SHA-1): Windows Server 2016 and older, macOS before 10.15, old Java and Android. Otherwise AES-256.'));
+        box.appendChild(lg);
+      }
+      var mineW = el('div', 'cx-pw cx-mine');
+      var mf = el('div', 'cx-field');
+      var ml = el('label', '', 'Your own password');
+      ml.htmlFor = 'cx-mine';
+      mf.appendChild(ml);
+      var mi = el('input'); mi.type = 'password'; mi.id = 'cx-mine'; mi.autocomplete = 'current-password';
+      mi.value = st.mine || '';
+      mi.oninput = function () { st.mine = mi.value; check(); };
+      noI18n(mi);
+      mf.appendChild(mi);
+      mf.appendChild(el('small', 'muted', 'The password you signed in with - the private key is handed out only with it.'));
+      mineW.appendChild(mf);
+      box.appendChild(mineW);
+      body.appendChild(box);
+      var said = el('div', 'cx-said');
+      said.id = 'cx-said';
+      body.appendChild(said);
+    }
+    check();
+  };
+  var check = function () {
+    var go = $('cx-go');
+    var f = CX_FORMATS.filter(function (x) { return x.k === st.fmt; })[0];
+    var bad = '';
+    if (f.key) {
+      var p1 = st['cx-pw1'] || '', p2 = st['cx-pw2'] || '';
+      if (st.fmt === 'pfx' && p1.length < 4) bad = 'A PFX needs a password of 4 characters at least.';
+      else if (p1 && p1 !== p2) bad = 'The two passwords are not the same.';
+      else if (!st.mine) bad = 'Your own password is needed for the private key.';
+      var meter = document.querySelector('.cx-meter span');
+      if (meter) {
+        var sc = Math.min(4, (p1.length >= 8) + (p1.length >= 12) + (/[A-Z]/.test(p1) && /[a-z]/.test(p1)) + (/[^A-Za-z0-9]/.test(p1) || /\d/.test(p1)));
+        meter.style.width = (p1 ? 12 + sc * 22 : 0) + '%';
+        meter.className = sc >= 3 ? 'good' : (sc >= 2 ? 'mid' : 'weak');
+      }
+      var said = $('cx-said');
+      if (said) { said.textContent = bad; said.className = 'cx-said' + (bad && (st['cx-pw1'] || st.mine) ? ' bad' : ''); }
+    }
+    if (go) {
+      go.disabled = !!bad;
+      setButtonIcon(go, 'download', 'Download ' + f.ext);
+    }
+  };
+  modal('Download the certificate', draw, [
+    {words: 'Close', close: true},
+    {words: 'Download', cls: 'primary', icon: 'download', go: function (b) {
+      busy(b, true);
+      api('web', {action: 'tls_export', target: target, format: st.fmt, password: st['cx-pw1'] || '',
+                  password2: st['cx-pw2'] || '', mine: st.mine || '', legacy: !!st.legacy}).then(function (x) {
+        var bin = atob(x.b64), arr = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        var a = el('a');
+        a.href = URL.createObjectURL(new Blob([arr], {type: x.mime || 'application/octet-stream'}));
+        a.download = x.name;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+        closeModal();
+        toast(x.name + ' downloaded', x.with_key ? 'warn' : 'good');
+      }).catch(function (e) {
+        var said = $('cx-said');
+        if (said) { said.textContent = String(e.message || e); said.className = 'cx-said bad'; } else oops(e);
+      }).then(function () { busy(b, false); check(); });
+    }}
+  ], 'cx-wide');
+  var go = document.querySelector('#modal-foot .btn.primary');
+  if (go) go.id = 'cx-go';
+  check();
+}
+
 function saveFile(name, text) {
   var a = el('a');
   a.href = URL.createObjectURL(new Blob([text], {type: 'application/json'}));
@@ -2577,12 +2743,9 @@ function certCard(d, target) {
     if (bef && !bef.ran_out) tools.appendChild(acmePutBackButton(target, bef, function () { loadWeb(); }));
     if (prof && prof.cert) {
       var dl = cmdButton('Download', 'download', 'small');
-      dl.title = 'The certificate and its chain, as PEM - without the key';
-      dl.onclick = function () {
-        api('web', {action: 'tls_pem', target: target}).then(function (x) {
-          saveFile((target === 'vip' ? 'web-address' : target) + '.pem', x.pem);
-        }).catch(oops);
-      };
+      dl.title = 'The certificate in the format you choose - PEM, DER, PKCS#7 or PFX, with its private key if you want it';
+      dl.classList.add('cx-open');
+      dl.onclick = function () { certExport(target, prof); };
       tools.appendChild(dl);
       var fg = cmdButton('Let go', 'forget', 'small danger-soft');
       fg.title = 'plexmon stops looking after it (nginx keeps what it has)';

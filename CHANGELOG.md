@@ -4,6 +4,19 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.1.1 - 2026-10-31
+
+- **Certificates and TLS → Download** opens a window to choose the format:
+  the certificate alone (PEM `.crt` or DER `.cer`), with its chain (PEM, or
+  PKCS#7 `.p7b`), and - for a full administrator - with the private key:
+  **PFX / PKCS#12** locked with a password (AES-256, or 3DES / SHA-1 for older
+  Windows, macOS and Java), one PEM with the key, or the key alone (locked with
+  a password if you give one). The file password is typed twice, with a
+  strength bar; the private key is handed out only after your own password,
+  and every export of it is an event.
+- Czech: some 200 translations of the pages dropped by the 2.0.x updates are
+  back (the tool merging them numbered new entries over older ones).
+
 ## 2.1.0 - 2026-10-31
 
 **Plex library** - what plex_tools.py did from a Windows console, now on the

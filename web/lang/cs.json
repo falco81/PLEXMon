@@ -5351,6 +5351,866 @@
   "xs0270": {
    "source": "Vietnamese",
    "text": "vietnamština"
+  },
+  "xs0271": {
+   "source": "Download the certificate",
+   "text": "Stáhnout certifikát"
+  },
+  "xs0272": {
+   "source": "The certificate in the format you choose - PEM, DER, PKCS#7 or PFX, with its private key if you want it",
+   "text": "Certifikát ve formátu, který zvolíte - PEM, DER, PKCS#7 nebo PFX, případně i s privátním klíčem"
+  },
+  "xs0273": {
+   "source": "issued by",
+   "text": "vydal"
+  },
+  "xs0274": {
+   "source": "valid until",
+   "text": "platný do"
+  },
+  "xs0275": {
+   "source": "Without the private key - safe to hand to anybody",
+   "text": "Bez privátního klíče - lze dát komukoli"
+  },
+  "xs0276": {
+   "source": "With the private key - whoever has it can be this server",
+   "text": "S privátním klíčem - kdo ho má, může se vydávat za tento server"
+  },
+  "xs0277": {
+   "source": "Certificate and chain",
+   "text": "Certifikát a řetězec"
+  },
+  "xs0278": {
+   "source": "Certificate, DER",
+   "text": "Certifikát, DER"
+  },
+  "xs0279": {
+   "source": "PEM with the key",
+   "text": "PEM s klíčem"
+  },
+  "xs0280": {
+   "source": "Private key",
+   "text": "Privátní klíč"
+  },
+  "xs0281": {
+   "source": "The certificate alone, PEM - for a browser, a client that has to trust it, or to look at.",
+   "text": "Jen certifikát, PEM - pro prohlížeč, klienta, který mu má věřit, nebo na prohlédnutí."
+  },
+  "xs0282": {
+   "source": "The certificate with its intermediate certificates, PEM - what nginx, Apache, HAProxy and most servers want.",
+   "text": "Certifikát s mezilehlými certifikáty, PEM - co chce nginx, Apache, HAProxy a většina serverů."
+  },
+  "xs0283": {
+   "source": "The certificate alone, binary - what Windows opens with a double click.",
+   "text": "Jen certifikát, binárně - co Windows otevřou dvojklikem."
+  },
+  "xs0284": {
+   "source": "The certificate and its chain in one binary file - Windows, Java keystores.",
+   "text": "Certifikát a jeho řetězec v jednom binárním souboru - Windows, úložiště klíčů Javy."
+  },
+  "xs0285": {
+   "source": "Certificate, chain and private key in one file locked with a password - Windows (IIS), macOS, Plex, Java, Synology, routers.",
+   "text": "Certifikát, řetězec a privátní klíč v jednom souboru zamčeném heslem - Windows (IIS), macOS, Plex, Java, Synology, routery."
+  },
+  "xs0286": {
+   "source": "Certificate, chain and private key in one PEM file - HAProxy, Home Assistant, Proxmox.",
+   "text": "Certifikát, řetězec a privátní klíč v jednom souboru PEM - HAProxy, Home Assistant, Proxmox."
+  },
+  "xs0287": {
+   "source": "The private key alone, PEM - beside the certificate, for nginx or Apache on another machine.",
+   "text": "Jen privátní klíč, PEM - vedle certifikátu, pro nginx nebo Apache na jiném stroji."
+  },
+  "xs0288": {
+   "source": "The private key leaves the server. Keep the file where nobody else can read it, and send it only over a channel you trust; the export is written into the events.",
+   "text": "Privátní klíč opouští server. Uložte soubor tam, kde ho nikdo jiný nepřečte, a posílejte ho jen cestou, které věříte; export se zapíše do událostí."
+  },
+  "xs0289": {
+   "source": "Password of the file",
+   "text": "Heslo souboru"
+  },
+  "xs0290": {
+   "source": "Lock the key with a password (optional)",
+   "text": "Zamknout klíč heslem (nepovinné)"
+  },
+  "xs0291": {
+   "source": "Asked when the file is opened or imported - 4 characters at least.",
+   "text": "Zeptá se na něj při otevření nebo importu souboru - aspoň 4 znaky."
+  },
+  "xs0292": {
+   "source": "Empty: the key is written unlocked (as nginx reads it).",
+   "text": "Prázdné: klíč se zapíše nezamčený (jak ho čte nginx)."
+  },
+  "xs0293": {
+   "source": "The same password again",
+   "text": "Totéž heslo znovu"
+  },
+  "xs0294": {
+   "source": "Show it",
+   "text": "Ukázat"
+  },
+  "xs0295": {
+   "source": "For older systems (3DES, SHA-1): Windows Server 2016 and older, macOS before 10.15, old Java and Android. Otherwise AES-256.",
+   "text": "Pro starší systémy (3DES, SHA-1): Windows Server 2016 a starší, macOS před 10.15, stará Java a Android. Jinak AES-256."
+  },
+  "xs0296": {
+   "source": "Your own password",
+   "text": "Vaše vlastní heslo"
+  },
+  "xs0297": {
+   "source": "The password you signed in with - the private key is handed out only with it.",
+   "text": "Heslo, kterým jste se přihlásili - privátní klíč se vydá jen s ním."
+  },
+  "xs0298": {
+   "source": "A PFX needs a password of 4 characters at least.",
+   "text": "PFX potřebuje heslo aspoň o 4 znacích."
+  },
+  "xs0299": {
+   "source": "The two passwords are not the same.",
+   "text": "Hesla se neshodují."
+  },
+  "xs0300": {
+   "source": "Your own password is needed for the private key.",
+   "text": "Pro privátní klíč je potřeba vaše heslo."
+  },
+  "xs0301": {
+   "source": "your own password is not right - the private key is given only with it",
+   "text": "vaše heslo nesouhlasí - privátní klíč se vydá jen s ním"
+  },
+  "rs00001": {
+   "source": "The certificate nginx answers with is also handed to Plex Media Server as its custom certificate (a PKCS#12 file in /var/lib/plexmediaserver/plexmon, named in its Preferences.xml) - so the Plex apps that connect straight to port 32400 by your own name see it too. Every new certificate - uploaded, self-signed or renewed by ACME - goes there as well.",
+   "text": "Nastavení Plex serveru na"
+  },
+  "rs00002": {
+   "source": "Writing",
+   "text": "Zapisuje"
+  },
+  "rs00003": {
+   "source": "Reading",
+   "text": "Čte"
+  },
+  "rs00004": {
+   "source": "Spinning up",
+   "text": "Roztáčí se"
+  },
+  "rs00005": {
+   "source": "Sleeping",
+   "text": "Spí"
+  },
+  "rs00006": {
+   "source": "Active",
+   "text": "Aktivní"
+  },
+  "rs00007": {
+   "source": "itself (self-signed)",
+   "text": "sám sebou (self-signed)"
+  },
+  "rs00008": {
+   "source": "Gaps are periods a disk was asleep — it is never woken just to read a temperature.",
+   "text": "Mezery jsou doby, kdy disk spal — kvůli čtení teploty se nikdy nebudí."
+  },
+  "rs00009": {
+   "source": "A new version, put in from here - from the web or as a file.",
+   "text": "Nová verze nasazená odsud - z webu nebo ze souboru."
+  },
+  "rs00010": {
+   "source": "Version, what is running, the language, the console at login, the debug log.",
+   "text": "Verze, co běží, jazyk, konzole po přihlášení, ladicí log."
+  },
+  "rs00011": {
+   "source": "Accounts, certificates and TLS, automatic certificates, upgrades - signing in is needed",
+   "text": "Účty, certifikáty a TLS, automatické certifikáty, aktualizace - je třeba se přihlásit"
+  },
+  "rs00012": {
+   "source": "Every sign-in, every account made or changed, every change of a setting, every certificate put in or renewed, every upgrade. Kept in the database, so it survives a restart.",
+   "text": "Každé přihlášení, každý založený či změněný účet, každá změna nastavení, každý nasazený či obnovený certifikát, každá aktualizace. Uloženo v databázi, takže přežije restart."
+  },
+  "rs00013": {
+   "source": "in Settings → About to have it say every step.",
+   "text": "v Nastavení → O aplikaci, aby vypisoval každý krok."
+  },
+  "rs00014": {
+   "source": "Plex Media Server",
+   "text": "Plex Media Server"
+  },
+  "rs00015": {
+   "source": "Plex Media Server answers on port 32400 with a certificate of its own (*.plex.direct). Switched on below, it is given this certificate too - as its custom certificate - so the Plex apps that reach it straight by your own name see the same one. Plex reads it only when it starts.",
+   "text": "Plex Media Server odpovídá na portu 32400 vlastním certifikátem (*.plex.direct). Zapnete-li to níže, dostane i tento certifikát - jako svůj vlastní (custom) certifikát - takže aplikace Plexu, které se k němu připojují přímo pod vaším jménem, uvidí tentýž. Plex ho načte jen při startu."
+  },
+  "rs00016": {
+   "source": "How the Plex address speaks HTTPS - nginx in front of Plex Media Server, the dashboard and these pages: the certificate with its chain, the protocols, the ciphers. And, where asked, the same certificate in Plex Media Server itself.",
+   "text": "Jak adresa Plexu mluví HTTPS - nginx před Plex Media Serverem, dashboardem a těmito stránkami: certifikát s řetězem, protokoly, šifry. A kde je to žádáno, tentýž certifikát i v samotném Plex Media Serveru."
+  },
+  "rs00017": {
+   "source": "The certificate of this server's name. A certificate is sent as PEM files (the certificate, its key, the chain, the root - in any order, or all in one file) or as a PFX / PKCS#12 file, with its password or without; or the request is made here and only what the authority sends back is uploaded. It goes into the files the Plex vhost of nginx names, nginx is asked before it is reloaded, and everything is put back as it was when nginx says no.",
+   "text": "Certifikát jména tohoto serveru. Posílá se jako soubory PEM (certifikát, jeho klíč, řetěz, kořen - v libovolném pořadí, nebo vše v jednom souboru) nebo jako soubor PFX / PKCS#12, s heslem či bez; nebo se tady udělá žádost a nahraje se jen to, co certifikační autorita vrátí. Zapíše se do souborů, které jmenuje Plex vhost nginxu, nginx se před reloadem zeptá na konfiguraci, a když řekne ne, vše se vrátí, jak bylo."
+  },
+  "rs00018": {
+   "source": "The certificate of this Plex server ordered from Let's Encrypt or another ACME CA and renewed by itself well before it runs out. The CA checks the name by asking it on port 80 (HTTP-01) - nginx answers it from a folder of plexmon's - or by a record in DNS (DNS-01), for a server the CA cannot see from the internet.",
+   "text": "Certifikát tohoto Plex serveru objednaný od Let's Encrypt nebo jiné ACME CA a obnovený sám dlouho před vypršením. CA ověří jméno dotazem na port 80 (HTTP-01) - nginx odpoví ze složky plexmonu - nebo záznamem v DNS (DNS-01), pro server, který CA z internetu nevidí."
+  },
+  "rs00019": {
+   "source": "A new version put in from here: from the web with one click, or as a package sent by hand - its signature checked, then root runs its install.sh --upgrade, and plexmon comes back as the new version. The command line (install.sh --upgrade) works as it always has.",
+   "text": "Nová verze nasazená odsud: z webu jedním kliknutím, nebo jako balíček poslaný ručně - ověří se jeho podpis, root spustí jeho install.sh --upgrade a plexmon se vrátí jako nová verze. Příkazová řádka (install.sh --upgrade) funguje jako vždy."
+  },
+  "rs00020": {
+   "source": "Where new versions are published - the address below - is looked at once a day. A newer plexmon found there is offered here, and put in with one click: fetched, its signature checked like a package sent by hand, then put in. Nothing is put in by itself.",
+   "text": "Místo, kde vycházejí nové verze - adresa níže - se kontroluje jednou denně. Novější plexmon, který se tam najde, se tu nabídne a nasadí jedním kliknutím: stáhne se, ověří se jeho podpis jako u balíčku poslaného ručně a nasadí se. Nic se nenasadí samo."
+  },
+  "rs00021": {
+   "source": "The .tar.gz of a new plexmon, as it was released. It is checked before anything else: it must be signed by a release key this server trusts, every file in it must be the one signed, and it must not be older than what runs here. Root checks it all again before it is put in.",
+   "text": ".tar.gz nového plexmonu, tak jak byl vydán. Nejprve se zkontroluje: musí být podepsán klíčem vydání, kterému tento server věří, každý soubor v něm musí být ten podepsaný a nesmí být starší než to, co tu běží. Root to vše před nasazením zkontroluje znovu."
+  },
+  "rs00022": {
+   "source": "Drop the plexmon-X.Y.Z.tar.gz here, or press to choose it",
+   "text": "Přetáhněte sem plexmon-X.Y.Z.tar.gz, nebo klikněte a vyberte ho"
+  },
+  "rs00023": {
+   "source": "Only to a version that is safe: one that reads what the newer versions wrote into the database the same - each version says how far back it may go, and the highest of what ran on this database and was installed on this machine counts. The database is not put back nor changed: the older version runs on it as it is.",
+   "text": "Jen na verzi, která je bezpečná: takovou, která čte to, co novější verze zapsaly do databáze, stejně - každá verze říká, jak daleko zpět smí, a platí nejvyšší z toho, co běželo na této databázi a bylo nainstalováno na tomto stroji. Databáze se nevrací ani nemění: starší verze na ní běží tak, jak je."
+  },
+  "rs00024": {
+   "source": "The output of install.sh, the last time this server was upgraded from these pages.",
+   "text": "Výstup install.sh při poslední aktualizaci tohoto serveru z těchto stránek."
+  },
+  "rs00025": {
+   "source": "The same, by hand, as root:",
+   "text": "Totéž ručně, jako root:"
+  },
+  "rs00026": {
+   "source": "Who may open these pages. full admin may change everything; read only may look and change nothing. The dashboard itself asks nobody.",
+   "text": "Kdo smí otevřít tyto stránky. Plný správce smí měnit vše; jen čtení smí dívat se a nic neměnit. Samotný dashboard se nikoho neptá."
+  },
+  "rs00027": {
+   "source": "Addresses and names with wrong attempts still counted - at the limit they are locked out until the time runs out. Clear one, or all of them, and they may try again at once.",
+   "text": "Adresy a jména, kterým se ještě počítají chybné pokusy - na limitu jsou zamčené, dokud čas nevyprší. Uvolněte jeden, nebo všechny, a mohou to hned zkusit znovu."
+  },
+  "rs00028": {
+   "source": "Two Python files (/usr/local/lib/plexmon/plexmon.py - the dashboard's daemon - and plexmon_admin.py - Settings), the standard library, and these PHP pages that ask it. On the server: plexmon --help, plexmon --console.",
+   "text": "Dva soubory Pythonu (/usr/local/lib/plexmon/plexmon.py - démon dashboardu - a plexmon_admin.py - Nastavení), standardní knihovna a tyto stránky PHP, které se ho ptají. Na serveru: plexmon --help, plexmon --console."
+  },
+  "rs00029": {
+   "source": "On: root signing in at the machine's console or over SSH lands in the plexmon console (plexmon --console); q leaves it for the shell. Off: the ordinary shell, and plexmon --console opens it. Commands run over SSH, scp and sftp never get it. On the server: plexmon --console-at-login on|off.",
+   "text": "Zapnuto: root přihlášený na konzoli stroje nebo přes SSH skončí v konzoli plexmonu (plexmon --console); q ji opustí do shellu. Vypnuto: běžný shell a plexmon --console ji otevře. Příkazy spouštěné přes SSH, scp a sftp ji nikdy nedostanou. Na serveru: plexmon --console-at-login on|off."
+  },
+  "rs00030": {
+   "source": "The dashboard",
+   "text": "Dashboard"
+  },
+  "rs00031": {
+   "source": "the dashboard has not said yet",
+   "text": "dashboard zatím nic neřekl"
+  },
+  "rs00032": {
+   "source": "not said yet",
+   "text": "zatím neřečeno"
+  },
+  "rs00033": {
+   "source": "Plex server: critical",
+   "text": "Plex server: kritický stav"
+  },
+  "rs00034": {
+   "source": "Plex server: warning",
+   "text": "Plex server: varování"
+  },
+  "rs00035": {
+   "source": "running, with trouble",
+   "text": "běží, s potížemi"
+  },
+  "rs00036": {
+   "source": "all is well",
+   "text": "vše v pořádku"
+  },
+  "rs00037": {
+   "source": "a warning",
+   "text": "varování"
+  },
+  "rs00038": {
+   "source": "critical",
+   "text": "kritický stav"
+  },
+  "rs00039": {
+   "source": "Plex Media Server uses this certificate too",
+   "text": "Plex Media Server používá tento certifikát také"
+  },
+  "rs00040": {
+   "source": "Plex’s custom certificate domain",
+   "text": "Doména vlastního certifikátu Plexu"
+  },
+  "rs00041": {
+   "source": "Restart Plex Media Server to take a new one",
+   "text": "Restartovat Plex Media Server, aby převzal nový"
+  },
+  "rs00042": {
+   "source": "Events kept for (days)",
+   "text": "Události se drží (dní)"
+  },
+  "rs00043": {
+   "source": "How long the events (sign-ins, changes, certificates) are kept. 0: for ever.",
+   "text": "Jak dlouho se drží události (přihlášení, změny, certifikáty). 0: navždy."
+  },
+  "rs00044": {
+   "source": "The certificate of this server ordered from the CA and renewed by itself - by HTTP-01 (port 80 of the name must reach this machine) or DNS-01. Off until switched on.",
+   "text": "Certifikát tohoto serveru objednaný od CA a obnovovaný sám - přes HTTP-01 (port 80 jména musí vést na tento stroj) nebo DNS-01. Vypnuto, dokud se nezapne."
+  },
+  "rs00045": {
+   "source": "A code from an app (Google or Microsoft Authenticator…) - the way the second step is given here.",
+   "text": "Kód z aplikace (Google nebo Microsoft Authenticator…) - způsob, jak se tu dává druhý krok."
+  },
+  "rs00046": {
+   "source": "After the password, every account gives a code too - from an authenticator app (Google or Microsoft Authenticator…). The first time, the account sets it up. Accounts → Reset the second step, or plexmon --reset-2fa NAME, makes it set it up again. Sign-ins already open end, but the one saving it.",
+   "text": "Po hesle zadá každý účet ještě kód - z ověřovací aplikace (Google nebo Microsoft Authenticator…). Napoprvé si ho účet nastaví. Účty → Resetovat druhý krok, nebo plexmon --reset-2fa JMÉNO, ho nechá nastavit znovu. Již otevřená přihlášení skončí, kromě toho, které to ukládá."
+  },
+  "rs00047": {
+   "source": "ECDSA is smaller and quicker; RSA for old clients (old Plex apps, old televisions).",
+   "text": "ECDSA je menší a rychlejší; RSA pro staré klienty (staré aplikace Plexu, staré televize)."
+  },
+  "rs00048": {
+   "source": "HTTP-01 needs port 80 of the name reachable from the internet (or from the CA, for a CA of your own). DNS-01 needs nothing open: the CA reads a TXT record - the way for a Plex server only the LAN reaches.",
+   "text": "HTTP-01 potřebuje port 80 jména dostupný z internetu (nebo z CA, u vlastní CA). DNS-01 nepotřebuje nic otevřeného: CA přečte TXT záznam - cesta pro Plex server, na který se dostane jen LAN."
+  },
+  "rs00049": {
+   "source": "The key’s secret (base64). Kept sealed; written to a file only plexmon reads for the moment nsupdate runs.",
+   "text": "Tajemství klíče (base64). Uloženo zapečetěné; zapíše se do souboru, který čte jen plexmon, na dobu běhu nsupdate."
+  },
+  "rs00050": {
+   "source": "A token from deSEC (Token management) - one that may change this domain’s records. Kept sealed.",
+   "text": "Token z deSEC (Token management) - takový, který smí měnit záznamy této domény. Uloženo zapečetěné."
+  },
+  "rs00051": {
+   "source": "The name at the top of Settings. Empty: the machine’s own name.",
+   "text": "Jméno nahoře v Nastavení. Prázdné: vlastní jméno stroje."
+  },
+  "rs00052": {
+   "source": "The language every page opens in - the dashboard too - until somebody chooses another for themselves.",
+   "text": "Jazyk, ve kterém se otevře každá stránka - i dashboard -, dokud si někdo nezvolí jiný."
+  },
+  "rs00053": {
+   "source": "Once a day (and when Look now is pressed) the address below is asked for plexmon-X.Y.Z.tar.gz packages; a newer one than runs here is offered on this page - put in with one click, after its signature has been checked like any package sent by hand. Nothing is put in by itself.",
+   "text": "Jednou denně (a po stisku Podívat se teď) se adresa níže zeptá na balíčky plexmon-X.Y.Z.tar.gz; novější, než tu běží, se nabídne na této stránce - nasadí se jedním kliknutím, po ověření podpisu jako u každého balíčku poslaného ručně. Nic se nenasadí samo."
+  },
+  "rs00054": {
+   "source": "Try port 80 on the card, then Order it now.",
+   "text": "Vyzkoušejte port 80 na kartě, pak Objednat teď."
+  },
+  "rs00055": {
+   "source": "The name points at the address that reaches port 80 of this server - from the internet (the router forwarding port 80 here), or from your own CA.",
+   "text": "Jméno ukazuje na adresu, přes kterou se dá dostat na port 80 tohoto serveru - z internetu (router přesměrovává port 80 sem), nebo z vaší vlastní CA."
+  },
+  "rs00056": {
+   "source": "Port 80 is open to it - the router and the firewall in front of the server, and firewalld here (the http service).",
+   "text": "Port 80 je pro ni otevřený - router a firewall před serverem i firewalld tady (služba http)."
+  },
+  "rs00057": {
+   "source": "HTTP-01: the CA asks port 80 of the name - so the name points at this server, and port 80 is open to the CA.",
+   "text": "HTTP-01: CA se ptá na port 80 jména - takže jméno ukazuje na tento server a port 80 je pro CA otevřený."
+  },
+  "rs00058": {
+   "source": "This server cannot put a version in by itself yet: plexmon-upgrade.path is not installed. Upgrade it once on the command line (install.sh --upgrade), which puts it in.",
+   "text": "Tento server zatím nedokáže nasadit verzi sám: plexmon-upgrade.path není nainstalován. Aktualizujte jednou z příkazové řádky (install.sh --upgrade), což ho nainstaluje."
+  },
+  "rs00059": {
+   "source": "Hand it to Plex now",
+   "text": "Předat Plexu hned"
+  },
+  "rs00060": {
+   "source": "Plex back to its own",
+   "text": "Plex zpět na vlastní"
+  },
+  "rs00061": {
+   "source": "Takes this certificate",
+   "text": "Bere tento certifikát"
+  },
+  "rs00062": {
+   "source": "Its custom certificate now",
+   "text": "Jeho vlastní certifikát teď"
+  },
+  "rs00063": {
+   "source": "For the domain",
+   "text": "Pro doménu"
+  },
+  "rs00064": {
+   "source": "Handed over",
+   "text": "Předáno"
+  },
+  "rs00065": {
+   "source": "none - its own (*.plex.direct)",
+   "text": "žádný - jeho vlastní (*.plex.direct)"
+  },
+  "rs00066": {
+   "source": "Hand the certificate to Plex Media Server?",
+   "text": "Předat certifikát Plex Media Serveru?"
+  },
+  "rs00067": {
+   "source": "Plex Media Server is restarted to take it: what is playing stops for a moment.",
+   "text": "Plex Media Server se kvůli tomu restartuje: co se právě přehrává, se na chvíli zastaví."
+  },
+  "rs00068": {
+   "source": "Hand it over",
+   "text": "Předat"
+  },
+  "rs00069": {
+   "source": "Plex Media Server back to its own certificate?",
+   "text": "Plex Media Server zpět na vlastní certifikát?"
+  },
+  "rs00070": {
+   "source": "Plex Media Server is restarted: what is playing stops for a moment.",
+   "text": "Plex Media Server se restartuje: co se právě přehrává, se na chvíli zastaví."
+  },
+  "rs00071": {
+   "source": "The certificate kept here written for Plex Media Server and named in its Preferences.xml now - Plex is restarted for it when Restart Plex Media Server is on. Without waiting for the next certificate.",
+   "text": "Certifikát uložený tady se teď zapíše pro Plex Media Server a uvede v jeho Preferences.xml - Plex se kvůli tomu restartuje, je-li zapnuto Restartovat Plex Media Server. Bez čekání na další certifikát."
+  },
+  "rs00072": {
+   "source": "The names taken out of Preferences.xml: Plex answers with its own *.plex.direct certificate again, after a restart.",
+   "text": "Jména se odeberou z Preferences.xml: Plex po restartu znovu odpovídá vlastním certifikátem *.plex.direct."
+  },
+  "rs00073": {
+   "source": "plexmon stops looking after it (nginx keeps what it has)",
+   "text": "plexmon se o něj přestane starat (nginx si nechá, co má)"
+  },
+  "rs00074": {
+   "source": "nginx keeps the files it has now; plexmon no longer changes them.",
+   "text": "nginx si nechá soubory, které má; plexmon je už nemění."
+  },
+  "rs00075": {
+   "source": "Read a file saved by Export my settings - here or on another machine running plexmon.",
+   "text": "Načíst soubor uložený přes Exportovat má nastavení - zde nebo na jiném stroji s plexmonem."
+  },
+  "rs00076": {
+   "source": "Every table you have laid out goes back as it comes: the widths and the order of the columns, on every page. Nobody else’s change.",
+   "text": "Každá tabulka, kterou jste si upravili, se vrátí do výchozí podoby: šířky a pořadí sloupců, na všech stránkách. Nikomu jinému se nic nezmění."
+  },
+  "rs00077": {
+   "source": "How you have set these pages up for yourself — the columns of the tables and the language — saved as a JSON file, and read back here or on another machine running plexmon. Never your password, your role or anything else about the account.",
+   "text": "Jak jste si tyto stránky nastavili — sloupce tabulek a jazyk — uloženo jako soubor JSON a načtené zpět tady nebo na jiném stroji s plexmonem. Nikdy vaše heslo, vaše role ani nic jiného o účtu."
+  },
+  "rs00078": {
+   "source": "Plex Media Server reads its certificate only when it starts: on, it is restarted when a new one is put in (playing streams stop for a moment); off, it takes the new one at its next start.",
+   "text": "Plex Media Server čte svůj certifikát jen při startu: zapnuto - restartuje se, když se nasadí nový (přehrávání se na chvíli zastaví); vypnuto - nový převezme při příštím startu."
+  },
+  "rs00079": {
+   "source": "nothing happened",
+   "text": "nic se nestalo"
+  },
+  "rs00080": {
+   "source": "Plex — server status",
+   "text": "Plex — stav serveru"
+  },
+  "rs00081": {
+   "source": "Plex server",
+   "text": "Plex server"
+  },
+  "rs00082": {
+   "source": "Trends",
+   "text": "Trendy"
+  },
+  "rs00083": {
+   "source": "Trends (no data yet)",
+   "text": "Trendy (zatím bez dat)"
+  },
+  "rs00084": {
+   "source": "Why this status",
+   "text": "Proč tento stav"
+  },
+  "rs00085": {
+   "source": "All checks passed — no warnings.",
+   "text": "Všechny kontroly prošly — žádná varování."
+  },
+  "rs00086": {
+   "source": "No details recorded — run the collector again.",
+   "text": "Žádné podrobnosti — spusťte kolektor znovu."
+  },
+  "rs00087": {
+   "source": "All healthy",
+   "text": "Vše v pořádku"
+  },
+  "rs00088": {
+   "source": "Running",
+   "text": "Běží"
+  },
+  "rs00089": {
+   "source": "Stopped",
+   "text": "Zastaven"
+  },
+  "rs00090": {
+   "source": "Active streams",
+   "text": "Aktivní streamy"
+  },
+  "rs00091": {
+   "source": "Load",
+   "text": "Zátěž"
+  },
+  "rs00092": {
+   "source": "System",
+   "text": "Systém"
+  },
+  "rs00093": {
+   "source": "Kernel",
+   "text": "Jádro"
+  },
+  "rs00094": {
+   "source": "uptime",
+   "text": "běží"
+  },
+  "rs00095": {
+   "source": "API response",
+   "text": "Odezva API"
+  },
+  "rs00096": {
+   "source": "Reverse proxy",
+   "text": "Reverzní proxy"
+  },
+  "rs00097": {
+   "source": "Plex backups",
+   "text": "Zálohy Plexu"
+  },
+  "rs00098": {
+   "source": "Now playing",
+   "text": "Právě hraje"
+  },
+  "rs00099": {
+   "source": "Nothing is playing right now.",
+   "text": "Právě nic nehraje."
+  },
+  "rs00100": {
+   "source": "Activity",
+   "text": "Aktivita"
+  },
+  "rs00101": {
+   "source": "No transcoding, analysis or library scan running.",
+   "text": "Neběží žádné překódování, analýza ani skenování knihovny."
+  },
+  "rs00102": {
+   "source": "Disks",
+   "text": "Disky"
+  },
+  "rs00103": {
+   "source": "Wake all disks",
+   "text": "Probudit všechny disky"
+  },
+  "rs00104": {
+   "source": "Performance",
+   "text": "Výkon"
+  },
+  "rs00105": {
+   "source": "Usage",
+   "text": "Využití"
+  },
+  "rs00106": {
+   "source": "full free",
+   "text": "plno"
+  },
+  "rs00107": {
+   "source": "not mounted",
+   "text": "nepřipojeno"
+  },
+  "rs00108": {
+   "source": "cached",
+   "text": "z mezipaměti"
+  },
+  "rs00109": {
+   "source": "Idle",
+   "text": "Nečinný"
+  },
+  "rs00110": {
+   "source": "Standby",
+   "text": "Uspaný"
+  },
+  "rs00111": {
+   "source": "Spun down to save power.",
+   "text": "Uspaný kvůli úspoře energie."
+  },
+  "rs00112": {
+   "source": "Power-on",
+   "text": "Zapnuto"
+  },
+  "rs00113": {
+   "source": "Spin-ups",
+   "text": "Roztočení"
+  },
+  "rs00114": {
+   "source": "Head parks",
+   "text": "Parkování hlav"
+  },
+  "rs00115": {
+   "source": "Reallocated",
+   "text": "Přealokované"
+  },
+  "rs00116": {
+   "source": "Pending",
+   "text": "Čekající"
+  },
+  "rs00117": {
+   "source": "Uncorrectable",
+   "text": "Neopravitelné"
+  },
+  "rs00118": {
+   "source": "Reported uncorrectable",
+   "text": "Hlášené neopravitelné"
+  },
+  "rs00119": {
+   "source": "SMART values shown here are from the last time the disk was awake — it is never woken just to draw this page.",
+   "text": "Hodnoty SMART zde jsou z doby, kdy byl disk naposledy vzhůru — kvůli vykreslení této stránky se nikdy nebudí."
+  },
+  "rs00120": {
+   "source": "History is still being collected — charts appear once the collector has run at least twice.",
+   "text": "Historie se teprve sbírá — grafy se objeví, až kolektor proběhne alespoň dvakrát."
+  },
+  "rs00121": {
+   "source": "All SMART values",
+   "text": "Všechny hodnoty SMART"
+  },
+  "rs00122": {
+   "source": "Burned in",
+   "text": "Zaběhnutý"
+  },
+  "rs00123": {
+   "source": "CPU temp",
+   "text": "Teplota CPU"
+  },
+  "rs00124": {
+   "source": "Closest to threshold",
+   "text": "Nejblíž prahu"
+  },
+  "rs00125": {
+   "source": "Command timeouts",
+   "text": "Vypršení příkazů"
+  },
+  "rs00126": {
+   "source": "Data read",
+   "text": "Přečteno dat"
+  },
+  "rs00127": {
+   "source": "Data written",
+   "text": "Zapsáno dat"
+  },
+  "rs00128": {
+   "source": "Emergency head retracts",
+   "text": "Nouzová stažení hlav"
+  },
+  "rs00129": {
+   "source": "Endurance used",
+   "text": "Využitá výdrž"
+  },
+  "rs00130": {
+   "source": "Error log entries",
+   "text": "Záznamy v logu chyb"
+  },
+  "rs00131": {
+   "source": "Free pages",
+   "text": "Volné stránky"
+  },
+  "rs00132": {
+   "source": "High — check upstream keepalive in nginx.",
+   "text": "Vysoká — zkontrolujte upstream keepalive v nginx."
+  },
+  "rs00133": {
+   "source": "Interface CRC errors",
+   "text": "Chyby CRC rozhraní"
+  },
+  "rs00134": {
+   "source": "Last self-test",
+   "text": "Poslední autotest"
+  },
+  "rs00135": {
+   "source": "Lifetime temp",
+   "text": "Teplota za život"
+  },
+  "rs00136": {
+   "source": "Media errors",
+   "text": "Chyby média"
+  },
+  "rs00137": {
+   "source": "Negligible — the proxy is not a bottleneck, so anything slow is Plex-side.",
+   "text": "Zanedbatelná — proxy není úzké hrdlo, takže pomalost je na straně Plexu."
+  },
+  "rs00138": {
+   "source": "No data in this range.",
+   "text": "V tomto rozsahu nejsou data."
+  },
+  "rs00139": {
+   "source": "No data yet.",
+   "text": "Zatím žádná data."
+  },
+  "rs00140": {
+   "source": "No measurable growth yet — projections appear once a trend forms.",
+   "text": "Zatím žádný měřitelný růst — odhady se objeví, až se vytvoří trend."
+  },
+  "rs00141": {
+   "source": "Not enough history yet.",
+   "text": "Zatím nedostatek historie."
+  },
+  "rs00142": {
+   "source": "Nothing recorded in this range.",
+   "text": "V tomto rozsahu nic zaznamenáno."
+  },
+  "rs00143": {
+   "source": "Noticeable but minor.",
+   "text": "Znatelná, ale malá."
+  },
+  "rs00144": {
+   "source": "Pair",
+   "text": "Spárovat"
+  },
+  "rs00145": {
+   "source": "Pair this TV",
+   "text": "Spárovat tuto TV"
+  },
+  "rs00146": {
+   "source": "Pair with",
+   "text": "Spárovat s"
+  },
+  "rs00147": {
+   "source": "Plex answers locally, so the fault is in nginx / TLS / DNS rather than in Plex.",
+   "text": "Plex odpovídá lokálně, takže chyba je spíš v nginx / TLS / DNS než v Plexu."
+  },
+  "rs00148": {
+   "source": "Power cycles",
+   "text": "Zapnutí"
+  },
+  "rs00149": {
+   "source": "Reading from",
+   "text": "Čte z"
+  },
+  "rs00150": {
+   "source": "Run the collector:",
+   "text": "Spusťte kolektor:"
+  },
+  "rs00151": {
+   "source": "SMART FAILED",
+   "text": "SMART SELHAL"
+  },
+  "rs00152": {
+   "source": "SMART OK",
+   "text": "SMART OK"
+  },
+  "rs00153": {
+   "source": "Spare left",
+   "text": "Zbývá rezervy"
+  },
+  "rs00154": {
+   "source": "Spin retries",
+   "text": "Opakovaná roztočení"
+  },
+  "rs00155": {
+   "source": "Stream copy",
+   "text": "Kopie streamu"
+  },
+  "rs00156": {
+   "source": "Direct Play",
+   "text": "Přímé přehrávání"
+  },
+  "rs00157": {
+   "source": "This browser cannot send the request.",
+   "text": "Tento prohlížeč nedokáže poslat požadavek."
+  },
+  "rs00158": {
+   "source": "Type the four-digit code shown on the television.",
+   "text": "Zadejte čtyřmístný kód zobrazený na televizi."
+  },
+  "rs00159": {
+   "source": "Unsafe shutdowns",
+   "text": "Nebezpečná vypnutí"
+  },
+  "rs00160": {
+   "source": "accept the prompt on the TV…",
+   "text": "potvrďte dotaz na TV…"
+  },
+  "rs00161": {
+   "source": "added per request vs. reaching Plex directly",
+   "text": "přidáno na požadavek oproti přímému přístupu k Plexu"
+  },
+  "rs00162": {
+   "source": "and check that",
+   "text": "a zkontrolujte, že"
+  },
+  "rs00163": {
+   "source": "was created.",
+   "text": "byl vytvořen."
+  },
+  "rs00164": {
+   "source": "bridge exposes health only",
+   "text": "most poskytuje jen zdraví"
+  },
+  "rs00165": {
+   "source": "check failed",
+   "text": "kontrola selhala"
+  },
+  "rs00166": {
+   "source": "disks awake — SMART refreshes on the next collector pass",
+   "text": "disky vzhůru — SMART se obnoví při dalším průchodu kolektoru"
+  },
+  "rs00167": {
+   "source": "forget the credentials stored for this TV",
+   "text": "zapomenout přihlašovací údaje uložené pro tuto TV"
+  },
+  "rs00168": {
+   "source": "head parks/year",
+   "text": "parkování hlav/rok"
+  },
+  "rs00169": {
+   "source": "home screen — the heavy one",
+   "text": "domovská obrazovka — ta náročná"
+  },
+  "rs00170": {
+   "source": "last 24 h",
+   "text": "posledních 24 h"
+  },
+  "rs00171": {
+   "source": "median over one reused connection",
+   "text": "medián přes jedno znovupoužité spojení"
+  },
+  "rs00172": {
+   "source": "pairing failed",
+   "text": "párování selhalo"
+  },
+  "rs00173": {
+   "source": "per day",
+   "text": "za den"
+  },
+  "rs00174": {
+   "source": "request refused",
+   "text": "požadavek odmítnut"
+  },
+  "rs00175": {
+   "source": "spin-ups/year",
+   "text": "roztočení/rok"
+  },
+  "rs00176": {
+   "source": "spinning up…",
+   "text": "roztáčí se…"
+  },
+  "rs00177": {
+   "source": "the TV",
+   "text": "TV"
+  },
+  "rs00178": {
+   "source": "timed out — the disks did not answer",
+   "text": "vypršel čas — disky neodpověděly"
+  },
+  "rs00179": {
+   "source": "unpair",
+   "text": "zrušit spárování"
+  },
+  "rs00180": {
+   "source": "web",
+   "text": "web"
+  },
+  "rs00181": {
+   "source": "Čeština",
+   "text": "Čeština"
+  },
+  "rs00182": {
+   "source": "No error-counter change in",
+   "text": "Žádná změna čítačů chyb za"
+  },
+  "rs00183": {
+   "source": "of monitoring.",
+   "text": "monitorování."
+  },
+  "rs00184": {
+   "source": "CPU",
+   "text": "CPU"
   }
  },
  "patterns": {
@@ -7089,6 +7949,78 @@
   "xp0063": {
    "source": "each matched again to its own entry, in {0}",
    "text": "každá se znovu spáruje na vlastní položku, v jazyce {0}"
+  },
+  "xp0064": {
+   "source": "PHP {0} running this page may have php2shell (CVE-2026-109618, CVE-2026-109619): remote code execution by anybody who can reach the web server. Update it - {1}",
+   "text": "PHP {0}, které obsluhuje tuto stránku, může mít php2shell (CVE-2026-109618, CVE-2026-109619): vzdálené spuštění kódu kýmkoli, kdo dosáhne na webový server. Aktualizujte ho – {1}"
+  },
+  "xp0065": {
+   "source": "PHP {0} has the php2shell fix (CVE-2026-109618, CVE-2026-109619)",
+   "text": "PHP {0} má opravu php2shell (CVE-2026-109618, CVE-2026-109619)"
+  },
+  "xp0066": {
+   "source": "PHP {0} has the php2shell fix (CVE-2026-109618, CVE-2026-109619) - backported, as its changelog says",
+   "text": "PHP {0} má opravu php2shell (CVE-2026-109618, CVE-2026-109619) – backportovanou, jak říká changelog balíčku"
+  },
+  "xp0067": {
+   "source": "PHP {0} does NOT have the php2shell fix (CVE-2026-109618, CVE-2026-109619): ./install.sh --upgrade, or Settings → Upgrades, brings it up to date",
+   "text": "PHP {0} NEMÁ opravu php2shell (CVE-2026-109618, CVE-2026-109619): ./install.sh --upgrade nebo Nastavení → Aktualizace ho aktualizuje"
+  },
+  "xp0068": {
+   "source": "PHP {0} does not have the php2shell fix (CVE-2026-109618, CVE-2026-109619): ./install.sh --upgrade (or Settings → Upgrades) brings it up to date",
+   "text": "PHP {0} nemá opravu php2shell (CVE-2026-109618, CVE-2026-109619): ./install.sh --upgrade (nebo Nastavení → Aktualizace) ho aktualizuje"
+  },
+  "xp0069": {
+   "source": "{0} downloaded",
+   "text": "staženo: {0}"
+  },
+  "rp00001": {
+   "source": "{0} free",
+   "text": "{0} volno"
+  },
+  "rp00002": {
+   "source": "updated {0} ago",
+   "text": "aktualizováno před {0}"
+  },
+  "rp00003": {
+   "source": "web {0} · server {1}",
+   "text": "web {0} · server {1}"
+  },
+  "rp00004": {
+   "source": "data.json age {0}s · collector runs as root via systemd timer · disks are never woken to draw this page · auto-refresh 60s",
+   "text": "stáří data.json {0} s · kolektor běží jako root · disky se kvůli vykreslení stránky nikdy nebudí · obnova každých 60 s"
+  },
+  "rp00005": {
+   "source": "This USB bridge does not report power state, so it is worked out from disk activity (idle for {0}).",
+   "text": "Tento USB most nehlásí stav napájení, proto se odvozuje z aktivity disku (nečinný {0})."
+  },
+  "rp00006": {
+   "source": "{0} disks awake",
+   "text": "{0} disků vzhůru"
+  },
+  "rp00007": {
+   "source": "{0} process(es) · {1} % CPU total. Background jobs are triggered by your \"asap\" settings whenever new media is added.",
+   "text": "{0} {0:proces|procesy|procesů} · celkem {1} % CPU. Úlohy na pozadí spouští vaše nastavení „asap“ při každém přidání nových médií."
+  },
+  "rp00008": {
+   "source": "{0} h of history so far",
+   "text": "zatím {0} h historie"
+  },
+  "rp00009": {
+   "source": "{0} min of history so far",
+   "text": "zatím {0} min historie"
+  },
+  "rp00010": {
+   "source": "{0} samples loaded",
+   "text": "načteno {0} vzorků"
+  },
+  "rp00011": {
+   "source": "plexmon {0} started on {1}",
+   "text": "plexmon {0} spuštěn na {1}"
+  },
+  "rp00012": {
+   "source": "the dashboard",
+   "text": "dashboard"
   }
  },
  "rich": {
@@ -7199,6 +8131,30 @@
   "xr0015": {
    "source": "The client id of an API app at <code>trakt.tv/oauth/applications</code>.",
    "text": "Client ID aplikace API na <code>trakt.tv/oauth/applications</code>."
+  },
+  "rr00001": {
+   "source": "Write everything into <code>/var/log/plexmon/plexmon.log</code>. Loud: for finding something out, not for leaving on.",
+   "text": "Zapisovat vše do <code>/var/log/plexmon/plexmon.log</code>. Hlučné: na zjištění něčeho, ne na trvalé zapnutí."
+  },
+  "rr00002": {
+   "source": "The name Plex announces for its custom certificate, <code>plex.example.cz</code>. Empty: the certificate’s own name (CN).",
+   "text": "Jméno, které Plex ohlašuje pro svůj vlastní certifikát, <code>plex.example.cz</code>. Prázdné: vlastní jméno certifikátu (CN)."
+  },
+  "rr00003": {
+   "source": "The name the certificate is for - the one people type to reach Plex, <code>plex.example.cz</code>. Empty: the name of the certificate it has now, else its full host name.",
+   "text": "Jméno, pro které certifikát je - to, které lidé píší, aby se dostali k Plexu, <code>plex.example.cz</code>. Prázdné: jméno certifikátu, který má teď, jinak jeho plné jméno hostitele."
+  },
+  "rr00004": {
+   "source": "The port on 127.0.0.1 the Settings pages ask this daemon on. The pages read it from <code>/run/plexmon/api-port</code>, written when the daemon starts.",
+   "text": "Port na 127.0.0.1, na kterém se stránky Nastavení ptají tohoto démona. Stránky ho čtou z <code>/run/plexmon/api-port</code>, který démon zapíše při startu."
+  },
+  "rr00005": {
+   "source": "As the DNS server knows it, <code>plexmon-acme.</code>; allowed to update _acme-challenge records only.",
+   "text": "Jak ho zná DNS server, <code>plexmon-acme.</code>; smí aktualizovat jen záznamy _acme-challenge."
+  },
+  "rr00006": {
+   "source": "Off: nothing on these pages offers going back to an older version. On: Settings → Upgrades shows <i>Going back to an older version</i> - only the versions it is safe to go back to, each with what changed in it. On the server, root can always: plexmon --downgrade.",
+   "text": "Vypnuto: nic na těchto stránkách nenabízí návrat ke starší verzi. Zapnuto: Nastavení → Aktualizace ukazuje <i>Návrat ke starší verzi</i> - jen verze, na které je bezpečné se vrátit, každou s tím, co se v ní změnilo. Na serveru root může vždy: plexmon --downgrade."
   }
  }
 }

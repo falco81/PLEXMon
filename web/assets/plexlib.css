@@ -336,3 +336,46 @@
 
 /* The wide popup of the tools. */
 .modal .box.px-wide{width:min(1180px,calc(100vw - 32px));max-width:none}
+
+/* ---- Settings → Certificates and TLS → Download (2.1.1) ------------------- */
+.modal .box.cx-wide{width:min(860px,calc(100vw - 32px));max-width:none}
+.cx-head{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:12px;margin-bottom:6px;
+  background:linear-gradient(120deg,var(--info-bg),transparent);border:1px solid rgba(88,166,255,.25)}
+.cx-ic{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;flex:none;
+  background:var(--panel2);color:var(--accent);border:1px solid var(--line)}
+.cx-head b{display:block;font-size:15.5px}
+.cx-head small{display:block;font-size:12.5px;margin-top:2px}
+.cx-group{margin:16px 0 8px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--tx-dim)}
+.cx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.cx-fmt{appearance:none;text-align:left;font:inherit;color:var(--tx);cursor:pointer;padding:11px 12px;border-radius:12px;
+  background:var(--panel);border:1px solid var(--line);transition:border-color .15s,background .15s,transform .15s}
+.cx-fmt:hover{border-color:#3a4252;transform:translateY(-1px)}
+.cx-fmt.on{border-color:var(--accent);background:linear-gradient(135deg,var(--info-bg),var(--panel));
+  box-shadow:0 0 0 1px var(--accent) inset}
+.cx-fmt.withkey.on{border-color:var(--warn);background:linear-gradient(135deg,var(--warn-bg),var(--panel));
+  box-shadow:0 0 0 1px var(--warn) inset}
+.cx-top{display:flex;align-items:center;gap:8px}
+.cx-fi{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--panel2);color:var(--accent);flex:none}
+.cx-fmt.withkey .cx-fi{color:var(--warn)}
+.cx-top b{font-size:14px;flex:1}
+.cx-ext{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--tx-dim);padding:2px 6px;border-radius:5px;
+  background:var(--bg);border:1px solid var(--line)}
+.cx-fmt p{margin:7px 0 0;font-size:12.5px;line-height:1.45;color:var(--tx-dim)}
+.cx-keybox{margin-top:16px;padding:14px;border-radius:12px;background:var(--bg);border:1px solid rgba(210,153,34,.35)}
+.cx-warn{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:#f1dcae;margin-bottom:12px}
+.cx-warn svg{flex:none;color:var(--warn);margin-top:1px}
+.cx-pw{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;align-items:start}
+.cx-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.cx-field label{font-size:13px;font-weight:600}
+.cx-field small{font-size:12px;line-height:1.4}
+.cx-field input{width:100%}
+.cx-inrow{display:flex;gap:6px}
+.cx-inrow input{flex:1;min-width:0}
+.cx-meter{grid-column:1/-1;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.cx-meter span{display:block;height:100%;width:0;transition:width .25s,background .25s;background:var(--crit)}
+.cx-meter span.mid{background:var(--warn)} .cx-meter span.good{background:var(--ok)}
+.cx-legacy{margin-top:12px;align-items:flex-start}
+.cx-mine{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);grid-template-columns:1fr}
+.cx-said{min-height:18px;margin-top:10px;font-size:13px;color:var(--tx-dim)}
+.cx-said.bad{color:var(--crit)}
+@media (max-width:640px){.cx-pw{grid-template-columns:1fr}}

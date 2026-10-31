@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.1.0'
+__version__ = '2.1.1'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -5743,6 +5743,104 @@ def _log(h):
 
 
 # ---- Certificates and TLS -------------------------------------------------------------
+
+# ---- the certificate taken away (2.1.1) ------------------------------------------------------
+EXPORT_FORMATS = {
+    'crt': ('certificate only (PEM)', False),
+    'fullchain': ('certificate and its chain (PEM)', False),
+    'der': ('certificate only (DER, .cer)', False),
+    'p7b': ('certificate and its chain (PKCS#7, .p7b)', False),
+    'key': ('private key only (PEM)', True),
+    'pem': ('certificate, chain and private key in one PEM', True),
+    'pfx': ('PFX / PKCS#12 - certificate, chain and private key', True),
+}
+
+
+def cert_export(h, prof, target, b, who):
+    """The certificate as a file in the format asked: with the private key only
+    for a full administrator who gives their own password again, every such
+    export an event. A PFX always has a password; a PEM key may have one."""
+    fmt = str(b.get('format') or '')
+    if fmt not in EXPORT_FORMATS:
+        raise ApiError(400, 'no such format')
+    if not prof.get('cert'):
+        raise ApiError(404, 'no certificate is kept for %s' % target)
+    words, with_key = EXPORT_FORMATS[fmt]
+    cert = prof['cert'].strip() + '\n'
+    chain = (prof.get('chain') or '').strip()
+    chain = chain + '\n' if chain else ''
+    name = re.sub(r'[^A-Za-z0-9._-]+', '_', str((prof.get('info') or {}).get('cn') or target)) or 'certificate'
+    pw = str(b.get('password') or '')
+    key = ''
+    if with_key:
+        acc = h.me('fulladmin')['account']
+        k = h.throttle('password', int(CONFIG.get('login_tries') or 5), 5, name=acc['name'])
+        if not password_ok(str(b.get('mine') or ''), acc.get('pw')):
+            h.failed(k)
+            raise ApiError(400, 'your own password is not right - the private key is given only '
+                                'with it')
+        key = unseal_secret(prof.get('key') or '', 'web:tls') or ''
+        if not key:
+            raise ApiError(404, 'the private key of %s is not kept here (a request made '
+                                'elsewhere, or a certificate taken over without it)' % target)
+        if fmt == 'pfx' and len(pw) < 4:
+            raise ApiError(400, 'a PFX needs a password of 4 characters at least')
+        if pw and pw != str(b.get('password2') or ''):
+            raise ApiError(400, 'the two passwords are not the same')
+    with tempfile.TemporaryDirectory(prefix='plexmon-export-') as tmp:
+        os.chmod(tmp, 0o700)
+        cf, chf, kf = (os.path.join(tmp, n) for n in ('c.pem', 'ch.pem', 'k.pem'))
+        for path_, v in ((cf, cert), (chf, chain), (kf, key)):
+            with open(path_, 'w') as f:
+                f.write(v)
+        env = {'PLEXMON_PW': pw}
+        if fmt == 'crt':
+            data, fn, mime = cert.encode(), name + '.crt', 'application/x-pem-file'
+        elif fmt == 'fullchain':
+            data, fn, mime = (cert + chain).encode(), name + '-fullchain.pem', \
+                'application/x-pem-file'
+        elif fmt == 'der':
+            data = _openssl(['x509', '-in', cf, '-outform', 'DER'], what='the DER file')
+            fn, mime = name + '.cer', 'application/pkix-cert'
+        elif fmt == 'p7b':
+            args = ['crl2pkcs7', '-nocrl', '-certfile', cf]
+            if chain:
+                args += ['-certfile', chf]
+            data = _openssl(args + ['-outform', 'DER'], what='the PKCS#7 file')
+            fn, mime = name + '.p7b', 'application/x-pkcs7-certificates'
+        elif fmt in ('key', 'pem'):
+            kdata = key.encode()
+            if pw:
+                kdata = _openssl(['pkey', '-in', kf, '-aes256', '-passout', 'env:PLEXMON_PW'],
+                                 env=env, what='locking the key')
+            if fmt == 'key':
+                data, fn = kdata, name + '.key'
+            else:
+                data, fn = (cert + chain).encode() + kdata, name + '-with-key.pem'
+            mime = 'application/x-pem-file'
+        else:
+            args = ['pkcs12', '-export', '-inkey', kf, '-in', cf, '-passout', 'env:PLEXMON_PW',
+                    '-name', name]
+            if chain:
+                args += ['-certfile', chf]
+            if b.get('legacy'):
+                # Older Windows, macOS before 10.15, old Java and Android:
+                # what they read (as Plex's own file).
+                args += ['-certpbe', 'PBE-SHA1-3DES', '-keypbe', 'PBE-SHA1-3DES', '-macalg', 'sha1']
+            else:
+                args += ['-certpbe', 'AES-256-CBC', '-keypbe', 'AES-256-CBC', '-macalg', 'sha256']
+            data = _openssl(args, env=env, what='the PFX file')
+            fn, mime = name + '.pfx', 'application/x-pkcs12'
+    if with_key:
+        h.store.add_event('settings', '%s exported the certificate of %s WITH its private key '
+                          '(%s%s)' % (who, target, words, ', locked with a password' if pw
+                                      else ', not locked'), 'warn', who=who)
+    else:
+        h.store.add_event('settings', '%s exported the certificate of %s (%s)' % (
+            who, target, words), 'info', who=who)
+    return {'name': fn, 'mime': mime, 'b64': base64.b64encode(data).decode(), 'bytes': len(data),
+            'with_key': with_key}
+
 @route('GET', '/api/web')
 def _web(h):
     me = h.me()
@@ -5851,6 +5949,8 @@ def _web_do(h):
                         'keeps what it has)' % (who, words), 'warn', who=who)
         return {'message': 'plexmon no longer looks after the TLS of %s; nginx keeps the files '
                            'it has' % words}
+    if act == 'tls_export':
+        return cert_export(h, prof, target, b, who)
     if act == 'tls_pem':
         if not prof.get('cert'):
             raise ApiError(404, 'no certificate is kept for %s' % words)
