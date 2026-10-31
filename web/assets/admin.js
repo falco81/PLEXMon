@@ -45,7 +45,7 @@ dressButtons(document);
 }());
 
 /* ---- tabs ------------------------------------------------------------------ */
-var TABS = ['settings', 'events'];
+var TABS = ['library', 'settings', 'events'];
 window.optShowTab = function (name) {
   if (TABS.indexOf(name) < 0) name = 'settings';
   var btn = document.querySelector('.tabs button[data-tab="' + name + '"]');
@@ -63,12 +63,14 @@ document.querySelectorAll('.tabs button[data-tab]').forEach(function (b) {
   b.onclick = function () { showTab(b.getAttribute('data-tab')); };
 });
 function writeHash() {
-  var want = '#' + TAB + (TAB === 'settings' ? '/' + PANE : '');
+  var want = '#' + TAB + (TAB === 'settings' ? '/' + PANE : '')
+    + (TAB === 'library' && window.PXLIB ? window.PXLIB.hash() : '');
   if (location.hash !== want) try { history.replaceState(null, '', want); } catch (e) { }
 }
 function onTab(name) {
   explainWhatWasDrawn(document);
   if (name === 'events') loadEvents();
+  if (window.PXLIB) { if (name === 'library') window.PXLIB.show(); else window.PXLIB.hide(); }
   if (name === 'settings') loadSettings(!Object.keys(DIRTY || {}).length && !Object.keys(PENDING || {}).length);
 }
 
@@ -3475,15 +3477,23 @@ function drawPlex(d) {
 
 /* ---- starting ------------------------------------------------------------ */
 (function start() {
-  var h = (location.hash || '#settings').slice(1).split('/');
-  if (h[1]) PANE = h[1];
+  var h = (location.hash || '#library').slice(1).split('/');
+  if (h[0] === 'settings' && h[1]) PANE = h[1];
   if (STATUS) paintHeader(STATUS);
-  showTab(h[0] || 'settings');
+  /* The Plex library's script comes after this one: the first tab is shown
+     once it is there (it says what part of the library the address names). */
+  var first = function () {
+    if (h[0] === 'library' && window.PXLIB) window.PXLIB.from(h);
+    showTab(h[0] || 'library');
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', first);
+  else setTimeout(first, 0);
   setInterval(tick, 5000);
   explainWhatWasDrawn(document);
   window.addEventListener('hashchange', function () {
-    var g = (location.hash || '#settings').slice(1).split('/');
+    var g = (location.hash || '#library').slice(1).split('/');
     if (TABS.indexOf(g[0]) < 0) return;
+    if (g[0] === 'library') { if (g[0] !== TAB) showTab('library'); return; }
     if (g[0] === 'settings' && g[1] && g[1] !== PANE && typeof showPane === 'function'
         && TAB === 'settings') { showPane(g[1]); return; }
     if (g[1]) PANE = g[1];

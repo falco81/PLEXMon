@@ -4273,740 +4273,1084 @@
    "text": "↑ ↓ a Tab nebo Enter vybere · Esc zavře"
   },
   "xs0001": {
-   "source": "The certificate nginx answers with is also handed to Plex Media Server as its custom certificate (a PKCS#12 file in /var/lib/plexmediaserver/plexmon, named in its Preferences.xml) - so the Plex apps that connect straight to port 32400 by your own name see it too. Every new certificate - uploaded, self-signed or renewed by ACME - goes there as well.",
-   "text": "Nastavení Plex serveru na"
+   "source": "Plex library",
+   "text": "Knihovna Plexu"
   },
   "xs0002": {
-   "source": "Writing",
-   "text": "Zapisuje"
+   "source": "Library",
+   "text": "Knihovna"
   },
   "xs0003": {
-   "source": "Reading",
-   "text": "Čte"
+   "source": "Watchlist",
+   "text": "Seznam ke zhlédnutí"
   },
   "xs0004": {
-   "source": "Spinning up",
-   "text": "Roztáčí se"
+   "source": "Titles",
+   "text": "Názvy"
   },
   "xs0005": {
-   "source": "Sleeping",
-   "text": "Spí"
+   "source": "Ratings",
+   "text": "Hodnocení"
   },
   "xs0006": {
-   "source": "Active",
-   "text": "Aktivní"
+   "source": "Labels",
+   "text": "Štítky"
   },
   "xs0007": {
-   "source": "itself (self-signed)",
-   "text": "sám sebou (self-signed)"
+   "source": "What is being done in Plex now - one thing at a time.",
+   "text": "Co se teď v Plexu dělá - vždy jen jedna věc."
   },
   "xs0008": {
-   "source": "Gaps are periods a disk was asleep — it is never woken just to read a temperature.",
-   "text": "Mezery jsou doby, kdy disk spal — kvůli čtení teploty se nikdy nebudí."
+   "source": "not reachable",
+   "text": "nedostupný"
   },
   "xs0009": {
-   "source": "A new version, put in from here - from the web or as a file.",
-   "text": "Nová verze nasazená odsud - z webu nebo ze souboru."
+   "source": "Plex Media Server does not answer",
+   "text": "Plex Media Server neodpovídá"
   },
   "xs0010": {
-   "source": "Version, what is running, the language, the console at login, the debug log.",
-   "text": "Verze, co běží, jazyk, konzole po přihlášení, ladicí log."
+   "source": "plexmon asks it on 127.0.0.1:32400 with the server’s own token.",
+   "text": "plexmon se ho ptá na 127.0.0.1:32400 vlastním tokenem serveru."
   },
   "xs0011": {
-   "source": "Accounts, certificates and TLS, automatic certificates, upgrades - signing in is needed",
-   "text": "Účty, certifikáty a TLS, automatické certifikáty, aktualizace - je třeba se přihlásit"
+   "source": "Ask again",
+   "text": "Zeptat se znovu"
   },
   "xs0012": {
-   "source": "Every sign-in, every account made or changed, every change of a setting, every certificate put in or renewed, every upgrade. Kept in the database, so it survives a restart.",
-   "text": "Každé přihlášení, každý založený či změněný účet, každá změna nastavení, každý nasazený či obnovený certifikát, každá aktualizace. Uloženo v databázi, takže přežije restart."
+   "source": "shows",
+   "text": "seriály"
   },
   "xs0013": {
-   "source": "in Settings → About to have it say every step.",
-   "text": "v Nastavení → O aplikaci, aby vypisoval každý krok."
+   "source": "movies",
+   "text": "filmy"
   },
   "xs0014": {
-   "source": "Plex Media Server",
-   "text": "Plex Media Server"
+   "source": "No library of movies or shows",
+   "text": "Žádná knihovna filmů ani seriálů"
   },
   "xs0015": {
-   "source": "Plex Media Server answers on port 32400 with a certificate of its own (*.plex.direct). Switched on below, it is given this certificate too - as its custom certificate - so the Plex apps that reach it straight by your own name see the same one. Plex reads it only when it starts.",
-   "text": "Plex Media Server odpovídá na portu 32400 vlastním certifikátem (*.plex.direct). Zapnete-li to níže, dostane i tento certifikát - jako svůj vlastní (custom) certifikát - takže aplikace Plexu, které se k němu připojují přímo pod vaším jménem, uvidí tentýž. Plex ho načte jen při startu."
+   "source": "Plex has none yet.",
+   "text": "Plex zatím žádnou nemá."
   },
   "xs0016": {
-   "source": "How the Plex address speaks HTTPS - nginx in front of Plex Media Server, the dashboard and these pages: the certificate with its chain, the protocols, the ciphers. And, where asked, the same certificate in Plex Media Server itself.",
-   "text": "Jak adresa Plexu mluví HTTPS - nginx před Plex Media Serverem, dashboardem a těmito stránkami: certifikát s řetězem, protokoly, šifry. A kde je to žádáno, tentýž certifikát i v samotném Plex Media Serveru."
+   "source": "The library could not be read",
+   "text": "Knihovnu se nepodařilo načíst"
   },
   "xs0017": {
-   "source": "The certificate of this server's name. A certificate is sent as PEM files (the certificate, its key, the chain, the root - in any order, or all in one file) or as a PFX / PKCS#12 file, with its password or without; or the request is made here and only what the authority sends back is uploaded. It goes into the files the Plex vhost of nginx names, nginx is asked before it is reloaded, and everything is put back as it was when nginx says no.",
-   "text": "Certifikát jména tohoto serveru. Posílá se jako soubory PEM (certifikát, jeho klíč, řetěz, kořen - v libovolném pořadí, nebo vše v jednom souboru) nebo jako soubor PFX / PKCS#12, s heslem či bez; nebo se tady udělá žádost a nahraje se jen to, co certifikační autorita vrátí. Zapíše se do souborů, které jmenuje Plex vhost nginxu, nginx se před reloadem zeptá na konfiguraci, a když řekne ne, vše se vrátí, jak bylo."
+   "source": "a title, a year… (* and ? as wildcards)",
+   "text": "název, rok… (* a ? jako zástupné znaky)"
   },
   "xs0018": {
-   "source": "The certificate of this Plex server ordered from Let's Encrypt or another ACME CA and renewed by itself well before it runs out. The CA checks the name by asking it on port 80 (HTTP-01) - nginx answers it from a folder of plexmon's - or by a record in DNS (DNS-01), for a server the CA cannot see from the internet.",
-   "text": "Certifikát tohoto Plex serveru objednaný od Let's Encrypt nebo jiné ACME CA a obnovený sám dlouho před vypršením. CA ověří jméno dotazem na port 80 (HTTP-01) - nginx odpoví ze složky plexmonu - nebo záznamem v DNS (DNS-01), pro server, který CA z internetu nevidí."
+   "source": "Unwatched",
+   "text": "Nezhlédnuté"
   },
   "xs0019": {
-   "source": "A new version put in from here: from the web with one click, or as a package sent by hand - its signature checked, then root runs its install.sh --upgrade, and plexmon comes back as the new version. The command line (install.sh --upgrade) works as it always has.",
-   "text": "Nová verze nasazená odsud: z webu jedním kliknutím, nebo jako balíček poslaný ručně - ověří se jeho podpis, root spustí jeho install.sh --upgrade a plexmon se vrátí jako nová verze. Příkazová řádka (install.sh --upgrade) funguje jako vždy."
+   "source": "In progress",
+   "text": "Rozkoukané"
   },
   "xs0020": {
-   "source": "Where new versions are published - the address below - is looked at once a day. A newer plexmon found there is offered here, and put in with one click: fetched, its signature checked like a package sent by hand, then put in. Nothing is put in by itself.",
-   "text": "Místo, kde vycházejí nové verze - adresa níže - se kontroluje jednou denně. Novější plexmon, který se tam najde, se tu nabídne a nasadí jedním kliknutím: stáhne se, ověří se jeho podpis jako u balíčku poslaného ručně a nasadí se. Nic se nenasadí samo."
+   "source": "Watched",
+   "text": "Zhlédnuté"
   },
   "xs0021": {
-   "source": "The .tar.gz of a new plexmon, as it was released. It is checked before anything else: it must be signed by a release key this server trusts, every file in it must be the one signed, and it must not be older than what runs here. Root checks it all again before it is put in.",
-   "text": ".tar.gz nového plexmonu, tak jak byl vydán. Nejprve se zkontroluje: musí být podepsán klíčem vydání, kterému tento server věří, každý soubor v něm musí být ten podepsaný a nesmí být starší než to, co tu běží. Root to vše před nasazením zkontroluje znovu."
+   "source": "every label",
+   "text": "všechny štítky"
   },
   "xs0022": {
-   "source": "Drop the plexmon-X.Y.Z.tar.gz here, or press to choose it",
-   "text": "Přetáhněte sem plexmon-X.Y.Z.tar.gz, nebo klikněte a vyberte ho"
+   "source": "every genre",
+   "text": "všechny žánry"
   },
   "xs0023": {
-   "source": "Only to a version that is safe: one that reads what the newer versions wrote into the database the same - each version says how far back it may go, and the highest of what ran on this database and was installed on this machine counts. The database is not put back nor changed: the older version runs on it as it is.",
-   "text": "Jen na verzi, která je bezpečná: takovou, která čte to, co novější verze zapsaly do databáze, stejně - každá verze říká, jak daleko zpět smí, a platí nejvyšší z toho, co běželo na této databázi a bylo nainstalováno na tomto stroji. Databáze se nevrací ani nemění: starší verze na ní běží tak, jak je."
+   "source": "every country",
+   "text": "všechny země"
   },
   "xs0024": {
-   "source": "The output of install.sh, the last time this server was upgraded from these pages.",
-   "text": "Výstup install.sh při poslední aktualizaci tohoto serveru z těchto stránek."
+   "source": "without a rating",
+   "text": "bez hodnocení"
   },
   "xs0025": {
-   "source": "The same, by hand, as root:",
-   "text": "Totéž ručně, jako root:"
+   "source": "by title",
+   "text": "podle názvu"
   },
   "xs0026": {
-   "source": "Who may open these pages. full admin may change everything; read only may look and change nothing. The dashboard itself asks nobody.",
-   "text": "Kdo smí otevřít tyto stránky. Plný správce smí měnit vše; jen čtení smí dívat se a nic neměnit. Samotný dashboard se nikoho neptá."
+   "source": "newest first",
+   "text": "nejnovější"
   },
   "xs0027": {
-   "source": "Addresses and names with wrong attempts still counted - at the limit they are locked out until the time runs out. Clear one, or all of them, and they may try again at once.",
-   "text": "Adresy a jména, kterým se ještě počítají chybné pokusy - na limitu jsou zamčené, dokud čas nevyprší. Uvolněte jeden, nebo všechny, a mohou to hned zkusit znovu."
+   "source": "lately added",
+   "text": "naposledy přidané"
   },
   "xs0028": {
-   "source": "Two Python files (/usr/local/lib/plexmon/plexmon.py - the dashboard's daemon - and plexmon_admin.py - Settings), the standard library, and these PHP pages that ask it. On the server: plexmon --help, plexmon --console.",
-   "text": "Dva soubory Pythonu (/usr/local/lib/plexmon/plexmon.py - démon dashboardu - a plexmon_admin.py - Nastavení), standardní knihovna a tyto stránky PHP, které se ho ptají. Na serveru: plexmon --help, plexmon --console."
+   "source": "best rated",
+   "text": "nejlépe hodnocené"
   },
   "xs0029": {
-   "source": "On: root signing in at the machine's console or over SSH lands in the plexmon console (plexmon --console); q leaves it for the shell. Off: the ordinary shell, and plexmon --console opens it. Commands run over SSH, scp and sftp never get it. On the server: plexmon --console-at-login on|off.",
-   "text": "Zapnuto: root přihlášený na konzoli stroje nebo přes SSH skončí v konzoli plexmonu (plexmon --console); q ji opustí do shellu. Vypnuto: běžný shell a plexmon --console ji otevře. Příkazy spouštěné přes SSH, scp a sftp ji nikdy nedostanou. Na serveru: plexmon --console-at-login on|off."
+   "source": "lately watched",
+   "text": "naposledy sledované"
   },
   "xs0030": {
-   "source": "The dashboard",
-   "text": "Dashboard"
+   "source": "The size of the posters",
+   "text": "Velikost plakátů"
   },
   "xs0031": {
-   "source": "the dashboard has not said yet",
-   "text": "dashboard zatím nic neřekl"
+   "source": "Select",
+   "text": "Vybrat"
   },
   "xs0032": {
-   "source": "not said yet",
-   "text": "zatím neřečeno"
+   "source": "Pick several titles - or Ctrl-click a poster - and change them together: watched, labels, the tracks, the ratings, the titles.",
+   "text": "Vyberte víc titulů - nebo klikněte na plakát s Ctrl - a změňte je naráz: zhlédnuto, štítky, stopy, hodnocení, názvy."
   },
   "xs0033": {
-   "source": "Plex server: critical",
-   "text": "Plex server: kritický stav"
+   "source": "Read the library again from Plex",
+   "text": "Načíst knihovnu znovu z Plexu"
   },
   "xs0034": {
-   "source": "Plex server: warning",
-   "text": "Plex server: varování"
+   "source": "read again",
+   "text": "načteno znovu"
   },
   "xs0035": {
-   "source": "running, with trouble",
-   "text": "běží, s potížemi"
+   "source": "Scan the library files - what is new on the disk comes in",
+   "text": "Prohledat soubory knihovny - co je na disku nového, přibude"
   },
   "xs0036": {
-   "source": "all is well",
-   "text": "vše v pořádku"
+   "source": "Nothing like that here",
+   "text": "Nic takového tu není"
   },
   "xs0037": {
-   "source": "a warning",
-   "text": "varování"
+   "source": "Another word, or fewer filters.",
+   "text": "Zkuste jiné slovo nebo méně filtrů."
   },
   "xs0038": {
-   "source": "critical",
-   "text": "kritický stav"
+   "source": "1 season",
+   "text": "1 série"
   },
   "xs0039": {
-   "source": "Plex Media Server uses this certificate too",
-   "text": "Plex Media Server používá tento certifikát také"
+   "source": "watched",
+   "text": "zhlédnuto"
   },
   "xs0040": {
-   "source": "Plex’s custom certificate domain",
-   "text": "Doména vlastního certifikátu Plexu"
+   "source": "unwatched",
+   "text": "nezhlédnuto"
   },
   "xs0041": {
-   "source": "Restart Plex Media Server to take a new one",
-   "text": "Restartovat Plex Media Server, aby převzal nový"
+   "source": "Put them on the watchlist",
+   "text": "Přidat do seznamu ke zhlédnutí"
   },
   "xs0042": {
-   "source": "Events kept for (days)",
-   "text": "Události se drží (dní)"
+   "source": "Refresh their metadata",
+   "text": "Obnovit jejich metadata"
   },
   "xs0043": {
-   "source": "How long the events (sign-ins, changes, certificates) are kept. 0: for ever.",
-   "text": "Jak dlouho se drží události (přihlášení, změny, certifikáty). 0: navždy."
+   "source": "Export their titles to a .txt file, one per line",
+   "text": "Vyexportovat názvy do souboru .txt, jeden na řádek"
   },
   "xs0044": {
-   "source": "The certificate of this server ordered from the CA and renewed by itself - by HTTP-01 (port 80 of the name must reach this machine) or DNS-01. Off until switched on.",
-   "text": "Certifikát tohoto serveru objednaný od CA a obnovovaný sám - přes HTTP-01 (port 80 jména musí vést na tento stroj) nebo DNS-01. Vypnuto, dokud se nezapne."
+   "source": "Select every title shown",
+   "text": "Vybrat všechny zobrazené"
   },
   "xs0045": {
-   "source": "A code from an app (Google or Microsoft Authenticator…) - the way the second step is given here.",
-   "text": "Kód z aplikace (Google nebo Microsoft Authenticator…) - způsob, jak se tu dává druhý krok."
+   "source": "Select none",
+   "text": "Zrušit výběr"
   },
   "xs0046": {
-   "source": "After the password, every account gives a code too - from an authenticator app (Google or Microsoft Authenticator…). The first time, the account sets it up. Accounts → Reset the second step, or plexmon --reset-2fa NAME, makes it set it up again. Sign-ins already open end, but the one saving it.",
-   "text": "Po hesle zadá každý účet ještě kód - z ověřovací aplikace (Google nebo Microsoft Authenticator…). Napoprvé si ho účet nastaví. Účty → Resetovat druhý krok, nebo plexmon --reset-2fa JMÉNO, ho nechá nastavit znovu. Již otevřená přihlášení skončí, kromě toho, které to ukládá."
+   "source": "Audio & subtitles",
+   "text": "Zvuk a titulky"
   },
   "xs0047": {
-   "source": "ECDSA is smaller and quicker; RSA for old clients (old Plex apps, old televisions).",
-   "text": "ECDSA je menší a rychlejší; RSA pro staré klienty (staré aplikace Plexu, staré televize)."
+   "source": "Refresh",
+   "text": "Obnovit"
   },
   "xs0048": {
-   "source": "HTTP-01 needs port 80 of the name reachable from the internet (or from the CA, for a CA of your own). DNS-01 needs nothing open: the CA reads a TXT record - the way for a Plex server only the LAN reaches.",
-   "text": "HTTP-01 potřebuje port 80 jména dostupný z internetu (nebo z CA, u vlastní CA). DNS-01 nepotřebuje nic otevřeného: CA přečte TXT záznam - cesta pro Plex server, na který se dostane jen LAN."
+   "source": "Refresh it all",
+   "text": "Obnovit vše"
   },
   "xs0049": {
-   "source": "The key’s secret (base64). Kept sealed; written to a file only plexmon reads for the moment nsupdate runs.",
-   "text": "Tajemství klíče (base64). Uloženo zapečetěné; zapíše se do souboru, který čte jen plexmon, na dobu běhu nsupdate."
+   "source": "Plex asks its agents again for each of them - the same match: watched state, positions, the files and their default tracks stay. It goes one after the other, gently.",
+   "text": "Plex se znovu zeptá svých agentů na každý z nich - stejné párování: zhlédnutí, pozice, soubory a jejich výchozí stopy zůstanou. Jde to jeden po druhém, šetrně."
   },
   "xs0050": {
-   "source": "A token from deSEC (Token management) - one that may change this domain’s records. Kept sealed.",
-   "text": "Token z deSEC (Token management) - takový, který smí měnit záznamy této domény. Uloženo zapečetěné."
+   "source": "Plex downloads the metadata, posters and backgrounds of every item again. On a big library that takes a long time and loads the server; the scan of the files is usually what you want.",
+   "text": "Plex znovu stáhne metadata, plakáty a pozadí všech položek. U velké knihovny to trvá dlouho a zatěžuje server; obvykle stačí prohledat soubory."
   },
   "xs0051": {
-   "source": "The name at the top of Settings. Empty: the machine’s own name.",
-   "text": "Jméno nahoře v Nastavení. Prázdné: vlastní jméno stroje."
+   "source": "none of them has a match Plex Discover knows",
+   "text": "žádný z nich nemá spárování, které Plex Discover zná"
   },
   "xs0052": {
-   "source": "The language every page opens in - the dashboard too - until somebody chooses another for themselves.",
-   "text": "Jazyk, ve kterém se otevře každá stránka - i dashboard -, dokud si někdo nezvolí jiný."
+   "source": "That title could not be read",
+   "text": "Titul se nepodařilo načíst"
   },
   "xs0053": {
-   "source": "Once a day (and when Look now is pressed) the address below is asked for plexmon-X.Y.Z.tar.gz packages; a newer one than runs here is offered on this page - put in with one click, after its signature has been checked like any package sent by hand. Nothing is put in by itself.",
-   "text": "Jednou denně (a po stisku Podívat se teď) se adresa níže zeptá na balíčky plexmon-X.Y.Z.tar.gz; novější, než tu běží, se nabídne na této stránce - nasadí se jedním kliknutím, po ověření podpisu jako u každého balíčku poslaného ručně. Nic se nenasadí samo."
+   "source": "Mark watched",
+   "text": "Označit jako zhlédnuté"
   },
   "xs0054": {
-   "source": "Try port 80 on the card, then Order it now.",
-   "text": "Vyzkoušejte port 80 na kartě, pak Objednat teď."
+   "source": "On the watchlist",
+   "text": "V seznamu ke zhlédnutí"
   },
   "xs0055": {
-   "source": "The name points at the address that reaches port 80 of this server - from the internet (the router forwarding port 80 here), or from your own CA.",
-   "text": "Jméno ukazuje na adresu, přes kterou se dá dostat na port 80 tohoto serveru - z internetu (router přesměrovává port 80 sem), nebo z vaší vlastní CA."
+   "source": "taken off the watchlist",
+   "text": "odebráno ze seznamu ke zhlédnutí"
   },
   "xs0056": {
-   "source": "Port 80 is open to it - the router and the firewall in front of the server, and firewalld here (the http service).",
-   "text": "Port 80 je pro ni otevřený - router a firewall před serverem i firewalld tady (služba http)."
+   "source": "put on the watchlist",
+   "text": "přidáno do seznamu ke zhlédnutí"
   },
   "xs0057": {
-   "source": "HTTP-01: the CA asks port 80 of the name - so the name points at this server, and port 80 is open to the CA.",
-   "text": "HTTP-01: CA se ptá na port 80 jména - takže jméno ukazuje na tento server a port 80 je pro CA otevřený."
+   "source": "Plex Discover is not reachable from the server",
+   "text": "Plex Discover není ze serveru dostupný"
   },
   "xs0058": {
-   "source": "This server cannot put a version in by itself yet: plexmon-upgrade.path is not installed. Upgrade it once on the command line (install.sh --upgrade), which puts it in.",
-   "text": "Tento server zatím nedokáže nasadit verzi sám: plexmon-upgrade.path není nainstalován. Aktualizujte jednou z příkazové řádky (install.sh --upgrade), což ho nainstaluje."
+   "source": "Refresh metadata",
+   "text": "Obnovit metadata"
   },
   "xs0059": {
-   "source": "Hand it to Plex now",
-   "text": "Předat Plexu hned"
+   "source": "Open in Plex",
+   "text": "Otevřít v Plexu"
   },
   "xs0060": {
-   "source": "Plex back to its own",
-   "text": "Plex zpět na vlastní"
+   "source": "read more",
+   "text": "více"
   },
   "xs0061": {
-   "source": "Takes this certificate",
-   "text": "Bere tento certifikát"
+   "source": "read less",
+   "text": "méně"
   },
   "xs0062": {
-   "source": "Its custom certificate now",
-   "text": "Jeho vlastní certifikát teď"
+   "source": "Cast",
+   "text": "Hrají"
   },
   "xs0063": {
-   "source": "For the domain",
-   "text": "Pro doménu"
+   "source": "About it",
+   "text": "Podrobnosti"
   },
   "xs0064": {
-   "source": "Handed over",
-   "text": "Předáno"
+   "source": "Director",
+   "text": "Režie"
   },
   "xs0065": {
-   "source": "none - its own (*.plex.direct)",
-   "text": "žádný - jeho vlastní (*.plex.direct)"
+   "source": "Writers",
+   "text": "Scénář"
   },
   "xs0066": {
-   "source": "Hand the certificate to Plex Media Server?",
-   "text": "Předat certifikát Plex Media Serveru?"
+   "source": "Genres",
+   "text": "Žánry"
   },
   "xs0067": {
-   "source": "Plex Media Server is restarted to take it: what is playing stops for a moment.",
-   "text": "Plex Media Server se kvůli tomu restartuje: co se právě přehrává, se na chvíli zastaví."
+   "source": "Studio",
+   "text": "Studio"
   },
   "xs0068": {
-   "source": "Hand it over",
-   "text": "Předat"
+   "source": "Released",
+   "text": "Premiéra"
   },
   "xs0069": {
-   "source": "Plex Media Server back to its own certificate?",
-   "text": "Plex Media Server zpět na vlastní certifikát?"
+   "source": "Original title",
+   "text": "Původní název"
   },
   "xs0070": {
-   "source": "Plex Media Server is restarted: what is playing stops for a moment.",
-   "text": "Plex Media Server se restartuje: co se právě přehrává, se na chvíli zastaví."
+   "source": "Sort title",
+   "text": "Název pro řazení"
   },
   "xs0071": {
-   "source": "The certificate kept here written for Plex Media Server and named in its Preferences.xml now - Plex is restarted for it when Restart Plex Media Server is on. Without waiting for the next certificate.",
-   "text": "Certifikát uložený tady se teď zapíše pro Plex Media Server a uvede v jeho Preferences.xml - Plex se kvůli tomu restartuje, je-li zapnuto Restartovat Plex Media Server. Bez čekání na další certifikát."
+   "source": "Added",
+   "text": "Přidáno"
   },
   "xs0072": {
-   "source": "The names taken out of Preferences.xml: Plex answers with its own *.plex.direct certificate again, after a restart.",
-   "text": "Jména se odeberou z Preferences.xml: Plex po restartu znovu odpovídá vlastním certifikátem *.plex.direct."
+   "source": "Last watched",
+   "text": "Naposledy sledováno"
   },
   "xs0073": {
-   "source": "plexmon stops looking after it (nginx keeps what it has)",
-   "text": "plexmon se o něj přestane starat (nginx si nechá, co má)"
+   "source": "Metadata language",
+   "text": "Jazyk metadat"
   },
   "xs0074": {
-   "source": "nginx keeps the files it has now; plexmon no longer changes them.",
-   "text": "nginx si nechá soubory, které má; plexmon je už nemění."
+   "source": "the library’s",
+   "text": "podle knihovny"
   },
   "xs0075": {
-   "source": "Read a file saved by Export my settings - here or on another machine running plexmon.",
-   "text": "Načíst soubor uložený přes Exportovat má nastavení - zde nebo na jiném stroji s plexmonem."
+   "source": "Collections",
+   "text": "Kolekce"
   },
   "xs0076": {
-   "source": "Every table you have laid out goes back as it comes: the widths and the order of the columns, on every page. Nobody else’s change.",
-   "text": "Každá tabulka, kterou jste si upravili, se vrátí do výchozí podoby: šířky a pořadí sloupců, na všech stránkách. Nikomu jinému se nic nezmění."
+   "source": "Elsewhere",
+   "text": "Jinde"
   },
   "xs0077": {
-   "source": "How you have set these pages up for yourself — the columns of the tables and the language — saved as a JSON file, and read back here or on another machine running plexmon. Never your password, your role or anything else about the account.",
-   "text": "Jak jste si tyto stránky nastavili — sloupce tabulek a jazyk — uloženo jako soubor JSON a načtené zpět tady nebo na jiném stroji s plexmonem. Nikdy vaše heslo, vaše role ani nic jiného o účtu."
+   "source": "no labels",
+   "text": "žádné štítky"
   },
   "xs0078": {
-   "source": "Plex Media Server reads its certificate only when it starts: on, it is restarted when a new one is put in (playing streams stop for a moment); off, it takes the new one at its next start.",
-   "text": "Plex Media Server čte svůj certifikát jen při startu: zapnuto - restartuje se, když se nasadí nový (přehrávání se na chvíli zastaví); vypnuto - nový převezme při příštím startu."
+   "source": "Take this label off",
+   "text": "Odebrat tento štítek"
   },
   "xs0079": {
-   "source": "nothing happened",
-   "text": "nic se nestalo"
+   "source": "label taken off",
+   "text": "štítek odebrán"
   },
   "xs0080": {
-   "source": "Plex — server status",
-   "text": "Plex — stav serveru"
+   "source": "label added",
+   "text": "štítek přidán"
   },
   "xs0081": {
-   "source": "Plex server",
-   "text": "Plex server"
+   "source": "a new label…",
+   "text": "nový štítek…"
   },
   "xs0082": {
-   "source": "Trends",
-   "text": "Trendy"
+   "source": "Add",
+   "text": "Přidat"
   },
   "xs0083": {
-   "source": "Trends (no data yet)",
-   "text": "Trendy (zatím bez dat)"
+   "source": "Audio and subtitles",
+   "text": "Zvuk a titulky"
   },
   "xs0084": {
-   "source": "Why this status",
-   "text": "Proč tento stav"
+   "source": "Audio",
+   "text": "Zvuk"
   },
   "xs0085": {
-   "source": "All checks passed — no warnings.",
-   "text": "Všechny kontroly prošly — žádná varování."
+   "source": "Subtitles",
+   "text": "Titulky"
   },
   "xs0086": {
-   "source": "No details recorded — run the collector again.",
-   "text": "Žádné podrobnosti — spusťte kolektor znovu."
+   "source": "default",
+   "text": "výchozí"
   },
   "xs0087": {
-   "source": "All healthy",
-   "text": "Vše v pořádku"
+   "source": "external",
+   "text": "externí"
   },
   "xs0088": {
-   "source": "Running",
-   "text": "Běží"
+   "source": "forced",
+   "text": "vynucené"
   },
   "xs0089": {
-   "source": "Stopped",
-   "text": "Zastaven"
+   "source": "SDH",
+   "text": "SDH"
   },
   "xs0090": {
-   "source": "Active streams",
-   "text": "Aktivní streamy"
+   "source": "Seasons",
+   "text": "Série"
   },
   "xs0091": {
-   "source": "Load",
-   "text": "Zátěž"
+   "source": "Season watched",
+   "text": "Série zhlédnuta"
   },
   "xs0092": {
-   "source": "System",
-   "text": "Systém"
+   "source": "Season unwatched",
+   "text": "Série nezhlédnuta"
   },
   "xs0093": {
-   "source": "Kernel",
-   "text": "Jádro"
+   "source": "Audio & subtitles of the season",
+   "text": "Zvuk a titulky série"
   },
   "xs0094": {
-   "source": "uptime",
-   "text": "běží"
+   "source": "… of the episodes ticked",
+   "text": "… zaškrtnutých epizod"
   },
   "xs0095": {
-   "source": "API response",
-   "text": "Odezva API"
+   "source": "Tick to set the tracks of just these episodes",
+   "text": "Zaškrtněte a nastavíte stopy jen těmto epizodám"
   },
   "xs0096": {
-   "source": "Reverse proxy",
-   "text": "Reverzní proxy"
+   "source": "Watched - press for unwatched",
+   "text": "Zhlédnuto - stiskem nezhlédnuto"
   },
   "xs0097": {
-   "source": "Plex backups",
-   "text": "Zálohy Plexu"
+   "source": "Nothing else with this person on this server.",
+   "text": "Nic dalšího s touto osobou na tomto serveru není."
   },
   "xs0098": {
-   "source": "Now playing",
-   "text": "Právě hraje"
+   "source": "Leave it as it is",
+   "text": "Ponechat, jak je"
   },
   "xs0099": {
-   "source": "Nothing is playing right now.",
-   "text": "Právě nic nehraje."
+   "source": "Off - no subtitles",
+   "text": "Vypnuto - bez titulků"
   },
   "xs0100": {
-   "source": "Activity",
-   "text": "Aktivita"
+   "source": "1 video read",
+   "text": "přečteno 1 video"
   },
   "xs0101": {
-   "source": "No transcoding, analysis or library scan running.",
-   "text": "Neběží žádné překódování, analýza ani skenování knihovny."
+   "source": "a track is the same track in every one of them - an external .srt is told from one inside the file, forced from SDH.",
+   "text": "stopa je táž stopa ve všech - externí .srt se rozliší od vložené v souboru, vynucené od SDH."
   },
   "xs0102": {
-   "source": "Disks",
-   "text": "Disky"
+   "source": "leave them as they are",
+   "text": "ponechat, jak jsou"
   },
   "xs0103": {
-   "source": "Wake all disks",
-   "text": "Probudit všechny disky"
+   "source": "subtitles off",
+   "text": "titulky vypnout"
   },
   "xs0104": {
-   "source": "Performance",
-   "text": "Výkon"
+   "source": "Scan the files again",
+   "text": "Prohledat soubory znovu"
   },
   "xs0105": {
-   "source": "Usage",
-   "text": "Využití"
+   "source": "A subtitle file just put beside the video is not a track until Plex has scanned the folder: this asks Plex to scan the library and reads these videos again until their new tracks are there (up to 90 s).",
+   "text": "Soubor titulků právě přidaný k videu není stopou, dokud Plex složku neprohledá: tohle požádá Plex o prohledání knihovny a čte tato videa znovu, dokud v nich nové stopy nejsou (až 90 s)."
   },
   "xs0106": {
-   "source": "full free",
-   "text": "plno"
+   "source": "Show the plan",
+   "text": "Ukázat plán"
   },
   "xs0107": {
-   "source": "not mounted",
-   "text": "nepřipojeno"
+   "source": "videos change",
+   "text": "videí se změní"
   },
   "xs0108": {
-   "source": "cached",
-   "text": "z mezipaměti"
+   "source": "without that audio",
+   "text": "bez toho zvuku"
   },
   "xs0109": {
-   "source": "Idle",
-   "text": "Nečinný"
+   "source": "without those subtitles",
+   "text": "bez těch titulků"
   },
   "xs0110": {
-   "source": "Standby",
-   "text": "Uspaný"
+   "source": "Video",
+   "text": "Video"
   },
   "xs0111": {
-   "source": "Spun down to save power.",
-   "text": "Uspaný kvůli úspoře energie."
+   "source": "as it is",
+   "text": "beze změny"
   },
   "xs0112": {
-   "source": "Power-on",
-   "text": "Zapnuto"
+   "source": "not there - left",
+   "text": "chybí - ponecháno"
   },
   "xs0113": {
-   "source": "Spin-ups",
-   "text": "Roztočení"
+   "source": "The apps show it the next time the video is opened.",
+   "text": "Aplikace to ukážou při příštím otevření videa."
   },
   "xs0114": {
-   "source": "Head parks",
-   "text": "Parkování hlav"
+   "source": "Press a label: on all of them, on none, or back as it was (a dash: on some). The same label in another letter case is one row.",
+   "text": "Stiskněte štítek: na všech, na žádném, nebo zpět, jak byl (pomlčka: na některých). Týž štítek s jinou velikostí písmen je jeden řádek."
   },
   "xs0115": {
-   "source": "Reallocated",
-   "text": "Přealokované"
+   "source": "This library has no labels yet.",
+   "text": "Tato knihovna zatím nemá žádné štítky."
   },
   "xs0116": {
-   "source": "Pending",
-   "text": "Čekající"
+   "source": "Add it",
+   "text": "Přidat"
   },
   "xs0117": {
-   "source": "Uncorrectable",
-   "text": "Neopravitelné"
+   "source": "Save the labels",
+   "text": "Uložit štítky"
   },
   "xs0118": {
-   "source": "Reported uncorrectable",
-   "text": "Hlášené neopravitelné"
+   "source": "nothing changed",
+   "text": "nic se nezměnilo"
   },
   "xs0119": {
-   "source": "SMART values shown here are from the last time the disk was awake — it is never woken just to draw this page.",
-   "text": "Hodnoty SMART zde jsou z doby, kdy byl disk naposledy vzhůru — kvůli vykreslení této stránky se nikdy nebudí."
+   "source": "Movies",
+   "text": "Filmy"
   },
   "xs0120": {
-   "source": "History is still being collected — charts appear once the collector has run at least twice.",
-   "text": "Historie se teprve sbírá — grafy se objeví, až kolektor proběhne alespoň dvakrát."
+   "source": "Shows",
+   "text": "Seriály"
   },
   "xs0121": {
-   "source": "All SMART values",
-   "text": "Všechny hodnoty SMART"
+   "source": "On this server",
+   "text": "Na tomto serveru"
   },
   "xs0122": {
-   "source": "Burned in",
-   "text": "Zaběhnutý"
+   "source": "Not here",
+   "text": "Není tady"
   },
   "xs0123": {
-   "source": "CPU temp",
-   "text": "Teplota CPU"
+   "source": "Read the watchlist again",
+   "text": "Načíst seznam znovu"
   },
   "xs0124": {
-   "source": "Closest to threshold",
-   "text": "Nejblíž prahu"
+   "source": "Put a title on it from its detail, or select several in the library.",
+   "text": "Přidejte titul z jeho detailu, nebo jich vyberte víc v knihovně."
   },
   "xs0125": {
-   "source": "Command timeouts",
-   "text": "Vypršení příkazů"
+   "source": "series",
+   "text": "seriál"
   },
   "xs0126": {
-   "source": "Data read",
-   "text": "Přečteno dat"
+   "source": "movie",
+   "text": "film"
   },
   "xs0127": {
-   "source": "Data written",
-   "text": "Zapsáno dat"
+   "source": "here",
+   "text": "je tady"
   },
   "xs0128": {
-   "source": "Emergency head retracts",
-   "text": "Nouzová stažení hlav"
+   "source": "not on this server",
+   "text": "na tomto serveru není"
   },
   "xs0129": {
-   "source": "Endurance used",
-   "text": "Využitá výdrž"
+   "source": "Take it off the watchlist",
+   "text": "Odebrat ze seznamu"
   },
   "xs0130": {
-   "source": "Error log entries",
-   "text": "Záznamy v logu chyb"
+   "source": "The watchlist could not be read",
+   "text": "Seznam ke zhlédnutí se nepodařilo načíst"
   },
   "xs0131": {
-   "source": "Free pages",
-   "text": "Volné stránky"
+   "source": "The language the titles are put into",
+   "text": "Jazyk, do kterého se názvy převedou"
   },
   "xs0132": {
-   "source": "High — check upstream keepalive in nginx.",
-   "text": "Vysoká — zkontrolujte upstream keepalive v nginx."
+   "source": "a title…",
+   "text": "název…"
   },
   "xs0133": {
-   "source": "Interface CRC errors",
-   "text": "Chyby CRC rozhraní"
+   "source": "locked",
+   "text": "zamčené"
   },
   "xs0134": {
-   "source": "Last self-test",
-   "text": "Poslední autotest"
+   "source": "split entries",
+   "text": "rozdělené položky"
   },
   "xs0135": {
-   "source": "Lifetime temp",
-   "text": "Teplota za život"
+   "source": "sort title differs",
+   "text": "liší se název pro řazení"
   },
   "xs0136": {
-   "source": "Media errors",
-   "text": "Chyby média"
+   "source": "sort title",
+   "text": "název pro řazení"
   },
   "xs0137": {
-   "source": "Negligible — the proxy is not a bottleneck, so anything slow is Plex-side.",
-   "text": "Zanedbatelná — proxy není úzké hrdlo, takže pomalost je na straně Plexu."
+   "source": "Tick all shown",
+   "text": "Zaškrtnout zobrazené"
   },
   "xs0138": {
-   "source": "No data in this range.",
-   "text": "V tomto rozsahu nejsou data."
+   "source": "Read their exact language",
+   "text": "Načíst jejich přesný jazyk"
   },
   "xs0139": {
-   "source": "No data yet.",
-   "text": "Zatím žádná data."
+   "source": "The language of the metadata of each ticked item, from Plex (the item’s own, or the library’s) - not a guess from the title. One question each, so only for the ticked ones.",
+   "text": "Jazyk metadat každé zaškrtnuté položky přímo z Plexu (vlastní položky, nebo knihovny) - ne odhad z názvu. Jeden dotaz na každou, proto jen pro zaškrtnuté."
   },
   "xs0140": {
-   "source": "No measurable growth yet — projections appear once a trend forms.",
-   "text": "Zatím žádný měřitelný růst — odhady se objeví, až se vytvoří trend."
+   "source": "Other ways…",
+   "text": "Jiné způsoby…"
   },
   "xs0141": {
-   "source": "Not enough history yet.",
-   "text": "Zatím nedostatek historie."
+   "source": "guessed from the title’s letters and words",
+   "text": "odhadnuto z písmen a slov názvu"
   },
   "xs0142": {
-   "source": "Nothing recorded in this range.",
-   "text": "V tomto rozsahu nic zaznamenáno."
+   "source": "split",
+   "text": "rozděleno"
   },
   "xs0143": {
-   "source": "Noticeable but minor.",
-   "text": "Znatelná, ale malá."
+   "source": "Which fields are locked is read with the exact language: tick the titles and press “Read their exact language”.",
+   "text": "Která pole jsou zamčená, se načte spolu s přesným jazykem: zaškrtněte tituly a stiskněte „Načíst jejich přesný jazyk“."
   },
   "xs0144": {
-   "source": "Pair",
-   "text": "Spárovat"
+   "source": "The titles could not be read",
+   "text": "Názvy se nepodařilo načíst"
   },
   "xs0145": {
-   "source": "Pair this TV",
-   "text": "Spárovat tuto TV"
+   "source": "another entry of the agent - check it",
+   "text": "jiná položka agenta - zkontrolujte"
   },
   "xs0146": {
-   "source": "Pair with",
-   "text": "Spárovat s"
+   "source": "a split entry: two items share this match",
+   "text": "rozdělená položka: dvě položky sdílejí toto spárování"
   },
   "xs0147": {
-   "source": "Plex answers locally, so the fault is in nginx / TLS / DNS rather than in Plex.",
-   "text": "Plex odpovídá lokálně, takže chyba je spíš v nginx / TLS / DNS než v Plexu."
+   "source": "the title is locked: its ending is kept",
+   "text": "název je zamčený: jeho koncovka zůstane"
   },
   "xs0148": {
-   "source": "Power cycles",
-   "text": "Zapnutí"
+   "source": "title",
+   "text": "název"
   },
   "xs0149": {
-   "source": "Reading from",
-   "text": "Čte z"
+   "source": "Find…",
+   "text": "Najít…"
   },
   "xs0150": {
-   "source": "Run the collector:",
-   "text": "Spusťte kolektor:"
+   "source": "Write",
+   "text": "Zapsat"
   },
   "xs0151": {
-   "source": "SMART FAILED",
-   "text": "SMART SELHAL"
+   "source": "Find the right entry",
+   "text": "Najít správnou položku"
   },
   "xs0152": {
-   "source": "SMART OK",
-   "text": "SMART OK"
+   "source": "Search",
+   "text": "Hledat"
   },
   "xs0153": {
-   "source": "Spare left",
-   "text": "Zbývá rezervy"
+   "source": "asking the agent…",
+   "text": "ptám se agenta…"
   },
   "xs0154": {
-   "source": "Spin retries",
-   "text": "Opakovaná roztočení"
+   "source": "Nothing found.",
+   "text": "Nic nenalezeno."
   },
   "xs0155": {
-   "source": "Stream copy",
-   "text": "Kopie streamu"
+   "source": "This one",
+   "text": "Tuto"
   },
   "xs0156": {
-   "source": "Direct Play",
-   "text": "Přímé přehrávání"
+   "source": "Only the name of the entry picked is taken - no new match.",
+   "text": "Převezme se jen název vybrané položky - žádné nové spárování."
   },
   "xs0157": {
-   "source": "This browser cannot send the request.",
-   "text": "Tento prohlížeč nedokáže poslat požadavek."
+   "source": "also the split entries and the locked titles (not advised: it can undo a split made by hand, or a name given by hand)",
+   "text": "i rozdělené položky a zamčené názvy (nedoporučuje se: může zrušit ručně provedené rozdělení nebo ručně daný název)"
   },
   "xs0158": {
-   "source": "Type the four-digit code shown on the television.",
-   "text": "Zadejte čtyřmístný kód zobrazený na televizi."
+   "source": "Do it",
+   "text": "Provést"
   },
   "xs0159": {
-   "source": "Unsafe shutdowns",
-   "text": "Nebezpečná vypnutí"
+   "source": "needs its key in Settings → Plex library",
+   "text": "potřebuje klíč v Nastavení → Knihovna Plexu"
   },
   "xs0160": {
-   "source": "accept the prompt on the TV…",
-   "text": "potvrďte dotaz na TV…"
+   "source": "The sources…",
+   "text": "Zdroje…"
   },
   "xs0161": {
-   "source": "added per request vs. reaching Plex directly",
-   "text": "přidáno na požadavek oproti přímému přístupu k Plexu"
+   "source": "Without a rating",
+   "text": "Bez hodnocení"
   },
   "xs0162": {
-   "source": "and check that",
-   "text": "a zkontrolujte, že"
+   "source": "Ticked",
+   "text": "Zaškrtnuté"
   },
   "xs0163": {
-   "source": "was created.",
-   "text": "byl vytvořen."
+   "source": "overwrite the ratings there are",
+   "text": "přepsat existující hodnocení"
   },
   "xs0164": {
-   "source": "bridge exposes health only",
-   "text": "most poskytuje jen zdraví"
+   "source": "no rating",
+   "text": "bez hodnocení"
   },
   "xs0165": {
-   "source": "check failed",
-   "text": "kontrola selhala"
+   "source": "Every one has a rating",
+   "text": "Všechny mají hodnocení"
   },
   "xs0166": {
-   "source": "disks awake — SMART refreshes on the next collector pass",
-   "text": "disky vzhůru — SMART se obnoví při dalším průchodu kolektoru"
+   "source": "added",
+   "text": "přidáno"
   },
   "xs0167": {
-   "source": "forget the credentials stored for this TV",
-   "text": "zapomenout přihlašovací údaje uložené pro tuto TV"
+   "source": "no match",
+   "text": "bez shody"
   },
   "xs0168": {
-   "source": "head parks/year",
-   "text": "parkování hlav/rok"
+   "source": "add",
+   "text": "přidat"
   },
   "xs0169": {
-   "source": "home screen — the heavy one",
-   "text": "domovská obrazovka — ta náročná"
+   "source": "update",
+   "text": "aktualizovat"
   },
   "xs0170": {
-   "source": "last 24 h",
-   "text": "posledních 24 h"
+   "source": "rating",
+   "text": "hodnocení"
   },
   "xs0171": {
-   "source": "median over one reused connection",
-   "text": "medián přes jedno znovupoužité spojení"
+   "source": "audience",
+   "text": "publikum"
   },
   "xs0172": {
-   "source": "pairing failed",
-   "text": "párování selhalo"
+   "source": "no id another database knows",
+   "text": "žádné ID, které jiná databáze zná"
   },
   "xs0173": {
-   "source": "per day",
-   "text": "za den"
+   "source": "kept as it is",
+   "text": "ponecháno, jak je"
   },
   "xs0174": {
-   "source": "request refused",
-   "text": "požadavek odmítnut"
+   "source": "lock the fields, so a refresh by Plex does not put its own back",
+   "text": "zamknout pole, aby je obnovení Plexu nepřepsalo"
   },
   "xs0175": {
-   "source": "spin-ups/year",
-   "text": "roztočení/rok"
+   "source": "No labels in this library",
+   "text": "V této knihovně nejsou žádné štítky"
   },
   "xs0176": {
-   "source": "spinning up…",
-   "text": "roztáčí se…"
+   "source": "Select titles in the library and press Labels.",
+   "text": "Vyberte tituly v knihovně a stiskněte Štítky."
   },
   "xs0177": {
-   "source": "the TV",
-   "text": "TV"
+   "source": "Show them",
+   "text": "Ukázat je"
   },
   "xs0178": {
-   "source": "timed out — the disks did not answer",
-   "text": "vypršel čas — disky neodpověděly"
+   "source": "Rename…",
+   "text": "Přejmenovat…"
   },
   "xs0179": {
-   "source": "unpair",
-   "text": "zrušit spárování"
+   "source": "Clean it out…",
+   "text": "Odstranit všude…"
   },
   "xs0180": {
-   "source": "web",
-   "text": "web"
+   "source": "Clean it out",
+   "text": "Odstranit všude"
   },
   "xs0181": {
-   "source": "Čeština",
-   "text": "Čeština"
+   "source": "Off every item, season, episode and collection of this library that carries it - in every letter case. Plex has no way of deleting a label itself: once nothing carries it, it goes from the lists after Plex optimizes its database.",
+   "text": "Ze všech položek, sérií, epizod a kolekcí této knihovny, které ho mají - v jakékoli velikosti písmen. Plex neumí štítek smazat: když ho nic nenese, zmizí ze seznamů po optimalizaci databáze Plexu."
   },
   "xs0182": {
-   "source": "No error-counter change in",
-   "text": "Žádná změna čítačů chyb za"
+   "source": "The new name",
+   "text": "Nový název"
   },
   "xs0183": {
-   "source": "of monitoring.",
-   "text": "monitorování."
+   "source": "Rename",
+   "text": "Přejmenovat"
   },
   "xs0184": {
-   "source": "CPU",
-   "text": "CPU"
+   "source": "The labels could not be read",
+   "text": "Štítky se nepodařilo načíst"
+  },
+  "xs0185": {
+   "source": "stops after the item it is on",
+   "text": "zastaví se po položce, na které je"
+  },
+  "xs0186": {
+   "source": "The movies and shows of this Plex server: their posters and details, and the tools - the default audio and subtitles, watched, labels, titles in another language, the watchlist, the ratings.",
+   "text": "Filmy a seriály tohoto Plex serveru: plakáty a podrobnosti, a nástroje - výchozí zvuk a titulky, zhlédnuto, štítky, názvy v jiném jazyce, seznam ke zhlédnutí, hodnocení."
+  },
+  "xs0187": {
+   "source": "The language titles are put into, and the keys of the databases the ratings come from (TMDB, OMDb, Trakt, TVmaze).",
+   "text": "Jazyk, do kterého se převádějí názvy, a klíče databází, ze kterých se berou hodnocení (TMDB, OMDb, Trakt, TVmaze)."
+  },
+  "xs0188": {
+   "source": "The tools of the Plex library (the tab above) ask Plex Media Server on this machine with its own token - nobody signs in to Plex, nothing leaves the server but the questions for the ratings and the watchlist. Here: the language a title in another one is put into, and the keys of the databases the ratings come from. A key is kept sealed; you see its last two characters.",
+   "text": "Nástroje knihovny Plexu (záložka nahoře) se ptají Plex Media Serveru na tomto stroji jeho vlastním tokenem - nikdo se do Plexu nepřihlašuje, ze serveru neodchází nic než dotazy na hodnocení a seznam ke zhlédnutí. Tady: jazyk, do kterého se převádí název v jiném jazyce, a klíče databází, ze kterých se berou hodnocení. Klíč je uložen zapečetěný; vidíte jeho poslední dva znaky."
+  },
+  "xs0189": {
+   "source": "The language titles are put into",
+   "text": "Jazyk, do kterého se převádějí názvy"
+  },
+  "xs0190": {
+   "source": "TMDB API key",
+   "text": "API klíč TMDB"
+  },
+  "xs0191": {
+   "source": "OMDb API key (IMDb, Rotten Tomatoes)",
+   "text": "API klíč OMDb (IMDb, Rotten Tomatoes)"
+  },
+  "xs0192": {
+   "source": "Trakt client id",
+   "text": "Client ID Traktu"
+  },
+  "xs0193": {
+   "source": "TVmaze (no key needed)",
+   "text": "TVmaze (bez klíče)"
+  },
+  "xs0194": {
+   "source": "The ratings of shows and episodes from TVmaze - no key, no account.",
+   "text": "Hodnocení seriálů a epizod z TVmaze - bez klíče, bez účtu."
+  },
+  "xs0195": {
+   "source": "the default tracks are set",
+   "text": "nastavují se výchozí stopy"
+  },
+  "xs0196": {
+   "source": "marked watched",
+   "text": "označuje se jako zhlédnuté"
+  },
+  "xs0197": {
+   "source": "marked unwatched",
+   "text": "označuje se jako nezhlédnuté"
+  },
+  "xs0198": {
+   "source": "taken off everything in the library",
+   "text": "odebírá se ze všeho v knihovně"
+  },
+  "xs0199": {
+   "source": "their metadata language is read",
+   "text": "čte se jazyk jejich metadat"
+  },
+  "xs0200": {
+   "source": "the agent is asked for the titles",
+   "text": "agent se ptá na názvy"
+  },
+  "xs0201": {
+   "source": "the titles are written",
+   "text": "zapisují se názvy"
+  },
+  "xs0202": {
+   "source": "their metadata is refreshed (no new match)",
+   "text": "obnovují se metadata (bez nového spárování)"
+  },
+  "xs0203": {
+   "source": "what is picked is read",
+   "text": "čte se, co je vybráno"
+  },
+  "xs0204": {
+   "source": "the sources are asked",
+   "text": "ptám se zdrojů"
+  },
+  "xs0205": {
+   "source": "the ratings are written",
+   "text": "zapisují se hodnocení"
+  },
+  "xs0206": {
+   "source": "Plex scans the files; their tracks are read again",
+   "text": "Plex prohledává soubory; stopy se čtou znovu"
+  },
+  "xs0207": {
+   "source": "the default audio and subtitles",
+   "text": "výchozí zvuk a titulky"
+  },
+  "xs0208": {
+   "source": "scanning the files for new tracks",
+   "text": "hledání nových stop v souborech"
+  },
+  "xs0209": {
+   "source": "watched / unwatched",
+   "text": "zhlédnuto / nezhlédnuto"
+  },
+  "xs0210": {
+   "source": "cleaning a label out of the library",
+   "text": "odstranění štítku z knihovny"
+  },
+  "xs0211": {
+   "source": "reading the metadata language",
+   "text": "čtení jazyka metadat"
+  },
+  "xs0212": {
+   "source": "looking up the titles",
+   "text": "hledání názvů"
+  },
+  "xs0213": {
+   "source": "writing the titles",
+   "text": "zápis názvů"
+  },
+  "xs0214": {
+   "source": "the metadata language",
+   "text": "jazyk metadat"
+  },
+  "xs0215": {
+   "source": "Fix Match to their own entry",
+   "text": "Opravit spárování na vlastní položku"
+  },
+  "xs0216": {
+   "source": "refreshing metadata",
+   "text": "obnova metadat"
+  },
+  "xs0217": {
+   "source": "looking up the ratings",
+   "text": "hledání hodnocení"
+  },
+  "xs0218": {
+   "source": "writing the ratings",
+   "text": "zápis hodnocení"
+  },
+  "xs0219": {
+   "source": "unknown",
+   "text": "neznámý"
+  },
+  "xs0220": {
+   "source": "unknown (has accents)",
+   "text": "neznámý (s diakritikou)"
+  },
+  "xs0221": {
+   "source": "Czech/Slovak",
+   "text": "čeština/slovenština"
+  },
+  "xs0222": {
+   "source": "Chinese/Japanese",
+   "text": "čínština/japonština"
+  },
+  "xs0223": {
+   "source": "Nordic",
+   "text": "severské jazyky"
+  },
+  "xs0224": {
+   "source": "French/Romance",
+   "text": "francouzština/románské"
+  },
+  "xs0225": {
+   "source": "Cyrillic",
+   "text": "cyrilice"
+  },
+  "xs0226": {
+   "source": "Devanagari",
+   "text": "dévanágarí"
+  },
+  "xs0227": {
+   "source": "library default",
+   "text": "podle knihovny"
+  },
+  "xs0228": {
+   "source": "the library",
+   "text": "knihovna"
+  },
+  "xs0229": {
+   "source": "the item",
+   "text": "položka"
+  },
+  "xs0230": {
+   "source": "Plex library → Titles: the language a title in another one is put into - English unless you say otherwise.",
+   "text": "Knihovna Plexu → Názvy: jazyk, do kterého se převede název v jiném jazyce - angličtina, pokud neřeknete jinak."
+  },
+  "xs0231": {
+   "source": "IMDb and Rotten Tomatoes, read through OMDb - a free key from omdbapi.com/apikey.aspx (1000 a day).",
+   "text": "IMDb a Rotten Tomatoes přes OMDb - klíč zdarma na omdbapi.com/apikey.aspx (1000 denně)."
+  },
+  "xs0232": {
+   "source": "Arabic",
+   "text": "arabština"
+  },
+  "xs0233": {
+   "source": "Bulgarian",
+   "text": "bulharština"
+  },
+  "xs0234": {
+   "source": "Catalan",
+   "text": "katalánština"
+  },
+  "xs0235": {
+   "source": "Chinese",
+   "text": "čínština"
+  },
+  "xs0236": {
+   "source": "Croatian",
+   "text": "chorvatština"
+  },
+  "xs0237": {
+   "source": "Danish",
+   "text": "dánština"
+  },
+  "xs0238": {
+   "source": "Dutch",
+   "text": "nizozemština"
+  },
+  "xs0239": {
+   "source": "Estonian",
+   "text": "estonština"
+  },
+  "xs0240": {
+   "source": "Finnish",
+   "text": "finština"
+  },
+  "xs0241": {
+   "source": "French",
+   "text": "francouzština"
+  },
+  "xs0242": {
+   "source": "German",
+   "text": "němčina"
+  },
+  "xs0243": {
+   "source": "Greek",
+   "text": "řečtina"
+  },
+  "xs0244": {
+   "source": "Hebrew",
+   "text": "hebrejština"
+  },
+  "xs0245": {
+   "source": "Hindi",
+   "text": "hindština"
+  },
+  "xs0246": {
+   "source": "Hungarian",
+   "text": "maďarština"
+  },
+  "xs0247": {
+   "source": "Indonesian",
+   "text": "indonéština"
+  },
+  "xs0248": {
+   "source": "Italian",
+   "text": "italština"
+  },
+  "xs0249": {
+   "source": "Japanese",
+   "text": "japonština"
+  },
+  "xs0250": {
+   "source": "Korean",
+   "text": "korejština"
+  },
+  "xs0251": {
+   "source": "Latvian",
+   "text": "lotyština"
+  },
+  "xs0252": {
+   "source": "Lithuanian",
+   "text": "litevština"
+  },
+  "xs0253": {
+   "source": "Malay",
+   "text": "malajština"
+  },
+  "xs0254": {
+   "source": "Norwegian",
+   "text": "norština"
+  },
+  "xs0255": {
+   "source": "Persian",
+   "text": "perština"
+  },
+  "xs0256": {
+   "source": "Polish",
+   "text": "polština"
+  },
+  "xs0257": {
+   "source": "Portuguese",
+   "text": "portugalština"
+  },
+  "xs0258": {
+   "source": "Portuguese (Brazil)",
+   "text": "portugalština (Brazílie)"
+  },
+  "xs0259": {
+   "source": "Romanian",
+   "text": "rumunština"
+  },
+  "xs0260": {
+   "source": "Russian",
+   "text": "ruština"
+  },
+  "xs0261": {
+   "source": "Serbian",
+   "text": "srbština"
+  },
+  "xs0262": {
+   "source": "Slovak",
+   "text": "slovenština"
+  },
+  "xs0263": {
+   "source": "Slovenian",
+   "text": "slovinština"
+  },
+  "xs0264": {
+   "source": "Spanish",
+   "text": "španělština"
+  },
+  "xs0265": {
+   "source": "Spanish (Mexico)",
+   "text": "španělština (Mexiko)"
+  },
+  "xs0266": {
+   "source": "Swedish",
+   "text": "švédština"
+  },
+  "xs0267": {
+   "source": "Thai",
+   "text": "thajština"
+  },
+  "xs0268": {
+   "source": "Turkish",
+   "text": "turečtina"
+  },
+  "xs0269": {
+   "source": "Ukrainian",
+   "text": "ukrajinština"
+  },
+  "xs0270": {
+   "source": "Vietnamese",
+   "text": "vietnamština"
   }
  },
  "patterns": {
@@ -6495,52 +6839,256 @@
    "text": "· o {0} s později"
   },
   "xp0001": {
-   "source": "PHP {0} running this page may have php2shell (CVE-2026-109618, CVE-2026-109619): remote code execution by anybody who can reach the web server. Update it - {1}",
-   "text": "PHP {0}, které obsluhuje tuto stránku, může mít php2shell (CVE-2026-109618, CVE-2026-109619): vzdálené spuštění kódu kýmkoli, kdo dosáhne na webový server. Aktualizujte ho – {1}"
+   "source": "{0} playing now",
+   "text": "přehrává se: {0}"
   },
   "xp0002": {
-   "source": "PHP {0} has the php2shell fix (CVE-2026-109618, CVE-2026-109619)",
-   "text": "PHP {0} má opravu php2shell (CVE-2026-109618, CVE-2026-109619)"
+   "source": "{0} shows",
+   "text": "{0} {0:seriál|seriály|seriálů}"
   },
   "xp0003": {
-   "source": "PHP {0} has the php2shell fix (CVE-2026-109618, CVE-2026-109619) - backported, as its changelog says",
-   "text": "PHP {0} má opravu php2shell (CVE-2026-109618, CVE-2026-109619) – backportovanou, jak říká changelog balíčku"
+   "source": "{0} movies",
+   "text": "{0} {0:film|filmy|filmů}"
   },
   "xp0004": {
-   "source": "PHP {0} does NOT have the php2shell fix (CVE-2026-109618, CVE-2026-109619): ./install.sh --upgrade, or Settings → Upgrades, brings it up to date",
-   "text": "PHP {0} NEMÁ opravu php2shell (CVE-2026-109618, CVE-2026-109619): ./install.sh --upgrade nebo Nastavení → Aktualizace ho aktualizuje"
+   "source": "{0} titles",
+   "text": "{0} {0:titul|tituly|titulů}"
   },
   "xp0005": {
-   "source": "PHP {0} does not have the php2shell fix (CVE-2026-109618, CVE-2026-109619): ./install.sh --upgrade (or Settings → Upgrades) brings it up to date",
-   "text": "PHP {0} nemá opravu php2shell (CVE-2026-109618, CVE-2026-109619): ./install.sh --upgrade (nebo Nastavení → Aktualizace) ho aktualizuje"
+   "source": "{0} of {1}",
+   "text": "{0} z {1}"
   },
   "xp0006": {
-   "source": "{0} disks awake",
-   "text": "{0} disků vzhůru"
+   "source": "{0} seasons",
+   "text": "{0} {0:série|série|sérií}"
   },
   "xp0007": {
-   "source": "{0} process(es) · {1} % CPU total. Background jobs are triggered by your \"asap\" settings whenever new media is added.",
-   "text": "{0} {0:proces|procesy|procesů} · celkem {1} % CPU. Úlohy na pozadí spouští vaše nastavení „asap“ při každém přidání nových médií."
+   "source": "{0} episodes",
+   "text": "{0} {0:epizoda|epizody|epizod}"
   },
   "xp0008": {
-   "source": "{0} h of history so far",
-   "text": "zatím {0} h historie"
+   "source": "{0} selected",
+   "text": "vybráno: {0}"
   },
   "xp0009": {
-   "source": "{0} min of history so far",
-   "text": "zatím {0} min historie"
+   "source": "{0} titles exported",
+   "text": "vyexportováno {0} {0:název|názvy|názvů}"
   },
   "xp0010": {
-   "source": "{0} samples loaded",
-   "text": "načteno {0} vzorků"
+   "source": "{0} marked watched",
+   "text": "{0} označeno jako zhlédnuté"
   },
   "xp0011": {
-   "source": "plexmon {0} started on {1}",
-   "text": "plexmon {0} spuštěn na {1}"
+   "source": "{0} marked unwatched",
+   "text": "{0} označeno jako nezhlédnuté"
   },
   "xp0012": {
-   "source": "the dashboard",
-   "text": "dashboard"
+   "source": "{0} marked watched, {1} failed",
+   "text": "{0} označeno jako zhlédnuté, {1} selhalo"
+  },
+  "xp0013": {
+   "source": "{0} marked unwatched, {1} failed",
+   "text": "{0} označeno jako nezhlédnuté, {1} selhalo"
+  },
+  "xp0014": {
+   "source": "Refresh the metadata of {0} titles?",
+   "text": "Obnovit metadata {0} {0:titulu|titulů|titulů}?"
+  },
+  "xp0015": {
+   "source": "{0} refreshed",
+   "text": "obnoveno: {0}"
+  },
+  "xp0016": {
+   "source": "Refresh all the metadata of {0}?",
+   "text": "Obnovit všechna metadata knihovny {0}?"
+  },
+  "xp0017": {
+   "source": "{0} put on the watchlist",
+   "text": "přidáno do seznamu: {0}"
+  },
+  "xp0018": {
+   "source": "{0} put on the watchlist, {1} failed",
+   "text": "přidáno do seznamu: {0}, selhalo: {1}"
+  },
+  "xp0019": {
+   "source": "Audio and subtitles · {0}",
+   "text": "Zvuk a titulky · {0}"
+  },
+  "xp0020": {
+   "source": "{0} videos read",
+   "text": "přečteno {0} {0:video|videa|videí}"
+  },
+  "xp0021": {
+   "source": "in {0} of {1}",
+   "text": "ve {0} z {1}"
+  },
+  "xp0022": {
+   "source": "default in {0}",
+   "text": "výchozí ve {0}"
+  },
+  "xp0023": {
+   "source": "{0} of {1} do not have it. There:",
+   "text": "{0} z {1} ji nemá. Tam:"
+  },
+  "xp0024": {
+   "source": "Set it on {0} videos",
+   "text": "Nastavit na {0} {0:videu|videích|videích}"
+  },
+  "xp0025": {
+   "source": "{0} videos set",
+   "text": "nastaveno {0} {0:video|videa|videí}"
+  },
+  "xp0026": {
+   "source": "Labels of {0} titles",
+   "text": "Štítky {0} {0:titulu|titulů|titulů}"
+  },
+  "xp0027": {
+   "source": "{0} of {1} → {2}",
+   "text": "{0} z {1} → {2}"
+  },
+  "xp0028": {
+   "source": "labels changed on {0} titles",
+   "text": "štítky změněny u {0} {0:titulu|titulů|titulů}"
+  },
+  "xp0029": {
+   "source": "{0} on the watchlist",
+   "text": "{0} v seznamu ke zhlédnutí"
+  },
+  "xp0030": {
+   "source": "on this server: {0}",
+   "text": "na tomto serveru: {0}"
+  },
+  "xp0031": {
+   "source": "not in {0} ({1})",
+   "text": "ne v jazyce {0} ({1})"
+  },
+  "xp0032": {
+   "source": "all ({0})",
+   "text": "vše ({0})"
+  },
+  "xp0033": {
+   "source": "ticked ({0})",
+   "text": "zaškrtnuté ({0})"
+  },
+  "xp0034": {
+   "source": "Find the {0} titles of {1}",
+   "text": "Najít názvy ({0}) pro {1}"
+  },
+  "xp0035": {
+   "source": "its metadata language ({0})",
+   "text": "jazyk jeho metadat ({0})"
+  },
+  "xp0036": {
+   "source": "locked {0}",
+   "text": "zamčeno: {0}"
+  },
+  "xp0037": {
+   "source": "The first 600 of {0} - narrow it with the search.",
+   "text": "Prvních 600 z {0} - zužte vyhledáváním."
+  },
+  "xp0038": {
+   "source": "Every title looks like {0} already.",
+   "text": "Všechny názvy už vypadají jako {0}."
+  },
+  "xp0039": {
+   "source": "No {0} title was found",
+   "text": "Nenašel se žádný název ({0})"
+  },
+  "xp0040": {
+   "source": "The agent has none for them in {0}.",
+   "text": "Agent pro ně v jazyce {0} žádný nemá."
+  },
+  "xp0041": {
+   "source": "Write {0} titles",
+   "text": "Zapsat {0} {0:název|názvy|názvů}"
+  },
+  "xp0042": {
+   "source": "{0} titles written",
+   "text": "zapsáno {0} {0:název|názvy|názvů}"
+  },
+  "xp0043": {
+   "source": "{0} titles written, {1} failed",
+   "text": "zapsáno {0}, selhalo {1}"
+  },
+  "xp0044": {
+   "source": "score {0}",
+   "text": "skóre {0}"
+  },
+  "xp0045": {
+   "source": "Other ways for {0} titles",
+   "text": "Jiné způsoby pro {0} {0:titul|tituly|titulů}"
+  },
+  "xp0046": {
+   "source": "The metadata language becomes {0}, and a refresh",
+   "text": "Jazyk metadat bude {0} a obnovení"
+  },
+  "xp0047": {
+   "source": "Fix Match to its own entry, in {0}",
+   "text": "Opravit spárování na vlastní položku, v jazyce {0}"
+  },
+  "xp0048": {
+   "source": "{0} done",
+   "text": "hotovo: {0}"
+  },
+  "xp0049": {
+   "source": "Look up the ratings of {0}",
+   "text": "Vyhledat hodnocení {0} {0:titulu|titulů|titulů}"
+  },
+  "xp0050": {
+   "source": "Write {0} ratings",
+   "text": "Zapsat {0} {0:hodnocení|hodnocení|hodnocení}"
+  },
+  "xp0051": {
+   "source": "{0} ratings written",
+   "text": "zapsáno {0} {0:hodnocení|hodnocení|hodnocení}"
+  },
+  "xp0052": {
+   "source": "{0} labels",
+   "text": "{0} {0:štítek|štítky|štítků}"
+  },
+  "xp0053": {
+   "source": "spelt {0}",
+   "text": "psáno {0}"
+  },
+  "xp0054": {
+   "source": "Take “{0}” off everything?",
+   "text": "Odebrat „{0}“ ze všeho?"
+  },
+  "xp0055": {
+   "source": "taken off {0}",
+   "text": "odebráno z {0}"
+  },
+  "xp0056": {
+   "source": "Rename “{0}”",
+   "text": "Přejmenovat „{0}“"
+  },
+  "xp0057": {
+   "source": "renamed on {0} titles",
+   "text": "přejmenováno u {0} {0:titulu|titulů|titulů}"
+  },
+  "xp0058": {
+   "source": "Plex cannot rename a label: the new one is put on the {0} titles carrying it, and the old one taken off.",
+   "text": "Plex neumí štítek přejmenovat: nový se dá na {0} {0:titul|tituly|titulů}, které ho nesou, a starý se odebere."
+  },
+  "xp0059": {
+   "source": "Plex is scanning the files of {0}",
+   "text": "Plex prohledává soubory knihovny {0}"
+  },
+  "xp0060": {
+   "source": "Plex is refreshing all the metadata of {0}",
+   "text": "Plex obnovuje všechna metadata knihovny {0}"
+  },
+  "xp0061": {
+   "source": "{0} video(s) have new tracks so far",
+   "text": "nové stopy zatím má {0} videí"
+  },
+  "xp0062": {
+   "source": "the metadata language becomes {0} and they are refreshed",
+   "text": "jazyk metadat bude {0} a obnoví se"
+  },
+  "xp0063": {
+   "source": "each matched again to its own entry, in {0}",
+   "text": "každá se znovu spáruje na vlastní položku, v jazyce {0}"
   }
  },
  "rich": {
@@ -6593,28 +7141,64 @@
    "text": "vlastní nastavení tohoto uzlu – každý uzel clusteru má své; ostatních jsou pod polem a všechny v Nastavení → Vysoká dostupnost"
   },
   "xr0001": {
-   "source": "Write everything into <code>/var/log/plexmon/plexmon.log</code>. Loud: for finding something out, not for leaving on.",
-   "text": "Zapisovat vše do <code>/var/log/plexmon/plexmon.log</code>. Hlučné: na zjištění něčeho, ne na trvalé zapnutí."
+   "source": "Only <b>which track plays by default</b> changes - the files, the subtitles themselves, watched state and positions stay exactly as they are. Nothing is changed before you see the plan.",
+   "text": "Mění se jen <b>to, která stopa hraje ve výchozím stavu</b> - soubory, samotné titulky, zhlédnutí a pozice zůstanou přesně, jak jsou. Nic se nezmění, dokud neuvidíte plán."
   },
   "xr0002": {
-   "source": "The name Plex announces for its custom certificate, <code>plex.example.cz</code>. Empty: the certificate’s own name (CN).",
-   "text": "Jméno, které Plex ohlašuje pro svůj vlastní certifikát, <code>plex.example.cz</code>. Prázdné: vlastní jméno certifikátu (CN)."
+   "source": "<b>{0}</b> set.",
+   "text": "Nastaveno: <b>{0}</b>."
   },
   "xr0003": {
-   "source": "The name the certificate is for - the one people type to reach Plex, <code>plex.example.cz</code>. Empty: the name of the certificate it has now, else its full host name.",
-   "text": "Jméno, pro které certifikát je - to, které lidé píší, aby se dostali k Plexu, <code>plex.example.cz</code>. Prázdné: jméno certifikátu, který má teď, jinak jeho plné jméno hostitele."
+   "source": "<b>{0}</b> failed.",
+   "text": "Selhalo: <b>{0}</b>."
   },
   "xr0004": {
-   "source": "The port on 127.0.0.1 the Settings pages ask this daemon on. The pages read it from <code>/run/plexmon/api-port</code>, written when the daemon starts.",
-   "text": "Port na 127.0.0.1, na kterém se stránky Nastavení ptají tohoto démona. Stránky ho čtou z <code>/run/plexmon/api-port</code>, který démon zapíše při startu."
+   "source": "A title found to be in another language is put into <b>{0}</b> the safest way first: <b>only the title is written</b> (and locked) - no new match; streams, subtitles, watched state and artwork stay. A locked title keeps its own ending (<i>- Viki</i>); a split entry (two items on one match) is held back.",
+   "text": "Název, který je v jiném jazyce, se převede do jazyka <b>{0}</b> nejprve nejbezpečněji: <b>zapíše se jen název</b> (a zamkne se) - žádné nové spárování; stopy, titulky, zhlédnutí a obrázky zůstanou. Zamčený název si ponechá vlastní koncovku (<i>- Viki</i>); rozdělená položka (dvě položky na jednom spárování) se vynechá."
   },
   "xr0005": {
-   "source": "As the DNS server knows it, <code>plexmon-acme.</code>; allowed to update _acme-challenge records only.",
-   "text": "Jak ho zná DNS server, <code>plexmon-acme.</code>; smí aktualizovat jen záznamy _acme-challenge."
+   "source": "<b>{0}</b> of {1} are ticked: they come from the item’s own entry.",
+   "text": "Zaškrtnuto <b>{0}</b> z {1}: pocházejí z vlastní položky titulu."
   },
   "xr0006": {
-   "source": "Off: nothing on these pages offers going back to an older version. On: Settings → Upgrades shows <i>Going back to an older version</i> - only the versions it is safe to go back to, each with what changed in it. On the server, root can always: plexmon --downgrade.",
-   "text": "Vypnuto: nic na těchto stránkách nenabízí návrat ke starší verzi. Zapnuto: Nastavení → Aktualizace ukazuje <i>Návrat ke starší verzi</i> - jen verze, na které je bezpečné se vrátit, každou s tím, co se v ní změnilo. Na serveru root může vždy: plexmon --downgrade."
+   "source": "<b>{0}</b> belong to another entry of the agent - check them, or press <i>Find…</i> to pick the right one by hand.",
+   "text": "<b>{0}</b> patří k jiné položce agenta - zkontrolujte je, nebo stiskněte <i>Najít…</i> a vyberte správnou ručně."
+  },
+  "xr0007": {
+   "source": "<b>{0}</b> have a locked title or are a split entry - tick them yourself if you mean it.",
+   "text": "<b>{0}</b> má zamčený název nebo je rozdělená položka - zaškrtněte je sami, pokud to tak myslíte."
+  },
+  "xr0008": {
+   "source": "{0} had no {1} title at all and are left alone.",
+   "text": "{0} vůbec nemá název ({1}) a zůstává beze změny."
+  },
+  "xr0009": {
+   "source": "The ratings are <b>looked up first and shown</b>: nothing is written until you press Write. A show is the show, its seasons and every episode. The fields are left unlocked unless you say so - a later refresh by Plex may then put its own back.",
+   "text": "Hodnocení se <b>nejprve vyhledají a ukážou</b>: nic se nezapíše, dokud nestisknete Zapsat. Seriál je seriál, jeho série i každá epizoda. Pole zůstanou odemčená, pokud neřeknete jinak - pozdější obnovení Plexem pak může vrátit vlastní."
+  },
+  "xr0010": {
+   "source": "Not a new match: the item stays on its entry, so watched state, positions and the tracks stay. The title, the episode titles and the summary come again in {0} - a locked title is unlocked first.",
+   "text": "Žádné nové spárování: položka zůstane na své položce, takže zhlédnutí, pozice a stopy zůstanou. Název, názvy epizod a popis přijdou znovu v jazyce {0} - zamčený název se nejprve odemkne."
+  },
+  "xr0011": {
+   "source": "Matched again to the very entry it has now (the same guid), with metadata in {0}. Only where the agent has that entry; an item without one is left as it is.",
+   "text": "Znovu spárováno na tutéž položku, kterou má teď (stejné guid), s metadaty v jazyce {0}. Jen tam, kde agent tu položku má; položka bez ní zůstane, jak je."
+  },
+  "xr0012": {
+   "source": "Plex library → Titles: the language a title in another one is put into - English unless you say otherwise.",
+   "text": "Knihovna Plexu → Názvy: jazyk, do kterého se převede název v jiném jazyce - angličtina, pokud neřeknete jinak."
+  },
+  "xr0013": {
+   "source": "The ratings of movies, shows, seasons and episodes from The Movie Database - a free key from <code>themoviedb.org/settings/api</code>.",
+   "text": "Hodnocení filmů, seriálů, sérií a epizod z The Movie Database - klíč zdarma na <code>themoviedb.org/settings/api</code>."
+  },
+  "xr0014": {
+   "source": "IMDb and Rotten Tomatoes, read through OMDb - a free key from <code>omdbapi.com/apikey.aspx</code> (1000 a day).",
+   "text": "IMDb a Rotten Tomatoes přes OMDb - klíč zdarma na <code>omdbapi.com/apikey.aspx</code> (1000 denně)."
+  },
+  "xr0015": {
+   "source": "The client id of an API app at <code>trakt.tv/oauth/applications</code>.",
+   "text": "Client ID aplikace API na <code>trakt.tv/oauth/applications</code>."
   }
  }
 }

@@ -4,6 +4,62 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.1.0 - 2026-10-31
+
+**Plex library** - what plex_tools.py did from a Windows console, now on the
+Plex server itself: a tab of Settings (signed in only), the command line and
+the console. Nobody signs in to Plex, there are no Home users and no PIN:
+plexmon asks Plex Media Server on 127.0.0.1:32400 with the server's own token
+(PlexOnlineToken in Preferences.xml), which never leaves the daemon.
+
+- **The library**: the posters of every movie and show (made small by Plex's
+  own transcoder, kept on disk, loaded as they come into view), searched
+  (`*` and `?` as wildcards), filtered (unwatched, in progress, watched, a
+  label, a genre, a country, without a rating), sorted, bigger or smaller.
+  A title opens over the page: its backdrop, poster, ratings (IMDb, Rotten
+  Tomatoes, TMDB), 4K / HDR / Dolby Vision, the cast with their photos (a
+  face shows everything else on the server with that person), the facts,
+  the file, its labels, its tracks; a show its seasons and every episode,
+  each watched or not by one press. *Open in Plex* goes to the same title in
+  Plex Web.
+- **Several at once**: Select (or Ctrl-click, Shift for a range) and the bar
+  at the bottom: watched, unwatched, audio & subtitles, labels, ratings,
+  titles, the watchlist, refresh metadata, the titles exported to a .txt.
+- **The default audio and subtitles** of a movie, a show (every episode), a
+  season or the episodes ticked - the very track, not only its language: an
+  external .srt is told from one inside the file, forced from SDH. Where one
+  is missing: leave it, subtitles off, or another track. *Scan the files
+  again* for a subtitle just put beside the video. The plan, episode by
+  episode, before anything is set.
+- **Watched / unwatched**: a movie, a show, a season, an episode, many.
+- **Labels**: added and taken off several titles at once (on all, on none,
+  as it was), renamed, cleaned out of the whole library (items, seasons,
+  episodes, collections, every letter case).
+- **Titles in another language**: found by the writing system, the letters
+  and the little words of a title - or by the item's own metadata language,
+  read from Plex - and put into English (or another language): the title
+  alone (written and locked, its own ending like *- Viki* kept), the metadata
+  language and a refresh, or a Fix Match to the item's own entry. A title
+  from another entry of the agent is marked to be checked (*Find…* picks the
+  right one by hand); a split entry and a locked title are held back.
+- **Ratings**: IMDb and Rotten Tomatoes (OMDb), TMDB, TVmaze, Trakt - for
+  movies, shows, seasons and episodes; only the missing ones or all of them,
+  locked or not; looked up and shown first, written when you say so. The
+  keys in Settings → Plex library, sealed.
+- **The watchlist** of the server's owner (Plex Discover): what is on it,
+  what of it is on this server, put on and taken off.
+- **Plex is not harmed**: only its HTTP API, never its files or its
+  database; at most three requests at once, writes paced, metadata read in
+  batches of 40, one job at a time with a Stop; everything that writes shows
+  its plan first; an event for every change.
+- The command line: `--plex`, `--plex-items`, `--plex-show`, `--plex-tracks
+  --audio --subs`, `--plex-watched`, `--plex-unwatched`, `--plex-labels`,
+  `--plex-label --label-add --label-remove`, `--plex-titles [--fix]`,
+  `--plex-ratings [--overwrite] [--lock]`, `--plex-watchlist[-add|-remove]`,
+  `--plex-refresh`, `--plex-scan`, `--dry-run`. The console: *The Plex
+  library*.
+- Settings opens on the Plex library; Czech and English as everything else.
+
 ## 2.0.3 - 2026-10-31
 
 PHP and php2shell (CVE-2026-109618, CVE-2026-109619 - remote code execution

@@ -14,6 +14,13 @@ disků (spící disk se nikdy neprobudí), co se právě přehrává, aktivita P
 trendy, ovládání televizí (Apple TV, LG, Samsung). Nově v češtině i angličtině
 (přepínač EN / CS nahoře) a s odkazem na Nastavení.
 
+**Knihovna Plexu** (první záložka Nastavení, jen po přihlášení) - to, co uměl
+`plex_tools.py`, přímo na serveru: plakáty a detaily filmů a seriálů, výchozí
+zvuk a titulky (i celého seriálu), zhlédnuto, štítky, názvy v jiném jazyce,
+hodnocení z IMDb / Rotten Tomatoes / TMDB / TVmaze / Trakt, seznam ke
+zhlédnutí. Jen přes API Plexu na 127.0.0.1 vlastním tokenem serveru, vždy
+nejdřív náhled. Viz [docs/plex-library.md](docs/plex-library.md).
+
 **Nastavení** je administrace z otp - stejný engine, stejné stránky, stejné
 chování - zúžená na to, co Plex server potřebuje:
 
@@ -48,6 +55,7 @@ plexmon --set acme=1 --set acme_node_name=plex.example.cz
 plexmon --acme-order             objednat certifikát hned, sledovat průběh
 plexmon --plex-cert on           Plex Media Server dostane certifikát také
 plexmon --upgrade-online         nejnovější verze: stáhnout, ověřit, nasadit
+plexmon --plex-tracks "Breaking Bad" --audio eng --subs cze   výchozí stopy celého seriálu
 plexmon --help                   všechno
 ```
 
@@ -56,7 +64,7 @@ plexmon --help                   všechno
 [INSTALL.md](INSTALL.md). Krátce:
 
 ```bash
-tar xzf plexmon-2.0.0.tar.gz && cd plexmon-2.0.0
+tar xzf plexmon-X.Y.Z.tar.gz && cd plexmon-X.Y.Z
 sudo ./install.sh            # i přes stávající plexmon (plex-status.service) - převezme ho
 ```
 
@@ -65,6 +73,7 @@ rozbalený v kořeni tohoto repozitáře.
 
 ## Dokumentace
 
+- [docs/plex-library.md](docs/plex-library.md) - Knihovna Plexu (plex_tools)
 - [docs/settings.md](docs/settings.md) - Nastavení: účty, certifikáty, Plex, jazyky
 - [docs/acme.md](docs/acme.md) - automatické certifikáty (HTTP-01 a DNS-01)
 - [docs/upgrades.md](docs/upgrades.md) - aktualizace z webu, podpis, návrat zpět, vydání verze

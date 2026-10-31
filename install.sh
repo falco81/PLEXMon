@@ -368,6 +368,7 @@ systemctl stop plexmon.service >/dev/null 2>&1
 mkdir -p "$LIB/release-keys" "$LIB/tools"
 install -m 755 "$HERE/plexmon.py" "$LIB/plexmon.py"
 install -m 644 "$HERE/plexmon_admin.py" "$LIB/plexmon_admin.py"
+install -m 644 "$HERE/plexmon_plex.py" "$LIB/plexmon_plex.py"
 install -m 755 "$HERE/deploy/plexmon_upgrade.py" "$LIB/plexmon_upgrade.py"
 install -m 644 "$HERE/CHANGELOG.md" "$LIB/CHANGELOG.md"
 for f in "$HERE"/tools/*; do install -m 755 "$f" "$LIB/tools/$(basename "$f")"; done

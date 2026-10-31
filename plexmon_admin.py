@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.0.3'
+__version__ = '2.1.0'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -152,10 +152,17 @@ DEFAULTS = {
     'debug_api': 0,
     # --- the database ---------------------------------------------------------
     'retain_events_days': 365,
+    # --- the Plex library (plex_tools) --------------------------------------------
+    'plex_title_lang': 'en',
+    'plex_tmdb_key': '',
+    'plex_omdb_key': '',
+    'plex_trakt_id': '',
+    'plex_tvmaze': 1,
 }
 
 FILE_ONLY_KEYS = ()
-SECRET_KEYS = ('acme_dns_tsig_secret', 'acme_dns_token', 'acme_dns_key', 'acme_desec_token')
+SECRET_KEYS = ('acme_dns_tsig_secret', 'acme_dns_token', 'acme_dns_key', 'acme_desec_token',
+               'plex_tmdb_key', 'plex_omdb_key', 'plex_trakt_id')
 SEALED_KEYS = SECRET_KEYS
 
 TUNABLE = {
@@ -173,9 +180,25 @@ TUNABLE = {
     'acme_dns_wait': (0, 600),
     'ui_lang': ('cs', 'en'), 'api_port': (1024, 65535), 'debug_api': (0, 1),
     'retain_events_days': (0, 36500),
+    'plex_tvmaze': (0, 1),
+    'plex_title_lang': ('en', 'cs', 'ar', 'bg', 'ca', 'zh', 'hr', 'da', 'nl', 'et', 'fi', 'fr',
+                        'de', 'el', 'he', 'hi', 'hu', 'id', 'it', 'ja', 'ko', 'lv', 'lt', 'ms',
+                        'nb', 'fa', 'pl', 'pt', 'pt-BR', 'ro', 'ru', 'sr', 'sk', 'sl', 'es',
+                        'es-MX', 'sv', 'th', 'tr', 'uk', 'vi'),
 }
 
 CHOICE_WORDS = {
+    'plex_title_lang': {'en': 'English', 'cs': 'Czech', 'ar': 'Arabic', 'bg': 'Bulgarian',
+                        'ca': 'Catalan', 'zh': 'Chinese', 'hr': 'Croatian', 'da': 'Danish',
+                        'nl': 'Dutch', 'et': 'Estonian', 'fi': 'Finnish', 'fr': 'French',
+                        'de': 'German', 'el': 'Greek', 'he': 'Hebrew', 'hi': 'Hindi',
+                        'hu': 'Hungarian', 'id': 'Indonesian', 'it': 'Italian',
+                        'ja': 'Japanese', 'ko': 'Korean', 'lv': 'Latvian', 'lt': 'Lithuanian',
+                        'ms': 'Malay', 'nb': 'Norwegian', 'fa': 'Persian', 'pl': 'Polish',
+                        'pt': 'Portuguese', 'pt-BR': 'Portuguese (Brazil)', 'ro': 'Romanian',
+                        'ru': 'Russian', 'sr': 'Serbian', 'sk': 'Slovak', 'sl': 'Slovenian',
+                        'es': 'Spanish', 'es-MX': 'Spanish (Mexico)', 'sv': 'Swedish',
+                        'th': 'Thai', 'tr': 'Turkish', 'uk': 'Ukrainian', 'vi': 'Vietnamese'},
     'acme_challenge': {'http-01': 'HTTP-01 - the CA asks port 80 of the name',
                        'dns-01': 'DNS-01 - a TXT record in DNS (no port open to the internet)'},
     'acme_dns': {'manual': 'by hand - the record is shown here, you put it in',
@@ -233,6 +256,11 @@ NAMES = {
     'debug': 'Debug log',
     'debug_api': '...every API call',
     'retain_events_days': 'Events kept for (days)',
+    'plex_title_lang': 'The language titles are put into',
+    'plex_tmdb_key': 'TMDB API key',
+    'plex_omdb_key': 'OMDb API key (IMDb, Rotten Tomatoes)',
+    'plex_trakt_id': 'Trakt client id',
+    'plex_tvmaze': 'TVmaze (no key needed)',
 }
 
 SAYS = {
@@ -329,6 +357,14 @@ SAYS = {
     'debug_api': 'Every API call the web pages make.',
     'retain_events_days': 'How long the events (sign-ins, changes, certificates) are kept. '
                           '0: for ever.',
+    'plex_title_lang': 'Plex library → Titles: the language a title in another one is put '
+                       'into - English unless you say otherwise.',
+    'plex_tmdb_key': 'The ratings of movies, shows, seasons and episodes from The Movie '
+                     'Database - a free key from <code>themoviedb.org/settings/api</code>.',
+    'plex_omdb_key': 'IMDb and Rotten Tomatoes, read through OMDb - a free key from '
+                     '<code>omdbapi.com/apikey.aspx</code> (1000 a day).',
+    'plex_trakt_id': 'The client id of an API app at <code>trakt.tv/oauth/applications</code>.',
+    'plex_tvmaze': 'The ratings of shows and episodes from TVmaze - no key, no account.',
 }
 SAYS_SHORT = {}
 
@@ -345,6 +381,7 @@ PANES = {
              'acme_dns_alias', 'acme_dns_wait', 'acme_resolvers'],
     'upgrade': ['upgrade_check', 'upgrade_url', 'upgrade_downgrade'],
     'about': ['site_name', 'ui_lang', 'api_port', 'retain_events_days', 'debug', 'debug_api'],
+    'plex': ['plex_title_lang', 'plex_tmdb_key', 'plex_omdb_key', 'plex_trakt_id', 'plex_tvmaze'],
 }
 
 ONLY_WHEN = {
@@ -4785,6 +4822,14 @@ class ApiHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def send_raw(self, data, ctype, status=200, cache='private, max-age=604800'):
+        self.send_response(status)
+        self.send_header('Content-Type', ctype)
+        self.send_header('Content-Length', str(len(data)))
+        self.send_header('Cache-Control', cache)
+        self.end_headers()
+        self.wfile.write(data)
+
     def body(self):
         if hasattr(self, '_body'):
             return self._body
@@ -5310,6 +5355,166 @@ def _software(h):
     h.me()
     return {'nodes': [{'name': node_name(), 'me': True, 'alive': True,
                        'software': software_info()}]}
+
+
+# ---- the Plex library (plex_tools, 2.1.0) ------------------------------------------------
+# Read by any account of Settings; changed by a full administrator. The token
+# of the Plex server stays here - the pages get the items and small images.
+def _plex(fn, *a, **kw):
+    try:
+        return fn(*a, **kw)
+    except PX.PlexError as e:
+        raise ApiError(502, str(e))
+
+
+def _rks(b, key='rks'):
+    got = b.get(key) or []
+    if not isinstance(got, list):
+        raise ValueError('%s is a list' % key)
+    return [str(x) for x in got if str(x).isdigit()][:5000]
+
+
+@route('GET', '/api/plex')
+def _plex_state(h):
+    h.me()
+    out = _plex(PX.state)
+    out['title_lang'] = CONFIG.get('plex_title_lang') or 'en'
+    return out
+
+
+@route('GET', '/api/plex/items')
+def _plex_items(h):
+    h.me()
+    data = _plex(PX.items, h.arg('lib'), fresh=h.arg('fresh') == '1')
+    return {'section': data['section'], 'items': data['items'], 'at': data['at']}
+
+
+@route('GET', '/api/plex/item')
+def _plex_item(h):
+    h.me()
+    rk = h.arg('rk')
+    if not rk.isdigit():
+        raise ApiError(400, 'which item?')
+    return {'item': _plex(PX.item_view, rk)}
+
+
+@route('GET', '/api/plex/children')
+def _plex_children(h):
+    h.me()
+    rk = h.arg('rk')
+    if not rk.isdigit():
+        raise ApiError(400, 'which item?')
+    return {'items': _plex(PX.children_view, rk)}
+
+
+@route('GET', '/api/plex/img')
+def _plex_img(h):
+    h.me()
+    try:
+        data, ctype = PX.image(h.arg('u'), h.num('w', 300, 40, 1920), h.num('h', 450, 40, 1080))
+    except (PX.PlexError, OSError, ValueError) as e:
+        raise ApiError(404, str(e))
+    h.send_raw(data, ctype)
+    return None
+
+
+@route('GET', '/api/plex/job')
+def _plex_job(h):
+    h.me()
+    return {'job': PX.job_view()}
+
+
+@route('GET', '/api/plex/labels')
+def _plex_labels(h):
+    h.me()
+    return {'labels': _plex(PX.label_groups, h.arg('lib'))}
+
+
+@route('GET', '/api/plex/titles')
+def _plex_titles(h):
+    h.me()
+    return _plex(PX.titles_rows, h.arg('lib'))
+
+
+@route('GET', '/api/plex/matches')
+def _plex_matches(h):
+    h.me('fulladmin')
+    rk = h.arg('rk')
+    if not rk.isdigit():
+        raise ApiError(400, 'which item?')
+    return {'matches': _plex(PX.matches, rk, lang=h.arg('lang') or None,
+                             title=h.arg('title') or None, year=h.arg('year') or None)}
+
+
+@route('GET', '/api/plex/watchlist')
+def _plex_watchlist(h):
+    h.me()
+    return _plex(PX.watchlist_view, fresh=h.arg('fresh') == '1')
+
+
+@route('GET', '/api/plex/person')
+def _plex_person(h):
+    h.me()
+    pid = h.arg('id')
+    if not pid.isdigit():
+        raise ApiError(400, 'which person?')
+    return _plex(PX.person_titles, pid, h.arg('name'))
+
+
+@route('POST', '/api/plex')
+def _plex_do(h):
+    s = h.me('fulladmin')
+    by = s['name']
+    b = h.body()
+    act = str(b.get('action') or '')
+    st = h.store
+    lib = str(b.get('lib') or '')
+    if act == 'stop':
+        return {'stopped': PX.job_stop(), 'job': PX.job_view()}
+    if act == 'forget':
+        PX.forget()
+        return {'message': 'read again from Plex'}
+    if act in ('watched', 'unwatched'):
+        return _plex(PX.set_watched, st, _rks(b), act == 'watched', by)
+    if act == 'tracks-scan':
+        return _plex(PX.tracks_scan, _rks(b))
+    if act == 'tracks-plan':
+        return _plex(PX.tracks_plan, str(b.get('scan') or ''), str(b.get('audio') or 'keep'),
+                     str(b.get('subs') or 'keep'), str(b.get('missing_audio') or 'skip'),
+                     str(b.get('missing_subs') or 'skip'))
+    if act == 'tracks-apply':
+        return {'job': _plex(PX.tracks_apply, st, str(b.get('scan') or ''), by)}
+    if act == 'tracks-rescan':
+        return {'job': _plex(PX.tracks_rescan, st, str(b.get('scan') or ''), by)}
+    if act == 'labels':
+        return _plex(PX.labels_do, st, lib, str(b.get('how') or 'edit'), by, rks=_rks(b),
+                     add=[str(x) for x in b.get('add') or []][:50],
+                     remove=[str(x) for x in b.get('remove') or []][:50],
+                     old=str(b.get('old') or ''), new=str(b.get('new') or ''))
+    if act == 'titles-read':
+        return {'job': _plex(PX.titles_read, st, lib, _rks(b), by)}
+    if act == 'titles-propose':
+        lang = str(b.get('lang') or CONFIG.get('plex_title_lang') or 'en')
+        return {'job': _plex(PX.titles_propose, st, lib, _rks(b), lang, by)}
+    if act == 'titles-apply':
+        items = [x for x in (b.get('items') or []) if isinstance(x, dict)][:5000]
+        return {'job': _plex(PX.titles_apply, st, lib, str(b.get('how') or ''), by,
+                             items_=items, rks=_rks(b),
+                             lang=str(b.get('lang') or CONFIG.get('plex_title_lang') or 'en'),
+                             risky=bool(b.get('risky')))}
+    if act == 'refresh':
+        return {'job': _plex(PX.refresh_items, st, _rks(b), by)}
+    if act == 'scan':
+        return _plex(PX.scan_library, st, lib, by, force=bool(b.get('force')))
+    if act in ('watchlist-add', 'watchlist-remove'):
+        dks = [str(x) for x in b.get('dks') or []][:500]
+        return _plex(PX.watchlist_do, st, act.split('-')[1], dks, by)
+    if act == 'ratings-preview':
+        return {'job': _plex(PX.ratings_preview, st, lib, _rks(b), bool(b.get('overwrite')), by)}
+    if act == 'ratings-apply':
+        return {'job': _plex(PX.ratings_apply, st, str(b.get('plan') or ''),
+                             bool(b.get('lock')), _rks(b, 'only'), by)}
+    raise ApiError(400, 'no such thing to do')
 
 
 @route('GET', '/api/console-login')
@@ -6526,6 +6731,10 @@ def help_text(parser, pal):
 
 
 
+import plexmon_plex as PX  # noqa: E402
+PX.bind(sys.modules[__name__])
+
+
 def build_parser():
     p = HelpfulParser(prog='plexmon', add_help=False, allow_abbrev=False,
                       usage='plexmon [--json] [--no-color] [what to do]',
@@ -6637,6 +6846,41 @@ def build_parser():
     g.add_argument('--downgrade-check', action='store_true',
                    help='the older versions there, and which are safe to go back to')
     g.add_argument('--downgrade', metavar='VERSION|FILE', help='go back to a safe older version')
+    g = p.add_argument_group('THE PLEX LIBRARY', 'Asked of Plex Media Server here, with its own '
+                             'token; what writes shows its plan first (--dry-run: only that).')
+    g.add_argument('--plex', action='store_true', help='the server and its libraries')
+    g.add_argument('--plex-items', metavar='LIB', help='the movies or shows of a library '
+                   '(its number or name; --search narrows it)')
+    g.add_argument('--plex-show', metavar='TITLE', help='one title, all Plex knows of it '
+                   '(a ratingKey, or words of its title)')
+    g.add_argument('--plex-tracks', metavar='TITLE', help='the default audio and subtitles of a '
+                   'movie, or of every episode of a show; with --audio / --subs')
+    g.add_argument('--audio', metavar='X', help='keep, a language code (eng, cze…) or part of '
+                   'the track\'s name')
+    g.add_argument('--subs', metavar='X', help='keep, off, a language code or part of the name')
+    g.add_argument('--plex-watched', metavar='TITLE', nargs='+', help='mark watched')
+    g.add_argument('--plex-unwatched', metavar='TITLE', nargs='+', help='mark unwatched')
+    g.add_argument('--plex-labels', metavar='LIB', help='the labels of a library, and how many '
+                   'carry each')
+    g.add_argument('--plex-label', metavar='TITLE', nargs='+', help='change the labels of titles: '
+                   'with --label-add / --label-remove')
+    g.add_argument('--label-add', metavar='LABEL', action='append', default=[], help='a label to put on them (again for more)')
+    g.add_argument('--label-remove', metavar='LABEL', action='append', default=[], help='a label to take off them')
+    g.add_argument('--plex-titles', metavar='LIB', help='the titles not in --lang (English unless '
+                   'set); with --fix: put them into it (only the title, own entry only)')
+    g.add_argument('--lang', metavar='CODE', help='en, cs, de… for --plex-titles')
+    g.add_argument('--fix', action='store_true', help='with --plex-titles: write them (asked first)')
+    g.add_argument('--plex-ratings', metavar='LIB', help='fill the missing ratings of a library in '
+                   '(--overwrite: all of them; --lock: lock the fields)')
+    g.add_argument('--overwrite', action='store_true', help='with --plex-ratings: every one, not only the missing')
+    g.add_argument('--lock', action='store_true', help='with --plex-ratings: lock the fields written')
+    g.add_argument('--plex-watchlist', action='store_true',
+                   help='the watchlist of the server\'s owner (Plex Discover)')
+    g.add_argument('--plex-watchlist-add', metavar='TITLE', nargs='+', help='put on it')
+    g.add_argument('--plex-watchlist-remove', metavar='TITLE', nargs='+', help='take off it')
+    g.add_argument('--plex-refresh', metavar='TITLE', nargs='+', help='refresh their metadata')
+    g.add_argument('--plex-scan', metavar='LIB', help='scan the files of a library')
+    g.add_argument('--dry-run', action='store_true', help='show the plan, write nothing')
     g = p.add_argument_group('THE CONSOLE')
     g.add_argument('--console', action='store_true', help='plexmon by its menus: the live log, '
                    'the accounts, the certificates, upgrades')
@@ -6657,6 +6901,9 @@ HELP_EXAMPLES = [
     ('plexmon --acme-order', 'a certificate from Let\'s Encrypt now'),
     ('plexmon --plex-cert on', 'Plex Media Server takes the certificate too'),
     ('plexmon --upgrade-online', 'the newest version: fetched, checked, put in'),
+    ('plexmon --plex-items Filmy --search matrix', 'the movies of a library'),
+    ('plexmon --plex-tracks "Crash Landing on You" --audio kor --subs cze', 'every episode'),
+    ('plexmon --plex-ratings Filmy --dry-run', 'the missing ratings, shown, not written'),
 ]
 
 
@@ -6995,6 +7242,334 @@ MONITOR_FLAGS = ('wake', 'refresh', 'oneshot', 'diag', 'atv', 'atv_scan', 'atv_p
                  'atv_pair', 'atv_key', 'atv_unpair', 'atv_unpair_all')
 
 
+
+# ---- the Plex library on the command line (2.1.0) ----------------------------------------
+def _px_wait(pal, quiet=False):
+    """The job just started, followed here until it ends: its result."""
+    last = ''
+    while True:
+        j = PX.job_view()
+        line = '%s %s' % (j.get('says') or '', ('%d/%d' % (j['done'], j['whole'])) if j.get(
+            'whole') else '')
+        if not quiet and line != last and sys.stderr.isatty():
+            sys.stderr.write('\r  ' + pal.dim(line[:90]).ljust(70) + '\x1b[K')
+            sys.stderr.flush()
+            last = line
+        if not j.get('running'):
+            break
+        time.sleep(0.4)
+    if not quiet and sys.stderr.isatty():
+        sys.stderr.write('\r\x1b[K')
+    if j.get('error'):
+        raise PX.PlexError(j['error'])
+    return j.get('result') or {}
+
+
+def _px_ask(args, words):
+    if args.yes:
+        return True
+    if args.json or not sys.stdin.isatty():
+        print('  (add --yes to do it)')
+        return False
+    try:
+        return input('  %s [y/N] ' % words).strip().lower() in ('y', 'yes', 'a', 'ano')
+    except EOFError:
+        return False
+
+
+def _px_lib(ref):
+    secs = PX.video_sections()
+    ref = str(ref or '').strip()
+    for s in secs:
+        if s['key'] == ref or s['title'].casefold() == ref.casefold():
+            return s
+    hits = [s for s in secs if ref.casefold() in s['title'].casefold()]
+    if len(hits) == 1:
+        return hits[0]
+    raise ValueError('no library %s - there are: %s' % (ref, ', '.join(
+        '%s (%s)' % (s['title'], s['key']) for s in secs)))
+
+
+def _px_find(ref):
+    """A title by its ratingKey, or by words of it - in every library."""
+    ref = str(ref or '').strip()
+    if ref.isdigit():
+        md = PX.metadata(ref)
+        if md:
+            return {'rk': ref, 'title': md.get('title'), 'year': md.get('year'),
+                    'type': md.get('type'), 'lib': str(md.get('librarySectionID') or ''),
+                    'guid': md.get('guid')}
+    m = re.search(r'/library/metadata/(\d+)', ref) or re.search(r'key=%2Flibrary%2Fmetadata%2F(\d+)',
+                                                               ref)
+    if m:
+        return _px_find(m.group(1))
+    match = None
+    found = []
+    for s in PX.video_sections():
+        for it in PX.items(s['key'])['items']:
+            t = (it['title'] or '').casefold()
+            if t == ref.casefold():
+                match = dict(it, lib=s['key'])
+            elif ref.casefold() in t:
+                found.append(dict(it, lib=s['key']))
+    if match:
+        return match
+    if len(found) == 1:
+        return found[0]
+    if not found:
+        raise ValueError('nothing called %s' % ref)
+    raise ValueError('%s is %d titles: %s - say which (its number)' % (ref, len(found), '; '.join(
+        '%s (%s) %s' % (f['title'], f.get('year') or '', f['rk']) for f in found[:8])))
+
+
+def _px_variant(arg, variants, kind, allow_off):
+    a = str(arg or '').strip().lower()
+    if a in ('', 'keep', '-'):
+        return 'keep'
+    if allow_off and a in ('off', 'none', '0'):
+        return 'off'
+    c = [v for v in variants if v['key'] == a] or [v for v in variants if v['code'] == a] or \
+        [v for v in variants if a in v['label'].lower()]
+    if not c:
+        raise ValueError('%s: %s is not there - there are: %s' % (
+            kind, arg, ', '.join(sorted({v['code'] or '?' for v in variants})) or 'none'))
+    c.sort(key=lambda v: -v.get('count', 0))
+    return c[0]['key']
+
+
+def cli_plex(args, store, pal):
+    """The Plex library: None when nothing of it was asked."""
+    asked = [a for a in ('plex', 'plex_items', 'plex_show', 'plex_tracks', 'plex_watched',
+                         'plex_unwatched', 'plex_labels', 'plex_label', 'plex_titles',
+                         'plex_ratings', 'plex_refresh', 'plex_scan', 'plex_watchlist',
+                         'plex_watchlist_add', 'plex_watchlist_remove')
+             if getattr(args, a, None)]
+    if not asked:
+        return None
+    by = 'root (command line)'
+    try:
+        return _cli_plex(args, store, pal, asked[0], by)
+    except (PX.PlexError, ValueError) as e:
+        if args.json:
+            out_json({'ok': False, 'error': str(e)})
+        else:
+            print(pal.bad_line(str(e)))
+        return 1
+
+
+def _cli_plex(args, store, pal, what, by):
+    if what == 'plex':
+        st = PX.state()
+        if args.json:
+            out_json(st)
+            return 0 if st.get('reachable') else 1
+        if not st.get('reachable'):
+            print(pal.bad_line(st.get('error') or 'Plex Media Server does not answer'))
+            return 1
+        sv = st['server']
+        print(pal.ok_line('%s %s · %s · %d playing now' % (pal.bold(sv['name']), sv['version'],
+                                                            st['url'], st.get('playing') or 0)))
+        print(table([[s['key'], s['title'], s['type'], s.get('count') if s.get('count') is not None
+                      else '?', 'refreshing' if s.get('refreshing') else '']
+                     for s in st['sections']], ['#', 'library', 'kind', 'items', '']))
+        src = st.get('sources') or {}
+        print(pal.dim('  ratings from: %s' % (', '.join(k for k, v in src.items() if v) or 'nothing')))
+        return 0
+    if what == 'plex_items':
+        lib = _px_lib(args.plex_items)
+        rows = PX.items(lib['key'])['items']
+        if args.search:
+            q = args.search.casefold()
+            rows = [r for r in rows if q in (r['title'] or '').casefold()]
+        if args.json:
+            out_json(rows)
+            return 0
+        out = []
+        for r in rows:
+            if r['type'] == 'show':
+                seen = '%d/%d' % (r.get('seen') or 0, r.get('leaves') or 0)
+            else:
+                seen = 'watched' if r.get('views') else ('in progress' if r.get('offset') else '')
+            out.append([r['rk'], r['title'], r.get('year') or '', seen,
+                        ('%.1f' % float(r['rating'])) if r.get('rating') else '',
+                        ', '.join(r.get('labels') or [])])
+        print(table(out, ['#', 'title', 'year', 'watched', 'rating', 'labels']))
+        print(pal.dim('  %d in %s' % (len(rows), lib['title'])))
+        return 0
+    if what == 'plex_show':
+        it = PX.item_view(_px_find(args.plex_show)['rk'])
+        if args.json:
+            out_json(it)
+            return 0
+        print(pal.head('%s%s' % (it['title'], ' (%s)' % it['year'] if it.get('year') else '')))
+        facts = [('kind', it['type']), ('library', it.get('lib_title')),
+                 ('ratings', '  '.join('%s %s' % (b['label'] or '★', b['value'])
+                                       for b in it.get('ratings') or [])),
+                 ('genres', ', '.join(it.get('genres') or [])),
+                 ('labels', ', '.join(it.get('labels') or [])),
+                 ('locked', ', '.join(it.get('locked') or [])),
+                 ('language', it.get('language') or 'the library\'s'),
+                 ('watched', ('%d of %d episodes' % (it.get('seen') or 0, it.get('leaves') or 0))
+                  if it['type'] == 'show' else ('yes' if it.get('views') else 'no')),
+                 ('ids', ', '.join('%s %s' % kv for kv in (it.get('ids') or {}).items()))]
+        for k, v in facts:
+            if v:
+                print('  %s %s' % (pal.dim(k.ljust(10)), v))
+        if it.get('summary'):
+            print('  ' + it['summary'][:400])
+        t = it.get('tracks') or {}
+        for kind, lst in (('audio', t.get('audio')), ('subtitles', t.get('subs'))):
+            if lst:
+                print('  %s %s' % (pal.dim(kind.ljust(10)), '; '.join(
+                    ('*' if v['selected'] else '') + v['label'] for v in lst)))
+        for sea in it.get('seasons') or []:
+            print('  %s %d/%d watched' % (sea['title'].ljust(12), sea.get('seen') or 0,
+                                          sea.get('leaves') or 0))
+        return 0
+    if what == 'plex_tracks':
+        f = _px_find(args.plex_tracks)
+        sc = PX.tracks_scan([f['rk']])
+        if not args.audio and not args.subs:
+            if args.json:
+                out_json(dict(sc, title=f['title'], rk=f['rk']))
+                return 0
+            print(pal.head('%s - %d video(s)' % (f['title'], sc['videos'])))
+            for kind, lst in (('audio', sc['audio']), ('subtitles', sc['subs'])):
+                print(table([[v['code'] or '?', v['label'], '%d/%d' % (v['count'], sc['videos']),
+                              'default' if v['selected'] else ''] for v in lst],
+                            [kind, 'track', 'in', '']))
+            print(pal.dim('  then: --audio CODE --subs CODE|off'))
+            return 0
+        a = _px_variant(args.audio, sc['audio'], 'audio', False)
+        s_ = _px_variant(args.subs, sc['subs'], 'subtitles', True)
+        plan = PX.tracks_plan(sc['scan'], a, s_)
+        if args.json and args.dry_run:
+            out_json(plan)
+            return 0
+        print(pal.head('%s: audio → %s, subtitles → %s' % (f['title'], plan['words']['audio'],
+                                                          plan['words']['subs'])))
+        for r in plan['rows']:
+            miss = any(x.get('audio_missing') or x.get('subs_missing') for x in r['parts'])
+            print('  %s %s' % (pal.warn('–') if miss else pal.good('→'), r['label']))
+        print(pal.dim('  %d change; %d without that audio, %d without those subtitles (left)' % (
+            plan['change'], plan['audio_missing'], plan['subs_missing'])))
+        if args.dry_run or not plan['change']:
+            return 0
+        if not _px_ask(args, 'Set it on %d video(s)?' % plan['change']):
+            return 1
+        PX.tracks_apply(store, sc['scan'], by)
+        r = _px_wait(pal)
+        print((pal.ok_line if not r.get('failed') else pal.bad_line)(
+            '%d set, %d failed' % (r.get('ok') or 0, r.get('failed') or 0)))
+        return 0 if not r.get('failed') else 1
+    if what in ('plex_watched', 'plex_unwatched'):
+        refs = args.plex_watched or args.plex_unwatched
+        found = [_px_find(x) for x in refs]
+        got = PX.set_watched(store, [f['rk'] for f in found], what == 'plex_watched', by)
+        r = got.get('done') or _px_wait(pal)
+        print(pal.ok_line('%s marked %s' % (', '.join(f['title'] for f in found),
+                                           'watched' if what == 'plex_watched' else 'unwatched')))
+        return 0 if not r.get('failed') else 1
+    if what == 'plex_labels':
+        lib = _px_lib(args.plex_labels)
+        g = PX.label_groups(lib['key'])
+        if args.json:
+            out_json(g)
+            return 0
+        print(table([[x['title'], x['count'], ' / '.join(x['names']) if len(x['names']) > 1 else '']
+                     for x in g], ['label', 'titles', 'spelt']))
+        return 0
+    if what == 'plex_label':
+        if not args.label_add and not args.label_remove:
+            raise ValueError('say what: --label-add LABEL and/or --label-remove LABEL')
+        found = [_px_find(x) for x in args.plex_label]
+        libs = {f['lib'] for f in found}
+        if len(libs) != 1:
+            raise ValueError('the titles have to be in one library')
+        r = PX.labels_do(store, libs.pop(), 'edit', by, rks=[f['rk'] for f in found],
+                         add=args.label_add, remove=args.label_remove)
+        print(pal.ok_line('labels changed on %d title(s)' % r['done']))
+        return 0
+    if what == 'plex_titles':
+        lib = _px_lib(args.plex_titles)
+        lang = args.lang or CONFIG.get('plex_title_lang') or 'en'
+        target = PX.lang_name_from_code(lang)
+        rows = [r for r in PX.titles_rows(lib['key'])['rows']
+                if not PX.is_target_lang(r['lang'], target)]
+        if not args.fix:
+            if args.json:
+                out_json(rows)
+                return 0
+            print(table([[r['rk'], r['title'], r['lang'], 'split' if r['dup'] else '']
+                         for r in rows], ['#', 'title', 'looks like', '']))
+            print(pal.dim('  %d not in %s - add --fix to put them into it' % (len(rows), target)))
+            return 0
+        PX.titles_propose(store, lib['key'], [r['rk'] for r in rows], lang, by)
+        props = [p_ for p_ in _px_wait(pal).get('props') or [] if p_['exact'] and not p_['risky']]
+        for p_ in props:
+            print('  %s  %s  %s' % (p_['old'], pal.dim('→'), pal.good(p_['new'])))
+        print(pal.dim('  %d from their own entry (the rest: on the pages, to be checked)' %
+                      len(props)))
+        if args.dry_run or not props or not _px_ask(args, 'Write %d title(s)?' % len(props)):
+            return 0
+        PX.titles_apply(store, lib['key'], 'title', by, items_=props, lang=lang)
+        r = _px_wait(pal)
+        print(pal.ok_line('%d written, %d failed' % (r.get('ok') or 0, r.get('failed') or 0)))
+        return 0
+    if what == 'plex_ratings':
+        lib = _px_lib(args.plex_ratings)
+        rows = PX.items(lib['key'])['items']
+        rks = [r['rk'] for r in rows if args.overwrite or not (r.get('rating') or r.get('audience'))]
+        if not rks:
+            print(pal.ok_line('every one of %s has a rating' % lib['title']))
+            return 0
+        PX.ratings_preview(store, lib['key'], rks, args.overwrite, by)
+        r = _px_wait(pal)
+        ch = [e for e in r['rows'] if e['status'] in ('add', 'update')]
+        print(table([[e['label'], e['status'],
+                      ('%.1f→' % e['cur'] if e.get('cur') is not None else '') +
+                      ('%.1f %s' % (e['new'], e['new_src']) if e.get('new') is not None else ''),
+                      ('%.1f %s' % (e['new_aud'], e['new_aud_src']) if e.get('new_aud') is not None
+                       else '')] for e in ch], ['title', '', 'rating', 'audience']))
+        print(pal.dim('  %s' % ', '.join('%s %d' % kv for kv in r['counts'].items())))
+        if args.dry_run or not ch or not _px_ask(args, 'Write %d rating(s)%s?' % (
+                len(ch), ' and lock them' if args.lock else '')):
+            return 0
+        PX.ratings_apply(store, r['plan_id'], args.lock, [], by)
+        x = _px_wait(pal)
+        print(pal.ok_line('%d written, %d failed' % (x.get('ok') or 0, x.get('failed') or 0)))
+        return 0
+    if what in ('plex_watchlist_add', 'plex_watchlist_remove'):
+        how = 'add' if what == 'plex_watchlist_add' else 'remove'
+        found = [_px_find(x) for x in (args.plex_watchlist_add or args.plex_watchlist_remove)]
+        dks = [PX.discover_key(f.get('guid')) for f in found]
+        if not all(dks):
+            raise ValueError('a title without a match Plex Discover knows')
+        r = PX.watchlist_do(store, how, dks, by)
+        print(pal.ok_line('%d %s' % (r['ok'], 'put on the watchlist' if how == 'add'
+                                    else 'taken off the watchlist')))
+        return 0 if not r['failed'] else 1
+    if what == 'plex_watchlist':
+        v = PX.watchlist_view(fresh=True)
+        if args.json:
+            out_json(v)
+            return 0
+        print(table([[x['title'], x.get('year') or '', x['type'],
+                      ('here: %s' % x['here']['lib_title']) if x.get('here') else '']
+                     for x in v['items']], ['title', 'year', 'kind', '']))
+        return 0
+    if what == 'plex_refresh':
+        found = [_px_find(x) for x in args.plex_refresh]
+        PX.refresh_items(store, [f['rk'] for f in found], by)
+        r = _px_wait(pal)
+        print(pal.ok_line('%d refreshed' % (r.get('ok') or 0)))
+        return 0
+    if what == 'plex_scan':
+        lib = _px_lib(args.plex_scan)
+        print(pal.ok_line(PX.scan_library(store, lib['key'], by)['message']))
+        return 0
+    return None
+
 def cli_main(argv=None, mon=None):
     """plexmon on the command line. `mon` is plexmon.py - the dashboard's daemon -
     for --daemon, --check, --wake, --atv and the rest of its own."""
@@ -7020,7 +7595,8 @@ def cli_main(argv=None, mon=None):
     acted = any(v is not None and v is not False and v != [] and v != ''
                 for k, v in vars(args).items()
                 if k not in ('no_color', 'json', 'debug', 'limit', 'search', 'role', 'note',
-                             'yes'))
+                             'yes', 'audio', 'subs', 'label_add', 'label_remove', 'lang', 'fix',
+                             'overwrite', 'lock', 'dry_run'))
     # Nothing asked for: under systemd (an older unit starts plexmon.py bare)
     # that is the daemon; typed by somebody - or by a script - it is the
     # question they meant, what is it doing, never a second daemon.
@@ -7252,6 +7828,9 @@ def cli_main(argv=None, mon=None):
         gch, gwords = nginx_php_guard()
         print((pal.ok_line if gch or 'already' in gwords else pal.bad_line)(gwords))
         return 0 if changed or 'already' in words else 1
+    got = cli_plex(args, store, pal)
+    if got is not None:
+        return got
     if args.plex_cert:
         pv = plex_view(store)
         if args.plex_cert == 'status':
@@ -9325,6 +9904,7 @@ class Console(object):
             ('8', 'Automatic certificates (ACME)', self.m_acme),
             ('9', 'Upgrades', self.m_upgrades),
             ('10', 'The service', self.m_service),
+            ('11', 'The Plex library', self.m_plex),
         ]
         os.environ.setdefault('ESCDELAY', '25')
         os.environ.setdefault('NCURSES_NO_UTF8_ACS', '1')
@@ -9436,6 +10016,150 @@ class Console(object):
             ('3', 'Read SMART from the disks already spinning', lambda: self.act('--refresh')),
             ('4', 'Wake the disks and read SMART', wake),
             ('5', 'The dashboard\'s own check (--check)', lambda: self.act('--check')),
+        ])
+
+    # ---- 11 the Plex library --------------------------------------------------------
+    def _plex_lib(self, title):
+        st = self.out('--plex') or {}
+        secs = st.get('sections') or []
+        if not secs:
+            self.note(title, st.get('error') or 'Plex Media Server has no library of movies or '
+                      'shows, or does not answer.')
+            return None
+        got = self.choose(title, [(s['key'], '%s  (%s, %s)' % (s['title'], s['type'],
+                                                              s.get('count', '?')))
+                                  for s in secs])
+        return got
+
+    def _plex_title(self, it):
+        rk = it['rk']
+        while True:
+            seen = it.get('views') or (it.get('leaves') and it.get('seen') == it.get('leaves'))
+            r = self.choose(it['title'], [
+                ('show', 'Everything Plex knows of it'),
+                ('watched', 'Mark it unwatched' if seen else 'Mark it watched'),
+                ('tracks', 'The default audio and subtitles' + (' (every episode)'
+                                                                 if it.get('type') == 'show' else '')),
+                ('labels', 'Labels: add or take one off'),
+                ('wl', 'Put it on the watchlist / take it off'),
+                ('refresh', 'Refresh its metadata (no new match)'),
+            ])
+            if not r:
+                return
+            if r == 'show':
+                self.act('--plex-show', rk)
+            elif r == 'watched':
+                self.act('--plex-unwatched' if seen else '--plex-watched', rk)
+                it['views'] = 0 if seen else 1
+                if it.get('leaves'):
+                    it['seen'] = 0 if seen else it['leaves']
+            elif r == 'tracks':
+                self._plex_tracks(it)
+            elif r == 'labels':
+                got = self.form('Labels of ' + it['title'], [
+                    {'key': 'add', 'label': 'Put on', 'need': False, 'help': 'a label, or empty'},
+                    {'key': 'remove', 'label': 'Take off', 'need': False,
+                     'help': 'a label, or empty'}],
+                    'The label is put on or taken off this title only.')
+                if got and (got.get('add') or got.get('remove')):
+                    a = ['--plex-label', rk]
+                    if got.get('add'):
+                        a += ['--label-add', got['add']]
+                    if got.get('remove'):
+                        a += ['--label-remove', got['remove']]
+                    self.act(*a)
+            elif r == 'wl':
+                how = self.choose('The watchlist', [('add', 'Put it on the watchlist'),
+                                                    ('remove', 'Take it off the watchlist')])
+                if how:
+                    self.act('--plex-watchlist-' + how, rk)
+            elif r == 'refresh':
+                self.act('--plex-refresh', rk)
+
+    def _plex_tracks(self, it):
+        sc = self.out('--plex-tracks', it['rk']) or {}
+        if not sc.get('videos'):
+            self.note('Audio and subtitles', sc.get('error') or 'no video in it')
+            return
+        n = sc['videos']
+
+        def opts(lst, off):
+            o = [('keep', 'Leave it as it is')]
+            if off:
+                o.append(('off', 'Off - no subtitles'))
+            return o + [(v['key'], '%s  (in %d of %d%s)' % (v['label'], v['count'], n,
+                                                            ', default' if v['selected'] else ''))
+                        for v in lst]
+        a = self.choose('Audio of %s (%d video%s)' % (it['title'], n, '' if n == 1 else 's'),
+                        opts(sc.get('audio') or [], False))
+        if not a:
+            return
+        s_ = self.choose('Subtitles of %s' % it['title'], opts(sc.get('subs') or [], True))
+        if not s_ or (a == 'keep' and s_ == 'keep'):
+            return
+        self.act('--plex-tracks', it['rk'], '--audio', a, '--subs', s_, '--dry-run',
+                 title='The plan')
+        if self.confirm('Audio and subtitles', 'Set it as the plan says? Only which track plays '
+                        'by default changes - the files and the subtitles stay as they are.',
+                        'Set it'):
+            self.act('--plex-tracks', it['rk'], '--audio', a, '--subs', s_, '--yes')
+
+    def m_plex(self):
+        def browse():
+            lib = self._plex_lib('Which library')
+            if not lib:
+                return
+
+            def load():
+                got = self.out('--plex-items', lib)
+                return got if isinstance(got, list) else []
+            cols = [('title', lambda r: r.get('title'), 44, None),
+                    ('year', lambda r: r.get('year') or '', 5, None),
+                    ('watched', lambda r: ('%d/%d' % (r.get('seen') or 0, r.get('leaves') or 0))
+                     if r.get('type') == 'show' else ('yes' if r.get('views') else ''), 8,
+                     lambda r: 'ok' if (r.get('views') or (r.get('leaves') and r.get('seen') ==
+                                                          r.get('leaves'))) else None),
+                    ('rating', lambda r: ('%.1f' % float(r['rating'])) if r.get('rating') else '', 6,
+                     None),
+                    ('labels', lambda r: ', '.join(r.get('labels') or []), 30, None)]
+            self.pick('The library', load, cols, act=self._plex_title,
+                      words='Enter: what to do with it · / finds')
+
+        def titles():
+            lib = self._plex_lib('Titles in another language: which library')
+            if not lib:
+                return
+            self.act('--plex-titles', lib, title='Not in the language set (Settings → Plex library)')
+            if self.confirm('Put them into it', 'The agent is asked for each; only those from the '
+                            'title\'s own entry are written - the title alone, locked. The rest, '
+                            'to be checked, on the pages.', 'Look them up'):
+                self.act('--plex-titles', lib, '--fix', '--yes')
+
+        def ratings():
+            lib = self._plex_lib('Ratings: which library')
+            if not lib:
+                return
+            self.act('--plex-ratings', lib, '--dry-run', title='What would be written')
+            if self.confirm('Ratings', 'Write the missing ratings shown?', 'Write them'):
+                self.act('--plex-ratings', lib, '--yes')
+
+        def labels():
+            lib = self._plex_lib('Labels: which library')
+            if lib:
+                self.act('--plex-labels', lib)
+
+        def scan():
+            lib = self._plex_lib('Scan the files of which library')
+            if lib:
+                self.act('--plex-scan', lib)
+        return self.sub('The Plex library', [
+            ('1', 'The server and its libraries', lambda: self.act('--plex')),
+            ('2', 'Browse a library - a title: watched, tracks, labels…', browse),
+            ('3', 'Titles in another language', titles),
+            ('4', 'Ratings: fill the missing in', ratings),
+            ('5', 'The labels of a library', labels),
+            ('6', 'The watchlist', lambda: self.act('--plex-watchlist')),
+            ('7', 'Scan the files of a library', scan),
         ])
 
     # ---- 4 the televisions ------------------------------------------------------------

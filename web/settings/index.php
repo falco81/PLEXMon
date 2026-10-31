@@ -51,6 +51,38 @@ if (isset($_GET['api'])) {
         echo json_encode($data);
         exit;
     }
+    if ($what === 'plex-img' && !$post) {
+        /* A poster, a backdrop, a face: made small by Plex's own transcoder and
+           kept by the daemon; Plex's token never leaves it. Cached by the
+           browser for a week - an image of an item does not change under the
+           same address (Plex puts the time it changed into it). */
+        $u = (string) ($_GET['u'] ?? '');
+        $w = (int) ($_GET['w'] ?? 300);
+        $hh = (int) ($_GET['h'] ?? 450);
+        if ($u === '' || strlen($u) > 1000) {
+            http_response_code(400);
+            exit;
+        }
+        [$status, $body] = pm_call('/api/plex/img?' . http_build_query(['u' => $u, 'w' => $w, 'h' => $hh]),
+                                   'GET', null, 60.0);
+        if ($status !== 200 || $body === '') {
+            http_response_code($status ?: 503);
+            header('Cache-Control: no-store');
+            exit;
+        }
+        $type = 'image/jpeg';
+        if (strncmp($body, "\x89PNG", 4) === 0) {
+            $type = 'image/png';
+        } elseif (strncmp($body, 'RIFF', 4) === 0 && substr($body, 8, 4) === 'WEBP') {
+            $type = 'image/webp';
+        }
+        header('Content-Type: ' . $type);
+        header('Content-Length: ' . strlen($body));
+        header('Cache-Control: private, max-age=604800, immutable');
+        header('X-Content-Type-Options: nosniff');
+        echo $body;
+        exit;
+    }
     if ($post) {
         pm_guard_post();
     }
@@ -151,6 +183,11 @@ if (isset($_GET['api'])) {
         'whoami' => '/api/auth/whoami', 'my-settings' => '/api/auth/settings',
         'upgrade' => '/api/upgrade', 'web' => '/api/web', 'lockouts' => '/api/lockouts',
         'console-login' => '/api/console-login', 'mfa' => '/api/auth/mfa', 'acme' => '/api/acme',
+        'plex' => '/api/plex', 'plex-items' => '/api/plex/items', 'plex-item' => '/api/plex/item',
+        'plex-children' => '/api/plex/children', 'plex-job' => '/api/plex/job',
+        'plex-labels' => '/api/plex/labels', 'plex-titles' => '/api/plex/titles',
+        'plex-matches' => '/api/plex/matches', 'plex-watchlist' => '/api/plex/watchlist',
+        'plex-person' => '/api/plex/person',
     ];
     $writes = [
         'settings' => '/api/settings', 'users' => '/api/users', 'sessions' => '/api/sessions',
@@ -158,6 +195,7 @@ if (isset($_GET['api'])) {
         'columns' => '/api/auth/columns', 'my-settings' => '/api/auth/settings',
         'upgrade' => '/api/upgrade', 'web' => '/api/web', 'lockouts' => '/api/lockouts',
         'console-login' => '/api/console-login', 'mfa' => '/api/auth/mfa', 'acme' => '/api/acme',
+        'plex' => '/api/plex',
     ];
     if ($post) {
         if (!isset($writes[$what])) {
@@ -333,11 +371,18 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
 <div id="problems" class="offline warnish" hidden></div>
 
 <div class="tabs" role="tablist">
+  <button role="tab" aria-selected="false" data-tab="library" data-icon="list"
+          title="The movies and shows of this Plex server: their posters and details, and the tools - the default audio and subtitles, watched, labels, titles in another language, the watchlist, the ratings.">Plex library</button>
   <button role="tab" aria-selected="true" data-tab="settings" data-icon="gear"
           title="The accounts, the certificates of the Plex server and how TLS is spoken, automatic certificates, upgrades and what this is.">Settings</button>
   <button role="tab" aria-selected="false" data-tab="events" data-icon="history"
           title="Every sign-in, every change of a setting, every certificate put in - and the daemon’s own log.">Events</button>
 </div>
+
+<!-- ===================== Plex library ===================== -->
+<section class="panel" id="tab-library" hidden>
+  <div class="px" id="px-root"></div>
+</section>
 
 <!-- ===================== Events ===================== -->
 <section class="panel" id="tab-events" hidden>
@@ -381,6 +426,7 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
     <button type="button" class="fulladmin-only" data-pane="acme" data-icon="lock" title="The certificate ordered from Let's Encrypt (or another ACME CA) and renewed by itself.">Automatic certificates</button>
     <div class="ctl-group">The server</div>
     <button type="button" class="fulladmin-only" data-pane="upgrade" data-icon="up" title="A new version, put in from here - from the web or as a file.">Upgrades</button>
+    <button type="button" data-pane="plex" data-icon="list" title="The language titles are put into, and the keys of the databases the ratings come from (TMDB, OMDb, Trakt, TVmaze).">Plex library</button>
     <button type="button" data-pane="about" data-icon="info" title="Version, what is running, the language, the console at login, the debug log.">About</button>
   </nav>
 
@@ -535,6 +581,15 @@ plexmon --upgrade-status                   # an upgrade started on these pages</
     </div>
   </div>
 
+  <div class="ctl-pane" id="pane-plex" hidden>
+    <div class="ctl-head"><h2 class="ctl-title">Plex library</h2>
+      <p class="ctl-lede">The tools of the Plex library (the tab above) ask Plex Media Server on this
+        machine with its own token - nobody signs in to Plex, nothing leaves the server but the
+        questions for the ratings and the watchlist. Here: the language a title in another one is
+        put into, and the keys of the databases the ratings come from. A key is kept sealed; you
+        see its last two characters.</p></div>
+    <div class="card full"><div id="sect-plex"></div></div>
+  </div>
   <div class="ctl-pane" id="pane-about" hidden>
     <div class="ctl-head"><h2 class="ctl-title">About</h2></div>
     <div class="card full"><div id="about-state"></div></div>
@@ -573,5 +628,6 @@ var PHP_SAFETY = <?= ($me['role'] ?? '') === 'fulladmin' ? json_encode(pm_php_sa
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/core.js?v=<?= h(PM_VERSION) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/cols.js?v=<?= h(PM_VERSION) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/admin.js?v=<?= h(PM_VERSION) ?>"></script>
+<script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/plexlib.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/plexlib.js')) ?>"></script>
 </body>
 </html>
