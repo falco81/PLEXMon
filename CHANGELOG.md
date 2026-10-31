@@ -4,6 +4,28 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.2.6 - 2026-10-31
+
+ACME made the same as upsmon's (4.1.6 and 4.1.7), its UI and what it does:
+
+- **The certificate's key**: *Both: RSA 2048 + ECDSA P-256* (advised, the
+  default), *Both: RSA 4096 + ECDSA P-384*, or one key - ECDSA P-256, P-384,
+  RSA 2048, 3072, 4096. (*RSA 3072 + ECDSA P-384* of 2.2.4 becomes *RSA 4096
+  + ECDSA P-384*.) The second certificate only signs: the name is already
+  proven.
+- **The key of the ACME account** (new setting): ECDSA P-256 (ES256), P-384
+  (ES384) or RSA 2048, 3072, 4096 (RS256) - never a certificate's key. A
+  change makes a new account at the next order.
+- The keys show on the ACME card (*Keys*), on the certificate (*Key: RSA 2048
+  bit + EC 256 bit (a second certificate beside it)*), beside the account at
+  the CA, and in the order's steps (*a second certificate, with a … key*).
+- **Fixed**: an order whose name was not proven yet stopped with "the key is
+  ec256, ec384, …" - the order's loop reused the name of the key's kind for
+  the challenge's (dns-01 / http-01), as upsmon 4.1.7 found. Tested through
+  the whole order with both challenges and every key.
+- What the last order did: the time one narrow column, the words left
+  beside it.
+
 ## 2.2.5 - 2026-10-31
 
 - **Automatic certificates: the ciphers from there too.** Each certificate's

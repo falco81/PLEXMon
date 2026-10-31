@@ -8051,6 +8051,86 @@
   "xs0761": {
    "source": "The protocols, the ciphers, the DH parameters and HSTS nginx speaks with this certificate - the same as Certificates and TLS → TLS settings; kept through every renewal.",
    "text": "Protokoly, šifry, parametry DH a HSTS, se kterými nginx s tímto certifikátem mluví - totéž co Certifikáty a TLS → Nastavení TLS; zůstávají při každém obnovení."
+  },
+  "xs0762": {
+   "source": "Both: RSA 2048 + ECDSA P-256 (advised)",
+   "text": "Oba: RSA 2048 + ECDSA P-256 (doporučeno)"
+  },
+  "xs0763": {
+   "source": "Both: RSA 4096 + ECDSA P-384",
+   "text": "Oba: RSA 4096 + ECDSA P-384"
+  },
+  "xs0764": {
+   "source": "ECDSA P-256 (ES256)",
+   "text": "ECDSA P-256 (ES256)"
+  },
+  "xs0765": {
+   "source": "ECDSA P-384 (ES384)",
+   "text": "ECDSA P-384 (ES384)"
+  },
+  "xs0766": {
+   "source": "RSA 2048 (RS256)",
+   "text": "RSA 2048 (RS256)"
+  },
+  "xs0767": {
+   "source": "RSA 3072 (RS256)",
+   "text": "RSA 3072 (RS256)"
+  },
+  "xs0768": {
+   "source": "RSA 4096 (RS256)",
+   "text": "RSA 4096 (RS256)"
+  },
+  "xs0769": {
+   "source": "The key of the ACME account",
+   "text": "Klíč účtu ACME"
+  },
+  "xs0770": {
+   "source": "Let’s Encrypt takes RSA keys of 2048, 3072 or 4096 bits and ECDSA keys on P-256 or P-384. Both - what Let’s Encrypt advises - orders two certificates for the name: RSA served by default, the much smaller ECDSA one to the clients that say they take it.",
+   "text": "Let’s Encrypt přijímá klíče RSA o 2048, 3072 nebo 4096 bitech a klíče ECDSA na křivkách P-256 nebo P-384. Oba - jak Let’s Encrypt doporučuje - objedná pro jméno dva certifikáty: RSA se podává standardně, mnohem menší ECDSA klientům, kteří řeknou, že ho umí."
+  },
+  "xs0771": {
+   "source": "The key the account with the CA signs with - never one of a certificate. RSA 2048, 3072, 4096 or ECDSA P-256, P-384. A change makes a new account at the next order.",
+   "text": "Klíč, kterým se podepisuje účet u CA - nikdy ne klíč certifikátu. RSA 2048, 3072, 4096 nebo ECDSA P-256, P-384. Změna při příští objednávce založí nový účet."
+  },
+  "xs0772": {
+   "source": "(a second certificate beside it)",
+   "text": "(druhý certifikát vedle něj)"
+  },
+  "xs0773": {
+   "source": "the certificate is made",
+   "text": "certifikát se vystavuje"
+  },
+  "xs0774": {
+   "source": "ordered from the CA",
+   "text": "objednáno u CA"
+  },
+  "xs0775": {
+   "source": "the keys: RSA 2048 + ECDSA P-256",
+   "text": "klíče: RSA 2048 + ECDSA P-256"
+  },
+  "xs0776": {
+   "source": "the keys: RSA 4096 + ECDSA P-384",
+   "text": "klíče: RSA 4096 + ECDSA P-384"
+  },
+  "xs0777": {
+   "source": "the key: ECDSA P-256",
+   "text": "klíč: ECDSA P-256"
+  },
+  "xs0778": {
+   "source": "the key: ECDSA P-384",
+   "text": "klíč: ECDSA P-384"
+  },
+  "xs0779": {
+   "source": "the key: RSA 2048",
+   "text": "klíč: RSA 2048"
+  },
+  "xs0780": {
+   "source": "the key: RSA 3072",
+   "text": "klíč: RSA 3072"
+  },
+  "xs0781": {
+   "source": "the key: RSA 4096",
+   "text": "klíč: RSA 4096"
   }
  },
  "patterns": {
@@ -10205,6 +10285,18 @@
   "xp0155": {
    "source": "a certificate for {0} ({1}) came from the CA, good until {2} ({3})",
    "text": "certifikát pro {0} ({1}) přišel od CA, platí do {2} ({3})"
+  },
+  "xp0156": {
+   "source": "a second certificate, with a {0} key",
+   "text": "druhý certifikát, s klíčem {0}"
+  },
+  "xp0157": {
+   "source": "{0} + {1} (a second certificate beside it)",
+   "text": "{0} + {1} (druhý certifikát vedle něj)"
+  },
+  "xp0158": {
+   "source": "{0} + {1} bit (a second certificate beside it)",
+   "text": "{0} + {1} bit (druhý certifikát vedle něj)"
   }
  },
  "rich": {

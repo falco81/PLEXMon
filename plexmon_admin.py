@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.2.5'
+__version__ = '2.2.6'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -123,6 +123,7 @@ DEFAULTS = {
     'acme_node_name': '',
     'acme_days': 30,
     'acme_key': 'dual',
+    'acme_account_key': 'ec',
     'acme_challenge': 'http-01',
     'acme_dns': 'manual',
     'acme_dns_server': '',
@@ -209,7 +210,8 @@ TUNABLE = {
     'plex_cert': (0, 1), 'plex_cert_restart': (0, 1),
     'upgrade_check': (0, 1), 'upgrade_downgrade': (0, 1),
     'acme': (0, 1), 'acme_ca': ('letsencrypt', 'letsencrypt-staging', 'custom'),
-    'acme_days': (7, 60), 'acme_key': ('dual', 'dual384', 'rsa2048', 'rsa3072', 'rsa4096', 'ec', 'ec384'),
+    'acme_days': (7, 60), 'acme_key': ('dual', 'dual-strong', 'ec', 'ec384', 'rsa2048', 'rsa3072', 'rsa4096'),
+    'acme_account_key': ('ec', 'ec384', 'rsa2048', 'rsa3072', 'rsa4096'),
     'acme_challenge': ('http-01', 'dns-01'),
     'acme_dns': ('manual', 'rfc2136', 'cloudflare', 'acmedns', 'desec'),
     'acme_dns_tsig_alg': ('hmac-sha256', 'hmac-sha512', 'hmac-sha384', 'hmac-sha224', 'hmac-sha1',
@@ -270,10 +272,13 @@ CHOICE_WORDS = {
     'acme_ca': {'letsencrypt': 'Let’s Encrypt',
                 'letsencrypt-staging': 'Let’s Encrypt - staging (to try it)',
                 'custom': 'another ACME CA (step-ca, an internal CA...)'},
-    'acme_key': {'dual': 'RSA 2048 + ECDSA P-256 (Let\'s Encrypt\'s recommendation)',
-                 'dual384': 'RSA 3072 + ECDSA P-384',
-                 'rsa2048': 'RSA 2048', 'rsa3072': 'RSA 3072', 'rsa4096': 'RSA 4096',
-                 'ec': 'ECDSA P-256', 'ec384': 'ECDSA P-384'},
+    'acme_key': {'dual': 'Both: RSA 2048 + ECDSA P-256 (advised)',
+                 'dual-strong': 'Both: RSA 4096 + ECDSA P-384',
+                 'ec': 'ECDSA P-256', 'ec384': 'ECDSA P-384',
+                 'rsa2048': 'RSA 2048', 'rsa3072': 'RSA 3072', 'rsa4096': 'RSA 4096'},
+    'acme_account_key': {'ec': 'ECDSA P-256 (ES256)', 'ec384': 'ECDSA P-384 (ES384)',
+                         'rsa2048': 'RSA 2048 (RS256)', 'rsa3072': 'RSA 3072 (RS256)',
+                         'rsa4096': 'RSA 4096 (RS256)'},
     'ui_lang': {'cs': 'Čeština', 'en': 'English'},
 }
 
@@ -295,6 +300,7 @@ NAMES = {
     'acme_node_name': 'The node’s DNS name',
     'acme_days': 'Renewed when fewer days are left than',
     'acme_key': 'The key of the certificate',
+    'acme_account_key': 'The key of the ACME account',
     'acme_challenge': 'How the CA checks the name',
     'acme_dns': 'Who puts the TXT record in DNS',
     'acme_dns_server': 'The DNS server taking the updates',
@@ -382,10 +388,13 @@ SAYS = {
                       '<code>plex.example.cz</code>. Empty: the name of the certificate it '
                       'has now, else its full host name.',
     'acme_days': 'Let’s Encrypt’s certificates last 90 days; 30 is what it advises.',
-    'acme_key': 'The keys Let’s Encrypt takes: RSA 2048, 3072 or 4096, ECDSA P-256 or '
-                'P-384. Both (its recommendation): an RSA certificate by default and a much '
-                'smaller ECDSA one to the clients that can take it - nginx offers the two, old '
-                'Plex apps and televisions keep RSA, Plex Media Server gets the RSA one.',
+    'acme_key': 'Let’s Encrypt takes RSA keys of 2048, 3072 or 4096 bits and ECDSA keys on P-256 '
+                'or P-384. Both - what Let’s Encrypt advises - orders two certificates for the '
+                'name: RSA served by default, the much smaller ECDSA one to the clients that say '
+                'they take it.',
+    'acme_account_key': 'The key the account with the CA signs with - never one of a '
+                        'certificate. RSA 2048, 3072, 4096 or ECDSA P-256, P-384. A change makes '
+                        'a new account at the next order.',
     'acme_challenge': 'HTTP-01 needs port 80 of the name reachable from the internet (or from '
                       'the CA, for a CA of your own). DNS-01 needs nothing open: the CA reads a '
                       'TXT record - the way for a Plex server only the LAN reaches.',
@@ -513,7 +522,7 @@ PANES = {
                'admin_2fa', 'admin_2fa_app'],
     'web': ['plex_cert', 'plex_cert_domain', 'plex_cert_restart'],
     'acme': ['acme', 'acme_email', 'acme_ca', 'acme_url', 'acme_ca_pem',
-             'acme_node_name', 'acme_days', 'acme_key', 'acme_challenge', 'acme_dns',
+             'acme_node_name', 'acme_days', 'acme_key', 'acme_account_key', 'acme_challenge', 'acme_dns',
              'acme_dns_server', 'acme_dns_zone', 'acme_dns_tsig_name', 'acme_dns_tsig_alg',
              'acme_dns_tsig_secret', 'acme_dns_token', 'acme_dns_url', 'acme_dns_user',
              'acme_dns_key', 'acme_dns_subdomain', 'acme_desec_domain', 'acme_desec_token',
@@ -547,7 +556,7 @@ ONLY_WHEN = {
     'plex_cert_domain': ['plex_cert', '1'], 'plex_cert_restart': ['plex_cert', '1'],
     'acme_email': ['acme', '1'], 'acme_ca': ['acme', '1'],
     'acme_url': ['acme_ca', 'custom'], 'acme_ca_pem': ['acme_ca', 'custom'],
-    'acme_node_name': ['acme', '1'], 'acme_days': ['acme', '1'], 'acme_key': ['acme', '1'],
+    'acme_node_name': ['acme', '1'], 'acme_days': ['acme', '1'], 'acme_key': ['acme', '1'], 'acme_account_key': ['acme', '1'],
     'acme_challenge': ['acme', '1'], 'acme_dns': ['acme_challenge', 'dns-01'],
     'acme_dns_wait': ['acme_challenge', 'dns-01'],
     'acme_dns_server': ['acme_dns', 'rfc2136'], 'acme_dns_zone': ['acme_dns', 'rfc2136'],
@@ -720,6 +729,8 @@ def load_config(path=None, saved=None):
     FILE_KEYS = named
     whole = dict(fresh)
     for key, value in (saved or {}).items():
+        if key == 'acme_key' and value == 'dual384':
+            value = 'dual-strong'           # its name in 2.2.4-2.2.5 (RSA 4096 + P-384 now)
         if key in DEFAULTS and key not in FILE_ONLY_KEYS:
             try:
                 whole[key] = _coerce(DEFAULTS[key], value)
@@ -3112,28 +3123,57 @@ class Acme(object):
                 f.write(self.key_pem)
         return p
 
+    def _alg(self):
+        """(JWS alg, digest, bytes of r and s) of the account key (4.1.6)."""
+        kind = getattr(self, 'akind', 'ec')
+        if kind == 'ec384':
+            return 'ES384', '-sha384', 48
+        if kind.startswith('rsa'):
+            return 'RS256', '-sha256', 0
+        return 'ES256', '-sha256', 32
+
     def _jwk(self):
-        der = _openssl(['pkey', '-in', self._key_file(), '-pubout', '-outform', 'DER'],
-                       what='the account key')
-        point = der[-64:]
-        return {'crv': 'P-256', 'kty': 'EC', 'x': _b64u(point[:32]), 'y': _b64u(point[32:])}
+        if getattr(self, '_jwk_done', None):
+            return self._jwk_done
+        alg, _, size = self._alg()
+        if alg == 'RS256':
+            txt = _openssl(['pkey', '-in', self._key_file(), '-noout', '-text_pub'],
+                           what='the account key').decode()
+            m = re.search(r'(?s)Modulus:\s*\n(.*?)\n\S', txt)
+            e = re.search(r'Exponent:\s*(\d+)', txt)
+            if not m or not e:
+                raise AcmeError('the RSA account key does not read')
+            n = bytes.fromhex(re.sub(r'[^0-9a-fA-F]', '', m.group(1))).lstrip(b'\x00')
+            ev = int(e.group(1))
+            jwk = {'e': _b64u(ev.to_bytes((ev.bit_length() + 7) // 8, 'big')), 'kty': 'RSA',
+                   'n': _b64u(n)}
+        else:
+            der = _openssl(['pkey', '-in', self._key_file(), '-pubout', '-outform', 'DER'],
+                           what='the account key')
+            point = der[-2 * size:]
+            jwk = {'crv': 'P-384' if size == 48 else 'P-256', 'kty': 'EC',
+                   'x': _b64u(point[:size]), 'y': _b64u(point[size:])}
+        self._jwk_done = jwk
+        return jwk
 
     def thumbprint(self):
-        jwk = self._jwk()
+        # RFC 7638: the required members only, sorted - the JWK holds just those.
         return _b64u(hashlib.sha256(json.dumps(
-            {'crv': jwk['crv'], 'kty': jwk['kty'], 'x': jwk['x'], 'y': jwk['y']},
-            separators=(',', ':'), sort_keys=True).encode()).digest())
+            self._jwk(), separators=(',', ':'), sort_keys=True).encode()).digest())
 
     def _sign(self, data):
-        der = _openssl(['dgst', '-sha256', '-sign', self._key_file()], data=data,
+        alg, digest, size = self._alg()
+        der = _openssl(['dgst', digest, '-sign', self._key_file()], data=data,
                        what='signing for the CA')
-        # DER SEQUENCE { INTEGER r, INTEGER s } -> r || s, 32 bytes each.
+        if alg == 'RS256':
+            return der                       # PKCS#1 v1.5, as JWS wants it
+        # DER SEQUENCE { INTEGER r, INTEGER s } -> r || s, `size` bytes each.
         i = 2 if der[1] < 0x80 else 3
 
         def integer(at):
             n = der[at + 1]
             v = der[at + 2:at + 2 + n].lstrip(b'\x00')
-            return v.rjust(32, b'\x00'), at + 2 + n
+            return v.rjust(size, b'\x00'), at + 2 + n
         r, i = integer(i)
         s, _ = integer(i)
         return r + s
@@ -3143,7 +3183,7 @@ class Acme(object):
         for attempt in (1, 2, 3):
             if not self.nonce:
                 self._req(self.dir['newNonce'], method='HEAD')
-            protected = {'alg': 'ES256', 'nonce': self.nonce, 'url': url}
+            protected = {'alg': self._alg()[0], 'nonce': self.nonce, 'url': url}
             if use_jwk or not self.kid:
                 protected['jwk'] = self._jwk()
             else:
@@ -3187,7 +3227,13 @@ class Acme(object):
     def _account(self, fresh=False):
         row = {} if fresh else (_meta_json(self.store, 'acme:account') or {})
         pem = unseal_secret(row.get('key') or '', 'acme') if row.get('key') else ''
-        if row.get('directory') != self.dir_url or not pem:
+        # The kind of key asked for (4.1.6): another one than the account has
+        # makes a new account with a key of that kind.
+        self.akind = str(CONFIG.get('acme_account_key') or 'ec')
+        if self.akind not in KEY_WORDS:
+            self.akind = 'ec'
+        if row.get('directory') != self.dir_url or not pem or \
+                (row.get('kind') or 'ec') != self.akind:
             pem = ''
         if fresh:
             self.kid = None
@@ -3196,9 +3242,14 @@ class Acme(object):
             except OSError:
                 pass
         if not pem:
-            pem = _openssl(['genpkey', '-algorithm', 'EC', '-pkeyopt', 'ec_paramgen_curve:P-256'],
-                           what='the account key').decode()
+            pem = new_key(self.akind)
             row = {}
+            self.kid = None
+            self._jwk_done = None
+            try:
+                os.unlink(os.path.join(self.work, 'account.pem'))
+            except OSError:
+                pass
         self.key_pem = pem
         if row.get('kid'):
             self.kid = row['kid']
@@ -3213,7 +3264,7 @@ class Acme(object):
             raise AcmeError('the CA made no account')
         self.store.set_meta('acme:account', json.dumps({
             'key': seal_secret(pem, 'acme'), 'kid': self.kid, 'directory': self.dir_url,
-            'email': mail, 'at': time.time()}))
+            'email': mail, 'at': time.time(), 'kind': self.akind}))
 
     # -- an order --------------------------------------------------------------------
     def _poll(self, url, done, what, secs=90):
@@ -3231,7 +3282,7 @@ class Acme(object):
                 raise AcmeError('%s: the CA has not said in %d s (%s)' % (what, secs, st))
             time.sleep(2)
 
-    def order(self, names, say, kind=None):
+    def order(self, names, say, key_kind=None):
         say('ordered from the CA')
         got, headers = self.post_json(self.dir['newOrder'], {
             'identifiers': [{'type': 'dns', 'value': n} for n in names]})
@@ -3274,7 +3325,7 @@ class Acme(object):
                 self._poll(az, ('valid',), 'the CA did not take %s' % name)
             finally:
                 acme_chal_drop(token)
-        key, csr = make_csr(names[0], names[1:], kind or 'rsa2048')
+        key, csr = make_csr(names[0], names[1:], key_kind or 'ec')
         der = _openssl(['req', '-in', '/dev/stdin', '-outform', 'DER'], data=csr.encode(),
                        what='the request')
         say('the certificate is made')
@@ -3404,15 +3455,19 @@ def acme_due(store, target, name):
     return ''
 
 
-KEY_WORDS = {'rsa2048': 'RSA 2048', 'rsa3072': 'RSA 3072', 'rsa4096': 'RSA 4096',
-             'ec': 'ECDSA P-256', 'ec256': 'ECDSA P-256', 'ec384': 'ECDSA P-384'}
+KEY_WORDS = {'ec': 'ECDSA P-256', 'ec384': 'ECDSA P-384', 'rsa2048': 'RSA 2048',
+             'rsa3072': 'RSA 3072', 'rsa4096': 'RSA 4096'}
+# A certificate's choice: one key, or two certificates - RSA served by
+# default, ECDSA to the clients that take it (what Let's Encrypt advises).
+ACME_CERT_KEYS = {'dual': ('rsa2048', 'ec'), 'dual-strong': ('rsa4096', 'ec384'),
+                  'dual384': ('rsa4096', 'ec384'),      # its name in 2.2.4-2.2.5
+                  'ec': ('ec',), 'ec384': ('ec384',), 'rsa2048': ('rsa2048',),
+                  'rsa3072': ('rsa3072',), 'rsa4096': ('rsa4096',)}
 
 
 def acme_key_kinds():
-    """The keys of what is ordered: one, or RSA then ECDSA for a dual one."""
-    k = CONFIG.get('acme_key') or 'dual'
-    return {'dual': ['rsa2048', 'ec256'], 'dual384': ['rsa3072', 'ec384']}.get(k) or \
-        [k if k in KEY_WORDS else 'rsa2048']
+    """The keys of what is ordered: one, or RSA then ECDSA for both."""
+    return list(ACME_CERT_KEYS.get(str(CONFIG.get('acme_key') or 'dual')) or ('ec',))
 
 
 def tls_ec_of(prof):
@@ -3452,7 +3507,7 @@ def acme_order(store, target, name, by, say=None):
             # that take it - ordered again for the same name; the authorization
             # the CA has just given is used again, nothing is checked twice.
             try:
-                say('the ECDSA certificate beside it')
+                say('a second certificate, with a %s key' % KEY_WORDS[kinds[1]])
                 ekey, echain = a.order([name], say, kinds[1])
                 ec = cert_bundle(echain, ekey)
             except (AcmeError, ValueError, OSError) as e:
@@ -3484,14 +3539,14 @@ def acme_order(store, target, name, by, say=None):
         prof.setdefault('dh', 'none')
         tls_save(store, target, prof, by)
         st.update(ok=True, not_after=info.get('not_after'), issuer=info.get('issuer'),
-                  ordered_at=time.time(), keys=[KEY_WORDS[k] for k in kinds[:2 if ec else 1]],
+                  ordered_at=time.time(), keys=' + '.join(KEY_WORDS[k] for k in kinds[:2 if ec else 1]),
                   ec_not_after=(ec or {}).get('info', {}).get('not_after'))
         st['steps'] = steps[-25:]
         store.set_meta('acme:state:' + target, json.dumps(st))
         store.add_event('settings', 'a certificate for %s (%s) came from the CA, good until %s'
                         ' (%s)' % (name, target,
                                    stamp(info.get('not_after')) if info.get('not_after') else '?',
-                                   ' + '.join(st['keys'])),
+                                   st['keys']),
                         'info', who=by)
         return st
     except (AcmeError, ValueError, OSError) as e:
@@ -3585,7 +3640,8 @@ def acme_view(store):
     acc = _meta_json(store, 'acme:account') or {}
     return {'on': bool(CONFIG.get('acme')), 'targets': out, 'mine': mine,
             'directory': acme_directory_url(), 'account': {
-                'kid': acc.get('kid'), 'email': acc.get('email'), 'at': acc.get('at')},
+                'kid': acc.get('kid'), 'email': acc.get('email'), 'at': acc.get('at'),
+                'key': KEY_WORDS.get(acc.get('kind') or 'ec', '') if acc.get('kid') else ''},
             'work': dict(ACME_WORK), 'node': node_name(),
             'challenge': CONFIG.get('acme_challenge') or 'http-01',
             'dns_guide': acme_dns_guide(store),
