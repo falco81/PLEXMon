@@ -4,6 +4,13 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.1.5 - 2026-10-31
+
+- **A click beside a popup closes it** (pressed and let go beside it - text
+  selected inside and let go outside does not). Only a popup with something
+  typed into it stays open - it gives a little shake instead, so a stray click
+  does not lose a half-filled form; its × , Close or Escape close it.
+
 ## 2.1.4 - 2026-10-31
 
 - **PHP goes onto the 8.3 branch** - at least 8.3.36, fixed against php2shell

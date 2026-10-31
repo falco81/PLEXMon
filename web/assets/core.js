@@ -391,9 +391,38 @@ document.addEventListener('keydown', function (e) {
 });
 if ($('modal-x')) {
   $('modal-x').onclick = closeModal;
-  /* A click beside the popup leaves it open (1.0.25): a stray click lost a
-     half-filled form. It closes by its own buttons, its x, or Escape. */
 }
+/* A click beside the popup closes it (plexmon 2.1.5) - pressed and let go
+   both beside it, so text selected inside and let go outside does not. Only
+   what was typed into it keeps it open: a stray click would lose a
+   half-filled form, so the popup gives a little shake instead. */
+var MODAL_VEIL_DOWN = false;
+function modalTyped(box) {
+  return Array.prototype.some.call(box.querySelectorAll('input, textarea'), function (i) {
+    if (i.type === 'checkbox' || i.type === 'radio' || i.type === 'hidden' || i.type === 'file'
+        || i.readOnly || i.disabled) return false;
+    return String(i.value || '') !== String(i.defaultValue || '');
+  });
+}
+document.addEventListener('mousedown', function (e) {
+  var m = $('modal');
+  MODAL_VEIL_DOWN = !!(m && !m.hidden && e.target === m);
+}, true);
+document.addEventListener('click', function (e) {
+  var m = $('modal');
+  var was = MODAL_VEIL_DOWN;
+  MODAL_VEIL_DOWN = false;
+  if (!was || !m || m.hidden || e.target !== m) return;
+  if (typeof COLS_MENU !== 'undefined' && COLS_MENU) return;
+  var box = $('modal-box');
+  if (box && modalTyped(box)) {
+    box.classList.remove('shake');
+    void box.offsetWidth;
+    box.classList.add('shake');
+    return;
+  }
+  closeModal();
+});
 document.addEventListener('keydown', function (e) {
   /* A help popup open is the first thing Escape closes. (1.10.159) */
   if (e.key === 'Escape' && typeof SETHELP !== 'undefined' && SETHELP

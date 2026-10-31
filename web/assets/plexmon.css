@@ -3356,3 +3356,8 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .pager{margin-top:14px}
 .offline + .tabs,.offline + .offline{margin-top:10px}
 .tabs{margin-bottom:16px}
+
+/* A click beside a popup with something typed in it: a shake, not a close. */
+@keyframes modal-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+.modal .box.shake{animation:modal-shake .35s ease}
+.modal{cursor:default}
