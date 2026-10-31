@@ -31,20 +31,24 @@ stránky, které se jen ptají démona na 127.0.0.1. plexmon nikdy neběží v c
 
 ## Příkazová řádka
 
+Stejná jako u otp: barevně (colorama), `--json` všude, kde to dává smysl,
+`plexmon --help` ve dvou sloupcích. Démona spouští systemd (`plexmon --daemon`).
+
 ```
-plexmon --status                 Nastavení na jedné obrazovce
-plexmon --console                vše přes menu (i živý log)
-plexmon --users                  účty
+plexmon                          co dělá (= --status)
+plexmon --check                  kontrola všeho: disky, SMART, API, nginx, certifikát
+plexmon --console                vše přes menu (živý log, účty, certifikáty, upgrady)
+plexmon --wake | --refresh | --diag | --atv ...   dashboard a televize, jako dosud
+plexmon --users                  účty Nastavení
 plexmon --add-user jan --role fulladmin
 plexmon --cert-status            certifikát nginxu
 plexmon --cert-import cert.pem key.pem chain.pem
+plexmon --tls-preset intermediate --tls-hsts 31536000
 plexmon --set acme=1 --set acme_node_name=plex.example.cz
 plexmon --acme-order             objednat certifikát hned, sledovat průběh
 plexmon --plex-cert on           Plex Media Server dostane certifikát také
-plexmon --upgrade-check          co je na adrese aktualizací
-plexmon --upgrade-online         nejnovější: stáhnout, ověřit, nasadit
-plexmon --help-settings          všechno o Nastavení
-plexmon --check | --diag | --wake | --atv ...   dashboard, jako dosud
+plexmon --upgrade-online         nejnovější verze: stáhnout, ověřit, nasadit
+plexmon --help                   všechno
 ```
 
 ## Instalace a přechod ze současného plexmonu

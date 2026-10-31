@@ -276,7 +276,7 @@ for svc in php-fpm nginx; do
 done
 
 # ---------------------------------------------------------------------------
-if ! "$PY" "$LIB/plexmon_admin.py" --users 2>/dev/null | grep -q "full admin"; then
+if ! "$PY" "$LIB/plexmon_admin.py" --users --json 2>/dev/null | grep -q '"role": "fulladmin"'; then
     step "The first account of Settings"
     first="$STATE/first-login.txt"
     pw="$("$PY" -c 'import secrets; print(secrets.token_urlsafe(12))')"
@@ -299,5 +299,5 @@ IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 say "plexmon $VERSION"
 say "the dashboard:  https://$(hostname -f 2>/dev/null || hostname)/smart/   (or https://$IP/smart/)"
 say "Settings:       https://$(hostname -f 2>/dev/null || hostname)/smart/settings/"
-say "on the server:  plexmon --status · plexmon --console · plexmon --help-settings"
+say "on the server:  plexmon · plexmon --console · plexmon --help"
 exit 0

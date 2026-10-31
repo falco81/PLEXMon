@@ -22,13 +22,12 @@ identical. Run it with:  python3 plexmon.py           (daemon)
 """
 from __future__ import annotations
 
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
-import argparse
 import grp
 import hashlib
 import json
@@ -4066,111 +4065,11 @@ def _atv_cli(args) -> int:
     return 0 if res.get("ok") else 1
 
 
-def main(argv=None) -> int:
-    argv = sys.argv[1:] if argv is None else argv
-    # Settings' own command line (plexmon --status, --add-user, --console...).
-    try:
-        sys.path.insert(0, str(Path(__file__).resolve().parent))
-        import plexmon_admin
-        if plexmon_admin.wants_admin(argv):
-            return plexmon_admin.cli_main(argv)
-    except ImportError:
-        pass
-    ap = argparse.ArgumentParser(description="Plex status monitoring daemon (and plexmon "
-                                 "Settings: plexmon --status, --console, --help-settings)")
-    ap.add_argument("--help-settings", action="store_true",
-                    help="the options of Settings (accounts, certificates, ACME, upgrades)")
-    ap.add_argument("-v", "--debug", action="store_true")
-    ap.add_argument("--oneshot", action="store_true",
-                    help="run a single collection and exit (no daemon, for testing)")
-    ap.add_argument("--wake", action="store_true",
-                    help="tell the running daemon to wake the disks and refresh SMART "
-                         "(or, with --oneshot, force a SMART read in the one-off run)")
-    ap.add_argument("--refresh", action="store_true",
-                    help="re-read SMART from the disks that are already spinning "
-                         "(sleeping disks are left alone — use --wake for those)")
-    tv = ap.add_argument_group("television remote (Apple TV, LG, Samsung)")
-    tv.add_argument("--atv", action="store_true",
-                    help="list the televisions known and whether they are paired")
-    tv.add_argument("--atv-scan", action="store_true",
-                    help="search the network again (finds Apple TVs; LG and "
-                         "Samsung are identified by address instead)")
-    tv.add_argument("--atv-probe", metavar="ADDRESS",
-                    help="ask what kind of television answers at an address")
-    tv.add_argument("--atv-pair", metavar="TV",
-                    help="pair with a television, by name, identifier or — for "
-                         "an LG or Samsung not yet known — its IP address")
-    tv.add_argument("--atv-key", nargs=2, metavar=("TV", "KEY"),
-                    help="send one raw remote key to a Samsung, to find out "
-                         "which code it listens to (e.g. --atv-key Obyvak KEY_FF)")
-    tv.add_argument("--atv-unpair", metavar="TV",
-                    help="forget the credentials for one television")
-    tv.add_argument("--atv-unpair-all", action="store_true",
-                    help="forget the credentials for every television")
-
-    ap.add_argument("--check", action="store_true",
-                    help="self-check the whole chain against a running daemon")
-    ap.add_argument("--diag", action="store_true",
-                    help="probe the API and report latency + disk state")
-    args = ap.parse_args(argv)
-    set_debug(args.debug)
-    if args.help_settings:
-        import plexmon_admin
-        return plexmon_admin.cli_main(["--help"])
-
-    if args.check:
-        return check()
-    if args.diag:
-        return diag()
-
-    if (args.atv or args.atv_scan or args.atv_probe or args.atv_pair
-            or args.atv_key or args.atv_unpair or args.atv_unpair_all):
-        return _atv_cli(args)
-
-    if args.refresh:
-        try:
-            tok = TOKEN_FILE.read_text().strip()
-        except OSError:
-            print("no API token — is the daemon running?")
-            return 1
-        req = urllib.request.Request(
-            f"http://{API_HOST}:{API_PORT}/smart", method="POST", data=b"")
-        req.add_header("X-Plexmon-Token", tok)
-        try:
-            print(urllib.request.urlopen(req, timeout=8).read().decode())
-            return 0
-        except Exception as e:
-            print(f"could not reach the daemon: {e}")
-            return 1
-
-    # Standalone --wake (without --oneshot): ask the running daemon to wake the
-    # disks over its API, using the token, rather than starting a second daemon.
-    if args.wake and not args.oneshot:
-        try:
-            tok = TOKEN_FILE.read_text().strip()
-        except OSError:
-            print("no API token — is the daemon running?")
-            return 1
-        req = urllib.request.Request(
-            f"http://{API_HOST}:{API_PORT}/wake", method="POST", data=b"")
-        req.add_header("X-Plexmon-Token", tok)
-        try:
-            body = urllib.request.urlopen(req, timeout=8).read()
-            print(body.decode())
-            return 0
-        except Exception as e:
-            print(f"could not reach the daemon: {e}")
-            return 1
-
+def run_daemon(debug: bool = False) -> int:
+    """The daemon in the foreground - what plexmon.service starts
+    (plexmon --daemon). One at a time: a second one finds the API taken."""
+    set_debug(debug)
     d = Daemon()
-    if args.oneshot:
-        d._tick(force_smart=args.wake)
-        with d.lock:
-            print(json.dumps({"overall": d.snapshot.get("overall"),
-                              "disks": len(d.snapshot.get("disks", [])),
-                              "sessions": d.snapshot.get("plex", {}).get("sessions"),
-                              "last_smart_read": d.snapshot.get("last_smart_read")}))
-        return 0
     try:
         d.run()
     except KeyboardInterrupt:
@@ -4178,6 +4077,72 @@ def main(argv=None) -> int:
     return 0
 
 
+def monitor_cli(args) -> int:
+    """The dashboard daemon's own command line: --wake, --refresh, --oneshot,
+    --diag and the television remotes - as plexmon.py always had them."""
+    set_debug(getattr(args, "debug", False))
+    if args.diag:
+        return diag()
+    if (args.atv or args.atv_scan or args.atv_probe or args.atv_pair
+            or args.atv_key or args.atv_unpair or args.atv_unpair_all):
+        return _atv_cli(args)
+    if args.oneshot:
+        d = Daemon()
+        d._tick(force_smart=args.wake)
+        with d.lock:
+            print(json.dumps({"overall": d.snapshot.get("overall"),
+                              "disks": len(d.snapshot.get("disks", [])),
+                              "sessions": d.snapshot.get("plex", {}).get("sessions"),
+                              "last_smart_read": d.snapshot.get("last_smart_read")}))
+        return 0
+    if args.refresh or args.wake:
+        path = "/smart" if args.refresh else "/wake"
+        try:
+            tok = TOKEN_FILE.read_text().strip()
+        except OSError:
+            print("no API token — is the daemon running? (systemctl status plexmon)")
+            return 1
+        req = urllib.request.Request(
+            f"http://{API_HOST}:{API_PORT}{path}", method="POST", data=b"")
+        req.add_header("X-Plexmon-Token", tok)
+        try:
+            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+            print(opener.open(req, timeout=8).read().decode())
+            return 0
+        except Exception as e:
+            print(f"could not reach the daemon: {e}")
+            return 1
+    return 0
+
+
+def main(argv=None) -> int:
+    """plexmon: with nothing at all it says what it is doing; the daemon is
+    plexmon --daemon (systemd). Everything goes through Settings' command
+    line (plexmon_admin.cli_main), otp's, which hands the dashboard's own
+    commands back here."""
+    argv = sys.argv[1:] if argv is None else argv
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        import plexmon_admin
+    except Exception as e:                              # noqa: BLE001
+        # Settings broken: the dashboard still runs, as it did before 2.0.
+        if not argv or "--daemon" in argv:
+            print(f"plexmon: Settings cannot be loaded ({e}); the dashboard runs alone",
+                  file=sys.stderr)
+            return run_daemon("--debug" in argv or "-v" in argv)
+        raise
+    return plexmon_admin.cli_main(argv, mon=sys.modules[__name__])
+
+
 if __name__ == "__main__":
-    import sys
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except BrokenPipeError:
+        # Read through `| head`: the rest is nobody's, said nowhere.
+        try:
+            os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        except OSError:
+            pass
+        sys.exit(0)
+    except KeyboardInterrupt:
+        sys.exit(130)

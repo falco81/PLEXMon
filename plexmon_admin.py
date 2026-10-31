@@ -26,6 +26,8 @@ plexmon never runs in a cluster: there is one node, this machine.
 import argparse
 import base64
 import binascii
+import collections
+import getpass
 import hashlib
 import hmac
 import html
@@ -56,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.0.0'
+__version__ = '2.0.1'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -2466,6 +2468,7 @@ def plex_prefs_now():
 def plex_running():
     try:
         return subprocess.run([SYSTEMCTL, 'is-active', '--quiet', PLEX_SERVICE],
+                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                               timeout=20).returncode == 0
     except (OSError, subprocess.SubprocessError):
         return False
@@ -5963,57 +5966,544 @@ def start(monitor=None):
 
 
 # ---------------------------------------------------------------------------
-# The command line: plexmon --help (the dashboard's options are plexmon.py's)
+# The command line (otp's, as isemon's): plexmon --help
 # ---------------------------------------------------------------------------
+# Everything the pages can do, and the accounts and passwords besides - handled
+# straight in the database, never through the API, because the moment the
+# command line is most needed is the moment nobody can sign in. In colour on a
+# terminal and plain anywhere else, `[ ok ]` and `[fail]` standing in for the
+# colours.
+# ---------------------------------------------------------------------------
+# Colour - as isemon does it
+# ---------------------------------------------------------------------------
+# colorama when it is installed, and the same escape sequences written by hand
+# when it is not. A nicety, never a dependency: a server being put right at two
+# in the morning is not the one to find that the token server will not start
+# because a colour library is missing. colorama adds a Windows console, a
+# terminal reset however the program ends, and nothing else on Linux.
+try:
+    import colorama
+    from colorama import Fore as _Fore, Style as _Style
+    HAVE_COLORAMA = True
+except Exception:                       # not installed, or installed broken
+    colorama = None
+    HAVE_COLORAMA = False
+
+    class _Fore(object):
+        RED = '\033[31m'; GREEN = '\033[32m'; YELLOW = '\033[33m'
+        BLUE = '\033[34m'; MAGENTA = '\033[35m'; CYAN = '\033[36m'
+        WHITE = '\033[37m'; RESET = '\033[39m'
+
+    class _Style(object):
+        BRIGHT = '\033[1m'; DIM = '\033[2m'; NORMAL = '\033[22m'
+        RESET_ALL = '\033[0m'
+
+_COLORAMA_READY = False
+
+
+def start_colour():
+    global _COLORAMA_READY
+    if _COLORAMA_READY or not HAVE_COLORAMA:
+        return
+    _COLORAMA_READY = True
+    try:
+        if hasattr(colorama, 'just_fix_windows_console'):
+            colorama.just_fix_windows_console()
+        else:
+            colorama.init()
+    except Exception:
+        pass
+
+
+ANSI = re.compile(r'\033\[[0-9;]*m')
+TERM_CTL = re.compile(r'[\x00-\x08\x0b-\x1f\x7f-\x9f]')
+
+
+def term_safe(text):
+    """What came from outside, safe on a terminal (1.0.139): a User-Name or a
+    reason from a packet carried escapes that cleared the screen, set the
+    title or wrote the clipboard. Colours are kept; any other control
+    character is shown as \\xNN."""
+    t = str(text)
+    out, at = [], 0
+    for m in ANSI.finditer(t):
+        out.append(TERM_CTL.sub(lambda c: '\\x%02x' % ord(c.group(0)), t[at:m.start()]))
+        out.append(m.group(0))
+        at = m.end()
+    out.append(TERM_CTL.sub(lambda c: '\\x%02x' % ord(c.group(0)), t[at:]))
+    return ''.join(out)
+
+
+def plain_len(text):
+    """How wide something looks, the colour taken out."""
+    return len(ANSI.sub('', str(text)))
+
+
+def plain_pad(text, width):
+    return str(text) + ' ' * max(0, width - plain_len(text))
+
+
 class Palette(object):
+    """Every colour the command line uses, in one place."""
+
     def __init__(self, on):
         self.on = bool(on)
+        if self.on:
+            start_colour()
 
-    def _c(self, code, text):
-        return '\033[%sm%s\033[0m' % (code, text) if self.on else str(text)
+        def code(*parts):
+            return ''.join(parts) if self.on else ''
+
+        self.c_ok = code(_Fore.GREEN)
+        self.c_warn = code(_Fore.YELLOW)
+        self.c_bad = code(_Style.BRIGHT, _Fore.RED)
+        self.c_info = code(_Fore.CYAN)
+        self.c_head = code(_Style.BRIGHT, _Fore.CYAN)
+        self.c_key = code(_Fore.WHITE)
+        self.c_addr = code(_Fore.MAGENTA)
+        self.c_hi = code(_Style.BRIGHT)
+        self.c_dim = code(_Style.DIM)
+        self.off = code(_Style.RESET_ALL)
+        try:
+            self.width = max(60, min(120, shutil.get_terminal_size((100, 24)).columns))
+        except Exception:
+            self.width = 100
+
+    def paint(self, text, colour):
+        if not self.on or not colour:
+            return str(text)
+        return '%s%s%s' % (colour, text, self.off)
 
     def good(self, t):
-        return self._c('32', t)
+        return self.paint(t, self.c_ok)
 
     def bad(self, t):
-        return self._c('31', t)
+        return self.paint(t, self.c_bad)
 
     def warn(self, t):
-        return self._c('33', t)
+        return self.paint(t, self.c_warn)
 
     def info(self, t):
-        return self._c('36', t)
+        return self.paint(t, self.c_info)
 
     def dim(self, t):
-        return self._c('2', t)
+        return self.paint(t, self.c_dim)
+
+    soft = dim
+
+    def head(self, t):
+        return self.paint(t, self.c_head)
 
     def bold(self, t):
-        return self._c('1', t)
+        return self.paint(t, self.c_hi)
+
+    hi = bold
+
+    def addr(self, t):
+        return self.paint(t, self.c_addr)
+
+    def ok_line(self, t):
+        return (self.good('✔ ') if self.on else '[ ok ] ') + str(t)
+
+    def warn_line(self, t):
+        return (self.warn('! ') if self.on else '[warn] ') + str(t)
+
+    def bad_line(self, t):
+        return (self.bad('✘ ') if self.on else '[fail] ') + str(t)
 
 
-PAL = Palette(sys.stdout.isatty() and os.environ.get('TERM') != 'dumb')
+def colour_wanted(no_color=False, stream=None):
+    """What the person asked for, then NO_COLOR, then FORCE_COLOR, then the
+    terminal itself - in that order, as isemon decides it."""
+    if no_color or os.environ.get('NO_COLOR') is not None:
+        return False
+    if os.environ.get('FORCE_COLOR') or os.environ.get('CLICOLOR_FORCE'):
+        return True
+    if str(os.environ.get('TERM') or '').lower() in ('dumb', '') \
+            and not os.environ.get('TERM_PROGRAM'):
+        return False
+    try:
+        return bool((stream or sys.stdout).isatty())
+    except Exception:
+        return False
 
 
-def _print_json(obj):
-    print(json.dumps(obj, indent=2, default=str, ensure_ascii=False))
+# ---- colour in every output (1.0.132) ---------------------------------------------
+# With colour on, every table and every line the command line prints is
+# coloured the same way - tables by their cells, other lines as they read:
+# "key: value", addresses, times, and the words that say how a thing is.
+# Whatever already carries its own colour is left as it is.
+TABLE_PAL = None
+TONE_GOOD = {'on', 'yes', 'active', 'ok', 'accept', 'accepted', 'running', 'answering',
+             'in place', 'in service', 'done', 'synchronised', 'healthy', 'up', 'enabled',
+             'signed in', 'good', 'valid', 'sent', 'taken', 'checked'}
+TONE_BAD = {'off', 'no', 'reject', 'rejected', 'failed', 'fail', 'error', 'gone', 'down',
+            'locked', 'locked out', 'expired', 'not answering', 'inactive', 'dead', 'disabled',
+            'refused', 'missing', 'broken', 'lost', 'crit'}
+TONE_WARN = {'pending', 'waiting', 'maintenance', 'in maintenance', 'paused', 'warn',
+             'warning', 'not set up', 'unknown', 'stale', 'not yet'}
+TONE_DIM = {'never', '-', '–', '(none)', 'none', 'as they come', 'not set', ''}
+RE_ADDR = re.compile(r'(?<![\w.:])(\d{1,3}(?:\.\d{1,3}){3}(?:/\d{1,2})?(?::\d{1,5})?)(?![\w.])')
+RE_TIME = re.compile(r'\b(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})([ T]\d{2}:\d{2}(?::\d{2})?)?\b')
 
 
-def _kv(pairs):
-    w = max([len(k) for k, _ in pairs] + [4])
-    for k, v in pairs:
-        print('  %s  %s' % (PAL.dim(k.ljust(w)), v))
+def tone_cell(text, pal):
+    """One value coloured by what it says."""
+    t = str(text)
+    if not pal or not pal.on or ANSI.search(t):
+        return t
+    low = t.strip().lower()
+    if low in TONE_GOOD:
+        return pal.good(t)
+    if low in TONE_BAD:
+        return pal.bad(t)
+    if low in TONE_WARN:
+        return pal.warn(t)
+    if low in TONE_DIM:
+        return pal.dim(t)
+    if RE_TIME.fullmatch(t.strip()):
+        return pal.dim(t)
+    return tone_words(t, pal)
 
 
-def _ask_password(words='password'):
-    import getpass
-    if not sys.stdin.isatty():
-        got = sys.stdin.readline().rstrip('\n')
-        return got
-    a = getpass.getpass('  %s: ' % words)
-    b = getpass.getpass('  again: ')
-    if a != b:
-        raise SystemExit('plexmon: the two are not the same')
-    return a
+def tone_words(t, pal):
+    """Addresses and times inside a text."""
+    t = RE_ADDR.sub(lambda m: pal.addr(m.group(1)), t)
+    return RE_TIME.sub(lambda m: pal.dim(m.group(0)), t)
+
+
+def _cut(text, width):
+    """`text` no wider than `width` on the screen, its colour kept or - when it
+    has to be cut - taken off."""
+    if plain_len(text) <= width:
+        return text
+    return ANSI.sub('', text)[:width]
+
+
+def table(rows, heads, widths=None):
+    if not rows:
+        return '  (none)'
+    pal = TABLE_PAL
+    cells = [[tone_cell(term_safe(c), pal) for c in r] for r in rows]
+    cols = list(zip(*([heads] + [[str(c) for c in r] for r in cells])))
+    w = widths or [min(48, max(plain_len(x) for x in col)) for col in cols]
+    head = '  ' + '  '.join(h.upper().ljust(w[i]) for i, h in enumerate(heads))
+    out = [pal.head(head) if pal and pal.on else head]
+    for r in cells:
+        out.append('  ' + '  '.join(plain_pad(_cut(str(c), w[i]), w[i])
+                                    for i, c in enumerate(r)))
+    return '\n'.join(out)
+
+
+class ColourOut(object):
+    """stdout, every line coloured on its way out unless it is already."""
+    LINE_KV = re.compile(r'^(\s*)([A-Za-z][\w .()/\'-]{0,40}?)(:\s+|\s{2,})(\S.*)$')
+
+    def __init__(self, stream, pal):
+        self.s, self.pal, self.buf = stream, pal, ''
+
+    def _line(self, ln):
+        p = self.pal
+        ln = term_safe(ln)
+        if not p.on or not ln.strip() or ANSI.search(ln):
+            return ln
+        m = self.LINE_KV.match(ln)
+        if m and not ln.lstrip().startswith(('$', '#')):
+            return '%s%s%s%s' % (m.group(1), p.info(m.group(2)), m.group(3),
+                                 tone_cell(m.group(4), p))
+        return tone_words(ln, p)
+
+    def write(self, text):
+        self.buf += str(text)
+        if '\n' in self.buf:
+            done, self.buf = self.buf.rsplit('\n', 1)
+            self.s.write('\n'.join(self._line(x) for x in done.split('\n')) + '\n')
+        return len(text)
+
+    def flush(self):
+        if self.buf:
+            self.s.write(self.buf)
+            self.buf = ''
+        self.s.flush()
+
+    def __getattr__(self, name):
+        return getattr(self.s, name)
+
+
+def ask_password(prompt='password', twice=True, env='PLEXMON_PASSWORD'):
+    said = os.environ.get(env) if env else None
+    if said:
+        return said
+    first = getpass.getpass('%s: ' % prompt)
+    if twice:
+        again = getpass.getpass('and again: ')
+        if first != again:
+            raise SystemExit('those two are not the same')
+    return first
+
+
+def not_on_command_line(what, value, how):
+    """A secret written out on the command line is refused (1.0.187): ps, the
+    shell's history and the process accounting all keep it. - asks for it."""
+    if value not in (None, '', '-') and not str(value).startswith('@env'):
+        raise SystemExit('plexmon: %s is not taken on the command line, where ps and the shell\'s '
+                         'history keep it: %s' % (what, how))
+
+
+def ask_secret_value(key):
+    """KEY=- of --set: from PLEXMON_VALUE_<KEY>, else asked (twice), else one line of stdin."""
+    env = 'PLEXMON_VALUE_' + key.upper()
+    if os.environ.get(env):
+        return os.environ[env]
+    if sys.stdin.isatty():
+        return ask_password(key, twice=True, env=None)
+    return sys.stdin.readline().rstrip('\r\n')
+
+
+class HelpfulParser(argparse.ArgumentParser):
+    """An ArgumentParser whose help is isemon's: two columns, in colour.
+    Anything going wrong in the drawing falls back to argparse's own."""
+    palette = None
+
+    def format_help(self):
+        try:
+            return help_text(self, self.palette or Palette(False))
+        except Exception:
+            return super(HelpfulParser, self).format_help()
+
+    def error(self, message):
+        pal = self.palette or Palette(False)
+        sys.stderr.write('%s\n' % pal.bad_line(message))
+        sys.stderr.write(pal.dim('try:  plexmon --help') + '\n')
+        raise SystemExit(2)
+
+
+def help_option_words(action):
+    names = ', '.join(action.option_strings)
+    if action.nargs == 0:
+        return names, ''
+    if action.metavar:
+        meta = ' '.join(action.metavar) if isinstance(action.metavar, tuple) else action.metavar
+    elif action.choices:
+        meta = '{%s}' % ','.join(str(c) for c in action.choices)
+    else:
+        meta = action.dest.upper()
+    if action.nargs in ('+', '*'):
+        meta += ' ...'
+    return names, meta
+
+
+def help_text(parser, pal):
+    """The whole of --help, in the width of this terminal."""
+    import textwrap
+    width = pal.width
+    out = ['%s %s' % (pal.head('plexmon'), pal.bold(__version__)),
+           pal.dim('the Plex server\'s dashboard and its Settings: SMART, temperatures, now '
+                   'playing, the certificates of nginx and Plex, ACME, upgrades'),
+           '',
+           '%s plexmon %s' % (pal.paint('usage:', pal.c_key), pal.dim('[--json] [--no-color] '
+                                                                      '[what to do]')),
+           pal.dim('       with nothing at all it says what it is doing')]
+    every = [a for g in parser._action_groups for a in g._group_actions]
+    left = min(34, max([len(' '.join(x for x in help_option_words(a) if x))
+                        for a in every] or [20]) + 2)
+    for group in parser._action_groups:
+        actions = [a for a in group._group_actions if a.help != argparse.SUPPRESS]
+        if not actions:
+            continue
+        out.append('')
+        out.append(pal.head((group.title or '').upper()))
+        if group.description:
+            for line in textwrap.wrap(group.description, width - 2):
+                out.append('  ' + pal.dim(line))
+        for action in actions:
+            names, meta = help_option_words(action)
+            painted = pal.good(names) + (' ' + pal.warn(meta) if meta else '')
+            says = action.help or ''
+            if (action.default not in (None, False, '', argparse.SUPPRESS)
+                    and action.nargs != 0 and action.default != []
+                    and '[%s]' % action.default not in says):
+                says += ' [%s]' % action.default
+            lines = textwrap.wrap(says, max(24, width - left - 4)) or ['']
+            if plain_len(painted) > left:
+                out.append('  ' + painted)
+                lines_at = 0
+            else:
+                out.append('  %s  %s' % (plain_pad(painted, left), lines[0]))
+                lines_at = 1
+            for more in lines[lines_at:]:
+                out.append('  %s  %s' % (' ' * left, more))
+    out.append('')
+    out.append(pal.head('THINGS PEOPLE ACTUALLY TYPE'))
+    wide = min(36, max(len(c.split('\n')[0]) for c, _ in HELP_EXAMPLES) + 2)
+    for command, says in HELP_EXAMPLES:
+        first, *rest = command.split('\n')
+        if len(first) + 2 > wide:
+            out.append('  ' + pal.info(first) + ('' if rest or not says else ''))
+            for r in rest:
+                out.append('  ' + pal.info(r))
+            if says:
+                out.append('  %s  %s' % (' ' * wide, pal.dim(says)))
+        else:
+            out.append('  %s%s' % (plain_pad(pal.info(first), wide), pal.dim(says)))
+            for r in rest:
+                out.append('  ' + pal.info(r))
+    out.append('')
+    for note in ('the pages are at https://<this machine>/smart/ (the dashboard) and '
+                 '/smart/settings/ (Settings) · the configuration is %s and '
+                 '/etc/plex-status/config.json' % CONFIG_FILE,
+                 'typed with nothing at all it is --status; systemd runs the daemon as '
+                 '--daemon (plexmon.service), and only one runs at a time',
+                 'colour is off when this is piped, and with --no-color or NO_COLOR=1'
+                 + ('' if HAVE_COLORAMA else ' (colorama is not installed; colour is '
+                                             'written by hand)')):
+        for line in textwrap.wrap(note, width - 4):
+            out.append('  ' + pal.dim(line))
+    out.append('')
+    return '\n'.join(out)
+
+
+
+
+def build_parser():
+    p = HelpfulParser(prog='plexmon', add_help=False, allow_abbrev=False,
+                      usage='plexmon [--json] [--no-color] [what to do]',
+                      description='the Plex server\'s dashboard and its Settings',
+                      formatter_class=lambda prog: argparse.RawDescriptionHelpFormatter(
+                          prog, max_help_position=36, width=100))
+    g = p.add_argument_group('EVERYWHERE')
+    g.add_argument('-h', '--help', action='store_true', help='this, and stop')
+    g.add_argument('--version', action='store_true', help='which version this is, and stop')
+    g.add_argument('--no-color', '--no-colour', action='store_true', dest='no_color',
+                   help='plain text, no colour')
+    g.add_argument('--json', action='store_true', help='answer as JSON where it makes sense')
+    g.add_argument('--daemon', action='store_true',
+                   help='run the daemon in the foreground (what systemd starts as '
+                        'plexmon.service); one at a time')
+    g.add_argument('-v', '--debug', action='store_true', help='say everything, this run only')
+    g.add_argument('--yes', action='store_true', help='do it, ask nothing')
+    g = p.add_argument_group('LOOKING', 'Reading what it knows. None of these change anything.')
+    g.add_argument('--status', action='store_true', help='what it is doing, in one screen')
+    g.add_argument('--check', action='store_true',
+                   help='a health check, every part of it: the dashboard\'s whole chain, '
+                        'Settings, nginx, the certificate')
+    g.add_argument('--diag', action='store_true',
+                   help='the dashboard\'s API latency, each disk\'s power state and the '
+                        'settings in force')
+    g.add_argument('--events', action='store_true', help='Settings\' events: sign-ins, '
+                   'changes, certificates, upgrades')
+    g.add_argument('--log', action='store_true', help='the tail of /var/log/plexmon/plexmon.log')
+    g.add_argument('--limit', type=int, default=40, metavar='N', help='how many rows [40]')
+    g.add_argument('--search', metavar='TEXT', default='', help='only rows holding this')
+    g = p.add_argument_group('THE DISKS AND THE DASHBOARD',
+                             'A normal run never wakes a sleeping disk; only --wake does.')
+    g.add_argument('--wake', action='store_true',
+                   help='tell the running daemon to wake the disks and read SMART')
+    g.add_argument('--refresh', action='store_true',
+                   help='read SMART again from the disks already spinning (wakes nothing)')
+    g.add_argument('--oneshot', action='store_true',
+                   help='one collection without the service, a summary, and stop '
+                        '(with --wake: SMART read too)')
+    g = p.add_argument_group('THE TELEVISIONS', 'Apple TV, LG and Samsung remotes '
+                             '(atv_enable in /etc/plex-status/config.json).')
+    g.add_argument('--atv', action='store_true',
+                   help='the televisions known, and which are paired')
+    g.add_argument('--atv-scan', action='store_true', help='search the network again')
+    g.add_argument('--atv-probe', metavar='ADDRESS',
+                   help='what kind of television answers at an address')
+    g.add_argument('--atv-pair', metavar='TV', help='pair with a television (asks for its PIN)')
+    g.add_argument('--atv-key', nargs=2, metavar=('TV', 'KEY'),
+                   help='one raw remote key to a Samsung')
+    g.add_argument('--atv-unpair', metavar='TV', help='forget one television')
+    g.add_argument('--atv-unpair-all', action='store_true', help='forget every television')
+    g = p.add_argument_group('ACCOUNTS OF SETTINGS',
+                             'Straight in the database - they work when nobody can sign in.')
+    g.add_argument('--users', action='store_true', help='who may open Settings')
+    g.add_argument('--add-user', metavar='NAME', help='a new account (the password asked, or '
+                   'PLEXMON_PASSWORD; --role, --note)')
+    g.add_argument('--role', choices=ROLES_ALL, help='with --add-user / --set-role [fulladmin]')
+    g.add_argument('--note', metavar='TEXT', default='', help='with --add-user: a note')
+    g.add_argument('--passwd', metavar='NAME', help='a new password for an account; its '
+                   'sign-ins end')
+    g.add_argument('--set-role', metavar='NAME', help='change the role of an account (--role)')
+    g.add_argument('--disable-user', metavar='NAME', help='it may no longer sign in')
+    g.add_argument('--enable-user', metavar='NAME', help='it may sign in again')
+    g.add_argument('--del-user', metavar='NAME', help='take an account away')
+    g.add_argument('--reset-2fa', metavar='NAME', help='it sets its second step up again')
+    g.add_argument('--admin-2fa', choices=('on', 'off', 'status'),
+                   help='a second step (an authenticator app) for every sign-in to Settings')
+    g.add_argument('--sessions', action='store_true', help='who is signed in to Settings now')
+    g = p.add_argument_group('SETTINGS', 'The same settings as the pages, checked the same way.')
+    g.add_argument('--settings', action='store_true', help='every setting, and where it comes '
+                   'from')
+    g.add_argument('--set', action='append', metavar='KEY=VALUE',
+                   help='change one (KEY=- asks for a secret); as often as you like')
+    g.add_argument('--unset', action='append', metavar='KEY',
+                   help='back to config.json\'s, or the built-in default')
+    g = p.add_argument_group('CERTIFICATES AND TLS',
+                             'The certificate the Plex address answers with (nginx), and Plex '
+                             'Media Server\'s own.')
+    g.add_argument('--cert-status', '--web-status', action='store_true', dest='cert_status',
+                   help='the certificate, its TLS, and whether nginx has it')
+    g.add_argument('--cert-import', nargs='+', metavar='FILE',
+                   help='put a certificate in: PEM files (certificate, key, chain - any order) '
+                        'or one .pfx/.p12 (its password from PLEXMON_PFX_PASSWORD)')
+    g.add_argument('--cert-selfsigned', metavar='NAME', help='a self-signed certificate for NAME')
+    g.add_argument('--tls-preset', choices=sorted(TLS_PRESETS), help='how TLS is spoken')
+    g.add_argument('--tls-dh', choices=sorted(DH_WORDS), help='the DH parameters')
+    g.add_argument('--tls-hsts', type=int, metavar='SECONDS', help='HSTS (0: off)')
+    g.add_argument('--tls-apply', action='store_true',
+                   help='put in again what is kept, now (nginx -t, reload)')
+    g.add_argument('--nginx-adopt', action='store_true',
+                   help='hand the Plex vhost over to plexmon (install.sh does it, once)')
+    g.add_argument('--plex-cert', choices=('on', 'off', 'now', 'status'),
+                   help='Plex Media Server uses the certificate too (its custom certificate)')
+    g = p.add_argument_group('AUTOMATIC CERTIFICATES', 'Let\'s Encrypt or another ACME CA.')
+    g.add_argument('--acme', action='store_true', help='how the certificate by ACME stands')
+    g.add_argument('--acme-order', action='store_true', help='order it now, followed here')
+    g.add_argument('--acme-probe', action='store_true', help='try port 80 as the CA will')
+    g.add_argument('--acme-dns-check', action='store_true',
+                   help='what has to be in your DNS, looked up now')
+    g = p.add_argument_group('UPGRADES', 'Signed packages only (Ed25519, every file checked).')
+    g.add_argument('--upgrade-check', action='store_true',
+                   help='what is at upgrade_url, and whether it is newer')
+    g.add_argument('--upgrade-online', nargs='?', const='', metavar='VERSION',
+                   help='the newest (or VERSION): fetched, checked, put in, followed')
+    g.add_argument('--upgrade-file', metavar='FILE', help='put in a plexmon-X.Y.Z.tar.gz')
+    g.add_argument('--upgrade-status', action='store_true', help='how the last one went')
+    g.add_argument('--upgrade-follow', action='store_true', help='follow one going on')
+    g.add_argument('--upgrade-cancel', action='store_true', help='stop one not yet begun')
+    g.add_argument('--downgrade-check', action='store_true',
+                   help='the older versions there, and which are safe to go back to')
+    g.add_argument('--downgrade', metavar='VERSION|FILE', help='go back to a safe older version')
+    g = p.add_argument_group('THE CONSOLE')
+    g.add_argument('--console', action='store_true', help='plexmon by its menus: the live log, '
+                   'the accounts, the certificates, upgrades')
+    g.add_argument('--console-at-login', choices=('on', 'off', 'status'),
+                   help='the console when root signs in')
+    g.add_argument('--admin-only', action='store_true', help=argparse.SUPPRESS)
+    return p
+
+
+HELP_EXAMPLES = [
+    ('plexmon', 'what it is doing (the same as --status)'),
+    ('plexmon --check', 'every part of it: disks, SMART, the API, nginx, the certificate'),
+    ('plexmon --console', 'everything by its menus'),
+    ('plexmon --wake', 'spin the disks up and read SMART now'),
+    ('plexmon --add-user jan --role fulladmin', 'an account for Settings (password asked)'),
+    ('plexmon --cert-import plex.pem plex.key chain.pem', 'a certificate for nginx'),
+    ('plexmon --set acme=1 --set acme_node_name=plex.example.cz', ''),
+    ('plexmon --acme-order', 'a certificate from Let\'s Encrypt now'),
+    ('plexmon --plex-cert on', 'Plex Media Server takes the certificate too'),
+    ('plexmon --upgrade-online', 'the newest version: fetched, checked, put in'),
+]
+
+
+# ---------------------------------------------------------------------------
+# What the command line does
+# ---------------------------------------------------------------------------
+def out_json(obj):
+    sys.stdout.write(json.dumps(obj, indent=1, default=str, ensure_ascii=False) + '\n')
 
 
 def _daemon_get(path, timeout=10):
@@ -6025,7 +6515,8 @@ def _daemon_get(path, timeout=10):
     req = urllib.request.Request('http://127.0.0.1:%d%s' % (port, path),
                                  headers={'X-Otp-Token': api_token()})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with opener.open(req, timeout=timeout) as r:
             return json.loads(r.read().decode('utf-8'))
     except Exception:                                   # noqa: BLE001
         return None
@@ -6039,118 +6530,262 @@ def service_active(name=SERVICE):
         return '?'
 
 
-def cli_status(store, as_json=False):
-    health = _daemon_get('/api/health')
-    cert = cert_now(nginx_conf_cert_paths()[0])
+DASH_DATA = Path(os.environ.get('PLEXMON_DATA', '/var/www/html/smart/data.json'))
+
+
+def dashboard_state():
+    """What the dashboard's daemon last wrote (data.json): never a disk touched."""
+    try:
+        d = json.loads(DASH_DATA.read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return {}
+    plex = d.get('plex') or {}
+    return {'overall': d.get('overall'), 'generated': d.get('generated'),
+            'age': time.time() - float(d.get('generated') or 0) if d.get('generated') else None,
+            'reasons': [r.get('text') for r in d.get('reasons') or []],
+            'disks': [{'name': x.get('name'), 'model': x.get('model'), 'power': x.get('power'),
+                       'temp': x.get('temp'), 'health': x.get('health')}
+                      for x in d.get('disks') or []],
+            'plex': {'active': plex.get('active'), 'version': plex.get('version'),
+                     'sessions': plex.get('sessions')}}
+
+
+def status_now(store):
+    cert = cert_now(nginx_conf_cert_paths()[0]) or {}
     prof = tls_profile(store, node_name()) or {}
     up = online_view(store).get('online') or {}
-    out = {'version': __version__, 'node': node_name(), 'service': service_active(),
-           'answering': bool(health), 'database': store.db.where(),
-           'accounts': store.counts()['accounts'],
-           'nginx_adopted': nginx_adopted(), 'nginx_site': str(NGINX_SITE),
-           'certificate': {'cn': (cert or {}).get('cn'), 'issuer': (cert or {}).get('issuer'),
-                           'not_after': (cert or {}).get('not_after'), 'how': prof.get('how')},
-           'tls_state': web_status(store).get('state') or '',
-           'acme': bool(CONFIG.get('acme')), 'acme_state': acme_state(store, node_name()),
-           'newer': up.get('newest', {}).get('version') if up.get('newer') else '',
-           'console_at_login': console_login_state(),
-           'plex_cert': plex_view(store)}
-    if as_json:
-        _print_json(out)
-        return 0
-    c = out['certificate']
-    left = int((c['not_after'] - time.time()) / 86400) if c.get('not_after') else None
-    print(PAL.bold('plexmon %s' % __version__) + '  ' + node_name())
-    _kv([('service', (PAL.good if out['service'] == 'active' else PAL.bad)(out['service'])),
-         ('Settings API', PAL.good('answering') if out['answering'] else PAL.bad('not answering')),
-         ('database', out['database']), ('accounts', str(out['accounts'])),
-         ('nginx', ('%s is plexmon\'s' % NGINX_SITE) if out['nginx_adopted'] else
-          PAL.warn('%s not adopted (install.sh --upgrade)' % NGINX_SITE)),
-         ('certificate', '%s, %s%s' % (c.get('cn') or '-', (c.get('issuer') or '-')[:60],
-                                       '' if left is None else (', %d days left' % left))),
-         ('TLS', out['tls_state'] or '-'),
-         ('ACME', ('on' + (', last order failed: %s' % out['acme_state'].get('said')
-                           if out['acme_state'].get('ok') is False else ''))
-          if out['acme'] else 'off'),
-         ('Plex certificate', 'on' if out['plex_cert']['on'] else 'off'),
-         ('newer version', out['newer'] or 'none known'),
-         ('console at login', 'on' if out['console_at_login'] else 'off')])
-    return 0
+    health = _daemon_get('/api/health', 3)
+    problems = []
+    if not health:
+        problems.append('Settings is not answering on 127.0.0.1:%s - systemctl status %s'
+                        % (CONFIG.get('api_port'), SERVICE))
+    if not nginx_adopted():
+        problems.append('%s is not plexmon\'s: its TLS settings and the ACME answers cannot be '
+                        'written (plexmon --nginx-adopt)' % NGINX_SITE)
+    st = web_status(store)
+    if st.get('state') == 'failed':
+        problems.append('the certificate could not be put in: %s' % (st.get('said') or ['?'])[-1])
+    left = None
+    if cert.get('not_after'):
+        left = int((cert['not_after'] - time.time()) / 86400)
+        if left < 14:
+            problems.append('the certificate of %s %s' % (cert.get('cn') or '?', (
+                'ran out' if left < 0 else 'runs out in %d days' % left)))
+    ac = acme_state(store, node_name())
+    if CONFIG.get('acme') and ac.get('ok') is False:
+        problems.append('the last order from the ACME CA failed: %s' % ac.get('said'))
+    dash = dashboard_state()
+    if dash.get('age') is not None and dash['age'] > 600:
+        problems.append('the dashboard has written nothing for %s' % human_span(dash['age']))
+    plan = upgrade_plan(store)
+    return {'version': __version__, 'node': node_name(), 'host': socket.gethostname(),
+            'service': service_active(), 'daemon_alive': bool(health),
+            'database': store.db.where(), 'counts': store.counts(),
+            'dashboard': dash, 'nginx_adopted': nginx_adopted(), 'nginx_site': str(NGINX_SITE),
+            'certificate': {'cn': cert.get('cn'), 'issuer': cert.get('issuer'),
+                            'not_after': cert.get('not_after'), 'days_left': left,
+                            'how': prof.get('how'), 'file': str(nginx_conf_cert_paths()[0])},
+            'tls': {'state': st.get('state') or '', 'preset': prof.get('preset')},
+            'acme': {'on': bool(CONFIG.get('acme')), 'state': ac},
+            'plex_cert': plex_view(store),
+            'upgrade': {'newer': (up.get('newest') or {}).get('version') if up.get('newer')
+                        else '', 'plan': plan['state'] if plan else ''},
+            'console_at_login': console_login_state(), 'problems': problems,
+            'nodes': [{'name': node_name(), 'alive': True}]}
 
 
-def cli_users(store, as_json=False):
-    rows = store.accounts()
-    if as_json:
-        _print_json(rows)
+def cli_status(store, pal, as_json, check=False, mon=None):
+    s = status_now(store)
+    if as_json and not check:
+        out_json(s)
         return 0
+    if as_json and check:
+        lines = []
+        bad = _settings_checks(store, s, lambda ok, t: lines.append(('ok ' if ok else 'FAIL ') + t))
+        out_json(dict(s, check={'ok': not bad, 'exit': 1 if bad else 0, 'lines': lines}))
+        return 1 if bad else 0
+    print(pal.head('plexmon %s on %s' % (__version__, s['host'])))
+    print((pal.ok_line if s['service'] == 'active' else pal.bad_line)(
+        '%s.service is %s' % (SERVICE, s['service'])))
+    print((pal.ok_line if s['daemon_alive'] else pal.bad_line)(
+        'Settings %s' % ('answers on 127.0.0.1:%s' % CONFIG.get('api_port') if s['daemon_alive']
+                         else 'is not answering - systemctl status %s' % SERVICE)))
+    d = s['dashboard']
+    if d:
+        tone = {'ok': pal.ok_line, 'warn': pal.warn_line}.get(d.get('overall'), pal.bad_line)
+        print(tone('the dashboard: %s, %d disk(s), written %s ago' % (
+            {'ok': 'all is well', 'warn': 'a warning', 'crit': 'critical'}.get(
+                d.get('overall'), d.get('overall') or '?'), len(d.get('disks') or []),
+            human_span(d.get('age') or 0))))
+        for r in d.get('reasons') or []:
+            print('    ' + pal.warn(r))
+        px = d.get('plex') or {}
+        print('  Plex Media Server: %s%s, %s stream(s)' % (
+            'running' if px.get('active') else 'stopped',
+            (' ' + px['version']) if px.get('version') else '', px.get('sessions') or 0))
+    else:
+        print(pal.warn_line('the dashboard has written nothing yet (%s)' % DASH_DATA))
+    c = s['certificate']
+    if c.get('cn'):
+        print('  certificate: %s, from %s, %s' % (
+            c['cn'], re.sub(r'^.*?CN=([^,]+).*$', r'\1', c.get('issuer') or '?'),
+            ('%d days left' % c['days_left']) if c.get('days_left') is not None else '?'))
+    print('  nginx: %s' % ('%s is plexmon\'s, TLS %s' % (NGINX_SITE, s['tls']['state'] or '-')
+                           if s['nginx_adopted'] else 'not adopted'))
+    print('  ACME: %s · Plex\'s own certificate: %s · console at login: %s' % (
+        'on' if s['acme']['on'] else 'off', 'on' if s['plex_cert']['on'] else 'off',
+        'on' if s['console_at_login'] else 'off'))
+    print('  database: %s · accounts %d · signed in %d' % (
+        s['database'], s['counts']['accounts'], s['counts']['sessions']))
+    if s['upgrade']['newer']:
+        print(pal.warn_line('plexmon %s is out - plexmon --upgrade-online' % s['upgrade']['newer']))
+    for p in s['problems']:
+        print(pal.bad_line(p))
+    bad = 0
+    if check:
+        if mon is not None:
+            print(pal.head('the dashboard\'s whole chain'))
+            sys.stdout.flush()
+            try:
+                bad += 1 if mon.check() else 0
+            except Exception as e:                      # noqa: BLE001
+                print(pal.bad_line('the dashboard\'s check broke: %s' % e))
+                bad += 1
+        print(pal.head('Settings, nginx and the certificate'))
+        bad += _settings_checks(store, s, lambda ok, t: print((pal.ok_line if ok else
+                                                               pal.bad_line)(t)))
+    return 0 if s['daemon_alive'] and not s['problems'] and not bad else 1
+
+
+def _settings_checks(store, s, say):
+    bad = 0
+
+    def one(ok, text):
+        say(ok, text)
+        return 0 if ok else 1
+    key = sealing_key_path()
+    bad += one(key.is_file(), 'the key secrets are sealed with: %s' % key)
+    try:
+        store.db.value('SELECT 1')
+        bad += one(True, 'the database: %s' % store.db.where())
+    except Exception as e:                              # noqa: BLE001
+        bad += one(False, 'the database: %s' % e)
+    bad += one(bool(store.fulladmins_left()), 'a full administrator can sign in to Settings')
+    ok, said = nginx_test()
+    bad += one(ok, 'nginx -t: %s' % (said or 'ok'))
+    bad += one(nginx_adopted(), '%s is plexmon\'s' % NGINX_SITE)
+    c = s['certificate']
+    if c.get('cn'):
+        bad += one((c.get('days_left') or 0) >= 14, 'the certificate %s: %s days left'
+                   % (c['cn'], c.get('days_left')))
+    bad += one(TOKEN_FILE.exists(), 'the token of the pages: %s' % TOKEN_FILE)
+    bad += one(UPGRADE_HELPER.exists() and UPGRADE_PATH_UNIT.exists(),
+               'upgrades from the pages: %s and plexmon-upgrade.path' % UPGRADE_HELPER)
+    keys = sorted((LIB_DIR / 'release-keys').glob('*.pub'))
+    bad += one(bool(keys), 'release keys: %s' % (', '.join(k.name for k in keys) or 'none'))
+    return bad
+
+
+def cli_users(store, pal, as_json):
     mfa = mfa_all(store)
-    if not rows:
-        print('  no account yet: plexmon --add-user NAME --role fulladmin')
+    rows = store.accounts()
     for u in rows:
-        print('  %-24s %-10s %-4s %s%s' % (u['name'], ROLE_WORDS.get(u['role'], u['role']),
-                                           'off' if u['disabled'] else 'on',
-                                           ('2FA ' if mfa.get(u['name'].lower()) else ''),
-                                           ('last in %s from %s' % (stamp(u['last_in']),
-                                                                    u['last_from'])
-                                            if u.get('last_in') else 'never signed in')))
-    return 0
-
-
-def cli_settings(store, as_json=False):
-    a = Admin.__new__(Admin)
-    a.store = store
-    rows = a.settings_state(True)
+        u['mfa'] = mfa.get(u['name'].lower())
     if as_json:
-        _print_json(rows)
+        out_json({'users': rows, 'mfa_on': bool(CONFIG.get('admin_2fa'))})
         return 0
-    for pane, keys in PANES.items():
-        print(PAL.bold(pane))
-        for k in keys:
-            s = next(x for x in rows if x['key'] == k)
-            v = s['value']
-            print('  %-24s %-30s %s' % (k, json.dumps(v, ensure_ascii=False)[:30],
-                                        PAL.dim(s['source_says'])))
+    print(table([(u['name'], u['role'], 'off' if u['disabled'] else 'on',
+                  'app' if u.get('mfa') else '-', stamp(u['last_in']) if u.get('last_in')
+                  else 'never', u.get('last_from') or '-', u.get('note') or '')
+                 for u in rows],
+                ['account', 'role', 'state', '2nd step', 'last in', 'from', 'note']))
+    print(pal.dim('  the second step of signing in is %s (plexmon --admin-2fa on|off)'
+                  % ('ON' if CONFIG.get('admin_2fa') else 'off')))
     return 0
 
 
-def cli_cert(store, as_json=False):
+def cli_settings(store, pal, as_json):
+    adm = _bare(store)
+    rows = adm.settings_state(True)
+    if as_json:
+        out_json({'settings': rows, 'panes': PANES})
+        return 0
+    by = {r['key']: r for r in rows}
+    for pane, words in PANE_TITLES:
+        print(pal.head(words))
+        tbl = []
+        for k in PANES.get(pane, []):
+            r = by[k]
+            v = r['value']
+            shown = ('set' if r.get('set') else 'not set') if r['secret'] else (
+                'on' if v is True else 'off' if v is False else str(v))
+            tbl.append((k, shown, r['source_says']))
+        print(table(tbl, ['key', 'value', 'from'], [26, 40, 24]))
+    return 0
+
+
+PANE_TITLES = [('people', 'Accounts'), ('web', 'Certificates and TLS'),
+               ('acme', 'Automatic certificates'), ('upgrade', 'Upgrades'),
+               ('about', 'About and debugging')]
+
+
+def cli_cert(store, pal, as_json):
     prof = tls_profile(store, node_name()) or {}
     st = web_state(store)
-    out = {'kept': tls_view(prof), 'nginx': st}
     if as_json:
-        _print_json(out)
+        out_json({'kept': tls_view(prof), 'nginx': st, 'plex': plex_view(store),
+                  'acme_care': acme_care(store, node_name())})
         return 0
     info = prof.get('info') or st.get('cert_now') or {}
-    _kv([('name', info.get('cn') or '-'), ('names', ', '.join(info.get('san') or []) or '-'),
-         ('issued by', info.get('issuer') or '-'),
-         ('valid until', stamp(info.get('not_after'))), ('key', info.get('key') or '-'),
-         ('how', prof.get('how') or 'not kept here'),
-         ('TLS', prof.get('preset') or '-'), ('in nginx', st.get('cert_file')),
-         ('state', st.get('state') or '-'), ('said', '; '.join(st.get('said') or []) or '-')])
+    left = int((info['not_after'] - time.time()) / 86400) if info.get('not_after') else None
+    print(pal.head('the certificate of %s' % (info.get('cn') or node_name())))
+    print('  names:       %s' % (', '.join(info.get('san') or []) or '-'))
+    print('  issued by:   %s' % (info.get('issuer') or '-'))
+    print('  valid until: %s%s' % (stamp(info.get('not_after')),
+                                   '  (%d days left)' % left if left is not None else ''))
+    print('  key:         %s' % (info.get('key') or '-'))
+    print('  how:         %s' % (prof.get('how') or 'not kept here'))
+    print('  TLS:         %s, DH %s, HSTS %s' % (prof.get('preset') or '-', prof.get('dh') or
+                                                  'none', prof.get('hsts') or 'off'))
+    print('  in nginx:    %s (%s)' % (st.get('cert_file'), 'adopted' if st.get('adopted')
+                                      else 'NOT adopted'))
+    print('  ACME:        %s' % ('renews it' if acme_care(store, node_name()) and
+                                 CONFIG.get('acme') else 'leaves it alone'))
+    state = st.get('state') or '-'
+    print(((pal.ok_line if state == 'done' else pal.bad_line if state == 'failed'
+            else pal.warn_line)('%s%s' % (state, (': ' + '; '.join(st.get('said') or []))
+                                          if st.get('said') else ''))))
+    pv = plex_view(store)
+    print('  Plex Media Server: %s%s' % ('takes it' if pv['on'] else 'its own certificate',
+                                         (' (%s for %s)' % (pv['path'], pv['domain']))
+                                         if pv.get('ours') else ''))
     return 0
 
 
-def cli_cert_import(store, cert, key, chain=''):
-    got = cert_bundle(Path(cert).read_text(), Path(key).read_text() if key else '',
-                      Path(chain).read_text() if chain else '')
+def _put_cert(store, got, how, by):
     prof = tls_profile(store, node_name()) or {}
     prof.update(cert=got['cert'], chain=got['chain'], root=got['root'],
                 key=seal_secret(got['key'], 'web:tls'), info=got['info'],
                 chain_info=got['chain_info'], root_info=got['root_info'], verify=got['verify'],
-                how='uploaded')
+                how=how)
+    prof.pop('pending_key', None)
+    prof.pop('csr', None)
     prof.setdefault('preset', 'standard')
     prof.setdefault('dh', 'none')
     prof.setdefault('hsts', 0)
-    tls_save(store, node_name(), prof, 'root (command line)')
-    acme_care_set(store, node_name(), False, 'root', 'a certificate was put in by hand')
-    store.add_event('settings', 'root put a certificate in on the command line: %s'
-                    % got['info'].get('subject'), 'warn', who='root')
+    tls_save(store, node_name(), prof, by)
+    acme_care_set(store, node_name(), False, by, 'a certificate was put in by hand')
+    store.add_event('settings', '%s put a certificate in: %s (until %s)' % (
+        by, got['info'].get('subject'), stamp(got['info'].get('not_after'))), 'warn', who=by)
+
+
+def _apply_now(store):
     with WEB_LOCK:
         web_apply(store)
-    return cli_cert(store)
+    return web_status(store)
 
 
-def cli_upgrade_follow(store):
+def cli_upgrade_follow(store, pal):
     last = None
     while True:
         plan = upgrade_plan(store)
@@ -6159,342 +6794,15 @@ def cli_upgrade_follow(store):
             return 0
         st = plan['steps'][0]
         line = '%s → %s: %s %s' % (node_name(), plan['version'], st.get('state'),
-                                   st.get('said') or '')
+                                   st.get('part_words') or st.get('said') or '')
         if line != last:
-            print(line)
+            print(pal.dim(time.strftime('%H:%M:%S')) + '  ' + line)
             last = line
         if plan['state'] in ('done', 'failed', 'cancelled'):
+            print((pal.ok_line if plan['state'] == 'done' else pal.bad_line)(
+                'the upgrade to %s: %s' % (plan['version'], plan['state'])))
             return 0 if plan['state'] == 'done' else 1
         time.sleep(2)
-
-
-def cli_main(argv):
-    ap = argparse.ArgumentParser(prog='plexmon', description='plexmon Settings on the command '
-                                 'line - the same database as the pages. The dashboard\'s own '
-                                 'options (--check, --diag, --wake, --atv...) are plexmon.py\'s.')
-    ap.add_argument('--json', action='store_true', help='answer in JSON')
-    ap.add_argument('--no-color', action='store_true')
-    ap.add_argument('--yes', action='store_true', help='do not ask')
-    g = ap.add_argument_group('what it is doing')
-    g.add_argument('--status', action='store_true', help='Settings in one screen')
-    g.add_argument('--version', action='store_true')
-    g.add_argument('--events', nargs='?', const=50, type=int, metavar='N')
-    g.add_argument('--log', nargs='?', const=100, type=int, metavar='N',
-                   help='the tail of /var/log/plexmon/plexmon.log')
-    g = ap.add_argument_group('accounts of Settings')
-    g.add_argument('--users', action='store_true')
-    g.add_argument('--add-user', metavar='NAME')
-    g.add_argument('--role', metavar='ROLE', choices=ROLES_ALL, help='fulladmin or readonly')
-    g.add_argument('--passwd', metavar='NAME', help='a new password (asked, or from stdin)')
-    g.add_argument('--set-role', nargs=2, metavar=('NAME', 'ROLE'))
-    g.add_argument('--del-user', metavar='NAME')
-    g.add_argument('--disable-user', metavar='NAME')
-    g.add_argument('--enable-user', metavar='NAME')
-    g.add_argument('--reset-2fa', metavar='NAME')
-    g.add_argument('--sessions', action='store_true')
-    g = ap.add_argument_group('settings')
-    g.add_argument('--settings', action='store_true')
-    g.add_argument('--set', metavar='KEY=VALUE', action='append')
-    g.add_argument('--unset', metavar='KEY', action='append')
-    g = ap.add_argument_group('certificates and TLS')
-    g.add_argument('--cert-status', action='store_true')
-    g.add_argument('--cert-import', nargs='+', metavar='FILE', help='CERT KEY [CHAIN] (PEM)')
-    g.add_argument('--cert-selfsigned', metavar='NAME')
-    g.add_argument('--tls-apply', action='store_true', help='put in what is kept, now')
-    g.add_argument('--nginx-adopt', action='store_true',
-                   help='hand the Plex vhost over to plexmon (install.sh does it)')
-    g.add_argument('--plex-cert', choices=('on', 'off', 'now'),
-                   help='Plex Media Server uses the certificate too')
-    g = ap.add_argument_group('automatic certificates (ACME)')
-    g.add_argument('--acme-status', action='store_true')
-    g.add_argument('--acme-order', action='store_true', help='order it now, followed here')
-    g.add_argument('--acme-probe', action='store_true', help='try port 80 as the CA will')
-    g = ap.add_argument_group('upgrades')
-    g.add_argument('--upgrade-check', action='store_true')
-    g.add_argument('--upgrade-online', nargs='?', const='', metavar='VERSION')
-    g.add_argument('--upgrade-file', metavar='FILE')
-    g.add_argument('--upgrade-status', action='store_true')
-    g.add_argument('--upgrade-follow', action='store_true')
-    g.add_argument('--upgrade-cancel', action='store_true')
-    g.add_argument('--downgrade-check', action='store_true')
-    g.add_argument('--downgrade', metavar='VERSION|FILE')
-    g = ap.add_argument_group('the console')
-    g.add_argument('--console', action='store_true', help='plexmon by its menus')
-    g.add_argument('--console-at-login', choices=('on', 'off', 'status'))
-    g.add_argument('--admin-only', action='store_true',
-                   help='Settings alone, without the dashboard\'s daemon (for tests)')
-    a = ap.parse_args(argv)
-    if a.no_color:
-        PAL.on = False
-    if a.version:
-        print('plexmon %s' % __version__)
-        return 0
-    if a.console:
-        return console_main()
-    if a.admin_only:
-        _LOG_TO_STDERR[0] = True
-        adm = Admin()
-        adm.start()
-        try:
-            while True:
-                time.sleep(3600)
-        except KeyboardInterrupt:
-            return 0
-    store = open_store()
-    by = 'root (command line)'
-    if a.status:
-        return cli_status(store, a.json)
-    if a.events is not None:
-        rows, _n = store.events(a.events)
-        if a.json:
-            _print_json(rows)
-        for r in reversed(rows):
-            print('%s  %-22s %s%s' % (stamp(r['ts']), r['kind'], r['words'],
-                                      PAL.dim(' (%s)' % r['who']) if r['who'] else ''))
-        return 0
-    if a.log is not None:
-        for ln in log_tail(a.log):
-            print(ln)
-        return 0
-    if a.users:
-        return cli_users(store, a.json)
-    if a.add_user:
-        pw = _ask_password('a password for %s' % a.add_user)
-        store.add_account(a.add_user, a.role or 'fulladmin', pw, note='made on the command line',
-                          must_change=0)
-        store.add_event('accounts', 'root made the account %s (%s) on the command line'
-                        % (a.add_user, a.role or 'fulladmin'), who='root')
-        print('the account %s is made (%s)' % (a.add_user, ROLE_WORDS[a.role or 'fulladmin']))
-        return 0
-    if a.passwd:
-        pw = _ask_password('a new password for %s' % a.passwd)
-        store.set_account(a.passwd, password=pw, must_change=0)
-        store.db.run("DELETE FROM sessions WHERE kind = 'admin' AND LOWER(name) = ?",
-                     (a.passwd.lower(),))
-        store.add_event('accounts', 'root set a new password for %s on the command line'
-                        % a.passwd, 'warn', who='root')
-        print('the password of %s is set; their sign-ins are ended' % a.passwd)
-        return 0
-    if a.set_role:
-        name, role = a.set_role
-        if role not in ROLES_ALL:
-            raise SystemExit('plexmon: the role is fulladmin or readonly')
-        store.set_account(name, role=role)
-        store.add_event('accounts', 'root made %s %s' % (name, ROLE_WORDS[role]), who='root')
-        print('%s is %s' % (name, ROLE_WORDS[role]))
-        return 0
-    for flag, act in ((a.del_user, 'delete'), (a.disable_user, 'disable'),
-                      (a.enable_user, 'enable')):
-        if flag:
-            acc = store.account(flag)
-            if not acc:
-                raise SystemExit('plexmon: there is no account called %s' % flag)
-            if act in ('delete', 'disable') and acc['role'] == 'fulladmin' and \
-                    not store.fulladmins_left(but=flag) and not a.yes:
-                raise SystemExit('plexmon: that is the last full administrator (--yes to do it '
-                                 'anyway)')
-            if act == 'delete':
-                store.drop_account(flag)
-            else:
-                store.set_account(flag, disabled=1 if act == 'disable' else 0)
-                if act == 'disable':
-                    store.db.run("DELETE FROM sessions WHERE kind = 'admin' AND LOWER(name) = ?",
-                                 (flag.lower(),))
-            store.add_event('accounts', 'root: %s %s' % (act, flag), 'warn', who='root')
-            print('%s: %s' % (flag, act))
-            return 0
-    if a.reset_2fa:
-        had = mfa_reset(store, a.reset_2fa, 'root')
-        store.db.run("DELETE FROM sessions WHERE kind = 'admin' AND LOWER(name) = ?",
-                     (a.reset_2fa.lower(),))
-        print('the second step of %s is reset' % a.reset_2fa if had else
-              '%s had no second step set up' % a.reset_2fa)
-        return 0
-    if a.sessions:
-        rows = store.sessions()
-        if a.json:
-            _print_json(rows)
-        for s in rows:
-            print('  %-20s %-16s since %s, last %s' % (s['name'], s['ip'], stamp(s['created']),
-                                                       stamp(s['last'])))
-        return 0
-    if a.settings:
-        return cli_settings(store, a.json)
-    if a.set or a.unset:
-        adm = Admin.__new__(Admin)
-        adm.store = store
-        changes = {}
-        for kv in a.set or []:
-            k, _, v = kv.partition('=')
-            changes[k.strip()] = v
-        for k in a.unset or []:
-            if k not in DEFAULTS:
-                raise SystemExit('plexmon: %s is not a setting this version knows' % k)
-            store.drop_setting(k)
-            print('%s: back to %s' % (k, json.dumps(FILE_CONFIG.get(k, DEFAULTS[k]))))
-        if changes:
-            try:
-                print(adm.save_settings(changes, by=by)['message'])
-            except BadSetting as e:
-                raise SystemExit('plexmon: %s' % e)
-        return 0
-    if a.cert_status:
-        return cli_cert(store, a.json)
-    if a.cert_import:
-        files = a.cert_import + ['', '']
-        return cli_cert_import(store, files[0], files[1], files[2])
-    if a.cert_selfsigned:
-        key, crt = make_selfsigned(a.cert_selfsigned, [], 825)
-        got = cert_bundle(crt, key)
-        prof = tls_profile(store, node_name()) or {}
-        prof.update(cert=got['cert'], chain='', root='', key=seal_secret(got['key'], 'web:tls'),
-                    info=got['info'], chain_info=[], root_info=[], verify='',
-                    how='self-signed, made here')
-        prof.setdefault('preset', 'standard')
-        prof.setdefault('dh', 'none')
-        prof.setdefault('hsts', 0)
-        tls_save(store, node_name(), prof, by)
-        with WEB_LOCK:
-            web_apply(store)
-        return cli_cert(store)
-    if a.tls_apply:
-        store.set_meta('web:retry:' + node_name(), str(time.time()))
-        st = web_status(store)
-        st.pop('hash', None)
-        store.set_meta('web:state:' + node_name(), json.dumps(st))
-        with WEB_LOCK:
-            web_apply(store)
-        return cli_cert(store)
-    if a.nginx_adopt:
-        changed, said = nginx_adopt()
-        print(said)
-        return 0 if changed or 'already' in said else 1
-    if a.plex_cert:
-        if a.plex_cert == 'off':
-            store.drop_setting('plex_cert')
-            store.add_event('settings', 'root: Plex Media Server no longer takes plexmon\'s '
-                            'certificate', who='root')
-            print(plex_cert_off(store, by))
-            return 0
-        if a.plex_cert == 'on':
-            Admin.save_settings(_bare(store), {'plex_cert': 1}, by=by)
-        prof = tls_profile(store, node_name()) or {}
-        if not prof.get('cert'):
-            raise SystemExit('plexmon: no certificate is kept here yet')
-        print(plex_cert_apply(store, tls_resolved(prof), prof))
-        return 0
-    if a.acme_status:
-        v = acme_view(store)
-        if a.json:
-            _print_json(v)
-            return 0
-        t = v['targets'][0]
-        _kv([('ACME', 'on' if v['on'] else 'off'), ('CA', v['directory']),
-             ('for', t.get('name') or '-'), ('how', v['challenge']),
-             ('issued by', t.get('issuer') or '-'), ('until', stamp(t.get('not_after'))),
-             ('renews it', 'yes' if t.get('care') else 'no'),
-             ('last', ('failed: %s' % t['state'].get('said')) if t['state'].get('ok') is False
-              else (stamp(t['state'].get('ordered_at')) if t['state'].get('ordered_at')
-                    else 'never'))])
-        return 0
-    if a.acme_order:
-        if not CONFIG.get('acme'):
-            raise SystemExit('plexmon: ACME is off - plexmon --set acme=1 first')
-        t = node_name()
-        name = acme_name_of(store, t)
-        acme_care_set(store, t, True, by, 'ordered on the command line')
-        try:
-            acme_order(store, t, name, by, lambda w: print('  ' + PAL.dim(w)))
-        except AcmeError as e:
-            print(PAL.bad('no certificate: %s' % e))
-            return 1
-        with WEB_LOCK:
-            web_apply(store)
-        print(PAL.good('the certificate for %s came and is in place' % name))
-        return 0
-    if a.acme_probe:
-        r = acme_probe(store, node_name())
-        print(('%s  %s' % (PAL.good('ok') if r['ok'] else PAL.bad('no'), r.get('said'))))
-        return 0 if r['ok'] else 1
-    if a.upgrade_check:
-        row = online_look(store, by)
-        if row.get('error'):
-            print(PAL.bad('%s: %s' % (row['url'], row['error'])))
-            return 1
-        n = row.get('newest') or {}
-        print('%s: newest %s, here %s%s' % (row['url'], n.get('version') or '-', __version__,
-                                            PAL.good(' - newer') if row.get('newer') else ''))
-        return 0
-    if a.upgrade_online is not None:
-        row = online_look(store, by)
-        want = a.upgrade_online or ((row.get('newest') or {}).get('version') if row.get('newer')
-                                    else '')
-        if not want:
-            print('nothing newer than %s at %s' % (__version__, online_url()))
-            return 0
-        if not a.yes and sys.stdin.isatty():
-            if input('  upgrade to plexmon %s? (y/N) ' % want).strip().lower() not in ('y',
-                                                                                      'yes'):
-                return 1
-        meta = online_fetch(store, want, by)
-        print('plexmon %s fetched and checked (signed by %s)' % (meta['version'],
-                                                                 meta.get('signed_by')))
-        upgrade_start(store, by)
-        UPGRADE_WAKE.set()
-        print('the upgrade has begun - the service puts it in within seconds')
-        return cli_upgrade_follow(store)
-    if a.upgrade_file:
-        info = upgrade_inspect(a.upgrade_file)
-        if info.get('older'):
-            raise SystemExit('plexmon: %s is older than %s - plexmon --downgrade FILE'
-                             % (info['version'], __version__))
-        upgrade_store_package(store, a.upgrade_file, info, by)
-        upgrade_start(store, by)
-        return cli_upgrade_follow(store)
-    if a.upgrade_status:
-        v = upgrade_view(store)
-        if a.json:
-            _print_json(v)
-            return 0
-        p = v['plan']
-        print('plexmon %s; package: %s; upgrade: %s' % (
-            __version__, (v['package'] or {}).get('version') or '-',
-            ('%s to %s - %s' % (p['state'], p['version'], p['steps'][0].get('said') or ''))
-            if p else 'none'))
-        return 0
-    if a.upgrade_follow:
-        return cli_upgrade_follow(store)
-    if a.upgrade_cancel:
-        upgrade_cancel(store, by)
-        print('stopped')
-        return 0
-    if a.downgrade_check:
-        g = downgrade_list(store)
-        print('here %s; it may go back to %s or newer' % (g['here'], g['lowest']))
-        for v in g['versions']:
-            print('  %-10s %s' % (v['version'], PAL.good('yes') if not v['why'] else
-                                  PAL.bad('no: ' + '; '.join(v['why']))))
-        return 0
-    if a.downgrade:
-        if os.path.exists(a.downgrade):
-            info = upgrade_inspect(a.downgrade)
-            why = downgrade_why_not(store, info['version'])
-            if why:
-                raise SystemExit('plexmon: %s' % '; '.join(why))
-            upgrade_store_package(store, a.downgrade, info, by, downgrade=True)
-        else:
-            online_fetch(store, a.downgrade, by, older=True)
-        upgrade_start(store, by)
-        return cli_upgrade_follow(store)
-    if a.console_at_login:
-        if a.console_at_login != 'status':
-            console_login_set(a.console_at_login == 'on', 'root')
-            store.add_event('settings', 'root switched the console at login %s'
-                            % a.console_at_login, who='root')
-        on = console_login_state()
-        print('the console at login is %s' % ('on' if on else 'off'))
-        return 0 if on or a.console_at_login != 'status' else 3
-    return cli_status(store, a.json)
 
 
 def _bare(store):
@@ -6503,557 +6811,2840 @@ def _bare(store):
     return adm
 
 
-ADMIN_FLAGS = ('--status', '--version', '--events', '--log', '--users', '--add-user',
-               '--passwd', '--set-role', '--del-user', '--disable-user', '--enable-user',
-               '--reset-2fa', '--sessions', '--settings', '--set', '--unset', '--cert-status',
-               '--cert-import', '--cert-selfsigned', '--tls-apply', '--nginx-adopt',
-               '--plex-cert', '--acme-status', '--acme-order', '--acme-probe', '--upgrade-check',
-               '--upgrade-online', '--upgrade-file', '--upgrade-status', '--upgrade-follow',
-               '--upgrade-cancel', '--downgrade-check', '--downgrade', '--console',
-               '--console-at-login', '--admin-only', '--json')
+def _confirm(args, words):
+    if args.yes or not sys.stdin.isatty():
+        return True
+    try:
+        return input('  %s (y/N) ' % words).strip().lower() in ('y', 'yes', 'a', 'ano')
+    except EOFError:
+        return False
 
 
-def wants_admin(argv):
-    return any(a.split('=')[0] in ADMIN_FLAGS for a in argv)
+MONITOR_FLAGS = ('wake', 'refresh', 'oneshot', 'diag', 'atv', 'atv_scan', 'atv_probe',
+                 'atv_pair', 'atv_key', 'atv_unpair', 'atv_unpair_all')
 
 
-# ---------------------------------------------------------------------------
-# The console: plexmon run by its menus, on the server's own screen (as otp's)
-# ---------------------------------------------------------------------------
-# `plexmon --console` - and, with `plexmon --console-at-login on`, what root sees
-# first after signing in at the console or over SSH. Every action is the
-# `plexmon ...` command its window names, run as it would be typed; q leaves
-# it for the shell, ! opens a shell and comes back.
-class ConsoleBack(Exception):
-    pass
+def cli_main(argv=None, mon=None):
+    """plexmon on the command line. `mon` is plexmon.py - the dashboard's daemon -
+    for --daemon, --check, --wake, --atv and the rest of its own."""
+    global TABLE_PAL
+    said = list(sys.argv[1:] if argv is None else argv)
+    parser = build_parser()
+    pal = Palette(colour_wanted(any(x in ('--no-color', '--no-colour') for x in said))
+                  and '--json' not in said)
+    parser.palette = pal
+    TABLE_PAL = pal
+    args = parser.parse_args(said)
+    if (pal.on or sys.stdout.isatty()) and not args.console and not args.json and \
+            not args.daemon and not isinstance(sys.stdout, ColourOut):
+        sys.stdout = ColourOut(sys.stdout, pal)
+    if args.help:
+        sys.stdout.write(parser.format_help())
+        return 0
+    if args.version:
+        print('%s %s%s' % (pal.head('plexmon'), pal.bold(__version__), '' if HAVE_COLORAMA
+                           else pal.dim('  (colorama is not installed; colour is written by '
+                                        'hand)')))
+        return 0
+    acted = any(v is not None and v is not False and v != [] and v != ''
+                for k, v in vars(args).items()
+                if k not in ('no_color', 'json', 'debug', 'limit', 'search', 'role', 'note',
+                             'yes'))
+    # Nothing asked for: under systemd (an older unit starts plexmon.py bare)
+    # that is the daemon; typed by somebody - or by a script - it is the
+    # question they meant, what is it doing, never a second daemon.
+    if args.daemon or (not acted and os.environ.get('INVOCATION_ID') and not args.json):
+        if mon is None:
+            raise SystemExit('plexmon: the daemon is plexmon.py --daemon')
+        return mon.run_daemon(debug=args.debug)
+    if args.admin_only:
+        _LOG_TO_STDERR[0] = True
+        adm = Admin()
+        adm.start()
+        try:
+            while True:
+                time.sleep(3600)
+        except KeyboardInterrupt:
+            return 0
+    if not acted:
+        args.status = True
+        if not args.json:
+            print(pal.dim('(plexmon --help for everything it does; the daemon itself is '
+                          'systemctl status %s)' % SERVICE))
+    _LOG_TO_STDERR[0] = False
+    if any(getattr(args, k) not in (None, False) for k in MONITOR_FLAGS):
+        if mon is None:
+            raise SystemExit('plexmon: that is the dashboard\'s daemon\'s: plexmon.py')
+        return mon.monitor_cli(args)
+    if args.console_at_login:
+        if args.console_at_login != 'status':
+            on = console_login_set(args.console_at_login == 'on')
+            print(pal.ok_line('the plexmon console opens when root signs in at the console or '
+                              'over SSH (q leaves it for the shell)' if on else
+                              'root signs in to the ordinary shell; `plexmon --console` opens '
+                              'the console'))
+        else:
+            print(pal.ok_line('the console at login is %s' % ('ON' if console_login_state()
+                                                                else 'off')))
+        return 0
+    if args.console:
+        return console_main(pal)
+    store = open_store()
+    by = 'root (command line)'
+    if args.status or args.check:
+        return cli_status(store, pal, args.json, args.check, mon)
+    if args.events:
+        rows, total = store.events(args.limit, 0, args.search)
+        if args.json:
+            out_json({'rows': rows, 'total': total})
+            return 0
+        print(table([(stamp(r['ts']), r['kind'], r['who'] or '-', r['words'])
+                     for r in reversed(rows)], ['when', 'kind', 'who', 'what'],
+                    [19, 22, 16, max(30, pal.width - 66)]))
+        print(pal.dim('  %d of %d' % (len(rows), total)))
+        return 0
+    if args.log:
+        lines = log_tail(max(args.limit, 1))
+        if args.search:
+            lines = [ln for ln in lines if args.search.lower() in ln.lower()]
+        if args.json:
+            out_json({'lines': lines, 'file': str(LOG_FILE)})
+            return 0
+        for ln in lines:
+            print(ln)
+        return 0
+    if args.users:
+        return cli_users(store, pal, args.json)
+    if args.add_user:
+        pw = ask_password('a password for %s' % args.add_user) if sys.stdin.isatty() or \
+            os.environ.get('PLEXMON_PASSWORD') else sys.stdin.readline().rstrip('\n')
+        store.add_account(args.add_user, args.role or 'fulladmin', pw, note=args.note or
+                          'made on the command line', must_change=0)
+        store.add_event('accounts', 'root made the account %s (%s) on the command line'
+                        % (args.add_user, args.role or 'fulladmin'), who='root')
+        print(pal.ok_line('the account %s is made (%s)' % (args.add_user,
+                                                           ROLE_WORDS[args.role or 'fulladmin'])))
+        return 0
+    if args.passwd:
+        if not store.account(args.passwd):
+            raise SystemExit('plexmon: there is no account called %s' % args.passwd)
+        pw = ask_password('a new password for %s' % args.passwd) if sys.stdin.isatty() or \
+            os.environ.get('PLEXMON_PASSWORD') else sys.stdin.readline().rstrip('\n')
+        store.set_account(args.passwd, password=pw, must_change=0)
+        store.db.run("DELETE FROM sessions WHERE kind = 'admin' AND LOWER(name) = ?",
+                     (args.passwd.lower(),))
+        store.add_event('accounts', 'root set a new password for %s on the command line'
+                        % args.passwd, 'warn', who='root')
+        print(pal.ok_line('the password of %s is set; their sign-ins are ended' % args.passwd))
+        return 0
+    if args.set_role:
+        if not args.role:
+            raise SystemExit('plexmon: which role? --role fulladmin|readonly')
+        acc = store.account(args.set_role)
+        if not acc:
+            raise SystemExit('plexmon: there is no account called %s' % args.set_role)
+        if acc['role'] == 'fulladmin' and args.role != 'fulladmin' and \
+                not store.fulladmins_left(but=args.set_role):
+            raise SystemExit('plexmon: that is the last full administrator')
+        store.set_account(args.set_role, role=args.role)
+        store.add_event('accounts', 'root made %s %s' % (args.set_role, ROLE_WORDS[args.role]),
+                        who='root')
+        print(pal.ok_line('%s is %s' % (args.set_role, ROLE_WORDS[args.role])))
+        return 0
+    for flag, act in ((args.del_user, 'delete'), (args.disable_user, 'disable'),
+                      (args.enable_user, 'enable')):
+        if not flag:
+            continue
+        acc = store.account(flag)
+        if not acc:
+            raise SystemExit('plexmon: there is no account called %s' % flag)
+        if act in ('delete', 'disable') and acc['role'] == 'fulladmin' and \
+                not store.fulladmins_left(but=flag) and not args.yes:
+            raise SystemExit('plexmon: that is the last full administrator (--yes to do it '
+                             'anyway)')
+        if act == 'delete':
+            store.drop_account(flag)
+        else:
+            store.set_account(flag, disabled=1 if act == 'disable' else 0)
+            if act == 'disable':
+                store.db.run("DELETE FROM sessions WHERE kind = 'admin' AND LOWER(name) = ?",
+                             (flag.lower(),))
+        store.add_event('accounts', 'root: %s %s' % (act, flag), 'warn', who='root')
+        print(pal.ok_line({'delete': 'the account %s is gone', 'disable':
+                           '%s may no longer sign in', 'enable': '%s may sign in again'}[act]
+                          % flag))
+        return 0
+    if args.reset_2fa:
+        had = mfa_reset(store, args.reset_2fa, 'root')
+        store.db.run("DELETE FROM sessions WHERE kind = 'admin' AND LOWER(name) = ?",
+                     (args.reset_2fa.lower(),))
+        print(pal.ok_line('the second step of %s is reset: set up again at the next sign-in'
+                          % args.reset_2fa if had else
+                          '%s had no second step set up' % args.reset_2fa))
+        return 0
+    if args.admin_2fa:
+        if args.admin_2fa != 'status':
+            _bare(store).save_settings({'admin_2fa': 1 if args.admin_2fa == 'on' else 0},
+                                       by='root')
+        mfa = mfa_all(store)
+        print(pal.ok_line('the second step of signing in to Settings is %s'
+                          % ('ON' if CONFIG.get('admin_2fa') else 'off')))
+        for u in store.accounts():
+            print('  %-24s %s' % (u['name'], 'an app' if mfa.get(u['name'].lower()) else
+                                  'not set up yet'))
+        return 0
+    if args.sessions:
+        store.sessions_tidy(int(CONFIG.get('session_idle_min') or 120) * 60)
+        rows = store.sessions()
+        if args.json:
+            out_json(rows)
+            return 0
+        print(table([(s['name'], s['ip'], stamp(s['created']), stamp(s['last']))
+                     for s in rows], ['who', 'from', 'since', 'last asked']))
+        return 0
+    if args.settings:
+        return cli_settings(store, pal, args.json)
+    if args.set or args.unset:
+        changes = {}
+        for kv in args.set or []:
+            k, eq, v = kv.partition('=')
+            k = k.strip()
+            if not eq:
+                raise SystemExit('plexmon: --set KEY=VALUE')
+            if v == '-' and k in SECRET_KEYS:
+                v = ask_secret_value(k)
+            changes[k] = v
+        for k in args.unset or []:
+            if k not in DEFAULTS:
+                raise SystemExit('plexmon: %s is not a setting this version knows' % k)
+            store.drop_setting(k)
+            print(pal.ok_line('%s: back to %s' % (k, json.dumps(FILE_CONFIG.get(k, DEFAULTS[k])))))
+        if changes:
+            try:
+                print(pal.ok_line(_bare(store).save_settings(changes, by=by)['message']))
+            except BadSetting as e:
+                raise SystemExit('plexmon: %s' % e)
+        load_config(saved=store.settings_saved())
+        return 0
+    if args.cert_status:
+        return cli_cert(store, pal, args.json)
+    if args.cert_import:
+        pems, pfx = [], b''
+        for f in args.cert_import:
+            raw = Path(f).read_bytes()
+            if b'-----BEGIN' in raw:
+                pems.append(raw.decode('utf-8', 'replace'))
+            else:
+                pfx = raw
+        got = cert_bundle('\n'.join(pems), '', '', '', pfx,
+                          os.environ.get('PLEXMON_PFX_PASSWORD', ''))
+        _put_cert(store, got, 'uploaded', by)
+        st = _apply_now(store)
+        print((pal.ok_line if st.get('state') == 'done' else pal.bad_line)(
+            '; '.join(st.get('said') or [])))
+        return 0 if st.get('state') == 'done' else 1
+    if args.cert_selfsigned:
+        key, crt = make_selfsigned(args.cert_selfsigned, [], 825)
+        _put_cert(store, cert_bundle(crt, key), 'self-signed, made here', by)
+        st = _apply_now(store)
+        print((pal.ok_line if st.get('state') == 'done' else pal.bad_line)(
+            '; '.join(st.get('said') or [])))
+        return 0 if st.get('state') == 'done' else 1
+    if args.tls_preset or args.tls_dh or args.tls_hsts is not None:
+        prof = tls_profile(store, node_name()) or {}
+        if not prof.get('cert'):
+            raise SystemExit('plexmon: no certificate is kept here yet')
+        b = {'preset': args.tls_preset or prof.get('preset') or 'standard',
+             'protocols': prof.get('protocols'), 'ciphers': prof.get('ciphers'),
+             'dh': args.tls_dh or prof.get('dh') or 'none', 'prefer': prof.get('prefer'),
+             'hsts': args.tls_hsts if args.tls_hsts is not None else prof.get('hsts')}
+        prof.update(tls_policy_checked(b))
+        tls_save(store, node_name(), prof, by)
+        store.add_event('settings', 'root changed the TLS settings: %s, DH %s, HSTS %s' % (
+            prof['preset'], prof['dh'], prof.get('hsts')), who='root')
+        st = _apply_now(store)
+        print((pal.ok_line if st.get('state') == 'done' else pal.bad_line)(
+            '; '.join(st.get('said') or [])))
+        return 0 if st.get('state') == 'done' else 1
+    if args.tls_apply:
+        store.set_meta('web:retry:' + node_name(), str(time.time()))
+        st = web_status(store)
+        st.pop('hash', None)
+        store.set_meta('web:state:' + node_name(), json.dumps(st))
+        st = _apply_now(store)
+        print((pal.ok_line if st.get('state') == 'done' else pal.bad_line)(
+            '; '.join(st.get('said') or []) or 'nothing kept to put in'))
+        return 0 if st.get('state') in ('done', '') else 1
+    if args.nginx_adopt:
+        changed, words = nginx_adopt()
+        print((pal.ok_line if changed or 'already' in words else pal.bad_line)(words))
+        return 0 if changed or 'already' in words else 1
+    if args.plex_cert:
+        pv = plex_view(store)
+        if args.plex_cert == 'status':
+            if args.json:
+                out_json(pv)
+                return 0
+            print(pal.ok_line('Plex Media Server %s' % ('takes plexmon\'s certificate'
+                                                        if pv['on'] else 'keeps its own')))
+            print('  Preferences.xml: %s (%s)' % (pv['prefs'], 'there' if pv['there']
+                                                  else 'NOT there'))
+            print('  custom certificate: %s%s' % (pv['path'] or 'none', (' for %s'
+                                                                          % pv['domain'])
+                                                  if pv['domain'] else ''))
+            return 0
+        if args.plex_cert == 'off':
+            store.drop_setting('plex_cert')
+            store.add_event('settings', 'root: Plex Media Server no longer takes plexmon\'s '
+                            'certificate', who='root')
+            print(pal.ok_line(plex_cert_off(store, by)))
+            return 0
+        if args.plex_cert == 'on':
+            _bare(store).save_settings({'plex_cert': 1}, by=by)
+        prof = tls_profile(store, node_name()) or {}
+        if not prof.get('cert'):
+            raise SystemExit('plexmon: no certificate is kept here yet')
+        if not _confirm(args, 'Plex Media Server is restarted to take it - go on?'):
+            return 1
+        print(pal.ok_line(plex_cert_apply(store, tls_resolved(prof), prof)))
+        return 0
+    if args.acme:
+        v = acme_view(store)
+        if args.json:
+            out_json(v)
+            return 0
+        t = v['targets'][0]
+        st = t['state']
+        print(pal.head('automatic certificates: %s' % ('ON' if v['on'] else 'off')))
+        print('  the CA:        %s' % v['directory'])
+        print('  for:           %s' % (t.get('name') or '-'))
+        print('  checked by:    %s%s' % (v['challenge'], (' (%s)' % CONFIG.get('acme_dns'))
+                                         if v['challenge'] == 'dns-01' else ''))
+        print('  now:           %s, until %s' % (t.get('issuer') or '-', stamp(t.get('not_after'))))
+        print('  ACME renews:   %s' % ('yes' if t.get('care') else 'no - its own is kept'))
+        if st.get('ok') is False:
+            print(pal.bad_line('the last order failed (%s): %s' % (stamp(st.get('failed_at')),
+                                                                  st.get('said'))))
+        elif st.get('ordered_at'):
+            print(pal.ok_line('the last came %s' % stamp(st['ordered_at'])))
+        if v['account'].get('kid'):
+            print(pal.dim('  the account at the CA: %s' % v['account']['kid']))
+        return 0
+    if args.acme_order:
+        if not CONFIG.get('acme'):
+            raise SystemExit('plexmon: ACME is off - plexmon --set acme=1 first')
+        t = node_name()
+        name = acme_name_of(store, t)
+        acme_care_set(store, t, True, by, 'ordered on the command line')
+        print(pal.head('ordering a certificate for %s from %s' % (name, acme_directory_url())))
+        try:
+            acme_order(store, t, name, by, lambda w: print('  ' + pal.dim(w)))
+        except AcmeError as e:
+            print(pal.bad_line('no certificate: %s' % e))
+            return 1
+        st = _apply_now(store)
+        print((pal.ok_line if st.get('state') == 'done' else pal.bad_line)(
+            'the certificate for %s came: %s' % (name, '; '.join(st.get('said') or []))))
+        return 0
+    if args.acme_probe:
+        r = acme_probe(store, node_name())
+        if args.json:
+            out_json(r)
+            return 0
+        print((pal.ok_line if r['ok'] else pal.bad_line)('%s: %s (%d ms)' % (
+            r['url'], r.get('said'), r.get('ms') or 0)))
+        return 0 if r['ok'] else 1
+    if args.acme_dns_check:
+        g = acme_dns_check(store)
+        if args.json:
+            out_json(g)
+            return 0
+        print(table([(r.get('record') or '-', r.get('type') or '-', r.get('value') or '-',
+                      'yes' if r.get('ok') else ('no' if r.get('check') else '-'),
+                      r.get('said') or r.get('why') or '') for r in g['rows']],
+                    ['record', 'type', 'points at / value', 'there', 'said']))
+        return 0
+    if args.upgrade_check:
+        row = online_look(store, by)
+        if args.json:
+            out_json(row)
+            return 0
+        if row.get('error'):
+            print(pal.bad_line('%s: %s' % (row['url'], row['error'])))
+            return 1
+        n = row.get('newest') or {}
+        print((pal.warn_line if row.get('newer') else pal.ok_line)(
+            '%s: the newest is %s, this runs %s%s' % (row['url'], n.get('version') or '-',
+                                                      __version__, ' - newer!' if
+                                                      row.get('newer') else '')))
+        for p in row.get('packages') or []:
+            print('  %s  %s' % (p['version'], pal.dim(p['url'])))
+        return 0
+    if args.upgrade_online is not None:
+        row = online_look(store, by)
+        want = args.upgrade_online or ((row.get('newest') or {}).get('version')
+                                       if row.get('newer') else '')
+        if not want:
+            print(pal.ok_line('nothing newer than %s at %s' % (__version__, online_url())))
+            return 0
+        if not _confirm(args, 'upgrade to plexmon %s?' % want):
+            return 1
+        meta = online_fetch(store, want, by)
+        print(pal.ok_line('plexmon %s fetched and checked (signed by %s)' % (
+            meta['version'], meta.get('signed_by'))))
+        upgrade_start(store, by)
+        return cli_upgrade_follow(store, pal)
+    if args.upgrade_file:
+        info = upgrade_inspect(args.upgrade_file)
+        if info.get('older'):
+            raise SystemExit('plexmon: %s is older than %s - plexmon --downgrade FILE'
+                             % (info['version'], __version__))
+        upgrade_store_package(store, args.upgrade_file, info, by)
+        print(pal.ok_line('plexmon %s checked (signed by %s)' % (info['version'],
+                                                                 info.get('signed_by'))))
+        upgrade_start(store, by)
+        return cli_upgrade_follow(store, pal)
+    if args.upgrade_status:
+        v = upgrade_view(store)
+        if args.json:
+            out_json(v)
+            return 0
+        p = v['plan']
+        print(pal.head('plexmon %s on %s' % (__version__, node_name())))
+        print('  package kept: %s' % ((v['package'] or {}).get('version') or 'none'))
+        if p:
+            st = p['steps'][0]
+            print(((pal.ok_line if p['state'] == 'done' else pal.bad_line if p['state'] ==
+                    'failed' else pal.warn_line)('the upgrade to %s: %s - %s' % (
+                        p['version'], p['state'], st.get('said') or ''))))
+        else:
+            print('  no upgrade going on')
+        on = (v['web'].get('online') or {})
+        if on.get('newer'):
+            print(pal.warn_line('plexmon %s is out' % on['newest']['version']))
+        return 0
+    if args.upgrade_follow:
+        return cli_upgrade_follow(store, pal)
+    if args.upgrade_cancel:
+        upgrade_cancel(store, by)
+        print(pal.ok_line('stopped'))
+        return 0
+    if args.downgrade_check:
+        g = downgrade_list(store)
+        if args.json:
+            out_json(g)
+            return 0
+        print(pal.head('here %s; it may go back to %s or newer' % (g['here'], g['lowest'])))
+        for v in g['versions']:
+            print('  %-10s %s' % (v['version'], pal.good('yes') if not v['why'] else
+                                  pal.bad('no: ' + '; '.join(v['why']))))
+        return 0
+    if args.downgrade:
+        if os.path.exists(args.downgrade):
+            info = upgrade_inspect(args.downgrade)
+            why = downgrade_why_not(store, info['version'])
+            if why:
+                raise SystemExit('plexmon: %s' % '; '.join(why))
+            upgrade_store_package(store, args.downgrade, info, by, downgrade=True)
+        else:
+            online_fetch(store, args.downgrade, by, older=True)
+        upgrade_start(store, by)
+        return cli_upgrade_follow(store, pal)
+    return cli_status(store, pal, args.json)
 
 
 def plexmon_argv():
+    """How this program runs itself again (the console's commands)."""
     me = Path(__file__).resolve().parent / 'plexmon.py'
-    if me.exists():
-        return [sys.executable, str(me)]
-    return [sys.executable, str(Path(__file__).resolve())]
+    return [sys.executable, str(me if me.exists() else Path(__file__).resolve())]
+
+
+# ---------------------------------------------------------------------------
+# The console: plexmon run by its menus, on the server's own screen (otp's)
+# ---------------------------------------------------------------------------
+# `plexmon --console` - and, with `plexmon --console-at-login on`, what root sees
+# first after signing in at the console or over SSH. Everything is done by the
+# same `plexmon ...` commands the command line has (each one run as it would be
+# typed, so nothing here can do more than they do), plus the live log and the
+# journal. q leaves it for the ordinary shell; ! opens a shell and comes back
+# when it is closed. Coloured with colorama when it is there.
+class ConsoleBack(Exception):
+    """Back to the menu."""
 
 
 class Console(object):
-    HELP = ' Up/Down move   Enter choose   Esc back   ! shell   q leave '
-
-    def __init__(self, scr):
-        import curses
-        self.c = curses
-        self.scr = scr
-        self.st = {}
-        self.st_at = 0.0
-        curses.curs_set(0)
+    def __init__(self, pal):
+        self.pal = pal
+        self.me = os.path.abspath(sys.argv[0] if sys.argv and sys.argv[0].endswith('.py')
+                                  else __file__)
         try:
-            curses.start_color()
-            curses.use_default_colors()
-            for i, col in enumerate((curses.COLOR_CYAN, curses.COLOR_GREEN, curses.COLOR_RED,
-                                     curses.COLOR_YELLOW, curses.COLOR_WHITE), 1):
-                curses.init_pair(i, col, -1)
-            curses.init_pair(6, curses.COLOR_BLACK, curses.COLOR_CYAN)
-            curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLUE)
-        except curses.error:
+            __import__('readline')     # arrows and history in input()
+        except ImportError:
             pass
-        scr.keypad(True)
 
-    # ---- drawing ------------------------------------------------------------------
-    def put(self, y, x, text, attr=0):
-        h, w = self.scr.getmaxyx()
-        if y < 0 or y >= h or x >= w:
+    # ---- small things ---------------------------------------------------------------
+    def cmd(self, *args, show=True):
+        """`plexmon ARGS`, its output on the screen; its exit code."""
+        argv = plexmon_argv() + [str(a) for a in args]
+        if not self.pal.on:
+            argv.append('--no-color')
+        if show:
+            print(self.pal.dim('$ plexmon ' + ' '.join(self._quote(a) for a in args)))
+        try:
+            return subprocess.call(argv)
+        except KeyboardInterrupt:
+            print()
+            return 130
+
+    def out(self, *args):
+        """`plexmon ARGS --json`, read."""
+        try:
+            got = subprocess.run(plexmon_argv() + [str(a) for a in args] + ['--json'],
+                                 capture_output=True, text=True, timeout=60)
+            return json.loads(got.stdout or 'null')
+        except Exception:                               # noqa: BLE001
+            return None
+
+    @staticmethod
+    def _quote(a):
+        a = str(a)
+        return a if re.match(r'^[A-Za-z0-9_@%+=:,./-]+\Z', a) else "'%s'" % a.replace("'", "'\\''")
+
+    # ---- keys on the ordinary terminal: Esc goes back everywhere (1.0.132) ---------
+    def _raw(self):
+        """The terminal's settings, to be put back; None without a terminal."""
+        try:
+            import termios
+            return termios.tcgetattr(sys.stdin.fileno())
+        except Exception:                               # noqa: BLE001
+            return None
+
+    def _restore(self, was):
+        if was is None:
             return
-        try:
-            self.scr.addnstr(y, x, str(text), max(0, w - x - 1), attr)
-        except self.c.error:
-            pass
+        import termios
+        termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, was)
 
-    def status(self):
-        if time.time() - self.st_at > 20:
-            self.st_at = time.time()
+    def key(self, wait=None):
+        """One key, without Enter: 'esc', 'enter', 'bs', 'up'..., a character -
+        or None when `wait` seconds went by without one."""
+        import select
+        import tty
+        fd = sys.stdin.fileno()
+        was = self._raw()
+        try:
+            if was is not None:
+                # TCSANOW: what was typed ahead is kept, not thrown away.
+                import termios
+                tty.setcbreak(fd, termios.TCSANOW)
+            r, _w, _x = select.select([fd], [], [], wait)
+            if not r:
+                return None
+            ch = os.read(fd, 1)
+            if ch == b'\x1b':
+                # Alone, Esc; followed at once by more, a key's sequence.
+                r, _w, _x = select.select([fd], [], [], 0.05)
+                if not r:
+                    return 'esc'
+                rest = os.read(fd, 8)
+                full = {b'[5~': 'pgup', b'[6~': 'pgdn', b'[1~': 'home', b'[4~': 'end',
+                        b'[7~': 'home', b'[8~': 'end', b'[H': 'home', b'[F': 'end',
+                        b'OH': 'home', b'OF': 'end'}.get(rest)
+                if full:
+                    return full
+                return {b'[A': 'up', b'[B': 'down', b'[C': 'right', b'[D': 'left', b'OA': 'up',
+                        b'OB': 'down', b'OC': 'right', b'OD': 'left'}.get(rest[:2], 'seq')
+            if ch in (b'\r', b'\n'):
+                return 'enter'
+            if ch in (b'\x7f', b'\x08'):
+                return 'bs'
+            if ch == b'\x03':
+                return 'ctrl-c'
+            if ch == b'\x04':
+                return 'ctrl-d'
+            if ch == b'\x15':
+                return 'ctrl-u'
             try:
-                store = STORE.get('store') or open_store()
-                cert = cert_now(nginx_conf_cert_paths()[0]) or {}
-                left = int((cert['not_after'] - time.time()) / 86400) \
-                    if cert.get('not_after') else None
-                up = online_view(store).get('online') or {}
-                self.st = {'active': service_active(), 'cn': cert.get('cn') or '-',
-                           'left': left, 'acme': bool(CONFIG.get('acme')),
-                           'newer': (up.get('newest') or {}).get('version') if up.get('newer')
-                           else '', 'accounts': store.counts()['accounts'],
-                           'adopted': nginx_adopted()}
-            except Exception as e:                      # noqa: BLE001
-                self.st = {'active': '?', 'error': str(e)}
-        return self.st
-
-    def frame(self, title):
-        c = self.c
-        self.scr.erase()
-        h, w = self.scr.getmaxyx()
-        s = self.status()
-        bar = ' plexmon %s  %s  service %s | certificate %s%s | ACME %s | %s account(s)%s ' % (
-            __version__, node_name(), s.get('active'), s.get('cn'),
-            (' (%d days)' % s['left']) if s.get('left') is not None else '',
-            'on' if s.get('acme') else 'off', s.get('accounts', '?'),
-            (' | %s is out' % s['newer']) if s.get('newer') else '')
-        self.put(0, 0, bar.ljust(w), c.color_pair(7) | c.A_BOLD)
-        y = 1
-        if s.get('active') not in ('active', '?'):
-            self.put(y, 1, 'plexmon.service is %s: systemctl status plexmon' % s.get('active'),
-                     c.color_pair(3) | c.A_BOLD)
-            y += 1
-        if s.get('left') is not None and s['left'] < 14:
-            self.put(y, 1, 'the certificate runs out in %d days' % s['left'], c.color_pair(4))
-            y += 1
-        if s.get('adopted') is False:
-            self.put(y, 1, 'nginx: %s is not plexmon\'s (install.sh --upgrade adopts it)'
-                     % NGINX_SITE, c.color_pair(4))
-            y += 1
-        self.put(y + 1, 2, title, c.A_BOLD)
-        self.put(h - 1, 0, self.HELP.ljust(w), c.color_pair(6))
-        return y + 3
-
-    def menu(self, title, items, at=0):
-        """A list to choose from: the index chosen, or raises ConsoleBack."""
-        c = self.c
-        typed = ''
-        while True:
-            top = self.frame(title)
-            h, _w = self.scr.getmaxyx()
-            room = max(1, h - top - 2)
-            first = max(0, at - room + 1)
-            for i, words in enumerate(items[first:first + room]):
-                n = first + i
-                attr = c.A_REVERSE if n == at else 0
-                self.put(top + i, 3, ' %2d  %s ' % (n + 1, words), attr)
-            self.scr.refresh()
-            self.scr.timeout(20000)
-            k = self.scr.getch()
-            if k == -1:
-                continue
-            if k in (c.KEY_UP, ord('k')):
-                at = (at - 1) % len(items)
-            elif k in (c.KEY_DOWN, ord('j'), 9):
-                at = (at + 1) % len(items)
-            elif k in (c.KEY_HOME,):
-                at = 0
-            elif k in (c.KEY_END,):
-                at = len(items) - 1
-            elif k in (c.KEY_ENTER, 10, 13, c.KEY_RIGHT):
-                return at
-            elif k in (27, c.KEY_LEFT, c.KEY_BACKSPACE, 127):
-                raise ConsoleBack()
-            elif k == ord('q'):
-                raise SystemExit(0)
-            elif k == ord('!'):
-                self.shell()
-            elif ord('0') <= k <= ord('9'):
-                typed = (typed + chr(k))[-2:]
-                n = int(typed)
-                if 1 <= n <= len(items):
-                    at = n - 1
-                elif 1 <= int(chr(k)) <= len(items):
-                    typed = chr(k)
-                    at = int(chr(k)) - 1
-            if k == c.KEY_RESIZE:
-                self.scr.clear()
-
-    def page(self, title, lines):
-        """A long answer on a screen of its own, to scroll."""
-        c = self.c
-        top_line = 0
-        while True:
-            top = self.frame(title)
-            h, w = self.scr.getmaxyx()
-            room = max(1, h - top - 2)
-            for i, ln in enumerate(lines[top_line:top_line + room]):
-                attr = 0
-                low = ln.lower()
-                if any(x in low for x in ('fail', 'refused', 'error', ' no ', 'not right')):
-                    attr = c.color_pair(3)
-                elif any(x in low for x in (' ok', 'done', 'is made', 'in place', 'came')):
-                    attr = c.color_pair(2)
-                self.put(top + i, 2, ln.replace('\t', '    '), attr)
-            if len(lines) > room:
-                pos = int((h - top - 3) * top_line / max(1, len(lines) - room))
-                self.put(top + pos, w - 2, '█', c.color_pair(1))
-            self.scr.refresh()
-            self.scr.timeout(-1)
-            k = self.scr.getch()
-            if k in (c.KEY_UP, ord('k')):
-                top_line = max(0, top_line - 1)
-            elif k in (c.KEY_DOWN, ord('j')):
-                top_line = min(max(0, len(lines) - room), top_line + 1)
-            elif k == c.KEY_PPAGE:
-                top_line = max(0, top_line - room)
-            elif k == c.KEY_NPAGE:
-                top_line = min(max(0, len(lines) - room), top_line + room)
-            elif k == c.KEY_HOME:
-                top_line = 0
-            elif k == c.KEY_END:
-                top_line = max(0, len(lines) - room)
-            elif k in (27, 10, 13, ord('q'), c.KEY_LEFT, c.KEY_ENTER):
-                return
-
-    def form(self, title, fields):
-        """A window over the menu: [{'label', 'value', 'secret', 'choices', 'need'}].
-        Returns the values, or raises ConsoleBack."""
-        c = self.c
-        vals = [str(f.get('value') or '') for f in fields]
-        at = 0
-        said = ''
-        c.curs_set(1)
-        try:
-            while True:
-                top = self.frame(title)
-                for i, f in enumerate(fields):
-                    y = top + i * 2
-                    self.put(y, 3, f['label'], c.A_BOLD if i == at else 0)
-                    shown = ('*' * len(vals[i])) if f.get('secret') else vals[i]
-                    if f.get('choices'):
-                        shown = '< %s >' % vals[i]
-                    self.put(y + 1, 5, shown + ' ', c.A_UNDERLINE if i == at else 0)
-                if fields[at].get('help'):
-                    self.put(top + len(fields) * 2 + 1, 3, fields[at]['help'], c.color_pair(1))
-                if said:
-                    self.put(top + len(fields) * 2 + 2, 3, said, c.color_pair(3))
-                self.put(top + len(fields) * 2 + 3, 3, 'Enter: go on   Esc: back', c.A_DIM)
-                y = top + at * 2 + 1
-                x = 5 + (len(vals[at]) + 2 if fields[at].get('choices') else len(vals[at]))
-                try:
-                    self.scr.move(y, min(x, self.scr.getmaxyx()[1] - 2))
-                except c.error:
-                    pass
-                self.scr.refresh()
-                self.scr.timeout(-1)
-                k = self.scr.get_wch()
-                f = fields[at]
-                if k in ('\x1b', 27):
-                    raise ConsoleBack()
-                if k in (c.KEY_UP,):
-                    at = (at - 1) % len(fields)
-                elif k in (c.KEY_DOWN, '\t'):
-                    at = (at + 1) % len(fields)
-                elif k in ('\n', '\r', c.KEY_ENTER):
-                    bad = [fl['label'] for fl, v in zip(fields, vals) if fl.get('need') and not v]
-                    if bad:
-                        said = 'needed: %s' % ', '.join(bad)
+                return ch.decode('utf-8')
+            except UnicodeDecodeError:
+                more = ch
+                while len(more) < 4:
+                    more += os.read(fd, 1)
+                    try:
+                        return more.decode('utf-8')
+                    except UnicodeDecodeError:
                         continue
-                    return vals
-                elif f.get('choices') and k in (c.KEY_LEFT, c.KEY_RIGHT, ' '):
-                    ch = f['choices']
-                    i = ch.index(vals[at]) if vals[at] in ch else 0
-                    vals[at] = ch[(i + (1 if k != c.KEY_LEFT else -1)) % len(ch)]
-                elif not f.get('choices'):
-                    if k in (c.KEY_BACKSPACE, '\x7f', '\b', 127):
-                        vals[at] = vals[at][:-1]
-                    elif k == '\x15':
-                        vals[at] = ''
-                    elif isinstance(k, str) and k.isprintable():
-                        vals[at] += k
+                return ''
         finally:
-            c.curs_set(0)
+            self._restore(was)
+
+    def ask(self, words, default='', secret=False):
+        """A line typed; Esc (or Ctrl+C) goes back to the menu. A secret shows
+        a star for each character, never the characters."""
+        p = self.pal
+        hint = (' [%s]' % default) if default else ''
+        prompt = '  %s%s: ' % (p.info(words), p.dim(hint))
+        if self._raw() is None:
+            try:
+                got = input(prompt)
+            except EOFError:
+                raise ConsoleBack()
+            return got.strip() or default
+        sys.stdout.write(prompt)
+        sys.stdout.flush()
+        got = ''
+        while True:
+            k = self.key()
+            if k in ('esc', 'ctrl-c', 'ctrl-d'):
+                sys.stdout.write(p.dim('  (back)') + '\n')
+                sys.stdout.flush()
+                raise ConsoleBack()
+            if k == 'enter':
+                sys.stdout.write('\n')
+                sys.stdout.flush()
+                return got.strip() or default
+            if k == 'bs':
+                if got:
+                    got = got[:-1]
+                    sys.stdout.write('\b \b')
+            elif k == 'ctrl-u':
+                sys.stdout.write('\b \b' * len(got))
+                got = ''
+            elif k and len(k) == 1 and k.isprintable():
+                got += k
+                sys.stdout.write('*' if secret else k)
+            sys.stdout.flush()
 
     def yes(self, words):
-        try:
-            return self.menu(words, ['No', 'Yes']) == 1
-        except ConsoleBack:
-            return False
+        return self.ask(words + ' (y/N)').lower() in ('y', 'yes', 'a', 'ano')
 
-    def run(self, args, title=None):
-        """`plexmon ARGS`, its output on a page of its own."""
-        argv = plexmon_argv() + [str(x) for x in args] + ['--no-color']
-        try:
-            got = subprocess.run(argv, capture_output=True, text=True, timeout=1800,
-                                 env=dict(os.environ, PLEXMON_IN_CONSOLE='1'))
-            lines = (got.stdout + got.stderr).splitlines() or ['(nothing said)']
-        except subprocess.TimeoutExpired:
-            lines = ['it did not end in 30 minutes']
-        self.page(title or '$ plexmon ' + ' '.join(str(x) for x in args), lines)
-
-    def run_live(self, args, title=None, stdin=None):
-        """A command that takes a while, its output shown as it comes."""
-        self.c.endwin()
-        print('\n$ plexmon ' + ' '.join(str(x) for x in args))
-        try:
-            subprocess.run(plexmon_argv() + [str(x) for x in args], input=stdin, text=True,
-                           env=dict(os.environ, PLEXMON_IN_CONSOLE='1'))
-        except KeyboardInterrupt:
+    def pause(self):
+        sys.stdout.write(self.pal.dim('\n  Enter or Esc - back to the menu '))
+        sys.stdout.flush()
+        if self._raw() is None:
+            try:
+                input()
+            except EOFError:
+                pass
+            return
+        while self.key() not in ('enter', 'esc', 'ctrl-c', 'ctrl-d', 'q'):
             pass
-        input('\n  Enter - back to the menu ')
-        self.scr.clear()
+        sys.stdout.write('\n')
+
+    def stopped(self, wait):
+        """In a live view: True when Esc, q or Ctrl+C was pressed within
+        `wait` seconds."""
+        if self._raw() is None:
+            time.sleep(wait)
+            return False
+        return self.key(wait) in ('esc', 'q', 'ctrl-c', 'ctrl-d')
+
+    def clear_screen(self):
+        if sys.stdout.isatty():
+            sys.stdout.write('\033[H\033[2J')
+            sys.stdout.flush()
+
+    # ---- the menus: a text screen, arrows and Enter (1.0.131) ----------------------
+    # curses: only what changed is written, so nothing blinks; a window made
+    # bigger or smaller (PuTTY's too) is drawn again to its new size. Leaving it
+    # for a command's output and coming back is the one full redraw.
+    HELP = ' Up/Down move   Enter choose   Esc back   ! shell   q leave '
+
+    def status_thread(self):
+        """The line at the top, asked for again every 20 s off the screen's
+        thread - the menu never waits for it."""
+        def look():
+            while not self.closing:
+                # Nothing asked while nobody sees the bar (1.0.136): in a live
+                # view, a page or a shell - asked again on the way back.
+                if self.plain and not self.st_now:
+                    time.sleep(0.5)
+                    continue
+                self.st_now = False
+                st = self.out('--status') or {}
+                active = '?'
+                if shutil.which('systemctl'):
+                    try:
+                        active = subprocess.run(['systemctl', 'is-active', SERVICE],
+                                                capture_output=True, text=True,
+                                                timeout=10).stdout.strip() or '?'
+                    except Exception:                   # noqa: BLE001
+                        pass
+                self.st = dict(st, _active=active)
+                self.st_gen += 1
+                for _ in range(60):
+                    if self.closing or self.st_now:
+                        break
+                    time.sleep(0.5)
+        threading.Thread(target=look, name='plexmon-console-status', daemon=True).start()
+
+    def _put(self, y, x, text, attr=0):
+        try:
+            h, w = self.scr.getmaxyx()
+            if y < 0 or y >= h or x >= w:
+                return
+            self.scr.addnstr(y, x, str(text), max(0, w - x - (1 if y == h - 1 else 0)), attr)
+        except Exception:                               # noqa: BLE001 - the edge
+            pass
+
+    def _colours(self):
+        c = self.curses
+        self.A = {'head': c.A_REVERSE, 'sel': c.A_REVERSE | c.A_BOLD, 'ok': c.A_BOLD,
+                  'warn': c.A_BOLD, 'bad': c.A_BOLD, 'dim': c.A_DIM, 'key': c.A_BOLD,
+                  'title': c.A_BOLD}
+        if not c.has_colors():
+            return
+        try:
+            c.start_color()
+            try:
+                c.use_default_colors()
+                bg = -1
+            except Exception:                           # noqa: BLE001
+                bg = c.COLOR_BLACK
+            c.init_pair(1, c.COLOR_BLACK, c.COLOR_CYAN)
+            c.init_pair(2, c.COLOR_BLACK, c.COLOR_GREEN)
+            c.init_pair(3, c.COLOR_GREEN, bg)
+            c.init_pair(4, c.COLOR_YELLOW, bg)
+            c.init_pair(5, c.COLOR_RED, bg)
+            c.init_pair(6, c.COLOR_CYAN, bg)
+            self.A.update(head=c.color_pair(1), sel=c.color_pair(2) | c.A_BOLD,
+                          ok=c.color_pair(3) | c.A_BOLD, warn=c.color_pair(4) | c.A_BOLD,
+                          bad=c.color_pair(5) | c.A_BOLD, key=c.color_pair(6) | c.A_BOLD)
+        except Exception:                               # noqa: BLE001
+            pass
+
+    def draw(self, title, items, sel, top, path):
+        scr, A = self.scr, self.A
+        scr.erase()
+        h, w = scr.getmaxyx()
+        st = self.st or {}
+        # The bar at the top: what this is, and how it is.
+        self._put(0, 0, ' ' * w, A['head'])
+        left = ' plexmon %s  %s ' % (__version__, socket.gethostname())
+        self._put(0, 0, left, A['head'] | self.curses.A_BOLD)
+        active = st.get('_active') or '...'
+        svc = ' service %s ' % active
+        self._put(0, len(left) + 1, svc, A['sel'] if active == 'active' else
+                  (A['head'] if active == '...' else self.curses.A_REVERSE | A['bad']))
+        # As --status --json says it: the dashboard, Plex, the certificate,
+        # ACME, the accounts.
+        bits = []
+        dash = st.get('dashboard') or {}
+        if dash.get('overall'):
+            bits.append('dashboard %s' % {'ok': 'ok', 'warn': 'WARN', 'crit': 'CRIT'}.get(
+                dash['overall'], dash['overall']))
+        px = dash.get('plex') or {}
+        if px:
+            bits.append('Plex %s' % ('running' if px.get('active') else 'STOPPED'))
+        cert = st.get('certificate') or {}
+        if cert.get('cn'):
+            bits.append('cert %s%s' % (cert['cn'], (' %dd' % cert['days_left'])
+                                       if cert.get('days_left') is not None else ''))
+        if st.get('acme'):
+            bits.append('ACME %s' % ('on' if st['acme'].get('on') else 'off'))
+        acc = (st.get('counts') or {}).get('accounts')
+        if acc is not None:
+            bits.append('%s account(s)' % acc)
+        short = [b.replace('dashboard ', 'dash ').replace(' account(s)', ' acc.') for b in bits]
+        tries = [bits, bits[:-1], short[:-1], short[:-2]]
+        y = 1
+        for b in tries:
+            right = ' ' + ' | '.join(b) + ' '
+            if len(left) + len(svc) + len(right) + 2 < w:
+                self._put(0, w - len(right), right, A['head'])
+                break
+        else:
+            self._put(1, 1, ' | '.join(bits), A['key'])
+            y = 2
+        if (st.get('upgrade') or {}).get('newer'):
+            self._put(y, 1, 'plexmon %s is out - Upgrades' % st['upgrade']['newer'], A['warn'])
+            y += 1
+        if st and st.get('daemon_alive') is False:
+            self._put(y, 1, 'Settings is not answering (systemctl status %s)' % SERVICE, A['bad'])
+            y += 1
+        for one in (st.get('problems') or [])[:max(0, min(4, h - 12))]:
+            if 'not answering' in str(one) and st.get('daemon_alive') is False:
+                continue
+            self._put(y, 1, '! ' + str(one), A['warn'])
+            y += 1
+        y += 1
+        self._put(y, 2, path, A['dim'])
+        self._put(y, 2 + len(path), title, A['title'])
+        y += 2
+        # The items, a window of them when the screen is short.
+        room = max(1, h - y - 2)
+        if sel < top:
+            top = sel
+        if sel >= top + room:
+            top = sel - room + 1
+        width = max(20, min(w - 6, max(len(it[1]) for it in items) + 10))
+        for n, it in enumerate(items[top:top + room]):
+            i = top + n
+            line = ' %3s  %s' % (it[0], it[1])
+            line = line + ' ' * max(0, width - len(line))
+            if i == sel:
+                self._put(y + n, 2, line, A['sel'])
+            else:
+                self._put(y + n, 2, ' %3s' % it[0], A['key'])
+                self._put(y + n, 8, it[1])
+        if top > 0:
+            self._put(y - 1, 4, '^ more', A['dim'])
+        if top + room < len(items):
+            self._put(y + room, 4, 'v more', A['dim'])
+        self._put(h - 1, 0, ' ' * (w - 1), A['head'])
+        self._put(h - 1, 0, self.HELP[:w - 1], A['head'])
+        scr.noutrefresh()
+        return top
+
+    def menu(self, title, items, path=''):
+        """items: [(key, words, function[, 'plain'])]; returns 'back' or 'quit'."""
+        c = self.curses
+        sel, top, typed, typed_at, seen = 0, 0, '', 0.0, -1
+        while True:
+            if self.plain:
+                # Back from a command's screen: drawn whole, once.
+                c.reset_prog_mode()
+                self.scr.clear()
+                self.plain = False
+                self.st_now = True
+            top = self.draw(title, items, sel, top, path)
+            self.curses.doupdate()
+            self.backdrop = (lambda _s=sel, _t=top: self.draw(title, items, _s, _t, path))
+            seen = self.st_gen
+            self.scr.timeout(500)
+            while True:
+                k = self.scr.getch()
+                if k != -1 or self.st_gen != seen:
+                    break
+                # The window's size looked at too (PuTTY and others whose
+                # change is not always told): drawn again to the new one.
+                try:
+                    size = os.get_terminal_size(sys.__stdout__.fileno())
+                    if (size.lines, size.columns) != self.scr.getmaxyx():
+                        c.resizeterm(size.lines, size.columns)
+                        k = c.KEY_RESIZE
+                        break
+                except (OSError, ValueError, c.error):
+                    pass
+            if k == -1:
+                continue
+            if k == 27:
+                # An arrow some terminals send as ESC [ B rather than as the
+                # key the terminal description names: read whole here.
+                self.scr.nodelay(True)
+                k2 = self.scr.getch()
+                if k2 in (ord('['), ord('O')):
+                    k3 = self.scr.getch()
+                    k = {ord('A'): c.KEY_UP, ord('B'): c.KEY_DOWN, ord('C'): c.KEY_RIGHT,
+                         ord('D'): c.KEY_LEFT, ord('H'): c.KEY_HOME,
+                         ord('F'): c.KEY_END}.get(k3, -1)
+                    if k3 in (ord('5'), ord('6')):            # PgUp / PgDn: ESC [ 5 ~
+                        self.scr.getch()
+                        k = c.KEY_PPAGE if k3 == ord('5') else c.KEY_NPAGE
+                    if k == -1:
+                        continue
+                elif k2 != -1:
+                    c.ungetch(k2)
+                self.scr.nodelay(False)
+            if k == c.KEY_RESIZE:
+                try:
+                    c.update_lines_cols()
+                except Exception:                       # noqa: BLE001
+                    pass
+                self.scr.clear()
+                continue
+            if k in (c.KEY_UP, ord('k')):
+                sel = (sel - 1) % len(items)
+            elif k in (c.KEY_DOWN, ord('j'), 9):
+                sel = (sel + 1) % len(items)
+            elif k in (c.KEY_HOME, c.KEY_PPAGE):
+                sel = 0
+            elif k in (c.KEY_END, c.KEY_NPAGE):
+                sel = len(items) - 1
+            elif k in (27, c.KEY_LEFT, c.KEY_BACKSPACE, 127, 8):
+                if path:
+                    return 'back'
+            elif k in (ord('q'), ord('Q')):
+                return 'quit'
+            elif k == ord('!'):
+                self.go_plain(self.shell)
+            elif ord('0') <= k <= ord('9'):
+                now = time.time()
+                typed = (typed if now - typed_at < 1.0 else '') + chr(k)
+                typed_at = now
+                hit = [i for i, it in enumerate(items) if it[0] == typed]
+                if hit:
+                    sel = hit[0]
+                    # One that no longer number can grow into: chosen at once.
+                    if not any(it[0].startswith(typed) and it[0] != typed for it in items):
+                        k = 10
+                        typed = ''
+            if k in (10, 13, c.KEY_ENTER, c.KEY_RIGHT):
+                it = items[sel]
+                # Run on the text screen - its questions are windows there
+                # (1.0.135); only a view of its own ('plain') leaves it.
+                if len(it) > 3 and it[3] == 'plain':
+                    r = self.go_plain(it[2])
+                else:
+                    try:
+                        r = it[2]()
+                    except ConsoleBack:
+                        r = None
+                if r == 'quit':
+                    return 'quit'
+
+    def go_plain(self, fn):
+        """`fn` on the ordinary terminal - a command's output, a question, the
+        live log - and back to the screen after it."""
+        c = self.curses
+        c.def_prog_mode()
+        c.endwin()
+        self.plain = True
+        # A clean screen for it - not what the last command left there.
+        if sys.stdout.isatty():
+            sys.stdout.write('\033[H\033[2J\033[3J')
+            sys.stdout.flush()
+        try:
+            return fn()
+        except ConsoleBack:
+            return None
+        except KeyboardInterrupt:
+            print()
+            return None
+
+    def sub(self, title, items):
+        r = self.menu(title, items, path='Main menu > ')
+        return 'quit' if r == 'quit' else None
+
+    # ---- long output: a screen of its own, scrolled (1.0.134) -------------------
+    # As the fullscreen pickers of video_tools: the terminal is not scrolled, a
+    # window (top) into the lines is; each frame is one write (home, each line
+    # cleared to its end, the rest cleared) so nothing blinks, and the scroll
+    # bar is drawn after it into the last column. Arrows, PgUp/PgDn, Home/End,
+    # Space; Esc, q or Enter back. A window made bigger or smaller is drawn
+    # again to its size.
+    def capture(self, argv, env=None):
+        """What a command writes, its colour kept: (text, exit code)."""
+        e = dict(os.environ, **(env or {}))
+        if self.pal.on:
+            e.update(FORCE_COLOR='1', SYSTEMD_COLORS='1')
+        e['COLUMNS'] = str(max(60, self._cols() - 2))
+        try:
+            got = subprocess.run(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                 stdin=subprocess.DEVNULL, env=e, timeout=1800)
+            # Made safe here whatever the colour (1.0.146): with colour off the
+            # command wrote what a packet carried as it came, and page() put it
+            # on root's terminal - the title, the clipboard, the screen.
+            return term_safe(got.stdout.decode('utf-8', 'replace')), got.returncode
+        except subprocess.TimeoutExpired:
+            return 'it took more than 30 minutes and was stopped', 124
+        except OSError as ex:
+            return str(ex), 127
+
+    @staticmethod
+    def _cols():
+        try:
+            return os.get_terminal_size(sys.__stdout__.fileno()).columns
+        except (OSError, ValueError):
+            return 100
+
+    @staticmethod
+    def _fit(line, width):
+        """`line` cut to `width` columns on the screen, its colours kept."""
+        out, seen = [], 0
+        for part in re.split(r'(\x1b\[[0-9;?]*[A-Za-z])', line):
+            if not part:
+                continue
+            if part.startswith('\x1b['):
+                out.append(part)
+                continue
+            if seen + len(part) > width:
+                out.append(part[:max(0, width - seen)])
+                out.append('\x1b[0m')
+                return ''.join(out)
+            out.append(part)
+            seen += len(part)
+        return ''.join(out) + ('\x1b[0m' if '\x1b[' in line else '')
+
+    def page(self, title, text):
+        p = self.pal
+        lines = [ln.expandtabs(8).replace('\r', '') for ln in text.rstrip('\n').split('\n')] or ['']
+        tty = self._raw() is not None and sys.stdout.isatty()
+        if not tty:
+            print(text)
+            return
+        out = sys.stdout
+        out.write('\x1b[?1049h\x1b[?25l')
+        top, size = 0, None
+        try:
+            while True:
+                try:
+                    sz = os.get_terminal_size(sys.__stdout__.fileno())
+                    cols, rows = max(40, sz.columns), max(8, sz.lines)
+                except OSError:
+                    cols, rows = 100, 30
+                avail = max(3, rows - 2)
+                top = max(0, min(top, max(0, len(lines) - avail)))
+                end = min(len(lines), top + avail)
+                head = ' %s ' % title
+                where = ' %d-%d of %d ' % (top + 1, end, len(lines)) if len(lines) > avail \
+                    else ' %d lines ' % len(lines)
+                bar = (head + ' ' * max(0, cols - len(head) - len(where)) + where)[:cols]
+                foot = (' Up/Down PgUp/PgDn Home/End scroll   Esc, q or Enter back ')[:cols - 1]
+                body = [self._fit(ln, cols - 2) for ln in lines[top:end]]
+                body += [''] * (avail - len(body))
+                frame = ['\x1b[7m' + bar + '\x1b[0m' if p.on else bar] + body + \
+                    ['\x1b[7m' + foot + ' ' * max(0, cols - 1 - len(foot)) + '\x1b[0m'
+                     if p.on else foot]
+                out.write('\x1b[H' + '\n'.join(ln + '\x1b[K' for ln in frame) + '\x1b[J')
+                self._scrollbar(2, avail, len(lines), avail, top, cols)
+                out.flush()
+                size = (cols, rows)
+                while True:
+                    k = self.key(0.3)
+                    if k is not None:
+                        break
+                    try:
+                        sz = os.get_terminal_size(sys.__stdout__.fileno())
+                        if (max(40, sz.columns), max(8, sz.lines)) != size:
+                            break
+                    except OSError:
+                        pass
+                if k in ('esc', 'q', 'enter', 'ctrl-c', 'ctrl-d'):
+                    return
+                if k in ('up', 'k'):
+                    top -= 1
+                elif k in ('down', 'j'):
+                    top += 1
+                elif k in ('pgup', 'b'):
+                    top -= avail - 1
+                elif k in ('pgdn', ' ', 'f'):
+                    top += avail - 1
+                elif k in ('home', 'g'):
+                    top = 0
+                elif k in ('end', 'G'):
+                    top = len(lines)
+        finally:
+            out.write('\x1b[?25h\x1b[?1049l')
+            out.flush()
+
+    def _scrollbar(self, base_row, nrows, total, visible, top, cols):
+        if total <= visible or nrows <= 0:
+            return
+        thumb = max(1, min(nrows, round(nrows * visible / total)))
+        span = nrows - thumb
+        denom = max(1, total - visible)
+        tstart = max(0, min(span, round(span * (top / denom))))
+        on = self.pal.on
+        parts = ['\x1b[?7l']
+        for r in range(nrows):
+            hit = tstart <= r < tstart + thumb
+            g = '\u2588' if hit else '\u2502'
+            if on:
+                g = ('\x1b[36m' if hit else '\x1b[2m') + g + '\x1b[0m'
+            parts.append('\x1b[%d;%dH%s' % (base_row + r, cols, g))
+        parts.append('\x1b[?7h')
+        sys.stdout.write(''.join(parts))
+
+    def show(self, *args):
+        """`plexmon ARGS`, its output on a screen of its own."""
+        # A question left empty is nothing asked for: back to the menu.
+        if any(a is None or str(a).strip() == '' for a in args):
+            return
+        self.clear_screen()
+        print(self.pal.dim('  working… $ plexmon ' + ' '.join(self._quote(a) for a in args)))
+        argv = plexmon_argv() + [str(a) for a in args]
+        text, rc = self.capture(argv)
+        if rc not in (0, None):
+            text += '\n' + self.pal.dim('(it ended with %d)' % rc)
+        self.page('$ plexmon ' + ' '.join(self._quote(a) for a in args), text)
+
+    def show_live(self, *args):
+        """`plexmon ARGS` straight on the terminal - one that asks something."""
+        if any(a is None or str(a).strip() == '' for a in args):
+            return
+        self.clear_screen()
+        self.cmd(*args)
+        self.pause()
+
+    LOG_TONES = {'error': 'bad', 'crit': 'bad', 'warn': 'warn', 'info': '', 'debug': 'dim'}
+
+    LIVE_KEEP = 20000
+
+    def live_log(self, what=''):
+        path = LOG_FILE
+        st = {'f': None, 'ino': None}
+
+        def opened():
+            # Not through a link, nor stuck on a FIFO (1.0.149): the folder is
+            # root's console, never through a link.
+            fd = os.open(str(path), os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            try:
+                import stat as _st
+                if not _st.S_ISREG(os.fstat(fd).st_mode):
+                    raise OSError('not a plain file')
+            except OSError:
+                os.close(fd)
+                raise
+            return os.fdopen(fd, 'r', encoding='utf-8', errors='replace')
+
+        def first():
+            try:
+                f = opened()
+            except OSError as e:
+                return [self.pal.bad_line('%s cannot be read: %s' % (path, e))]
+            st['f'] = f
+            st['ino'] = os.fstat(f.fileno()).st_ino
+            # Read from near the end only: a log can be gigabytes.
+            f.seek(0, 2)
+            start = max(0, f.tell() - 2 * 1024 * 1024)
+            f.seek(start)
+            got = f.read().splitlines()
+            # The first line only when reading began inside it (1.0.146): a short
+            # log lost its first whole line.
+            if start and len(got) > 1:
+                got = got[1:]
+            return got[-self.LIVE_KEEP:]
+
+        def more():
+            f = st['f']
+            if f is None:
+                return []
+            out = []
+            while len(out) < 5000:
+                ln = f.readline()
+                if not ln:
+                    break
+                out.append(ln.rstrip('\n'))
+            if not out:
+                try:
+                    if os.stat(str(path)).st_ino != st['ino']:      # rotated
+                        f.close()
+                        st['f'] = opened()
+                        st['ino'] = os.fstat(st['f'].fileno()).st_ino
+                except OSError:
+                    pass
+            return out
+        try:
+            self.live_view('Live log  %s' % path, first, more, self._log_text, what)
+        finally:
+            if st['f']:
+                st['f'].close()
+
+    @staticmethod
+    def _grep(find):
+        """What is typed as `grep -i` takes it: a test of one line."""
+        if not find:
+            return lambda s: True
+        try:
+            rx = re.compile(find, re.I)
+            return lambda s: rx.search(s) is not None
+        except (re.error, OverflowError, RecursionError):   # a{9999999999} too (1.0.139)
+            low = find.lower()
+            return lambda s: low in s.lower()
+
+    def _mark(self, coloured, find):
+        """The hits of `find` shown reversed - in the text between the colours."""
+        if not find or not self.pal.on:
+            return coloured
+        try:
+            rx = re.compile(find, re.I)
+        except (re.error, OverflowError, RecursionError):
+            rx = re.compile(re.escape(find), re.I)
+        out = []
+        for part in re.split(r'(\x1b\[[0-9;?]*[A-Za-z])', coloured):
+            if part.startswith('\x1b['):
+                out.append(part)
+            elif part:
+                out.append(rx.sub(lambda m: '\x1b[7m' + m.group(0) + '\x1b[27m'
+                                  if m.group(0) else '', part))
+        return ''.join(out)
+
+    @staticmethod
+    def _slice(line, start, width):
+        """Columns start..start+width of `line` on the screen, its colours kept."""
+        out, seen = [], 0
+        end = start + width
+        for part in re.split(r'(\x1b\[[0-9;?]*[A-Za-z])', line):
+            if not part:
+                continue
+            if part.startswith('\x1b['):
+                out.append(part)
+                continue
+            a, b = seen, seen + len(part)
+            if b > start and a < end:
+                out.append(part[max(0, start - a):max(0, end - a)])
+            seen = b
+        return ''.join(out) + ('\x1b[0m' if '\x1b[' in line else '')
+
+    def live_view(self, title, first, more, paint, find=''):
+        """The live screen: `first()` the lines there are, `more()` those come
+        since (asked a few times a second), `paint(line)` its colours."""
+        p = self.pal
+        if self._raw() is None or not sys.stdout.isatty():
+            for ln in first() + more():
+                print(ln)
+            return
+        import termios
+        import tty
+        fd = sys.stdin.fileno()
+        was = termios.tcgetattr(fd)
+        out = sys.stdout
+        lines = []                       # (plain, coloured)
+
+        def add(raw):
+            for ln in raw:
+                ln = term_safe(ln.expandtabs(8).replace('\r', ''))
+                col = (paint(ln) if paint else ln) if p.on else self._plain_text(ln)
+                lines.append((self._plain_text(col), col))
+        add(first())
+        test = self._grep(find)
+        hits = [i for i, x in enumerate(lines) if test(x[0])]
+        top, follow, xoff, new, dirty, size = 0, True, 0, 0, True, None
+        tty.setcbreak(fd, termios.TCSANOW)
+        out.write('\x1b[?1049h\x1b[?25l')
+        try:
+            while True:
+                came = more()
+                if came:
+                    n0 = len(lines)
+                    add(came)
+                    got = [i for i in range(n0, len(lines)) if test(lines[i][0])]
+                    hits += got
+                    if not follow:
+                        new += len(got)
+                    if len(lines) > self.LIVE_KEEP * 1.25:
+                        cut = len(lines) - self.LIVE_KEEP
+                        gone = sum(1 for i in hits if i < cut)
+                        del lines[:cut]
+                        hits = [i - cut for i in hits if i >= cut]
+                        top = max(0, top - gone)
+                    dirty = dirty or bool(got)
+                try:
+                    sz = os.get_terminal_size(sys.__stdout__.fileno())
+                    cols, rows = max(40, sz.columns), max(8, sz.lines)
+                except OSError:
+                    cols, rows = 100, 30
+                if (cols, rows) != size:
+                    size, dirty = (cols, rows), True
+                avail = max(3, rows - 2)
+                last = max(0, len(hits) - avail)
+                if follow:
+                    top = last
+                top = max(0, min(top, last))
+                if dirty:
+                    end = min(len(hits), top + avail)
+                    where = (' %d-%d of %d ' % (top + 1, end, len(hits))) if hits else ' 0 '
+                    state = ' following ' if follow else (' PAUSED%s ' % (
+                        ', %d new below' % new if new else ''))
+                    head = ' %s ' % title
+                    gp = '  grep -i: %s_ ' % find if find else '  type to grep '
+                    right = state + where
+                    bar = (head + gp)[:max(0, cols - len(right))]
+                    bar = bar + ' ' * max(0, cols - len(bar) - len(right)) + right
+                    foot = (' type: grep (any case)  Bksp  Ctrl+U clear   Up/Down PgUp/PgDn '
+                            'Home  End: follow   Left/Right  Esc back ')[:cols - 1]
+                    body = [self._slice(self._mark(lines[i][1], find), xoff, cols - 2)
+                            for i in hits[top:end]]
+                    if not hits:
+                        body = ['', '   ' + (p.dim('nothing with "%s" yet' % find) if find
+                                             else p.dim('nothing yet'))]
+                    body += [''] * (avail - len(body))
+                    inv = (lambda t: '\x1b[7m' + t + '\x1b[0m') if p.on else (lambda t: t)
+                    tone = '\x1b[33m' if (not follow and p.on) else ''
+                    frame = [tone + inv(bar[:cols])] + body[:avail] + \
+                        [inv(foot + ' ' * max(0, cols - 1 - len(foot)))]
+                    out.write('\x1b[H' + '\n'.join(ln + '\x1b[K' for ln in frame) + '\x1b[J')
+                    self._scrollbar(2, avail, len(hits), avail, top, cols)
+                    out.flush()
+                    dirty = False
+                k = self.key(0.25)
+                if k is None:
+                    continue
+                dirty = True
+                if k in ('esc', 'ctrl-c', 'ctrl-d'):
+                    if find and k == 'esc':
+                        find = ''
+                    else:
+                        return
+                elif k == 'up':
+                    follow, top = False, top - 1
+                elif k == 'down':
+                    top += 1
+                    follow = top >= last
+                elif k == 'pgup':
+                    follow, top = False, top - (avail - 1)
+                elif k == 'pgdn':
+                    top += avail - 1
+                    follow = top >= last
+                elif k == 'home':
+                    follow, top = False, 0
+                elif k in ('end', 'enter'):
+                    follow, new = True, 0
+                elif k == 'left':
+                    xoff = max(0, xoff - 20)
+                    continue
+                elif k == 'right':
+                    xoff += 20
+                    continue
+                elif k == 'bs':
+                    find = find[:-1]
+                elif k == 'ctrl-u':
+                    find = ''
+                elif k and len(k) == 1 and k.isprintable():
+                    find += k
+                else:
+                    continue
+                if k in ('bs', 'ctrl-u', 'esc') or (k and len(k) == 1 and k.isprintable()):
+                    test = self._grep(find)
+                    hits = [i for i, x in enumerate(lines) if test(x[0])]
+                    follow, new = True, 0
+                if follow:
+                    new = 0
+        finally:
+            out.write('\x1b[?25h\x1b[?1049l')
+            out.flush()
+            termios.tcsetattr(fd, termios.TCSADRAIN, was)
+
+    def _log_text(self, ln):
+        """One line of the log, coloured (colorama when it is there): the time
+        dim, the level by how bad, what it is about in cyan, addresses in
+        magenta, accept and reject in green and red, a whole warning in yellow
+        and a whole error in red."""
+        p = self.pal
+        ln = ln.rstrip('\n')
+        m = re.match(r'^(\S+ \S+) (\w+)(\s+)(.*)$', ln)
+        if not m or not p.on:
+            return ln
+        lvl, rest = m.group(2), m.group(4)
+        tone = self.LOG_TONES.get(lvl, '')
+        paint = {'bad': p.bad, 'warn': p.warn, 'dim': p.dim}.get(tone)
+        what = re.match(r'^([a-z][a-z -]{1,30}): (.*)$', rest)
+        head, body = (what.group(1) + ':', what.group(2)) if what else ('', rest)
+
+        def words(t):
+            t = re.sub(r'(\[?[0-9a-fA-F:]*\d{1,3}(?:\.\d{1,3}){3}\]?(?::\d+)?|\b[0-9a-fA-F]{1,4}(?::[0-9a-fA-F]{0,4}){2,7}\b)',
+                       lambda x: p.addr(x.group(1)) + (p.c_warn if tone == 'warn' else
+                                                       p.c_bad if tone == 'bad' else ''), t)
+            t = re.sub(r'\b(accept(?:ed)?|signed in|in place|done|ok)\b',
+                       lambda x: p.good(x.group(1)) + (p.c_warn if tone == 'warn' else ''), t)
+            t = re.sub(r'\b(reject(?:ed)?|refused|failed|wrong|locked out|not answering)\b',
+                       lambda x: p.bad(x.group(1)) + (p.c_warn if tone == 'warn' else ''), t)
+            return t
+        body = words(body)
+        if paint is not None and tone != 'dim':
+            body = paint(body)
+        elif tone == 'dim':
+            body = p.dim(body)
+        lv = (paint or p.info)(lvl.ljust(5))
+        return '%s %s %s%s' % (p.dim(m.group(1)), lv, p.info(head) + (' ' if head else ''), body)
+
+    def _log_line(self, ln):
+        print(self._log_text(ln))
+
+
+
+    def _pw_fields(self):
+        return [{'key': 'pw', 'label': 'password', 'kind': 'secret', 'need': True,
+                 'help': 'At least 8 characters; only stars are shown.',
+                 'check': lambda v, _: None if len(v) >= 8 else 'at least 8 characters'},
+                {'key': 'again', 'label': 'again', 'kind': 'secret', 'need': True,
+                 'check': lambda v, vals: None if v == vals.get('pw')
+                 else 'the two passwords are not the same'}]
+
+
+    def _settings_rows(self):
+        got = self.out('--settings') or []
+        rows = got.get('settings') if isinstance(got, dict) else got
+        by = {r['key']: r for r in rows or [] if isinstance(r, dict) and r.get('key')}
+        out, seen = [], set()
+        for pane, words in self.PANE_TITLES:
+            keys = [k for k in PANES.get(pane, []) if k in by]
+            if not keys:
+                continue
+            out.append(('head', words))
+            for k in keys:
+                out.append(('set', by[k]))
+                seen.add(k)
+        rest = [k for k in by if k not in seen]
+        if rest:
+            out.append(('head', 'Everything else'))
+            out += [('set', by[k]) for k in rest]
+        return out
+
+    @staticmethod
+    def _shown(v):
+        if v is True:
+            return 'on'
+        if v is False:
+            return 'off'
+        return '' if v is None else str(v)
+
+    def _kind(self, key):
+        shape = TUNABLE.get(key)
+        d = DEFAULTS.get(key)
+        if isinstance(d, bool) or shape == (0, 1):
+            return 'switch', ['1', '0']
+        if isinstance(shape, tuple) and shape and isinstance(shape[0], str):
+            return 'choice', [str(x) for x in shape]
+        if isinstance(shape, tuple) and len(shape) == 2:
+            return 'number', list(shape)
+        return 'text', None
+
+    def settings_tui(self):
+        c, A = self.curses, self.A
+        rows = self._settings_rows()
+        if not rows:
+            return None
+        sel = next(i for i, r in enumerate(rows) if r[0] == 'set')
+        top, said, said_bad, find = 0, '', False, ''
+        while True:
+            if self.plain:
+                c.reset_prog_mode()
+                self.scr.clear()
+                self.plain = False
+
+            def paint():
+                nonlocal top
+                h, w = self.scr.getmaxyx()
+                self.scr.erase()
+                self._put(0, 0, ' ' * w, A['head'])
+                self._put(0, 0, ' plexmon %s  Settings' % __version__, A['head'] | c.A_BOLD)
+                if find:
+                    self._put(0, max(0, w - len(find) - 12), ' find: %s ' % find, A['head'])
+                avail = max(3, h - 3)
+                if sel < top:
+                    top = sel
+                if sel >= top + avail:
+                    top = sel - avail + 1
+                top = max(0, min(top, max(0, len(rows) - avail)))
+                if top > 0 and rows[top - 1][0] == 'head' and sel - top < avail - 1:
+                    top -= 1                    # the group's heading with its first setting
+                namew = max(20, min(44, w // 3))
+                valw = max(10, min(40, w - namew - 30))
+                for n, r in enumerate(rows[top:top + avail]):
+                    y = 1 + n
+                    if r[0] == 'head':
+                        self._put(y, 1, r[1].upper(), A['key'])
+                        continue
+                    st = r[1]
+                    val = self._shown(st.get('value'))
+                    line = '  %-*s %-*s %s' % (namew, (st.get('name') or st['key'])[:namew], valw,
+                                              val[:valw], st.get('key'))
+                    if top + n == sel:
+                        self._put(y, 0, line + ' ' * max(0, w - 2 - len(line)), A['sel'])
+                    else:
+                        self._put(y, 0, '  ' + (st.get('name') or st['key'])[:namew])
+                        tone = A['dim'] if st.get('source') == 'default' else A['ok']
+                        self._put(y, 3 + namew, val[:valw], tone)
+                        self._put(y, 4 + namew + valw, st.get('key'), A['dim'])
+                # The bar on the right.
+                total = len(rows)
+                if total > avail:
+                    thumb = max(1, min(avail, round(avail * avail / total)))
+                    tstart = max(0, min(avail - thumb, round((avail - thumb) * top
+                                                              / max(1, total - avail))))
+                    utf = 'utf' in (sys.stdout.encoding or '').lower()
+                    for r in range(avail):
+                        hit = tstart <= r < tstart + thumb
+                        self._put(1 + r, w - 1, ('\u2588' if hit else '\u2502') if utf
+                                  else ('#' if hit else '|'), A['key'] if hit else A['dim'])
+                if said:
+                    self._put(h - 2, 1, said[:w - 2], A['bad'] if said_bad else A['ok'])
+                help_ = ' Up/Down PgUp/PgDn Home/End move   Enter change   / find   Esc back '
+                self._put(h - 1, 0, ' ' * (w - 1), A['head'])
+                self._put(h - 1, 0, help_[:w - 1], A['head'])
+                self.scr.noutrefresh()
+                return h, avail
+            self.backdrop = paint
+            h, avail = paint()
+            c.doupdate()
+            self.scr.timeout(500)
+            k = self._getkey()
+            if k is None:
+                continue
+            said = ''
+            sets = [i for i, r in enumerate(rows) if r[0] == 'set']
+            if k == 'esc':
+                if find:
+                    find = ''
+                    continue
+                return None
+            if k == 'q':
+                return 'quit'
+            if k in ('up', 'down', 'pgup', 'pgdn', 'home', 'end'):
+                pos = sets.index(sel) if sel in sets else 0
+                pos = {'up': pos - 1, 'down': pos + 1, 'pgup': pos - (avail - 2),
+                       'pgdn': pos + (avail - 2), 'home': 0, 'end': len(sets) - 1}[k]
+                sel = sets[max(0, min(len(sets) - 1, pos))]
+            elif k == '/':
+                find = self._line_in(h - 2, 'Find (a word of its name or key): ', '') or ''
+                if find:
+                    hit = [i for i in sets if find.lower() in (
+                        str(rows[i][1].get('name')) + ' ' + rows[i][1]['key']).lower()]
+                    if hit:
+                        sel = hit[0]
+                    else:
+                        said, said_bad = 'nothing with "%s"' % find, True
+            elif k == 'n' and find:
+                hit = [i for i in sets if i > sel and find.lower() in (
+                    str(rows[i][1].get('name')) + ' ' + rows[i][1]['key']).lower()]
+                if hit:
+                    sel = hit[0]
+            elif k == 'enter':
+                done = self._edit_one(rows[sel][1])
+                if done:
+                    said, said_bad = done
+                    if not said_bad:
+                        cur = rows[sel][1]['key']
+                        rows = self._settings_rows()
+                        sel = next((i for i, r in enumerate(rows)
+                                    if r[0] == 'set' and r[1]['key'] == cur), sel)
+
+    def _getkey(self, win=None):
+        """A key on the text screen, by name: 'up', 'enter', 'esc', or the character."""
+        c = self.curses
+        src = win or self.scr
+        k = src.getch()
+        if k == -1:
+            # The window's size looked at, as the menus do.
+            try:
+                size = os.get_terminal_size(sys.__stdout__.fileno())
+                if (size.lines, size.columns) != self.scr.getmaxyx():
+                    c.resizeterm(size.lines, size.columns)
+                    self.scr.clear()
+                    return 'resize'
+            except (OSError, ValueError, c.error):
+                pass
+            return None
+        if k == 27:
+            src.nodelay(True)
+            k2 = src.getch()
+            if k2 in (ord('['), ord('O')):
+                seq = ''
+                while True:
+                    k3 = src.getch()
+                    if k3 == -1:
+                        break
+                    seq += chr(k3)
+                    if chr(k3).isalpha() or chr(k3) == '~':
+                        break
+                src.nodelay(False)
+                return {'A': 'up', 'B': 'down', 'C': 'right', 'D': 'left', 'H': 'home',
+                        'F': 'end', '5~': 'pgup', '6~': 'pgdn', '1~': 'home', '4~': 'end',
+                        '7~': 'home', '8~': 'end', '3~': 'del'}.get(seq, None)
+            if k2 != -1:
+                c.ungetch(k2)
+            src.nodelay(False)
+            return 'esc'
+        named = {c.KEY_UP: 'up', c.KEY_DOWN: 'down', c.KEY_LEFT: 'left', c.KEY_RIGHT: 'right',
+                 c.KEY_PPAGE: 'pgup', c.KEY_NPAGE: 'pgdn', c.KEY_HOME: 'home', c.KEY_END: 'end',
+                 c.KEY_ENTER: 'enter', 10: 'enter', 13: 'enter', c.KEY_BACKSPACE: 'bs',
+                 127: 'bs', 8: 'bs', c.KEY_DC: 'del', c.KEY_RESIZE: 'resize', 21: 'ctrl-u',
+                 9: 'tab'}
+        if k in named:
+            if k == c.KEY_RESIZE:
+                try:
+                    c.update_lines_cols()
+                except Exception:                       # noqa: BLE001
+                    pass
+            return named[k]
+        if 0xc0 <= k < 0xf8:
+            # getch() gives UTF-8 a byte at a time (1.0.139): "ž" came as two
+            # Latin-1 letters, and a password typed here was not the one meant.
+            raw = bytearray([k])
+            src.nodelay(True)
+            try:
+                for _ in range(1 if k < 0xe0 else 2 if k < 0xf0 else 3):
+                    k2 = src.getch()
+                    if not 0x80 <= k2 < 0xc0:
+                        break
+                    raw.append(k2)
+            finally:
+                src.nodelay(False)
+            try:
+                return raw.decode('utf-8')
+            except UnicodeDecodeError:
+                return None
+        if 32 <= k < 0x110000:
+            try:
+                return chr(k)
+            except ValueError:
+                return None
+        return None
+
+    def _line_in(self, y, prompt, text, secret=False, win=None, x=1, width=None):
+        """A line typed on the text screen: Enter gives it, Esc gives None."""
+        c = self.curses
+        scr = win or self.scr
+        pos = len(text)
+        try:
+            c.curs_set(1)
+        except Exception:                               # noqa: BLE001
+            pass
+        try:
+            while True:
+                h, w = scr.getmaxyx()
+                room = (width or (w - x - len(prompt) - 2))
+                shown = ('*' * len(text)) if secret else text
+                start = max(0, pos - room + 1)
+                try:
+                    scr.addstr(y, x, prompt, self.A['key'])
+                    scr.addstr(y, x + len(prompt), shown[start:start + room].ljust(room),
+                               self.curses.A_UNDERLINE)
+                    scr.move(y, x + len(prompt) + pos - start)
+                except c.error:
+                    pass
+                scr.refresh()
+                scr.timeout(500)
+                k = self._getkey(scr)
+                if k == 'enter':
+                    return text
+                if k == 'esc':
+                    return None
+                if k == 'bs' and pos > 0:
+                    text = text[:pos - 1] + text[pos:]
+                    pos -= 1
+                elif k == 'del':
+                    text = text[:pos] + text[pos + 1:]
+                elif k == 'left':
+                    pos = max(0, pos - 1)
+                elif k == 'right':
+                    pos = min(len(text), pos + 1)
+                elif k == 'home':
+                    pos = 0
+                elif k == 'end':
+                    pos = len(text)
+                elif k == 'ctrl-u':
+                    text, pos = '', 0
+                elif k and len(k) == 1 and k.isprintable():
+                    text = text[:pos] + k + text[pos:]
+                    pos += 1
+        finally:
+            try:
+                c.curs_set(0)
+            except Exception:                           # noqa: BLE001
+                pass
+
+    def _box(self, win, h, w):
+        """A frame round a window, in UTF-8 lines where the terminal takes them."""
+        c, A = self.curses, self.A
+        if 'utf' in (sys.stdout.encoding or '').lower():
+            hz, vt, tl, tr, bl, br = '\u2500', '\u2502', '\u250c', '\u2510', '\u2514', '\u2518'
+        else:
+            hz, vt, tl, tr, bl, br = '-', '|', '+', '+', '+', '+'
+        for y, line in ((0, tl + hz * (w - 2) + tr), (h - 1, bl + hz * (w - 2) + br)):
+            try:
+                win.addstr(y, 0, line, A['key'])
+            except c.error:
+                pass                                    # the bottom-right corner
+        for y in range(1, h - 1):
+            for x in (0, w - 1):
+                try:
+                    win.addstr(y, x, vt, A['key'])
+                except c.error:
+                    pass
+
+    def _edit_one(self, st):
+        """The window to change one setting: what it is, what it may be, the
+        value checked as the daemon checks it before it is saved. Returns
+        (words, bad) or None when nothing was done."""
+        c, A = self.curses, self.A
+        key = st['key']
+        kind, shape = self._kind(key)
+        secret = bool(st.get('secret'))
+        cur = self._shown(st.get('value'))
+        if kind == 'switch':
+            cur = '1' if st.get('value') in (True, 1, '1', 'on') else '0'
+        text = '' if secret else cur
+        choice = shape.index(cur) if kind in ('switch', 'choice') and cur in (shape or []) else 0
+        err = ''
+        helptext = re.sub(r'<[^>]+>', '', html.unescape(str(st.get('says') or '')))
+        while True:
+            self._under()
+            h, w = self.scr.getmaxyx()
+            ww = max(40, min(96, w - 4))
+            body = []
+            for para in helptext.split('\n'):
+                body += textwrap.wrap(para, ww - 4) or ['']
+            facts = ['now: %s%s' % ('(hidden)' if secret else (self._shown(st.get('value')) or '(empty)'),
+                                    '' if st.get('source') == 'default' else
+                                    '   - %s' % (st.get('source_says') or st.get('source'))),
+                     'as it comes: %s' % (self._shown(st.get('default')) or '(empty)')]
+            if kind == 'number':
+                facts.append('a whole number from %s to %s' % (shape[0], shape[1]))
+            elif kind == 'choice':
+                facts.append('one of: ' + ', '.join(shape))
+            if st.get('file_only'):
+                facts.append('kept in config.json on this machine - it takes effect after a restart')
+            if st.get('node_key'):
+                facts.append('this node\'s own (each node of a cluster has its own)')
+            # The help cut to what the screen has room for - the rest always fits.
+            fixed = len(facts) + 9 + (len(shape) - 1 if kind == 'choice' else 0)
+            body = body[:max(1, h - 2 - fixed)]
+            wh = min(h - 2, len(body) + fixed)
+            win = c.newwin(wh, ww, max(0, (h - wh) // 2), max(0, (w - ww) // 2))
+            win.keypad(True)
+            win.erase()
+            self._box(win, wh, ww)
+            title = ' %s ' % (st.get('name') or key)
+            try:
+                win.addnstr(0, 2, title, ww - 4, A['title'])
+                win.addnstr(1, 2, key, ww - 4, A['dim'])
+                y = 2
+                for ln in body:
+                    win.addnstr(y, 2, ln, ww - 4)
+                    y += 1
+                y += 1
+                for f in facts:
+                    win.addnstr(y, 2, f, ww - 4, A['dim'])
+                    y += 1
+                y += 1
+                if err:
+                    win.addnstr(wh - 2, 2, err[:ww - 4], ww - 4, A['bad'])
+                else:
+                    win.addnstr(wh - 2, 2, ('Left/Right choose' if kind in ('switch', 'choice')
+                                            else 'type the new value') +
+                                '   Enter save   Esc cancel', ww - 4, A['dim'])
+            except c.error:
+                pass
+            if kind in ('switch', 'choice'):
+                words = {'1': 'on', '0': 'off'} if kind == 'switch' else {}
+                x = 2
+                for i, opt in enumerate(shape):
+                    lab = ' %s ' % (words.get(opt) or (CHOICE_WORDS.get(key, {}).get(opt) or opt))
+                    if kind == 'choice':
+                        # One under the other: their words can be long.
+                        lab = (' > ' if i == choice else '   ') + lab.strip() + ' '
+                        try:
+                            win.addnstr(y, 2, lab, ww - 4, A['sel'] if i == choice else 0)
+                        except c.error:
+                            pass
+                        y += 1
+                        continue
+                    try:
+                        win.addnstr(y, x, lab, max(0, ww - x - 2), A['sel'] if i == choice else 0)
+                    except c.error:
+                        pass
+                    x += len(lab) + 1
+                win.noutrefresh()
+                c.doupdate()
+                win.timeout(500)
+                k = self._getkey(win)
+                if k == 'esc':
+                    return None
+                if k in ('left', 'up'):
+                    choice = (choice - 1) % len(shape)
+                elif k in ('right', 'down', 'tab', ' '):
+                    choice = (choice + 1) % len(shape)
+                elif k == 'enter':
+                    value = shape[choice]
+                else:
+                    continue
+                if k != 'enter':
+                    continue
+            else:
+                win.noutrefresh()
+                c.doupdate()
+                got = self._line_in(y, 'value: ', text, secret=secret, win=win, x=2,
+                                    width=ww - 14)
+                if got is None:
+                    return None
+                text = got
+                if secret and not got:
+                    return ('nothing typed - %s stays as it was' % key, False)
+                value = got
+            # Checked here as the daemon checks it, then saved by `plexmon --set`.
+            try:
+                check_setting(key, value)
+            except (BadSetting, ValueError, TypeError) as e:
+                err = str(e)
+                continue
+            # A secret goes by the environment, not the command line (1.0.136).
+            env = {'PLEXMON_VALUE_' + key.upper(): value} if secret else None
+            out, rc = self.capture(plexmon_argv() + ['--set', '%s=%s' % (
+                key, '@env' if secret else value), '--no-color'], env=env)
+            if rc != 0:
+                err = (out.strip().splitlines() or ['it was not saved'])[-1]
+                continue
+            return ('%s = %s - saved%s' % (key, '(hidden)' if secret else value,
+                                           '; the running service takes it within seconds'
+                                           if not st.get('file_only') else
+                                           '; restart the service for it'), False)
+
+    # ---- windows on the text screen for every menu: arrows and Enter (1.0.135) ----
+    # Nothing is typed at a bare prompt any more: a question is a window (a
+    # form) whose fields are moved between by the arrows, a choice is picked
+    # by the arrows, a list (tokens, accounts, clients, files…) is scrolled and
+    # Enter on one offers what can be done with it. What is typed is checked
+    # before anything is run; Esc closes the window and goes back. The screen
+    # under a window is drawn again by `self.backdrop` - so a window made
+    # bigger or smaller (PuTTY's too) is drawn right.
+    def _fresh(self):
+        """Back from a command's own screen: the text screen drawn whole again."""
+        if self.plain:
+            self.curses.reset_prog_mode()
+            self.scr.clear()
+            self.plain = False
+            self.st_now = True
+
+    def _under(self):
+        """The screen under a window, written but not yet shown."""
+        self._fresh()
+        fn = getattr(self, 'backdrop', None)
+        if fn:
+            try:
+                fn()
+                return
+            except Exception:                           # noqa: BLE001
+                pass
+        self.scr.noutrefresh()
+
+    def _window(self, want_h, want_w):
+        """A framed window in the middle of the screen; (win, h, w)."""
+        c = self.curses
+        h, w = self.scr.getmaxyx()
+        ww = max(20, min(want_w, w - 2))
+        wh = max(5, min(want_h, h - 2))
+        win = c.newwin(wh, ww, max(0, (h - wh) // 2), max(0, (w - ww) // 2))
+        win.keypad(True)
+        win.erase()
+        self._box(win, wh, ww)
+        return win, wh, ww
+
+    def _wput(self, win, y, x, text, attr=0, width=None):
+        try:
+            wh, ww = win.getmaxyx()
+            if 0 < y < wh - 1 and x < ww - 1:
+                win.addnstr(y, x, str(text), max(0, (width or ww) - (x if width is None else 0)
+                                                 - (1 if width is None else 0)), attr)
+        except self.curses.error:
+            pass
+
+    def _wkey(self, win, wait=500):
+        win.timeout(wait)
+        return self._getkey(win)
+
+    def _wrap(self, text, width):
+        out = []
+        for para in str(text or '').split('\n'):
+            out += textwrap.wrap(para, max(10, width)) or ['']
+        return out
+
+    @staticmethod
+    def _plain_text(text):
+        return re.sub(r'\x1b\[[0-9;?]*[A-Za-z]', '', str(text or ''))
+
+    def note(self, title, text, tone=''):
+        """Words in a window; any of Enter, Esc, q or Space closes it."""
+        A = self.A
+        while True:
+            self._under()
+            h, w = self.scr.getmaxyx()
+            ww = max(30, min(100, w - 4))
+            lines = self._wrap(text, ww - 4)[:max(1, h - 6)]
+            win, wh, ww = self._window(len(lines) + 4, max(len(title) + 8, min(
+                ww, max(len(x) for x in lines + ['']) + 6, ww)))
+            self._wput(win, 0, 2, ' %s ' % title, A['title'])
+            try:
+                win.addnstr(0, 2, ' %s ' % title, ww - 4, A['title'])
+            except self.curses.error:
+                pass
+            for i, ln in enumerate(lines):
+                self._wput(win, 1 + i, 2, ln, A.get(tone, 0) if tone else 0)
+            self._wput(win, wh - 2, 2, 'Enter or Esc - back', A['dim'])
+            win.noutrefresh()
+            self.curses.doupdate()
+            k = self._wkey(win)
+            if k in ('enter', 'esc', 'q', ' '):
+                return
+
+    def working(self, words):
+        """A window that says something is being done (the screen waits for it)."""
+        self._under()
+        win, wh, ww = self._window(3, min(100, len(words) + 6))
+        self._wput(win, 1, 2, words, self.A['dim'])
+        win.noutrefresh()
+        self.curses.doupdate()
+
+    def confirm(self, title, words, yes='Yes', no='No', danger=False):
+        """Yes or no, chosen by the arrows (or y / n); No unless chosen."""
+        A = self.A
+        pick = 1
+        while True:
+            self._under()
+            h, w = self.scr.getmaxyx()
+            ww = max(40, min(80, w - 4))
+            lines = self._wrap(words, ww - 4)[:max(1, h - 8)]
+            win, wh, ww = self._window(len(lines) + 5, ww)
+            try:
+                win.addnstr(0, 2, ' %s ' % title, ww - 4, A['bad'] if danger else A['title'])
+            except self.curses.error:
+                pass
+            for i, ln in enumerate(lines):
+                self._wput(win, 1 + i, 2, ln)
+            x = 2
+            y = wh - 2
+            for i, lab in enumerate((yes, no)):
+                lab = '  %s  ' % lab
+                self._wput(win, y, x, lab, (A['bad'] if danger and i == 0 else A['sel'])
+                           if i == pick else A['key'])
+                x += len(lab) + 2
+            self._wput(win, y, x + 2, 'Left/Right  Enter  Esc', A['dim'])
+            win.noutrefresh()
+            self.curses.doupdate()
+            k = self._wkey(win)
+            if k in ('esc', 'n', 'N'):
+                return False
+            if k in ('y', 'Y'):
+                return True
+            if k in ('left', 'right', 'tab', 'up', 'down'):
+                pick = 1 - pick
+            elif k == 'enter':
+                return pick == 0
+
+    def choose(self, title, options, words='', cur=0):
+        """One of `options` ([(value, words)]), picked by the arrows; Esc None."""
+        A = self.A
+        if not options:
+            return None
+        sel = max(0, min(cur or 0, len(options) - 1))
+        top = 0
+        while True:
+            self._under()
+            h, w = self.scr.getmaxyx()
+            ww = min(90, w - 4, max(36, max(len(o[1]) for o in options) + 12,
+                                    len(title) + 8, len(words) + 6 if words else 0))
+            head = self._wrap(words, ww - 4) if words else []
+            room = max(1, min(len(options), h - 6 - len(head)))
+            win, wh, ww = self._window(room + len(head) + (4 if head else 3), ww)
+            try:
+                win.addnstr(0, 2, ' %s ' % title, ww - 4, A['title'])
+            except self.curses.error:
+                pass
+            y = 1
+            for ln in head:
+                self._wput(win, y, 2, ln, A['dim'])
+                y += 1
+            if head:
+                y += 1
+            if sel < top:
+                top = sel
+            if sel >= top + room:
+                top = sel - room + 1
+            for n, (val, lab) in enumerate(options[top:top + room]):
+                i = top + n
+                line = ' %2d  %s' % (i + 1, lab)
+                if i == sel:
+                    self._wput(win, y + n, 2, line.ljust(ww - 5), A['sel'])
+                else:
+                    self._wput(win, y + n, 2, ' %2d' % (i + 1), A['key'])
+                    self._wput(win, y + n, 7, lab)
+            if len(options) > room:
+                self._wbar(win, y, room, len(options), top, ww - 2)
+            win.noutrefresh()
+            self.curses.doupdate()
+            k = self._wkey(win)
+            if k in ('esc', 'left'):
+                return None
+            if k == 'q':
+                return None
+            if k == 'up':
+                sel = (sel - 1) % len(options)
+            elif k in ('down', 'tab'):
+                sel = (sel + 1) % len(options)
+            elif k in ('home', 'pgup'):
+                sel = 0
+            elif k in ('end', 'pgdn'):
+                sel = len(options) - 1
+            elif k and k.isdigit():
+                n = int(k) - 1
+                if 0 <= n < len(options):
+                    sel = n
+                    return options[sel][0]
+            elif k in ('enter', 'right'):
+                return options[sel][0]
+
+    def _wbar(self, win, y0, rows, total, top, x):
+        """The scroll bar on the right of a list in a window."""
+        A = self.A
+        if total <= rows:
+            return
+        thumb = max(1, min(rows, round(rows * rows / total)))
+        tstart = max(0, min(rows - thumb, round((rows - thumb) * top / max(1, total - rows))))
+        utf = 'utf' in (sys.stdout.encoding or '').lower()
+        for r in range(rows):
+            hit = tstart <= r < tstart + thumb
+            try:
+                win.addstr(y0 + r, x, ('█' if hit else '│') if utf else
+                           ('#' if hit else '|'), A['key'] if hit else A['dim'])
+            except self.curses.error:
+                pass
+
+    def form(self, title, fields, words='', check=None, ok='OK'):
+        """Questions in one window. fields: [{'key', 'label', 'kind': 'text' |
+        'secret' | 'choice' | 'number', 'value', 'options': [(value, words)],
+        'need': True, 'range': (a, b), 'help', 'check': fn(value, values) ->
+        an error or None, 'when': fn(values) -> shown or not}]. Up/Down (Tab)
+        move between them, a choice is changed by Left/Right, Enter checks
+        them all and gives {key: value}; Esc gives None. A secret shows a star
+        for each character, never the characters."""
+        c, A = self.curses, self.A
+        vals, pos = {}, {}
+        for f in fields:
+            f.setdefault('kind', 'text')
+            if f['kind'] == 'choice':
+                opts = [o[0] for o in f['options']]
+                vals[f['key']] = f.get('value') if f.get('value') in opts else opts[0]
+            else:
+                vals[f['key']] = str(f.get('value') if f.get('value') is not None else '')
+            pos[f['key']] = len(vals[f['key']]) if f['kind'] != 'choice' else 0
+        at, err, err_at = 0, '', None
+        try:
+            c.curs_set(1)
+        except Exception:                               # noqa: BLE001
+            pass
+        try:
+            while True:
+                shown = [f for f in fields if not f.get('when') or f['when'](vals)]
+                at = max(0, min(at, len(shown) - 1))
+                f = shown[at]
+                self._under()
+                h, w = self.scr.getmaxyx()
+                ww = max(50, min(100, w - 4))
+                head = self._wrap(words, ww - 4) if words else []
+                labw = min(30, max(len(x.get('label') or x['key']) for x in shown) + 1)
+                fieldw = max(8, ww - labw - 7)
+                helps = self._wrap(f.get('help') or '', ww - 4) if f.get('help') else []
+                helps = helps[:4]
+                wh = len(head) + (1 if head else 0) + len(shown) + 2 + 4 + 1
+                win, wh, ww = self._window(wh, ww)
+                try:
+                    win.addnstr(0, 2, ' %s ' % title, ww - 4, A['title'])
+                except c.error:
+                    pass
+                y = 1
+                for ln in head:
+                    self._wput(win, y, 2, ln, A['dim'])
+                    y += 1
+                if head:
+                    y += 1
+                cursor = None
+                for i, x in enumerate(shown):
+                    lab = (x.get('label') or x['key'])[:labw - 1]
+                    here = i == at
+                    self._wput(win, y, 2, lab.rjust(labw), A['key'] if here else 0)
+                    vx = 3 + labw + 1
+                    v = vals[x['key']]
+                    if x['kind'] == 'choice':
+                        words_ = dict(x['options']).get(v, v)
+                        txt = ('< %s >' % words_) if here else ('  %s' % words_)
+                        self._wput(win, y, vx, txt[:fieldw], A['sel'] if here else A['ok'])
+                    else:
+                        t = ('*' * len(v)) if x['kind'] == 'secret' else v
+                        p = pos[x['key']] if here else len(t)
+                        start = max(0, p - fieldw + 1)
+                        self._wput(win, y, vx, t[start:start + fieldw].ljust(fieldw),
+                                   c.A_UNDERLINE | (A['key'] if here else 0))
+                        if here:
+                            cursor = (y, vx + p - start)
+                    if err and err_at == x['key']:
+                        self._wput(win, y, ww - 3, '!', A['bad'])
+                    y += 1
+                y += 1
+                for ln in helps:
+                    self._wput(win, y, 2, ln, A['dim'])
+                    y += 1
+                if err:
+                    self._wput(win, wh - 2, 2, err[:ww - 4], A['bad'])
+                else:
+                    self._wput(win, wh - 2, 2, ('Up/Down field   ' + ('Left/Right choose   '
+                               if any(x['kind'] == 'choice' for x in shown) else '') +
+                               'Enter %s   Esc cancel' % ok)[:ww - 4], A['dim'])
+                if cursor:
+                    try:
+                        c.curs_set(1)
+                        win.move(*cursor)
+                    except c.error:
+                        pass
+                else:
+                    try:
+                        c.curs_set(0)
+                    except Exception:                   # noqa: BLE001
+                        pass
+                win.noutrefresh()
+                c.doupdate()
+                k = self._wkey(win)
+                if k is None or k == 'resize':
+                    continue
+                key, kind = f['key'], f['kind']
+                if k == 'esc':
+                    return None
+                if k in ('up',) or (k == 'tab' and False):
+                    at = (at - 1) % len(shown)
+                elif k in ('down', 'tab'):
+                    at = (at + 1) % len(shown)
+                elif k == 'enter':
+                    err, err_at = '', None
+                    for i, x in enumerate(shown):
+                        v = vals[x['key']]
+                        if x['kind'] != 'choice':
+                            v = v.strip() if x['kind'] != 'secret' else v
+                            vals[x['key']] = v
+                        bad = None
+                        if x.get('need') and v == '':
+                            bad = '%s - it is needed' % (x.get('label') or x['key'])
+                        elif x['kind'] == 'number' and v != '':
+                            try:
+                                n = int(v)
+                                lo, hi = x.get('range') or (None, None)
+                                if (lo is not None and n < lo) or (hi is not None and n > hi):
+                                    bad = '%s - a whole number from %s to %s' % (
+                                        x.get('label') or x['key'], lo, hi)
+                            except ValueError:
+                                bad = '%s - a whole number' % (x.get('label') or x['key'])
+                        if not bad and x.get('check') and v != '':
+                            try:
+                                bad = x['check'](v, vals)
+                            except Exception as e:              # noqa: BLE001
+                                bad = str(e)
+                        if bad:
+                            err, err_at, at = bad, x['key'], i
+                            break
+                    if err:
+                        continue
+                    got = {x['key']: vals[x['key']] for x in shown}
+                    if check:
+                        bad = check(got)
+                        if bad:
+                            err, err_at = (bad if isinstance(bad, tuple) else (bad, None))
+                            if err_at:
+                                at = next((i for i, x in enumerate(shown) if x['key'] == err_at),
+                                          at)
+                            continue
+                    return got
+                elif kind == 'choice':
+                    opts = [o[0] for o in f['options']]
+                    i = opts.index(vals[key]) if vals[key] in opts else 0
+                    if k in ('left',):
+                        vals[key] = opts[(i - 1) % len(opts)]
+                    elif k in ('right', ' '):
+                        vals[key] = opts[(i + 1) % len(opts)]
+                    err = ''
+                else:
+                    t, p = vals[key], pos[key]
+                    if k == 'bs' and p > 0:
+                        t, p = t[:p - 1] + t[p:], p - 1
+                    elif k == 'del':
+                        t = t[:p] + t[p + 1:]
+                    elif k == 'left':
+                        p = max(0, p - 1)
+                    elif k == 'right':
+                        p = min(len(t), p + 1)
+                    elif k == 'home':
+                        p = 0
+                    elif k == 'end':
+                        p = len(t)
+                    elif k == 'ctrl-u':
+                        t, p = '', 0
+                    elif k and len(k) == 1 and k.isprintable():
+                        if kind == 'number' and not (k.isdigit() or (k == '-' and p == 0)):
+                            continue
+                        t, p = t[:p] + k + t[p:], p + 1
+                    else:
+                        continue
+                    vals[key], pos[key] = t, p
+                    if err_at == key:
+                        err, err_at = '', None
+        finally:
+            try:
+                c.curs_set(0)
+            except Exception:                           # noqa: BLE001
+                pass
+
+    def ask_one(self, title, label, value='', help_='', need=True, secret=False, check=None):
+        """One question in a window; its answer, or None (Esc)."""
+        got = self.form(title, [{'key': 'v', 'label': label, 'value': value, 'help': help_,
+                                 'need': need, 'kind': 'secret' if secret else 'text',
+                                 'check': check}])
+        return None if got is None else got['v']
+
+    def pick(self, title, load, cols, act=None, empty='nothing here', words=''):
+        """A list to scroll with the arrows: `load()` gives its rows (asked
+        again after something was done to one), `cols` [(heading, fn(row),
+        width, tone fn(row) or None)]. Enter calls `act(row)`; / finds. Esc
+        back, q leaves the console."""
+        c, A = self.curses, self.A
+        rows = load() or []
+        sel, top, find, said, said_bad = 0, 0, '', '', False
+        while True:
+            self._fresh()
+            h, w = self.scr.getmaxyx()
+            seen = [r for r in rows if not find or find.lower() in ' '.join(
+                str(fn(r)) for _h, fn, _w, _t in cols).lower()]
+            sel = max(0, min(sel, len(seen) - 1))
+            avail = max(3, h - 5 - (1 if words else 0))
+            if sel < top:
+                top = sel
+            if sel >= top + avail:
+                top = sel - avail + 1
+            top = max(0, min(top, max(0, len(seen) - avail)))
+            # Widths: as given; the last one takes what is left.
+            ws = [cw for _h, _f, cw, _t in cols]
+            fixed = sum(x + 2 for x in ws[:-1])
+            ws[-1] = max(8, min(ws[-1] or 200, w - 4 - fixed))
+
+            def paint(_title=title, _seen=seen, _top=top, _sel=sel, _ws=ws, _avail=avail):
+                self.scr.erase()
+                self._put(0, 0, ' ' * w, A['head'])
+                self._put(0, 0, ' plexmon %s  %s ' % (__version__, _title), A['head'] | c.A_BOLD)
+                right = ' %d%s ' % (len(_seen), (' of %d, with "%s"' % (len(rows), find))
+                                    if find else '')
+                self._put(0, max(0, w - len(right) - 1), right, A['head'])
+                y = 1
+                if words:
+                    self._put(y, 1, words[:w - 2], A['dim'])
+                    y += 1
+                x = 2
+                for (hd, _f, _w, _t), cw in zip(cols, _ws):
+                    self._put(y + 1, x, hd[:cw], A['key'])
+                    x += cw + 2
+                y += 2
+                if not _seen:
+                    self._put(y + 1, 4, empty if not find else 'nothing with "%s"' % find,
+                              A['dim'])
+                for n, r in enumerate(_seen[_top:_top + _avail]):
+                    i = _top + n
+                    x = 2
+                    if i == _sel:
+                        self._put(y + n, 1, ' ' * (w - 3), A['sel'])
+                    for (hd, fn, _w, tone), cw in zip(cols, _ws):
+                        try:
+                            v = str(fn(r))
+                        except Exception:               # noqa: BLE001
+                            v = '?'
+                        attr = A['sel'] if i == _sel else (A.get(tone(r) or '', 0) if tone else 0)
+                        self._put(y + n, x, v[:cw], attr)
+                        x += cw + 2
+                if len(_seen) > _avail:
+                    thumb = max(1, min(_avail, round(_avail * _avail / len(_seen))))
+                    ts = max(0, min(_avail - thumb, round((_avail - thumb) * _top
+                                                          / max(1, len(_seen) - _avail))))
+                    utf = 'utf' in (sys.stdout.encoding or '').lower()
+                    for r_ in range(_avail):
+                        hit = ts <= r_ < ts + thumb
+                        self._put(y + r_, w - 1, ('█' if hit else '│') if utf
+                                  else ('#' if hit else '|'), A['key'] if hit else A['dim'])
+                if said:
+                    self._put(h - 2, 1, said[:w - 2], A['bad'] if said_bad else A['ok'])
+                help_ = ' Up/Down PgUp/PgDn Home/End move   Enter %s   / find   Esc back ' % (
+                    'what to do with it' if act else 'look')
+                self._put(h - 1, 0, ' ' * (w - 1), A['head'])
+                self._put(h - 1, 0, help_[:w - 1], A['head'])
+                self.scr.noutrefresh()
+            self.backdrop = paint
+            paint()
+            c.doupdate()
+            self.scr.timeout(500)
+            k = self._getkey()
+            if k is None:
+                continue
+            said = ''
+            if k == 'esc':
+                if find:
+                    find = ''
+                    continue
+                return None
+            if k == 'q':
+                return 'quit'
+            if k in ('up', 'down', 'pgup', 'pgdn', 'home', 'end'):
+                sel = {'up': sel - 1, 'down': sel + 1, 'pgup': sel - (avail - 1),
+                       'pgdn': sel + (avail - 1), 'home': 0, 'end': len(seen) - 1}[k]
+            elif k == '/':
+                got = self.ask_one('Find', 'with the words', find, need=False,
+                                   help_='Only the rows with these words in them stay; '
+                                         'Esc in the list shows them all again.')
+                if got is not None:
+                    find, sel, top = got, 0, 0
+            elif k in ('enter', 'right') and seen and act:
+                r = act(seen[sel])
+                if r == 'quit':
+                    return 'quit'
+                if isinstance(r, tuple):
+                    said, said_bad = r
+                rows = load() or []
+
+    def act(self, *args, env=None, title=None, quiet_ok=None):
+        """`plexmon ARGS` run: a short answer in a window, a long one on a screen
+        of its own to scroll. Returns the exit code."""
+        argv = plexmon_argv() + [str(a) for a in args]
+        shown = '$ plexmon ' + ' '.join(self._quote(a) for a in args)
+        return self.act_argv(argv, title or shown, env=env, quiet_ok=quiet_ok)
+
+    def act_argv(self, argv, title, env=None, quiet_ok=None):
+        self.working('working…  ' + title)
+        text, rc = self.capture(argv, env=env)
+        plain = self._plain_text(text).rstrip()
+        if rc == 0 and not plain and quiet_ok:
+            plain = text = quiet_ok
+        h, w = self.scr.getmaxyx()
+        lines = self._wrap(plain, max(30, min(100, w - 4)) - 4)
+        if len(lines) <= max(3, min(14, h - 8)):
+            self.note(title if rc == 0 else '%s - it ended with %d' % (title, rc),
+                      plain or '(it said nothing)', '' if rc == 0 else 'bad')
+        else:
+            if rc not in (0, None):
+                text += '\n' + self.pal.dim('(it ended with %d)' % rc)
+            self.go_plain(lambda: self.page(title, text))
+        return rc
+
+    def live(self, fn):
+        """A view of its own on the terminal (a live log, a progress)."""
+        self.go_plain(fn)
+
+    # ---- small parts the lists use ------------------------------------------------
+    @staticmethod
+    def _when(ts):
+        if not ts:
+            return '-'
+        try:
+            return time.strftime('%Y-%m-%d %H:%M', time.localtime(float(ts)))
+        except (TypeError, ValueError):
+            return str(ts)
+
+    @staticmethod
+    def _rows(got, *keys):
+        if isinstance(got, dict):
+            for k in keys:
+                if isinstance(got.get(k), list):
+                    return got[k]
+            return []
+        return got if isinstance(got, list) else []
+
+    def details(self, title, row, skip=()):
+        """One row's fields as words, in a window or on its own screen."""
+        lines = []
+        for k, v in row.items():
+            if k in skip or v in (None, '', [], {}):
+                continue
+            if isinstance(v, (list, dict)):
+                v = json.dumps(v, default=str, ensure_ascii=False)
+            elif k in ('created', 'last_used', 'last_seen', 'last_in', 'activated', 'at',
+                       'pending_at', 'locked_until') and isinstance(v, (int, float)):
+                v = self._when(v)
+            lines.append('%-16s %s' % (k, v))
+        h, w = self.scr.getmaxyx()
+        if len(lines) <= h - 8:
+            self.note(title, '\n'.join(lines))
+        else:
+            self.go_plain(lambda: self.page(title, '\n'.join(lines)))
+
+    # ---- plexmon's own menus -------------------------------------------------------
+    def run(self):
+        main = [
+            ('1', 'Status and checks', self.m_status),
+            ('2', 'Live log', self.m_live_log, 'plain'),
+            ('3', 'The disks and the dashboard', self.m_dashboard),
+            ('4', 'The televisions', self.m_tv),
+            ('5', 'Accounts of Settings', self.m_accounts),
+            ('6', 'Settings', self.m_settings),
+            ('7', 'Certificates and TLS (nginx, Plex Media Server)', self.m_certs),
+            ('8', 'Automatic certificates (ACME)', self.m_acme),
+            ('9', 'Upgrades', self.m_upgrades),
+            ('10', 'The service', self.m_service),
+        ]
+        os.environ.setdefault('ESCDELAY', '25')
+        os.environ.setdefault('NCURSES_NO_UTF8_ACS', '1')
+        try:
+            import locale
+            locale.setlocale(locale.LC_ALL, '')
+        except Exception:                               # noqa: BLE001
+            pass
+        import curses
+        self.curses = curses
+        self.st, self.st_gen, self.st_now, self.closing, self.plain = {}, 0, False, False, False
+
+        def body(scr):
+            self.scr = scr
+            try:
+                curses.curs_set(0)
+            except Exception:                           # noqa: BLE001
+                pass
+            scr.keypad(True)
+            self._colours()
+            self.status_thread()
+            # It opens on the live log, every line; Esc: the menu.
+            if os.environ.get('PLEXMON_CONSOLE_START', 'log') == 'log':
+                self.go_plain(lambda: self.live_log(''))
+            self.menu('Main menu', main)
+        try:
+            curses.wrapper(body)
+        finally:
+            self.closing = True
+        print(self.pal.dim('  The plexmon console is closed - `plexmon --console` opens it again.'))
+        return 0
 
     def shell(self):
-        self.c.endwin()
-        print('\nA shell - exit comes back to the plexmon console.\n')
-        subprocess.call([os.environ.get('SHELL', '/bin/bash')],
-                        env=dict(os.environ, PLEXMON_IN_CONSOLE='1'))
-        self.scr.clear()
+        sh = os.environ.get('SHELL') or '/bin/bash'
+        print(self.pal.dim('  A shell - exit (or Ctrl+D) comes back to the plexmon console.'))
+        try:
+            subprocess.call([sh], env=dict(os.environ, PLEXMON_IN_CONSOLE='1'))
+        except KeyboardInterrupt:
+            pass
 
-    def live_log(self, path, title):
-        """The newest line at the bottom, followed as it comes; what is typed
-        filters it (as grep -i). Esc goes back."""
-        c = self.c
-        lines, pos, grep = [], 0, ''
-        while True:
-            try:
-                with open(path, 'rb') as f:
-                    f.seek(0, 2)
-                    size = f.tell()
-                    if size < pos:
-                        pos = 0
-                    f.seek(max(pos, size - 2 * 1024 * 1024))
-                    lines += f.read().decode('utf-8', 'replace').splitlines()
-                    pos = size
-            except OSError:
-                lines = ['%s cannot be read' % path]
-            lines = lines[-20000:]
-            top = self.frame('%s   following%s' % (title, ('   grep: %s' % grep) if grep else ''))
-            h, w = self.scr.getmaxyx()
-            room = max(1, h - top - 2)
-            shown = [ln for ln in lines if not grep or grep.lower() in ln.lower()][-room:]
-            for i, ln in enumerate(shown):
-                attr = c.color_pair(3) if ' error ' in ln or ' bad ' in ln else (
-                    c.color_pair(4) if ' warn ' in ln else 0)
-                self.put(top + i, 1, ln, attr)
-            self.scr.refresh()
-            self.scr.timeout(1000)
-            try:
-                k = self.scr.get_wch()
-            except c.error:
-                continue
-            if k in ('\x1b', 27):
-                if grep:
-                    grep = ''
-                    continue
-                return
-            if k in (c.KEY_BACKSPACE, '\x7f', 127):
-                grep = grep[:-1]
-            elif isinstance(k, str) and k.isprintable():
-                grep += k
+    def journal(self):
+        """journalctl -u plexmon -f, in the live view."""
+        try:
+            pr = subprocess.Popen(['journalctl', '-u', SERVICE, '-f', '-n', '400', '--no-pager'],
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                  errors='replace')
+        except OSError as e:
+            self.page('journalctl', self.pal.bad_line(str(e)))
+            return
+        q = collections.deque()
 
-    # ---- the menus ------------------------------------------------------------------
-    def main(self):
-        items = [('Status and checks', self.m_status), ('Live log', self.m_log),
-                 ('Accounts of Settings', self.m_accounts), ('Settings', self.m_settings),
-                 ('Certificates and TLS', self.m_certs), ('Automatic certificates (ACME)',
-                                                          self.m_acme),
-                 ('Upgrades', self.m_upgrades), ('The service', self.m_service),
-                 ('The disks and the dashboard', self.m_disks),
-                 ('The console at login', self.m_login)]
-        at = 0
-        while True:
-            try:
-                at = self.menu('Main menu', [w for w, _ in items], at)
-            except ConsoleBack:
-                continue
-            try:
-                items[at][1]()
-            except ConsoleBack:
-                pass
+        def pump():
+            for ln in pr.stdout:
+                q.append(ln.rstrip('\n'))
+        threading.Thread(target=pump, daemon=True).start()
 
+        def more():
+            got = []
+            while q:
+                got.append(q.popleft())
+            return got
+
+        def paint(ln):
+            return self._log_text(ln) if re.match(
+                r'^\S+ \S+ (info|warn|error|debug|crit) ', ln) else tone_words(ln, self.pal)
+        try:
+            self.live_view('journalctl -u %s -f' % SERVICE, lambda: [], more, paint, '')
+        finally:
+            pr.terminate()
+            try:
+                pr.wait(3)
+            except Exception:                           # noqa: BLE001
+                pr.kill()
+
+    # ---- 1 status -------------------------------------------------------------------
     def m_status(self):
-        while True:
-            i = self.menu('Status and checks', ['Settings in one screen (plexmon --status)',
-                                                'The dashboard\'s daemon (plexmon --check)',
-                                                'Latency and the disks (plexmon --diag)',
-                                                'Events (plexmon --events)'])
-            self.run([['--status'], ['--check'], ['--diag'], ['--events', '200']][i])
+        def events():
+            got = self.form('Events', [
+                {'key': 'n', 'label': 'how many', 'kind': 'number', 'value': '40',
+                 'range': (1, 5000), 'need': True},
+                {'key': 'q', 'label': 'only with the words', 'help':
+                 'Empty: every event. Or a name, a kind (sign-ins, accounts, settings) or a '
+                 'word.'}])
+            if got:
+                self.act('--events', '--limit', got['n'], *(['--search', got['q']]
+                                                             if got['q'] else []))
+        return self.sub('Status and checks', [
+            ('1', 'Status', lambda: self.act('--status')),
+            ('2', 'Checks (the disks, SMART, the API, nginx, the certificate)',
+             lambda: self.act('--check')),
+            ('3', 'The dashboard: latency and each disk\'s power state', lambda: self.act('--diag')),
+            ('4', 'Events of Settings', events),
+            ('5', 'Who is signed in to Settings', lambda: self.act('--sessions')),
+        ])
 
-    def m_log(self):
-        i = self.menu('Live log', ['plexmon.log (Settings)', 'The journal of plexmon.service'])
-        if i == 0:
-            self.live_log(str(LOG_FILE), 'plexmon.log')
-        else:
-            self.c.endwin()
-            try:
-                subprocess.call(['journalctl', '-u', SERVICE, '-f', '-n', '200'])
-            except KeyboardInterrupt:
-                pass
-            self.scr.clear()
+    # ---- 2 live log -----------------------------------------------------------------
+    def m_live_log(self):
+        return self.live_log('')
+
+    # ---- 3 the disks ----------------------------------------------------------------
+    def m_dashboard(self):
+        def wake():
+            if self.confirm('Wake the disks', 'Every disk is spun up and SMART read from it - '
+                            'the one thing that wakes them.', 'Wake them'):
+                self.act('--wake')
+        return self.sub('The disks and the dashboard', [
+            ('1', 'How the dashboard stands', lambda: self.act('--status')),
+            ('2', 'Latency and each disk\'s power state (--diag)', lambda: self.act('--diag')),
+            ('3', 'Read SMART from the disks already spinning', lambda: self.act('--refresh')),
+            ('4', 'Wake the disks and read SMART', wake),
+            ('5', 'The dashboard\'s own check (--check)', lambda: self.act('--check')),
+        ])
+
+    # ---- 4 the televisions ------------------------------------------------------------
+    def m_tv(self):
+        def pair():
+            tv = self.ask_one('Pair a television', 'the TV', help_=(
+                'Its name or identifier (plexmon --atv shows them), or for an LG or Samsung '
+                'not yet known its IP address. The PIN the television shows is asked.'))
+            if tv:
+                self.live(lambda: self.show_live('--atv-pair', tv))
+
+        def probe():
+            a = self.ask_one('What answers at an address', 'the address',
+                             check=lambda v, _: None if re.match(r'^[0-9a-fA-F:.]{3,45}$', v)
+                             else 'an IP address')
+            if a:
+                self.act('--atv-probe', a)
+
+        def unpair():
+            tv = self.ask_one('Forget a television', 'the TV')
+            if tv and self.confirm('Forget', 'The credentials of %s are forgotten.' % tv,
+                                   'Forget it'):
+                self.act('--atv-unpair', tv)
+        return self.sub('The televisions', [
+            ('1', 'The televisions known, and which are paired', lambda: self.act('--atv')),
+            ('2', 'Search the network again', lambda: self.act('--atv-scan')),
+            ('3', 'What answers at an address', probe),
+            ('4', 'Pair one (its PIN asked)', pair),
+            ('5', 'Forget one', unpair),
+        ])
+
+    # ---- 5 accounts -----------------------------------------------------------------
+    ROLES = [('fulladmin', 'fulladmin - everything'),
+             ('readonly', 'readonly - looks, changes nothing')]
 
     def m_accounts(self):
-        while True:
-            i = self.menu('Accounts of Settings', ['The accounts', 'Make an account',
-                                                   'A new password', 'Change a role',
-                                                   'Switch one off', 'Switch one on',
-                                                   'Reset the second step', 'Remove one',
-                                                   'Who is signed in'])
-            if i == 0:
-                self.run(['--users'])
-            elif i == 1:
-                v = self.form('Make an account (plexmon --add-user)', [
-                    {'label': 'Name', 'need': True},
-                    {'label': 'Role', 'choices': ['fulladmin', 'readonly'], 'value': 'fulladmin'},
-                    {'label': 'Password (8 characters at least)', 'secret': True, 'need': True},
-                    {'label': 'Again', 'secret': True, 'need': True}])
-                if v[2] != v[3]:
-                    self.page('Make an account', ['the two passwords are not the same'])
-                    continue
-                self._run_stdin(['--add-user', v[0], '--role', v[1]], v[2] + '\n')
-            elif i == 2:
-                v = self.form('A new password (plexmon --passwd)', [
-                    {'label': 'Name', 'need': True},
-                    {'label': 'Password', 'secret': True, 'need': True},
-                    {'label': 'Again', 'secret': True, 'need': True}])
-                if v[1] != v[2]:
-                    self.page('A new password', ['the two passwords are not the same'])
-                    continue
-                self._run_stdin(['--passwd', v[0]], v[1] + '\n')
-            elif i == 3:
-                v = self.form('Change a role (plexmon --set-role)', [
-                    {'label': 'Name', 'need': True},
-                    {'label': 'Role', 'choices': ['fulladmin', 'readonly'], 'value': 'readonly'}])
-                self.run(['--set-role', v[0], v[1]])
-            elif i in (4, 5, 6, 7):
-                v = self.form(['Switch one off', 'Switch one on', 'Reset the second step',
-                               'Remove one'][i - 4], [{'label': 'Name', 'need': True}])
-                flag = ['--disable-user', '--enable-user', '--reset-2fa', '--del-user'][i - 4]
-                if i in (4, 7) and not self.yes('%s %s?' % (flag[2:], v[0])):
-                    continue
-                self.run([flag, v[0]])
-            else:
-                self.run(['--sessions'])
+        def load():
+            got = self.out('--users') or {}
+            self._mfa_on = bool(got.get('mfa_on')) if isinstance(got, dict) else False
+            return self._rows(got, 'users')
 
-    def _run_stdin(self, args, text):
-        argv = plexmon_argv() + args + ['--no-color']
-        got = subprocess.run(argv, input=text, capture_output=True, text=True, timeout=120)
-        self.page('$ plexmon ' + ' '.join(args), (got.stdout + got.stderr).splitlines())
+        cols = [('account', lambda u: u.get('name'), 24, None),
+                ('role', lambda u: u.get('role'), 10, None),
+                ('state', lambda u: 'off' if u.get('disabled') else 'on', 5,
+                 lambda u: 'dim' if u.get('disabled') else 'ok'),
+                ('second step', lambda u: (u.get('mfa') or {}).get('kind') or '-'
+                 if isinstance(u.get('mfa'), dict) else (u.get('mfa') or '-'), 11, None),
+                ('last in', lambda u: self._when(u.get('last_in')), 16, None),
+                ('from', lambda u: u.get('last_from') or '', 16, None),
+                ('note', lambda u: u.get('note') or '', 40, lambda u: 'dim')]
+        return self.sub('Accounts of Settings', [
+            ('1', 'Browse them (Enter: what to do with one)',
+             lambda: self.pick('Accounts of Settings', load, cols, self.account_do)),
+            ('2', 'Make one', self.account_new),
+            ('3', 'The second step of signing in, for everybody', self.mfa_switch),
+            ('4', 'Who is signed in now', lambda: self.act('--sessions')),
+        ])
+
+    def account_do(self, u):
+        name = u['name']
+        opts = [('pw', 'Set its password'),
+                ('role', 'Change its role (now %s)' % u.get('role')),
+                ('on', 'Switch it on again') if u.get('disabled') else ('off', 'Switch it off')]
+        if u.get('mfa'):
+            opts.append(('mfa', 'Reset its second step (it sets one up again)'))
+        opts += [('show', 'Show it all'), ('delete', 'Delete it')]
+        what = self.choose(name, opts, '%s, %s' % (u.get('role'),
+                                                   'off' if u.get('disabled') else 'on'))
+        if what == 'pw':
+            got = self.form('A new password for %s' % name, self._pw_fields())
+            if got:
+                self.act('--passwd', name, env={'PLEXMON_PASSWORD': got['pw']})
+        elif what == 'role':
+            r = self.choose('The role of %s' % name, self.ROLES,
+                            cur=[x[0] for x in self.ROLES].index(u.get('role'))
+                            if u.get('role') in [x[0] for x in self.ROLES] else 0)
+            if r and r != u.get('role'):
+                self.act('--set-role', name, '--role', r)
+        elif what == 'off':
+            if self.confirm('Switch off', '%s can no longer sign in to Settings.' % name,
+                            'Switch it off'):
+                self.act('--disable-user', name)
+        elif what == 'on':
+            self.act('--enable-user', name)
+        elif what == 'mfa':
+            if self.confirm('Reset the second step', '%s sets its second step up again at '
+                            'its next sign-in.' % name, 'Reset it'):
+                self.act('--reset-2fa', name)
+        elif what == 'show':
+            self.details(name, u, skip=('prefs', 'cols'))
+        elif what == 'delete':
+            if self.confirm('Delete', 'The account %s is deleted. This cannot be undone.' % name,
+                            'Delete it', danger=True):
+                self.act('--del-user', name)
+
+    def account_new(self):
+        got = self.form('Make an account', [
+            {'key': 'name', 'label': 'name', 'need': True,
+             'help': 'What it signs in with: letters, digits, . _ - @',
+             'check': lambda v, _: None if re.match(r'^[A-Za-z0-9][A-Za-z0-9._@-]{0,63}$', v)
+             else 'letters, digits and . _ - @ only'},
+            {'key': 'role', 'label': 'role', 'kind': 'choice', 'value': 'fulladmin',
+             'options': self.ROLES,
+             'help': 'fulladmin may do everything; readonly looks.'}]
+            + self._pw_fields())
+        if got:
+            self.act('--add-user', got['name'], '--role', got['role'],
+                     env={'PLEXMON_PASSWORD': got['pw']})
+
+    def mfa_switch(self):
+        got = self.out('--users') or {}
+        on = bool(got.get('mfa_on')) if isinstance(got, dict) else False
+        r = self.choose('The second step for Settings', [
+            ('on', 'On - every account gives a code from an app after its password'),
+            ('off', 'Off - the password is enough'),
+            ('status', 'Show how it stands, account by account')],
+            'It is %s now.' % ('ON' if on else 'off'), cur=0 if on else 1)
+        if r == 'status':
+            self.act('--admin-2fa', 'status')
+        elif r and (r == 'on') != on:
+            self.act('--admin-2fa', r)
+        elif r:
+            self.note('The second step', 'It is %s already.' % r)
+
+    # ---- 6 settings -----------------------------------------------------------------
+    PANE_TITLES = PANE_TITLES
 
     def m_settings(self):
-        while True:
-            i = self.menu('Settings', ['Every setting (plexmon --settings)',
-                                       'Change one by its key (plexmon --set KEY=VALUE)',
-                                       'Put one back as it comes (plexmon --unset KEY)'])
-            if i == 0:
-                self.run(['--settings'])
-            elif i == 1:
-                v = self.form('Change a setting', [
-                    {'label': 'Key', 'need': True, 'help': ', '.join(sorted(DEFAULTS))[:200]},
-                    {'label': 'Value'}])
-                self.run(['--set', '%s=%s' % (v[0], v[1])])
-            else:
-                v = self.form('Put a setting back', [{'label': 'Key', 'need': True}])
-                self.run(['--unset', v[0]])
+        def by_key():
+            keys = sorted(DEFAULTS)
+            key = self.ask_one('Change one by its key', 'the key', help_=(
+                'Its key, as `plexmon --settings` shows it - e.g. acme_node_name, ui_lang. '
+                'Then the same window as in Browse opens.'),
+                check=lambda v, _: None if v in keys else 'there is no setting %s' % v)
+            if not key:
+                return
+            row = next((r[1] for r in self._settings_rows() if r[0] == 'set'
+                        and r[1]['key'] == key), None)
+            if not row:
+                self.note('Change one', 'there is no setting %s' % key, 'bad')
+                return
+            done = self._edit_one(row)
+            if done:
+                self.note('Change one', done[0], 'bad' if done[1] else 'ok')
+        return self.sub('Settings', [
+            ('1', 'Browse and change (arrows, Enter)', self.settings_tui),
+            ('2', 'Change one by its key', by_key),
+            ('3', 'All of them as text', lambda: self.act('--settings')),
+        ])
 
+    # ---- 7 certificates -----------------------------------------------------------------
     def m_certs(self):
-        while True:
-            i = self.menu('Certificates and TLS', [
-                'The certificate (plexmon --cert-status)',
-                'Put one in from PEM files (plexmon --cert-import)',
-                'A self-signed one (plexmon --cert-selfsigned)',
-                'Put in again what is kept (plexmon --tls-apply)',
-                'Plex Media Server takes it too (plexmon --plex-cert on)',
-                'Plex Media Server back to its own (plexmon --plex-cert off)',
-                'Hand the Plex vhost over to plexmon (plexmon --nginx-adopt)'])
-            if i == 0:
-                self.run(['--cert-status'])
-            elif i == 1:
-                v = self.form('Put a certificate in', [
-                    {'label': 'The certificate (PEM file)', 'need': True},
-                    {'label': 'Its key (PEM file)', 'need': True},
-                    {'label': 'The chain (PEM file, may be empty)'}])
-                self.run(['--cert-import'] + [x for x in v if x])
-            elif i == 2:
-                v = self.form('A self-signed certificate', [
-                    {'label': 'Its name (CN)', 'need': True, 'value': socket.getfqdn()}])
-                if self.yes('Replace the certificate nginx answers with?'):
-                    self.run(['--cert-selfsigned', v[0]])
-            elif i == 3:
-                self.run(['--tls-apply'])
-            elif i == 4:
-                if self.yes('Plex Media Server is restarted to take it - go on?'):
-                    self.run(['--plex-cert', 'on'])
-            elif i == 5:
-                if self.yes('Plex Media Server is restarted - go on?'):
-                    self.run(['--plex-cert', 'off'])
-            else:
-                self.run(['--nginx-adopt'])
+        def import_():
+            got = self.form('Put a certificate in', [
+                {'key': 'cert', 'label': 'the certificate', 'need': True, 'value': '/root/',
+                 'help': 'A PEM file (it may hold the key and the chain too), or a .pfx / .p12.',
+                 'check': lambda v, _: None if os.path.isfile(v) else 'there is no such file'},
+                {'key': 'key', 'label': 'its key', 'help': 'A PEM file; empty when it is in the '
+                 'file above (or in the .pfx).',
+                 'check': lambda v, _: None if not v or os.path.isfile(v) else
+                 'there is no such file'},
+                {'key': 'chain', 'label': 'the chain', 'help': 'The intermediate certificates '
+                 '(PEM); empty when they are in the file above.',
+                 'check': lambda v, _: None if not v or os.path.isfile(v) else
+                 'there is no such file'},
+                {'key': 'pw', 'label': 'password of the .pfx', 'kind': 'secret',
+                 'help': 'Only for a .pfx / .p12 with a password.'}])
+            if got and self.confirm('Put it in', 'nginx answers with it from now on (nginx -t '
+                                    'first; on a refusal everything stays as it was).',
+                                    'Put it in'):
+                self.act('--cert-import', *[x for x in (got['cert'], got['key'], got['chain'])
+                                            if x], env={'PLEXMON_PFX_PASSWORD': got['pw'] or ''})
 
+        def selfsigned():
+            name = self.ask_one('A self-signed certificate', 'its name (CN)', socket.getfqdn(),
+                                help_='Browsers warn about it until it is trusted by hand.')
+            if name and self.confirm('Self-signed', 'nginx answers with a self-signed '
+                                     'certificate for %s from now on.' % name, 'Make it',
+                                     danger=True):
+                self.act('--cert-selfsigned', name)
+
+        def tls():
+            got = self.form('How TLS is spoken', [
+                {'key': 'preset', 'label': 'the protocols and ciphers', 'kind': 'choice',
+                 'value': 'standard', 'options': [
+                     ('standard', 'Standard - TLS 1.2 + 1.3, ECDHE'),
+                     ('intermediate', 'Mozilla intermediate - DHE too, for old clients'),
+                     ('modern', 'Mozilla modern - TLS 1.3 only')]},
+                {'key': 'dh', 'label': 'DH parameters', 'kind': 'choice', 'value': 'none',
+                 'options': sorted(DH_WORDS.items())},
+                {'key': 'hsts', 'label': 'HSTS', 'kind': 'choice', 'value': '0',
+                 'options': [('0', 'off'), ('15768000', '6 months'), ('31536000', '1 year'),
+                             ('63072000', '2 years')]}])
+            if got:
+                self.act('--tls-preset', got['preset'], '--tls-dh', got['dh'], '--tls-hsts',
+                         got['hsts'])
+
+        def plex():
+            got = self.out('--plex-cert', 'status') or {}
+            r = self.choose('Plex Media Server\'s own certificate', [
+                ('on', 'On - Plex takes this certificate (it is restarted)'),
+                ('now', 'Hand it to Plex again now (it is restarted)'),
+                ('off', 'Off - Plex back to its own *.plex.direct (it is restarted)'),
+                ('status', 'How it stands')],
+                'It is %s now.' % ('ON' if got.get('on') else 'off'))
+            if r == 'status':
+                self.act('--plex-cert', 'status')
+            elif r and self.confirm('Plex Media Server', 'Plex Media Server is restarted: what '
+                                    'is playing stops for a moment.', 'Go on'):
+                self.act('--plex-cert', r, '--yes')
+        return self.sub('Certificates and TLS', [
+            ('1', 'The certificate, and whether nginx has it', lambda: self.act('--cert-status')),
+            ('2', 'Put one in from files (PEM or PFX)', import_),
+            ('3', 'A self-signed one', selfsigned),
+            ('4', 'How TLS is spoken (protocols, DH, HSTS)', tls),
+            ('5', 'Put in again what is kept (nginx -t, reload)', lambda: self.act('--tls-apply')),
+            ('6', 'Plex Media Server takes it too', plex),
+            ('7', 'Hand the Plex vhost over to plexmon (once)', lambda: self.act('--nginx-adopt')),
+        ])
+
+    # ---- 8 ACME ---------------------------------------------------------------------
     def m_acme(self):
-        while True:
-            i = self.menu('Automatic certificates (ACME)', [
-                'How it is (plexmon --acme-status)', 'Try port 80 as the CA will',
-                'Order it now (plexmon --acme-order)', 'Switch ACME on', 'Switch ACME off',
-                'The name of the certificate'])
-            if i == 0:
-                self.run(['--acme-status'])
-            elif i == 1:
-                self.run(['--acme-probe'])
-            elif i == 2:
-                self.run_live(['--acme-order'])
-            elif i == 3:
-                self.run(['--set', 'acme=1'])
-            elif i == 4:
-                self.run(['--set', 'acme=0'])
-            else:
-                v = self.form('The name of the certificate', [
-                    {'label': 'DNS name', 'value': CONFIG.get('acme_node_name') or ''}])
-                self.run(['--set', 'acme_node_name=%s' % v[0]])
+        def switch():
+            on = bool(CONFIG.get('acme'))
+            r = self.choose('Certificates from an ACME CA', [
+                ('1', 'On - ordered and renewed by itself'), ('0', 'Off')],
+                'It is %s now.' % ('ON' if on else 'off'), cur=0 if on else 1)
+            if r is not None:
+                self.act('--set', 'acme=%s' % r)
 
+        def name():
+            n = self.ask_one('The name of the certificate', 'DNS name',
+                             CONFIG.get('acme_node_name') or '',
+                             help_='The full name people type to reach Plex, plex.example.cz. '
+                                   'Empty: the name of the certificate it has now.', need=False)
+            if n is not None:
+                self.act('--set', 'acme_node_name=%s' % n)
+
+        def order():
+            if self.confirm('Order it now', 'A certificate is ordered from %s and put in once '
+                            'it comes; ACME renews it from then on.' % acme_directory_url(),
+                            'Order it'):
+                self.live(lambda: self.show_live('--acme-order'))
+        return self.sub('Automatic certificates (ACME)', [
+            ('1', 'How it stands', lambda: self.act('--acme')),
+            ('2', 'On or off', switch),
+            ('3', 'The name of the certificate', name),
+            ('4', 'Try port 80 as the CA will', lambda: self.act('--acme-probe')),
+            ('5', 'What has to be in your DNS', lambda: self.act('--acme-dns-check')),
+            ('6', 'Order it now (followed)', order),
+            ('7', 'Every ACME setting (the CA, DNS-01...)', self.settings_tui),
+        ])
+
+    # ---- 9 upgrades -----------------------------------------------------------------
     def m_upgrades(self):
-        while True:
-            i = self.menu('Upgrades', ['What is at the address (plexmon --upgrade-check)',
-                                       'Upgrade from the web (plexmon --upgrade-online)',
-                                       'Upgrade from a package file',
-                                       'How the last one went (plexmon --upgrade-status)',
-                                       'Go back to an older version (only a safe one)'])
-            if i == 0:
-                self.run(['--upgrade-check'])
-            elif i == 1:
-                if self.yes('Fetch the newest, check it and put it in?'):
-                    self.run_live(['--upgrade-online', '--yes'])
-            elif i == 2:
-                v = self.form('Upgrade from a file', [{'label': 'plexmon-X.Y.Z.tar.gz',
-                                                       'need': True}])
-                self.run_live(['--upgrade-file', v[0]])
-            elif i == 3:
-                self.run(['--upgrade-status'])
-            else:
-                self.run(['--downgrade-check'])
-                v = self.form('Go back to', [{'label': 'Version', 'need': True}])
-                if self.yes('Go back to %s?' % v[0]):
-                    self.run_live(['--downgrade', v[0]])
+        def online():
+            self.working('working…  looking for a new version')
+            row = self.out('--upgrade-check') or {}
+            if row.get('error'):
+                self.note('Upgrade from the web', '%s:\n%s' % (row.get('url'), row['error']),
+                          'bad')
+                return
+            here = _ver_tuple(__version__)
+            newer = [p for p in row.get('packages') or []
+                     if _ver_tuple(p.get('version')) > here]
+            if not newer:
+                self.note('Upgrade from the web', 'Nothing newer than %s at %s.' % (
+                    __version__, row.get('url')), 'ok')
+                return
+            ver = self.choose('Upgrade from the web', [
+                (p['version'], 'plexmon %s%s' % (p['version'], '   (the newest)' if i == 0
+                                                 else ''))
+                for i, p in enumerate(newer)], 'This server runs %s. Found at %s:' % (
+                    __version__, row.get('url')))
+            if not ver:
+                return
+            if not self.confirm('Upgrade to %s' % ver, 'plexmon is upgraded and restarted - '
+                                'the dashboard and Settings are back within a minute; Plex '
+                                'itself is not touched.', 'Upgrade'):
+                return
+            self.live(lambda: self.show_live('--upgrade-online', ver, '--yes'))
 
+        def install():
+            path = self.ask_one('Upgrade from a package', 'the package', '/root/',
+                                help_='plexmon-X.Y.Z.tar.gz - its signature is checked first.',
+                                check=lambda v, _: None if os.path.isfile(v) and
+                                v.endswith('.tar.gz') else 'not a plexmon-X.Y.Z.tar.gz')
+            if path and self.confirm('Upgrade', 'plexmon is upgraded with %s once its '
+                                     'signature is checked.' % path, 'Upgrade'):
+                self.live(lambda: self.show_live('--upgrade-file', path))
+
+        def cancel():
+            if self.confirm('Stop the upgrade', 'One not yet handed to root stays as it is.',
+                            'Stop it'):
+                self.act('--upgrade-cancel')
+
+        def back():
+            self.working('working…  looking for older versions')
+            got = self.out('--downgrade-check') or {}
+            vs = got.get('versions') or []
+            ok = [v for v in vs if not v.get('why')]
+            if not ok:
+                self.note('Go back to an older version', 'Nothing older at %s may be gone back '
+                          'to.\n\n%s' % (got.get('url'), '\n'.join(
+                              '%s: %s' % (v['version'], '; '.join(v['why'])) for v in vs)
+                              or 'No older version is there.'), 'warn')
+                return
+            ver = self.choose('Go back to an older version', [
+                (v['version'], 'plexmon %s' % v['version']) for v in ok],
+                'This server runs %s and may go back to %s or newer (the database is not '
+                'touched). Found at %s:' % (__version__, got.get('lowest'), got.get('url')))
+            if ver and self.confirm('Go back to %s' % ver, 'What came in the newer versions is '
+                                    'gone until you upgrade again.', 'Go back', danger=True):
+                self.live(lambda: self.show_live('--downgrade', ver))
+        return self.sub('Upgrades', [
+            ('1', 'How it stands', lambda: self.act('--upgrade-status')),
+            ('2', 'Look for a new version on the web now', lambda: self.act('--upgrade-check')),
+            ('3', 'Upgrade from the web (with its progress)', online),
+            ('4', 'Follow the upgrade going on', lambda: self.show_live('--upgrade-follow'),
+             'plain'),
+            ('5', 'Upgrade from a package file', install),
+            ('6', 'Stop an upgrade going on', cancel),
+            ('7', 'Go back to an older version (only a safe one)', back),
+        ])
+
+    # ---- 10 the service ---------------------------------------------------------------
     def m_service(self):
-        while True:
-            i = self.menu('The service', ['systemctl status plexmon', 'Restart plexmon',
-                                          'Restart nginx', 'Restart Plex Media Server'])
-            cmds = [['systemctl', 'status', '--no-pager', SERVICE],
-                    ['systemctl', 'restart', SERVICE], ['systemctl', 'restart', 'nginx'],
-                    ['systemctl', 'restart', PLEX_SERVICE]]
-            if i and not self.yes('%s?' % ' '.join(cmds[i])):
-                continue
-            got = subprocess.run(cmds[i], capture_output=True, text=True, timeout=300)
-            self.page('$ ' + ' '.join(cmds[i]), ((got.stdout + got.stderr).splitlines()
-                                                 or ['done']))
+        def restart(unit, words):
+            def go():
+                if self.confirm('Restart %s' % unit, words, 'Restart'):
+                    self.act_argv(['systemctl', 'restart', unit], '$ systemctl restart %s' % unit,
+                                  quiet_ok='restarted')
+                    self.st_now = True
+            return go
 
-    def m_disks(self):
-        while True:
-            i = self.menu('The disks and the dashboard', [
-                'Wake the disks and read SMART (plexmon --wake)',
-                'Read SMART from the spinning ones (plexmon --refresh)',
-                'The televisions (plexmon --atv)'])
-            self.run([['--wake'], ['--refresh'], ['--atv']][i])
+        def at_login():
+            on = console_login_state()
+            r = self.choose('The console at login', [
+                ('on', 'On - root sees this console first when signing in'),
+                ('off', 'Off - root gets the ordinary shell')],
+                'It is %s now.' % ('ON' if on else 'off'), cur=0 if on else 1)
+            if r and (r == 'on') != on:
+                self.act('--console-at-login', r)
+        return self.sub('The service', [
+            ('1', 'Its state', lambda: self.act_argv(
+                ['systemctl', 'status', SERVICE, '--no-pager', '-n', '60', '-l'],
+                '$ systemctl status %s' % SERVICE)),
+            ('2', 'Restart it', restart(SERVICE, 'The dashboard and Settings are back in a few '
+                                                 'seconds; Plex itself is not touched.')),
+            ('3', 'The pages (nginx, PHP)', lambda: self.act_argv(
+                ['systemctl', 'status', 'nginx', 'php-fpm', '--no-pager', '-n', '5'],
+                '$ systemctl status nginx php-fpm')),
+            ('4', 'Restart nginx', restart('nginx', 'Plex is not reachable through nginx for a '
+                                                    'moment.')),
+            ('5', 'Plex Media Server', lambda: self.act_argv(
+                ['systemctl', 'status', PLEX_SERVICE, '--no-pager', '-n', '20'],
+                '$ systemctl status %s' % PLEX_SERVICE)),
+            ('6', 'Restart Plex Media Server', restart(PLEX_SERVICE, 'What is playing stops.')),
+            ('7', 'Its journal, live', self.journal, 'plain'),
+            ('8', 'The console at login: on or off', at_login),
+        ])
 
-    def m_login(self):
-        on = console_login_state()
-        i = self.menu('The console at login - now %s' % ('on' if on else 'off'),
-                      ['On: root lands in this console', 'Off: root lands in the shell'])
-        self.run(['--console-at-login', 'on' if i == 0 else 'off'])
 
-
-def console_main():
+def console_main(pal):
     if not sys.stdin.isatty() or not sys.stdout.isatty():
-        print('plexmon --console needs a terminal')
-        return 2
-    import curses
-    os.environ.setdefault('ESCDELAY', '25')
+        raise SystemExit('plexmon: the console needs a terminal')
+    load_config(saved=open_store().settings_saved())
+    return Console(pal).run()
+
+
+def entry():
     try:
-        curses.wrapper(lambda scr: Console(scr).main())
-    except (SystemExit, KeyboardInterrupt):
-        pass
-    return 0
+        sys.exit(cli_main(sys.argv[1:]) or 0)
+    except BrokenPipeError:
+        try:
+            os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        except OSError:
+            pass
+        sys.exit(0)
+    except KeyboardInterrupt:
+        sys.exit(130)
 
 
 if __name__ == '__main__':
-    sys.exit(cli_main(sys.argv[1:]))
+    entry()

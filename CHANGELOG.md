@@ -4,6 +4,32 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.0.1 - 2026-10-31
+
+The command line and the console, as otp's.
+
+- `plexmon` with nothing after it says what it is doing (`--status`) - it no
+  longer starts a second daemon; the daemon is `plexmon --daemon`, which
+  plexmon.service runs (an older unit starting `plexmon.py` bare still works).
+- One command line for everything, otp's: `plexmon --help` in two columns and
+  in colour (colorama, or the same colours written by hand; `--no-color`,
+  `NO_COLOR`), every line coloured by what it says, `[ ok ]` / `[fail]` when
+  piped, `--json` everywhere it makes sense. The dashboard's own options
+  (`--wake`, `--refresh`, `--oneshot`, `--diag`, `--atv...`) are in it, and
+  `--check` checks the dashboard's whole chain and Settings, nginx and the
+  certificate together.
+- New on the command line: `--admin-2fa`, `--tls-preset`, `--tls-dh`,
+  `--tls-hsts`, `--plex-cert status`, `--acme`, `--acme-dns-check`,
+  `--events --search`, `--log`.
+- `plexmon --console` is otp's console: the bar at the top (the service, the
+  dashboard, Plex, the certificate and its days, ACME, the accounts), menus
+  by the arrows and numbers, windows with fields over the menu, Yes / No before
+  anything that cannot be undone, lists to scroll and filter (`/`), every
+  setting browsed and changed with its help, the live log and the journal
+  (what is typed is a grep), `!` a shell. Menus: Status and checks, Live log,
+  The disks and the dashboard, The televisions, Accounts of Settings, Settings,
+  Certificates and TLS, Automatic certificates, Upgrades, The service.
+
 ## 2.0.0 - 2026-10-31
 
 plexmon on otp's engine and pages: the dashboard as it was, and **Settings**.

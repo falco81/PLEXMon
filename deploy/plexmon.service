@@ -18,7 +18,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=@PYTHON@ /usr/local/lib/plexmon/plexmon.py
+ExecStart=@PYTHON@ /usr/local/lib/plexmon/plexmon.py --daemon
 Restart=on-failure
 RestartSec=5
 
