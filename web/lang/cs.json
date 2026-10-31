@@ -8039,6 +8039,18 @@
   "xs0758": {
    "source": "the ECDSA certificate beside it",
    "text": "certifikát ECDSA vedle něj"
+  },
+  "xs0759": {
+   "source": "TLS settings (ciphers)",
+   "text": "Nastavení TLS (šifry)"
+  },
+  "xs0760": {
+   "source": "Keys",
+   "text": "Klíče"
+  },
+  "xs0761": {
+   "source": "The protocols, the ciphers, the DH parameters and HSTS nginx speaks with this certificate - the same as Certificates and TLS → TLS settings; kept through every renewal.",
+   "text": "Protokoly, šifry, parametry DH a HSTS, se kterými nginx s tímto certifikátem mluví - totéž co Certifikáty a TLS → Nastavení TLS; zůstávají při každém obnovení."
   }
  },
  "patterns": {

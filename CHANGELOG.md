@@ -4,6 +4,16 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.2.5 - 2026-10-31
+
+- **Automatic certificates: the ciphers from there too.** Each certificate's
+  card has *TLS settings (ciphers)* - the protocols, the cipher list
+  (Standard, Mozilla intermediate, Mozilla modern or your own OpenSSL list),
+  the DH parameters and HSTS - the same dialog as Certificates and TLS → TLS
+  settings, kept through every renewal by ACME.
+- The card says which keys the certificate was ordered with (*Keys*: RSA 2048
+  + ECDSA P-256, …).
+
 ## 2.2.4 - 2026-10-31
 
 - **ACME: every key Let's Encrypt takes, and its dual certificate**

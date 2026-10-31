@@ -3270,6 +3270,7 @@ function drawAcme() {
         ['For', t.name || '', true], ['Issued by', t.issuer || '', true],
         ['Good until', t.not_after ? new Date(t.not_after * 1000).toLocaleDateString(numLang()) : ''],
         ['Last ordered', st.ordered_at ? ago(st.ordered_at) : 'never'],
+        ['Keys', (st.keys || []).join(' + ')],
         ['Ordered by', t.target === 'vip' ? 'the first node by name' : t.target]
       ]));
       if (st.ok === false && st.said) c.appendChild(nodeSaid({ok: false, error: st.said, at: st.failed_at}, ''));
@@ -3316,6 +3317,18 @@ function drawAcme() {
             'Order it', go, false);
         } else go();
       };
+      /* Its protocols and ciphers from here too (2.2.5) - the same as
+         Certificates and TLS → TLS settings, kept through every renewal. */
+      var tlsb = cmdButton('TLS settings (ciphers)', 'gear', 'small');
+      explain(tlsb, 'The protocols, the ciphers, the DH parameters and HSTS nginx speaks with this certificate - the same as Certificates and TLS → TLS settings; kept through every renewal.');
+      tlsb.disabled = !t.how;
+      tlsb.onclick = function () {
+        busy(tlsb, true);
+        api('web').then(function (w) {
+          busy(tlsb, false);
+          certPolicy(t.target, (w.tls || {})[t.target], w);
+        }).catch(function (e) { busy(tlsb, false); oops(e); });
+      };
       var cb = cmdButton(t.care ? 'Leave it alone' : 'Look after it', t.care ? 'cancel' : 'refresh', 'small');
       cb.disabled = !t.wanted;
       explain(cb, t.care ? 'ACME stops renewing this one; the certificate it has stays.'
@@ -3331,7 +3344,7 @@ function drawAcme() {
       explain(nm, t.target === 'vip' ? 'The DNS name of the VIP address - the one people type. It is the VIP address’s own (Settings → High availability) and its certificate is for it.'
         : 'The DNS name the certificate of ' + t.target + ' is for. Empty: the full host name of ' + t.target + '.');
       nm.onclick = function () { acmeNameAsk(t); };
-      row.appendChild(probe); row.appendChild(order); row.appendChild(cb); row.appendChild(nm);
+      row.appendChild(probe); row.appendChild(order); row.appendChild(cb); row.appendChild(nm); row.appendChild(tlsb);
       if (t.before && !t.before.ran_out) row.appendChild(acmePutBackButton(t.target, t.before, function (x) { AC.d = x; drawAcme(); }));
       c.appendChild(row);
       grid.appendChild(c);
