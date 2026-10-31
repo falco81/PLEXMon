@@ -4,6 +4,24 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.5.2 - 2026-10-31
+
+- **Posters come faster.**
+  - The images no longer wait in the same queue as everything else asked of
+    Plex (three at a time): five images are made at once by Plex's own image
+    transcoder, apart from the library's other questions, and the same picture
+    asked twice at once (two cards, a reload) is made once.
+  - The watchlist's posters from the internet (plex.tv, TMDB) are made small
+    by Plex's transcoder too - a few kilobytes instead of the whole picture of
+    a megabyte or more; where Plex will not, fetched whole as before.
+  - The page begins loading posters twice as far ahead of the scroll.
+  - Already so, and kept: each picture is made once and kept on the disk
+    (`/var/cache/plexmon/img`, 400 MB, the least used go first) and in the
+    browser for a week. A picture that changes in Plex changes its address
+    (Plex puts the time of the change into it), so an old one is never shown
+    for a new one - the library's list is read again within two minutes (or
+    at once with its refresh button).
+
 ## 2.5.1 - 2026-10-31
 
 - **Audio and subtitles → Scan the files again** shows how far Plex is: the

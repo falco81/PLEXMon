@@ -61,7 +61,7 @@ var LAZY = ('IntersectionObserver' in window) ? new IntersectionObserver(functio
     LAZY.unobserve(e.target);
     load(e.target);
   });
-}, {rootMargin: '700px 0px'}) : null;
+}, {rootMargin: '1400px 0px'}) : null;   /* begun well before they come into sight (2.5.2) */
 function load(im) {
   if (!im.dataset.src) return;
   im.src = im.dataset.src;

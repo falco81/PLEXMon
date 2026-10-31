@@ -64,6 +64,14 @@ IMG_REMOTE_HOSTS = ('metadata-static.plex.tv', 'image.tmdb.org', 'images.plex.tv
                     'provider-static.plex.tv', 'plex.tv')
 
 _SEM = threading.BoundedSemaphore(PLEX_PARALLEL)
+# Images apart (2.5.2): a page of posters no longer queues behind - nor holds up -
+# the library's other questions. Plex's own image transcoder, a few at a time;
+# the posters from the internet (the watchlist) need nothing of Plex's.
+IMG_PARALLEL = 5
+_IMG_SEM = threading.BoundedSemaphore(IMG_PARALLEL)
+_WEB_IMG_SEM = threading.BoundedSemaphore(8)
+_IMG_LOCKS = {}
+_IMG_LOCKS_LOCK = threading.Lock()
 _WRITE_LOCK = threading.Lock()
 _LAST_WRITE = [0.0]
 _TOKEN = {'mtime': None, 'token': None}
@@ -192,7 +200,7 @@ def _headers(accept='application/json', token=None):
 
 
 def raw(method, path, params=None, accept='application/json', timeout=READ_TIMEOUT_S,
-        binary=False):
+        binary=False, sem=None):
     """(status, body) from the local Plex. A write waits its turn (paced); at
     most PLEX_PARALLEL requests are open at once."""
     if not plex_token():
@@ -210,7 +218,7 @@ def raw(method, path, params=None, accept='application/json', timeout=READ_TIMEO
     for n, base in enumerate(urls):
         url = base + path + ('?' + q if q else '')
         req = urllib.request.Request(url, method=method, headers=_headers(accept))
-        with _SEM:
+        with (sem or _SEM):
             try:
                 with urllib.request.urlopen(req, timeout=timeout, context=_ctx(url)) as r:
                     body = r.read()
@@ -518,7 +526,11 @@ def _img_ok_path(u):
 
 
 def image(u, w, h):
-    """(bytes, content type) of an image, `w` x `h` at most."""
+    """(bytes, content type) of an image, `w` x `h` at most - made once, then
+    kept on the disk (IMG_DIR) and in the browser. An image that changes
+    changes its address (Plex puts the time it changed into it: /thumb/1730..;
+    the internet's have the picture's hash in theirs), so a kept one is never
+    an old picture under a new address."""
     kind = _img_ok_path(u)
     if not kind or '..' in u:
         raise PlexError('not an image of Plex')
@@ -526,35 +538,69 @@ def image(u, w, h):
     h = max(40, min(1080, int(h or 450)))
     key = hashlib.sha1(('%s|%d|%d' % (u, w, h)).encode()).hexdigest()
     path = IMG_DIR / key[:2] / (key + '.img')
-    try:
-        data = path.read_bytes()
-        if data:
-            os.utime(str(path), None)
+
+    def kept():
+        try:
+            data = path.read_bytes()
+            if data:
+                os.utime(str(path), None)
+                return data
+        except OSError:
+            pass
+        return None
+    data = kept()
+    if data:
+        return data, _ctype(data)
+    # The same picture asked twice at once (two cards, a reload) is made once.
+    with _IMG_LOCKS_LOCK:
+        lk = _IMG_LOCKS.setdefault(key, threading.Lock())
+    with lk:
+        try:
+            data = kept()
+            if data:
+                return data, _ctype(data)
+            data = _image_make(u, w, h, kind)
+            try:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                tmp = path.with_suffix('.tmp%d.%d' % (os.getpid(), threading.get_ident()))
+                tmp.write_bytes(data)
+                os.replace(str(tmp), str(path))
+                _img_tidy()
+            except OSError:
+                pass
             return data, _ctype(data)
-    except OSError:
-        pass
+        finally:
+            with _IMG_LOCKS_LOCK:
+                _IMG_LOCKS.pop(key, None)
+
+
+def _image_make(u, w, h, kind):
+    params = {'url': u, 'width': w, 'height': h, 'minSize': 1, 'upscale': 1, 'quality': 82,
+              'format': 'jpeg'}
     if kind == 'local':
-        st, data = raw('GET', '/photo/:/transcode', {
-            'url': u, 'width': w, 'height': h, 'minSize': 1, 'upscale': 1, 'quality': 82,
-            'format': 'jpeg'}, accept='image/*', timeout=40, binary=True)
+        st, data = raw('GET', '/photo/:/transcode', params, accept='image/*', timeout=40,
+                       binary=True, sem=_IMG_SEM)
         if st >= 400 or not data:
-            st, data = raw('GET', u, accept='image/*', timeout=40, binary=True)
+            st, data = raw('GET', u, accept='image/*', timeout=40, binary=True, sem=_IMG_SEM)
         if st >= 400 or not data:
             raise PlexError('Plex has no such image (%s)' % st)
-    else:
-        req = urllib.request.Request(u, headers={'User-Agent': 'plexmon'})
-        with _SEM:
-            with _web(req, 30, 'discover') as r:
-                data = r.read(8 << 20)
+        return data
+    # A poster from the internet (the watchlist, a face): made small by Plex's
+    # own transcoder too (2.5.2) - it fetches it itself - so a few kilobytes
+    # come instead of the full picture of a megabyte or more. Where Plex will
+    # not, fetched whole as before.
     try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = path.with_suffix('.tmp%d' % os.getpid())
-        tmp.write_bytes(data)
-        os.replace(str(tmp), str(path))
-        _img_tidy()
-    except OSError:
+        st, data = raw('GET', '/photo/:/transcode', params, accept='image/*', timeout=40,
+                       binary=True, sem=_IMG_SEM)
+        if st < 400 and data and (data[:2] == b'\xff\xd8' or data[:4] == b'\x89PNG' or
+                                  (data[:4] == b'RIFF' and data[8:12] == b'WEBP')):
+            return data
+    except PlexError:
         pass
-    return data, _ctype(data)
+    req = urllib.request.Request(u, headers={'User-Agent': 'plexmon'})
+    with _WEB_IMG_SEM:
+        with _web(req, 30, 'discover') as r:
+            return r.read(8 << 20)
 
 
 def _ctype(data):
