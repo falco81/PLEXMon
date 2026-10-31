@@ -1,41 +1,41 @@
-# Aktualizace a vydávání verzí
+# Upgrades and releasing versions
 
-## Na serveru
+## On the server
 
-*Nastavení → Aktualizace*:
+*Settings → Upgrades and maintenance*:
 
-- **Z webu**: jednou denně (a po *Podívat se teď*) se plexmon podívá na
-  `upgrade_url` (výchozí `https://github.com/falco81/PLEXMon/tree/main/release`,
-  posledních deset verzí). Novější se nabídne: *Aktualizovat na X teď* ji
-  stáhne, ověří a nasadí; *Jen stáhnout* ji připraví. Nic se nenasadí samo.
-- **Nová verze ze souboru**: přetáhněte `plexmon-X.Y.Z.tar.gz`.
-- **Návrat ke starší verzi** (`upgrade_downgrade`): jen na verzi, která je
-  bezpečná (ne starší než `DOWNGRADE_FLOOR` žádné verze, která tu běžela).
+- **From the web**: once a day (and after *Look now*) plexmon looks at
+  `upgrade_url` (default `https://github.com/falco81/PLEXMon/tree/main/release`,
+  the last ten versions). A newer one is offered: *Upgrade to X now*
+  fetches it, checks it and puts it in; *Only fetch it* gets it ready. Nothing is put in by itself.
+- **A new version from a file**: drop `plexmon-X.Y.Z.tar.gz` on it.
+- **Going back to an older version** (`upgrade_downgrade`): only to a version that is
+  safe (not older than the `DOWNGRADE_FLOOR` of any version that ran here).
 
-Bezpečnost: démon balíček jen připraví do `/var/lib/plexmon/upgrade/` a zapíše
-`request.json`; `plexmon-upgrade.path` spustí `plexmon-upgrade.service`, který
-jako root (mimo `plexmon.service`) balíček zkopíruje, ověří **podpis Ed25519**
-`MANIFEST.sig` klíčem z `/usr/local/lib/plexmon/release-keys/`, každý soubor
-proti `MANIFEST` (SHA-256), a spustí jeho `install.sh --upgrade --yes`. Výstup
-je na stránce (*Co naposledy řekl root*) a v `/var/lib/plexmon/upgrade/last.log`.
+Security: the daemon only gets the package ready in `/var/lib/plexmon/upgrade/` and writes
+`request.json`; `plexmon-upgrade.path` starts `plexmon-upgrade.service`, which
+as root (outside `plexmon.service`) copies the package, checks the **Ed25519 signature**
+`MANIFEST.sig` with a key from `/usr/local/lib/plexmon/release-keys/`, every file
+against `MANIFEST` (SHA-256), and runs its `install.sh --upgrade --yes`. The output
+is on the page (*What root said last*) and in `/var/lib/plexmon/upgrade/last.log`.
 
-Příkazová řádka: `plexmon --upgrade-check`, `--upgrade-online [VERZE] [--yes]`,
-`--upgrade-file SOUBOR`, `--upgrade-status`, `--downgrade-check`, `--downgrade VERZE`.
+Command line: `plexmon --upgrade-check`, `--upgrade-online [VERSION] [--yes]`,
+`--upgrade-file FILE`, `--upgrade-status`, `--downgrade-check`, `--downgrade VERSION`.
 
-## Vydání nové verze (pro správce repozitáře)
+## Releasing a new version (for the repository's maintainer)
 
-1. Zvyšte verzi na třech místech: `__version__` v `plexmon_admin.py` a
-   `plexmon.py`, `PM_VERSION` ve `web/plexmon-page.php`; zápis `## X.Y.Z`
-   v `CHANGELOG.md`.
-2. Podepište a zabalte (soukromý klíč není v repozitáři):
+1. Raise the version in three places: `__version__` in `plexmon_admin.py` and
+   `plexmon.py`, `PM_VERSION` in `web/plexmon-page.php`; an entry `## X.Y.Z`
+   in `CHANGELOG.md`.
+2. Sign and package (the private key is not in the repository):
 
    ```bash
    PLEXMON_SIGNING_KEY=~/plexmon-release-1.key PLEXMON_SYNC_ROOT=1 tools/build-release.sh
    ```
 
-   Vznikne `release/plexmon-X.Y.Z.tar.gz`, starší než posledních deset se
-   smažou, a `MANIFEST` + `MANIFEST.sig` v kořeni odpovídají rozbalenému obsahu.
-3. Commit a push do `main` - servery nabídnou novou verzi samy.
+   This makes `release/plexmon-X.Y.Z.tar.gz`, those older than the last ten are
+   deleted, and `MANIFEST` + `MANIFEST.sig` in the root match the unpacked content.
+3. Commit and push to `main` - the servers offer the new version by themselves.
 
-Veřejný klíč: `deploy/release-keys/plexmon-release-1.pub`. Nový klíč = nový
-soubor `.pub` vedle; install.sh nasadí všechny.
+The public key: `deploy/release-keys/plexmon-release-1.pub`. A new key = a new
+`.pub` file next to it; install.sh puts them all in.

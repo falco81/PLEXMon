@@ -1,58 +1,58 @@
-# Nastavení (Settings)
+# Settings
 
-`https://<server>/smart/settings/` - administrace převzatá z otp: stejné
-stránky, stejné ovládání (záhlaví, záložky, lišta vlevo, okna, lišta *Uložit
-změny* dole). Rozhoduje vždy démon; PHP stránky se ho jen ptají na 127.0.0.1.
+`https://<server>/smart/settings/` - the administration taken over from otp: the same
+pages, the same controls (header, tabs, the bar on the left, windows, the *Save the
+changes* bar at the bottom). The daemon always decides; the PHP pages only ask it on 127.0.0.1.
 
-## Účty
+## Accounts
 
-- **plný správce** smí vše, **jen čtení** se jen dívá.
-- Heslo nastavené jiným si člověk při prvním přihlášení změní.
-- *Druhý krok přihlášení*: `admin_2fa` (Účty → nastavení dole) - kód
-  z ověřovací aplikace; reset: tlačítko u účtu nebo `plexmon --reset-2fa JMÉNO`.
-- *Přihlášeni teď* - ukončení přihlášení jinde; *Zamčení* - adresy a jména
-  s chybnými pokusy, uvolnění jedním kliknutím.
-- *Sloupce tabulek* - každý si rozloží tabulky po svém (vaše jméno → Upravit
-  sloupce); export / import vlastního nastavení jako JSON.
+- **full admin** may do everything, **read only** only looks.
+- A password set by someone else is changed by its owner at the first sign-in.
+- *Second step* of signing in: `admin_2fa` (Accounts → the settings at the bottom) - a code
+  from an authenticator app; reset: the button by the account or `plexmon --reset-2fa NAME`.
+- *Signed in now* - ending a sign-in elsewhere; *Locked out* - addresses and names
+  with failed attempts, freed with one click.
+- *Columns of the tables* - everyone lays the tables out their own way (your name → Edit the
+  columns); export / import of your own settings as JSON.
 
-## Certifikáty a TLS
+## Certificates and TLS
 
-Karta certifikátu serveru: kdo ho vydal, do kdy platí, jména (SAN), řetěz,
-kořen, stav v nginx. Tlačítka:
+The card of the server's certificate: who issued it, until when it is good, the names (SAN), the chain,
+the root, the state in nginx. The buttons:
 
 | | |
 |---|---|
-| Nahrát | PEM (certifikát, klíč, řetěz, kořen - v libovolném pořadí) nebo PFX / PKCS#12 s heslem |
-| Žádost (CSR) | klíč se vyrobí tady a zůstane tady; žádost jde k vaší CA, nahrajete jen certifikát |
-| Podepsaný sám sebou | na zkoušku nebo do příchodu pravého |
-| Nastavení TLS | Standard (TLS 1.2 + 1.3, ECDHE), Mozilla intermediate / modern, vlastní; DH parametry; server volí šifru; HSTS |
-| Stáhnout | certifikát s řetězem (bez klíče) |
-| Pustit | plexmon se o TLS přestane starat, nginx si nechá soubory |
+| Upload | PEM (certificate, key, chain, root - in any order) or PFX / PKCS#12 with its password |
+| Request (CSR) | the key is made here and stays here; the request goes to your CA, you upload only the certificate |
+| Self-signed | for a try, or until the real one comes |
+| TLS settings | Standard (TLS 1.2 + 1.3, ECDHE), Mozilla intermediate / modern, custom; DH parameters; the server picks the cipher; HSTS |
+| Download | the certificate with its chain (without the key) |
+| Let go | plexmon stops looking after TLS, nginx keeps the files |
 
-Certifikát se zapíše do souborů, které jmenuje Plex vhost
-(`/etc/nginx/certs/server.pem` + `.key`), nastavení TLS do
-`/etc/nginx/plexmon/tls.conf`; nginx se zeptá (`nginx -t`) a reloadne; když
-odmítne, vše se vrátí.
+The certificate is written to the files the Plex vhost names
+(`/etc/nginx/certs/server.pem` + `.key`), the TLS settings to
+`/etc/nginx/plexmon/tls.conf`; nginx is asked (`nginx -t`) and reloaded; if it
+refuses, everything is put back.
 
-### Plex Media Server používá tento certifikát také
+### Plex Media Server uses this certificate too
 
-Plex Media Server (port 32400) má vlastní certifikát `*.plex.direct`. Se
-zapnutým `plex_cert` dostane i certifikát plexmonu jako *custom certificate*:
-`/var/lib/plexmediaserver/plexmon/plexmon.p12` (heslo náhodné, zapečetěné),
-v `Preferences.xml` se nastaví `customCertificatePath`, `customCertificateKey`
-a `customCertificateDomain` (doména = `plex_cert_domain`, jinak CN certifikátu).
-Plex certifikát čte jen při startu: s `plex_cert_restart` (výchozí) se restartuje
-(přehrávání se na chvíli zastaví). Každý další certifikát - i obnovený přes
-ACME - jde do Plexu také. *Plex zpět na vlastní* jména z Preferences.xml odebere.
-V Plexu pak nastavte *Custom server access URLs* na `https://plex.example.cz:32400`.
+Plex Media Server (port 32400) has its own certificate `*.plex.direct`. With
+`plex_cert` on, it also gets plexmon's certificate as its *custom certificate*:
+`/var/lib/plexmediaserver/plexmon/plexmon.p12` (a random password, sealed);
+`customCertificatePath`, `customCertificateKey`
+and `customCertificateDomain` are set in `Preferences.xml` (the domain = `plex_cert_domain`, otherwise the certificate's CN).
+Plex reads the certificate only when it starts: with `plex_cert_restart` (the default) it is restarted
+(playback stops for a moment). Every further certificate - renewed through
+ACME too - goes to Plex as well. *Plex back to its own* removes the names from Preferences.xml.
+In Plex then set *Custom server access URLs* to `https://plex.example.cz:32400`.
 
-## Jazyky
+## Languages
 
-Stránky jsou psané anglicky; `lang/cs.json` (`/var/www/html/smart/lang/`) říká,
-co je která věta česky - stejný engine jako isemon a otp. Výchozí jazyk:
-*O aplikaci → Jazyk stránek* (`ui_lang`, i pro dashboard); každý si může
-zvolit vlastní (vaše jméno → Jazyk, na dashboardu přepínač EN / CS).
+The pages are written in English; `lang/cs.json` (`/var/www/html/smart/lang/`) says
+what each sentence is in Czech - the same engine as isemon and otp. The default language:
+*About → Language of the pages* (`ui_lang`, for the dashboard too); everyone may
+choose their own (your name → Language, on the dashboard the EN / CS switch).
 
-Soubor jde upravit: měňte jen `text`, nikdy `source`; prázdný `text` = anglicky.
-`{0:jeden|dva až čtyři|pět a víc}` vybere český tvar podle čísla. Nový jazyk =
-nový soubor se svým `code`; v nabídkách se objeví sám.
+The file can be edited: change only `text`, never `source`; an empty `text` = English.
+`{0:jeden|dva až čtyři|pět a víc}` picks the Czech form by the number. A new language =
+a new file with its own `code`; it appears in the menus by itself.

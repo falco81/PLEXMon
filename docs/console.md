@@ -1,9 +1,9 @@
-# Konzole
+# Console
 
-`plexmon --console` - celý plexmon přes menu, na obrazovce serveru nebo přes
-SSH (jako konzole otp). S `plexmon --console-at-login on` (nebo *O aplikaci →
-Konzole po přihlášení*) se otevře sama, když se přihlásí **root** do
-interaktivního shellu; `q` ji opustí do shellu, `!` otevře shell a vrátí se.
+`plexmon --console` - the whole of plexmon through menus, on the server's screen or over
+SSH (like the otp console). With `plexmon --console-at-login on` (or *About →
+The console at login*) it opens by itself when **root** signs in to an
+interactive shell; `q` leaves it for the shell, `!` opens a shell and comes back.
 
 ```
  plexmon 2.0.1  plex   service active   dashboard ok | Plex running | cert plex.falco81.net 61d | ACME off | 1 account(s)
@@ -24,8 +24,8 @@ interaktivního shellu; `q` ji opustí do shellu, `!` otevře shell a vrátí se
  Up/Down move   Enter choose   Esc back   ! shell   q leave
 ```
 
-Konzole převzatá z otp: otevře se na živém logu (Esc → menu), šipky (j/k) pohyb, Enter výběr, Esc zpět, číslo skočí na položku. Otázky jsou okna s poli nad menu (Nahoru/Dolů mezi poli, Vlevo/Vpravo volba, hesla jako hvězdičky), vše nevratné se ptá Ano / Ne. Seznamy (účty) se rolují a filtrují (`/`), nastavení se procházejí po skupinách i s nápovědou. Každá akce je
-příkaz `plexmon ...`, který okno ukazuje v titulku - konzole neumí nic víc než
-příkazová řádka. Živý log: co napíšete, to filtruje (jako `grep -i`).
-Nikdy se neotevře pro příkaz přes SSH, scp, sftp ani skript; vypnout pro jedno
-přihlášení: `ssh -t server PLEXMON_NO_CONSOLE=1 bash -l`.
+The console taken over from otp: it opens on the live log (Esc → menu), the arrows (j/k) move, Enter chooses, Esc goes back, a number jumps to that item. Questions are windows with fields above the menu (Up/Down between the fields, Left/Right a choice, passwords as asterisks), everything that cannot be undone asks Yes / No. Lists (accounts) scroll and filter (`/`), the settings are gone through by group, with their help. Every action is
+a `plexmon ...` command, which the window shows in its title - the console can do nothing more than
+the command line. Live log: what you type filters it (like `grep -i`).
+It never opens for a command over SSH, scp, sftp or a script; to switch it off for one
+sign-in: `ssh -t server PLEXMON_NO_CONSOLE=1 bash -l`.
