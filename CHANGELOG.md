@@ -4,6 +4,12 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.1.6 - 2026-10-31
+
+- **Nothing closes by a click beside it** - neither a popup nor the detail of a
+  title in the Plex library: only their own buttons (× , Close) close them, or
+  Escape. 2.1.5 had it the other way round.
+
 ## 2.1.5 - 2026-10-31
 
 - **A click beside a popup closes it** (pressed and let go beside it - text

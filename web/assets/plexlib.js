@@ -693,8 +693,8 @@ function sheet() {
   if (s) return s;
   s = el('div', 'px-sheet');
   s.id = 'px-sheet';
+  /* A click beside it leaves it open: only its x (or Escape) closes it. */
   var veil = el('div', 'veil');
-  veil.onclick = closeSheet;
   s.appendChild(veil);
   var panel = el('div', 'px-panel');
   panel.setAttribute('role', 'dialog');
