@@ -7983,6 +7983,14 @@
   "xs0744": {
    "source": "When, as HH:MM - a quiet hour, away from the backups.",
    "text": "Kdy, jako HH:MM - v klidnou hodinu, mimo zálohy."
+  },
+  "xs0745": {
+   "source": "dnf updates every package, Plex Media Server's own left out. Plex goes on playing meanwhile; a restart it needs is offered at the end.",
+   "text": "dnf aktualizuje každý balíček, vlastní balíček Plex Media Serveru se vynechá. Plex mezitím hraje dál; restart, který bude potřeba, se nabídne na konci."
+  },
+  "xs0746": {
+   "source": "dnf updates every package, Plex Media Server too (it restarts). Plex goes on playing meanwhile; a restart it needs is offered at the end.",
+   "text": "dnf aktualizuje každý balíček, i Plex Media Server (restartuje se). Restart, který bude potřeba, se nabídne na konci."
   }
  },
  "patterns": {
@@ -10097,6 +10105,14 @@
   "xp0145": {
    "source": "{0}: done",
    "text": "{0}: hotovo"
+  },
+  "xp0146": {
+   "source": "{0} needs a restart after this update: {1}.",
+   "text": "{0} bude po této aktualizaci potřebovat restart: {1}."
+  },
+  "xp0147": {
+   "source": "{0} need a restart after this update: {1}.",
+   "text": "{0} budou po této aktualizaci potřebovat restart: {1}."
   }
  },
  "rich": {

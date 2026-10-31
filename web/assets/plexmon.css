@@ -3061,7 +3061,8 @@ button.mebtn { cursor: pointer; }
 .net-job.failed{border-color:rgba(248,81,73,.5)}
 .net-job.done{border-color:rgba(63,185,80,.45)}
 .pw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;margin-bottom:16px}
-.pw-head{display:flex;gap:8px;align-items:center;margin-bottom:10px;font-size:15px}
+.pw-head{display:flex;flex-wrap:wrap;gap:8px;row-gap:6px;align-items:center;margin-bottom:10px;font-size:15px}
+.pw-head .pw-break{flex-basis:100%;height:0}
 .pw-node .btnrow{margin-top:14px}
 #net-host .msect{margin-top:14px}
 #net-host .net-nodes + .card{margin-top:0}

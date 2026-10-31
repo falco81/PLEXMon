@@ -4,6 +4,12 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.2.1 - 2026-10-31
+
+- **System updates**: *restart after the update* (and *restart needed*) on a
+  line of its own under the server's name - beside it, it ran out of the card.
+- The two sentences under *Update this server* are in Czech too.
+
 ## 2.2.0 - 2026-10-31
 
 Five new parts of Settings, as otp has them - the same pages, the same
