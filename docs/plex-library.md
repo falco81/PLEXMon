@@ -52,3 +52,28 @@ plexmon --plex-scan Movies                       scan the library's files
 ```
 
 In the console (`plexmon --console`): *11 The Plex library*.
+
+## Since 2.5.0 - the rest of plex_tools
+
+- **Watched**: *Flip each* (each movie and episode on its own - the watched
+  ones unwatched, the others watched) in the selection dock, for a season, for
+  ticked episodes and as `plexmon --plex-flip-watched TITLE…`. Episodes stay
+  ticked from season to season; the ticked ones can be marked watched,
+  unwatched, flipped or given their tracks together.
+- **Selection**: *Invert* and *Unselect the titles shown* (plex_tools' `i`
+  and `-`) in the library, Titles and Ratings.
+- **Labels**: the filter *without a label*; *As Plex keeps them* (the exact
+  strings and ids, case variants marked); renaming a label on the selected
+  titles only.
+- **F5 / F9**: Plex's activities followed to their end in a panel at the foot
+  of the page.
+- **Audio and subtitles**: replacement after replacement where the track
+  chosen is missing (then the next, then the next).
+- **Titles**: *Other ways…* shows every title before it changes (now → after,
+  held back, without an entry of its own); locks filtered by title, sort
+  title, either, any field; *Refresh their metadata* of the ticked ones.
+- **Ratings**: *Refresh their metadata* of the ticked ones.
+- **Watchlist**: several taken off at once; a bookmark on the posters of the
+  titles on it and a filter in the library; adding sends only what is not on
+  it yet (and says how many were); the full detail of a title not on this
+  server from Plex Discover (plot, ratings, genres, director, cast).

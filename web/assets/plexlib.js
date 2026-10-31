@@ -20,6 +20,9 @@ ICONS.translate = '<path d="M4 5h9M8.5 3v2M6 5c.6 3.4 2.6 6 6 7.5M11 5c-.7 3.5-3
 ICONS.grid = '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>';
 ICONS.ext = '<path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 19V7.5A1.5 1.5 0 0 1 5.5 6H10"/>';
 ICONS.chevron = '<path d="M7 4l9 8-9 8"/>';
+ICONS.swap = '<path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/>';
+ICONS.invert = '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M3.5 20.5l17-17"/><path d="M12 3.5h5.5a3 3 0 0 1 3 3V12z" fill="currentColor" stroke="none"/>';
+ICONS.minus = '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12h8"/>';
 
 var LOGO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h5.2l6 9-6 9H7l6-9z" fill="#e5a00d"/></svg>';
 var VIEWS = [['library', 'Library', 'grid'], ['watchlist', 'Watchlist', 'bookmark'],
@@ -437,9 +440,24 @@ function toolbar(bar, d) {
     s.onchange = function () { set(s.value); grid(null, d); };
     return s;
   };
-  if (f.labels.length) bar.appendChild(sel(PX.label, f.labels, 'every label', function (v) { PX.label = v; }));
+  /* "(items with no label)" as plex_tools has it (2.5.0). */
+  var noLab = d.items.filter(function (it) { return !(it.labels || []).length; }).length;
+  if (f.labels.length || noLab) {
+    var ls = sel(PX.label, [['__none__', 'without a label (' + noLab + ')']].concat(f.labels), 'every label', function (v) { PX.label = v; });
+    ls.options[1].removeAttribute('data-no-i18n');
+    bar.appendChild(ls);
+  }
   if (f.genres.length) bar.appendChild(sel(PX.genre, f.genres, 'every genre', function (v) { PX.genre = v; }));
   if (f.countries.length) bar.appendChild(sel(PX.country, f.countries, 'every country', function (v) { PX.country = v; }));
+  /* On the watchlist or not (2.5.0, plex_tools' watchlist editor): the badge
+     on the posters and this filter, from the owner's watchlist. */
+  var wlf = selectBox([['', 'watchlist: all'], ['on', 'on the watchlist'], ['off', 'not on the watchlist']], PX.wlf || '');
+  wlf.onchange = function () {
+    PX.wlf = wlf.value;
+    if (!PX.wlf) { grid(null, d); return; }
+    wlKeys().then(function () { wlSet(); grid(null, d); }).catch(function (e) { PX.wlf = ''; wlf.value = ''; toast(String(e.message || e), 'bad'); });
+  };
+  bar.appendChild(wlf);
   var nr = el('button', 'px-chip' + (PX.norating ? ' on' : ''), 'without a rating');
   nr.type = 'button';
   nr.onclick = function () { PX.norating = !PX.norating; nr.classList.toggle('on', PX.norating); grid(null, d); };
@@ -492,7 +510,9 @@ function filtered(d) {
       if (PX.show === 'part' && s !== 'part') return false;
       if (PX.show === 'seen' && s !== 'seen') return false;
     }
-    if (PX.label && (it.labels || []).indexOf(PX.label) < 0) return false;
+    if (PX.label === '__none__') { if ((it.labels || []).length) return false; }
+    else if (PX.label && (it.labels || []).indexOf(PX.label) < 0) return false;
+    if (PX.wlf && PX.wlset) { var onw = !!PX.wlset[dkOf(it)]; if ((PX.wlf === 'on') !== onw) return false; }
     if (PX.genre && (it.genres || []).indexOf(PX.genre) < 0) return false;
     if (PX.country && (it.countries || []).indexOf(PX.country) < 0) return false;
     if (PX.norating && (it.rating || it.audience)) return false;
@@ -561,6 +581,7 @@ function card(it, i, d) {
   }
   var sc = bestScore(it);
   if (sc) { var r = el('span', 'px-rate'); r.textContent = '★ ' + sc; p.appendChild(r); }
+  if (PX.wlset && PX.wlset[dkOf(it)]) { var wb = el('span', 'px-wlb'); wb.appendChild(ico('bookmark', 13)); wb.title = 'on the watchlist'; p.appendChild(wb); }
   var s = el('span', 'px-sel'); s.appendChild(ico('check', 15)); p.appendChild(s);
   c.appendChild(p);
   var cap = el('div', 'px-cap');
@@ -615,6 +636,7 @@ function dock() {
   };
   add('Watched', 'check', function () { watched(picked(), true); }, '', true);
   add('Unwatched', 'eye', function () { watched(picked(), false); }, '', true);
+  add('Flip each', 'swap', function () { watchedToggle(picked()); }, '', true);
   add('Audio & subtitles', 'subs', function () { tracksDialog(picked(), n + ' titles'); }, '', true);
   add('Labels', 'tag', function () { labelsDialog(PX.lib, picked()); }, '', true);
   add('Ratings', 'star', function () { PX.tool = {pre: picked()}; go('ratings', true); }, '', true);
@@ -625,6 +647,11 @@ function dock() {
   icon('download', 'Export their titles to a .txt file, one per line', function () { exportTitles(picked().map(function (k) { return d.byRk[k]; }).filter(Boolean), lib); });
   icon('select', 'Select every title shown', function () { PX.shown.forEach(function (it) { PX.sel[it.rk] = true; }); document.querySelectorAll('#px-main .px-card').forEach(function (x) { x.classList.add('sel'); }); dock(); });
   icon('close', 'Select none', function () { PX.sel = {}; document.querySelectorAll('#px-main .px-card.sel').forEach(function (x) { x.classList.remove('sel'); }); dock(); });
+  /* plex_tools' i and - (2.5.0): the selection turned over among those shown,
+     and those shown (a search, a filter) taken out of it. */
+  var marks = function () { document.querySelectorAll('#px-main .px-card').forEach(function (x) { x.classList.toggle('sel', !!PX.sel[x.dataset.rk]); }); dock(); };
+  icon('invert', 'Invert the selection of the titles shown', function () { PX.shown.forEach(function (it) { if (PX.sel[it.rk]) delete PX.sel[it.rk]; else PX.sel[it.rk] = true; }); marks(); });
+  icon('minus', 'Unselect the titles shown (a search or a filter first)', function () { PX.shown.forEach(function (it) { delete PX.sel[it.rk]; }); marks(); });
 }
 function exportTitles(list, lib) {
   /* One per line; a variant of the same show ('X - Viki' beside 'X') is one line. */
@@ -667,6 +694,18 @@ function watched(rks, on, after) {
     if (after) after();
   }).catch(oops);
 }
+/* Each one flipped (2.5.0, plex_tools' "toggle each"). */
+function watchedToggle(rks, after) {
+  confirmThen('Flip the watched state of each?',
+    htmlText('Each movie and episode on its own: the watched ones become unwatched, the others watched. A show or a season is every episode of it.'),
+    'Flip each', function () {
+      follow(api('plex', {action: 'watched-toggle', rks: rks})).then(function (r) {
+        toast((r.watched || 0) + ' now watched, ' + (r.unwatched || 0) + ' unwatched' + (r.failed ? ', ' + r.failed + ' failed' : ''), r.failed ? 'bad' : 'good');
+        afterChange();
+        if (after) after();
+      }).catch(oops);
+    }, false);
+}
 function refreshItems(rks) {
   confirmThen('Refresh the metadata of ' + rks.length + ' titles?',
     htmlText('Plex asks its agents again for each of them - the same match: watched state, positions, the files and their default tracks stay. It goes one after the other, gently.'),
@@ -679,19 +718,94 @@ function libraryScan(sec, force) {
     confirmThen('Refresh all the metadata of ' + sec.title + '?',
       htmlText('Plex downloads the metadata, posters and backgrounds of every item again. On a big library that takes a long time and loads the server; the scan of the files is usually what you want.'),
       'Refresh it all', function () {
-        api('plex', {action: 'scan', lib: sec.key, force: true}).then(function (r) { toast(r.message, 'good'); }).catch(oops);
+        api('plex', {action: 'scan', lib: sec.key, force: true}).then(function (r) { toast(r.message, 'good'); plexActivity(sec); }).catch(oops);
       });
     return;
   }
-  api('plex', {action: 'scan', lib: sec.key}).then(function (r) { toast(r.message, 'good'); }).catch(oops);
+  api('plex', {action: 'scan', lib: sec.key}).then(function (r) { toast(r.message, 'good'); plexActivity(sec); }).catch(oops);
 }
+/* What Plex does after F5 / F9, followed to its end (2.5.0, as plex_tools'
+   progress bar from /activities): a panel at the foot of the page with each
+   of Plex's activities and how far it is; it goes away when Plex is done. */
+var PXA = {timer: null, seen: false, quiet: 0, began: 0};
+function plexActivity(sec) {
+  var box = $('px-activity');
+  if (!box) {
+    box = el('div', 'px-activity');
+    box.id = 'px-activity';
+    document.body.appendChild(box);
+  }
+  clearTimeout(PXA.timer);
+  PXA.seen = false; PXA.quiet = 0; PXA.began = Date.now();
+  var stopIt = function () { clearTimeout(PXA.timer); PXA.timer = null; box.classList.remove('on'); };
+  var look = function () {
+    api('plex', {action: 'activities'}).then(function (r) {
+      var acts = (r.activities || []).filter(function (a) { return a.type !== 'provider.subscriptions.process'; });
+      if (acts.length) { PXA.seen = true; PXA.quiet = 0; } else PXA.quiet += 1;
+      clear(box);
+      if (!acts.length) {
+        if ((PXA.seen && PXA.quiet >= 2) || (!PXA.seen && Date.now() - PXA.began > 20000)) {
+          if (PXA.seen) { toast('Plex is done with ' + sec.title, 'good'); afterChange(sec.key); }
+          stopIt();
+          return;
+        }
+        var w = el('div', 'px-act');
+        w.appendChild(el('b', '', 'Plex: waiting for it to begin…'));
+        box.appendChild(w);
+      }
+      acts.slice(0, 4).forEach(function (a) {
+        var w = el('div', 'px-act');
+        var head = el('div', 'h');
+        head.appendChild(txt('b', '', a.title || a.type || 'Plex'));
+        var pct = typeof a.progress === 'number' && a.progress >= 0 ? Math.round(a.progress) : null;
+        head.appendChild(el('span', 'muted small', pct === null ? '' : pct + ' %'));
+        w.appendChild(head);
+        if (a.subtitle) w.appendChild(txt('div', 'muted small', a.subtitle));
+        var bar = el('div', 'px-prog2');
+        var fill = el('span');
+        fill.style.width = (pct === null ? 100 : pct) + '%';
+        if (pct === null) bar.classList.add('busy');
+        bar.appendChild(fill);
+        w.appendChild(bar);
+        box.appendChild(w);
+      });
+      var x = iconButton('close', 'Hide - Plex goes on');
+      x.classList.add('px-act-x');
+      x.onclick = stopIt;
+      box.appendChild(x);
+      box.classList.add('on');
+      PXA.timer = setTimeout(look, 2000);
+    }).catch(function () { PXA.timer = setTimeout(look, 5000); });
+  };
+  look();
+}
+function dkOf(it) { return it && /^plex:\/\//.test(it.guid || '') ? it.guid.split('/').pop() : ''; }
+function wlSet() {
+  var set = {};
+  (WLK.keys || []).forEach(function (k) { set[k] = 1; });
+  PX.wlset = set;
+  return set;
+}
+/* Only what is not on it yet (2.5.0, plex_tools' "add"): those already on it
+   and those Plex Discover does not know are counted, not sent. */
 function watchlistAdd(rks) {
   var d = PX.data[PX.lib];
-  var dks = rks.map(function (k) { var it = d.byRk[k]; return it && /^plex:\/\//.test(it.guid || '') ? it.guid.split('/').pop() : null; }).filter(Boolean);
-  if (!dks.length) { toast('none of them has a match Plex Discover knows', 'bad'); return; }
-  api('plex', {action: 'watchlist-add', dks: dks}).then(function (r) {
-    toast(r.ok + ' put on the watchlist' + (r.failed ? ', ' + r.failed + ' failed' : ''), r.failed ? 'bad' : 'good');
-    PX.wl = null;
+  wlKeys().then(function () {
+    var set = wlSet();
+    var already = 0, nomatch = 0, dks = [];
+    rks.forEach(function (k) {
+      var dk = dkOf(d.byRk[k]);
+      if (!dk) nomatch++;
+      else if (set[dk]) already++;
+      else dks.push(dk);
+    });
+    var tail = (already ? ', ' + already + ' on it already' : '') + (nomatch ? ', ' + nomatch + ' without a match Plex Discover knows' : '');
+    if (!dks.length) { toast('nothing to put on the watchlist' + tail, 'warn'); return; }
+    api('plex', {action: 'watchlist-add', dks: dks}).then(function (r) {
+      toast(r.ok + ' put on the watchlist' + (r.failed ? ', ' + r.failed + ' failed' : '') + tail, r.failed ? 'bad' : 'good');
+      PX.wl = null; WLK.at = 0;
+      wlKeys().then(function () { wlSet(); grid(null, d); }).catch(function () { });
+    }).catch(oops);
   }).catch(oops);
 }
 
@@ -1027,8 +1141,33 @@ function seasonsBlock(host, it, seasonRk) {
   host.appendChild(eps);
   var pick = {};
   var now = seasonRk || (seasons.filter(function (s) { return s.leaves && s.seen < s.leaves; })[0] || seasons[0]).rk;
+  /* Ticked episodes stay ticked from season to season (2.5.0, plex_tools'
+     episode list): watched, unwatched, each flipped, or their tracks. */
+  var tickBar = el('div', 'btnrow px-ticked');
+  tickBar.style.margin = '0 0 10px';
+  host.insertBefore(tickBar, eps);
+  var paintTick = function (sea) {
+    clear(tickBar);
+    var n = Object.keys(pick).length;
+    tickBar.hidden = !ADMIN || !n;
+    if (!n) return;
+    var after = function () { pick = {}; detail(it.rk, sea.rk); };
+    tickBar.appendChild(el('span', 'muted small', n === 1 ? '1 episode ticked:' : n + ' episodes ticked:'));
+    var w1 = cmdButton('Watched', 'check', 'small');
+    w1.onclick = function () { watched(Object.keys(pick), true, after); };
+    var w2 = cmdButton('Unwatched', 'eye', 'small');
+    w2.onclick = function () { watched(Object.keys(pick), false, after); };
+    var w3 = cmdButton('Flip each', 'swap', 'small');
+    w3.onclick = function () { watchedToggle(Object.keys(pick), after); };
+    var w4 = cmdButton('Audio & subtitles', 'subs', 'small');
+    w4.onclick = function () { tracksDialog(Object.keys(pick), it.title + ' · ' + Object.keys(pick).length + ' episodes', after); };
+    var w5 = cmdButton('Untick all', 'close', 'small');
+    w5.onclick = function () { pick = {}; eps.querySelectorAll('input.chk').forEach(function (c) { c.checked = false; c.parentNode.classList.remove('pick'); }); paintTick(sea); };
+    [w1, w2, w3, w4, w5].forEach(function (b) { tickBar.appendChild(b); });
+  };
   var drawEps = function (sea) {
-    clear(eps); clear(bar); pick = {};
+    clear(eps); clear(bar);
+    paintTick(sea);
     strip.querySelectorAll('.px-season').forEach(function (x) { x.classList.toggle('on', x.dataset.rk === sea.rk); });
     if (ADMIN) {
       var b1 = cmdButton('Season watched', 'check', 'small');
@@ -1040,11 +1179,9 @@ function seasonsBlock(host, it, seasonRk) {
       var b5 = cmdButton('Ratings of the season', 'star', 'small');
       b5.onclick = function () { ratingsDialog([sea.rk], it.title + ' · ' + sea.title, 'the season and its episodes', function () { detail(it.rk, sea.rk); }); };
       bar.appendChild(b5);
-      var b4 = cmdButton('… of the episodes ticked', 'subs', 'small');
-      b4.disabled = true;
-      b4.onclick = function () { tracksDialog(Object.keys(pick), it.title + ' · ' + Object.keys(pick).length + ' episodes', function () { detail(it.rk, sea.rk); }); };
-      [b1, b2, b3, b4].forEach(function (b) { bar.appendChild(b); });
-      bar._b4 = b4;
+      var b6 = cmdButton('Season: flip each', 'swap', 'small');
+      b6.onclick = function () { watchedToggle([sea.rk], function () { detail(it.rk, sea.rk); }); };
+      [b1, b2, b6, b3].forEach(function (b) { bar.appendChild(b); });
     }
     eps.appendChild(el('div', 'px-skel'));
     eps.firstChild.style.cssText = 'aspect-ratio:auto;height:80px';
@@ -1054,8 +1191,10 @@ function seasonsBlock(host, it, seasonRk) {
         var row = el('div', 'px-ep');
         if (ADMIN) {
           var ck = el('input', 'chk'); ck.type = 'checkbox';
-          ck.title = 'Tick to set the tracks of just these episodes';
-          ck.onchange = function () { if (ck.checked) pick[e.rk] = 1; else delete pick[e.rk]; row.classList.toggle('pick', ck.checked); if (bar._b4) bar._b4.disabled = !Object.keys(pick).length; };
+          ck.title = 'Tick episodes - in any season - to mark them watched, flip them or set their tracks together';
+          ck.checked = !!pick[e.rk];
+          row.classList.toggle('pick', ck.checked);
+          ck.onchange = function () { if (ck.checked) pick[e.rk] = 1; else delete pick[e.rk]; row.classList.toggle('pick', ck.checked); paintTick(sea); };
           row.appendChild(ck);
         } else row.appendChild(el('span', 'num', String(e.index || '')));
         var shot = el('div', 'shot');
@@ -1193,13 +1332,38 @@ function tracksDialog(rks, what, after) {
         miss.style.marginTop = '8px';
         var mt = el('div');
         mt.appendChild(el('div', '', (r.videos - chosen.count) + ' of ' + r.videos + ' do not have it. There:'));
-        var pairs = [['skip', 'leave them as they are']];
-        if (kind === 'subs') pairs.push(['off', 'subtitles off']);
-        list.forEach(function (v) { if (v.key !== chosen.key) pairs.push([v.key, v.label]); });
-        var s = selectBox(pairs, T[kind === 'audio' ? 'ma' : 'ms']);
-        s.onchange = function () { T[kind === 'audio' ? 'ma' : 'ms'] = s.value; };
-        s.style.marginTop = '6px';
-        mt.appendChild(s);
+        /* Replacement after replacement (2.5.0, plex_tools' coverage loop):
+           where the one chosen is missing the next is tried, then the next. */
+        var tk = kind === 'audio' ? 'ma' : 'ms';
+        var chainBox = el('div', 'px-chain');
+        var paintChain = function () {
+          clear(chainBox);
+          var keys = String(T[tk] || 'skip').split(',').filter(Boolean);
+          var used = [chosen.key];
+          var shown = 0;
+          for (var i = 0; i <= keys.length; i++) {
+            var cur = keys[i] || 'skip';
+            var pairs = [['skip', i ? 'and where that is missing too: leave them' : 'leave them as they are']];
+            if (kind === 'subs') pairs.push(['off', 'subtitles off']);
+            list.forEach(function (v) { if (used.indexOf(v.key) < 0 || v.key === cur) pairs.push([v.key, (i ? 'then ' : '') + v.label]); });
+            (function (idx) {
+              var sb = selectBox(pairs, cur);
+              sb.style.marginTop = '6px';
+              sb.onchange = function () {
+                var k2 = keys.slice(0, idx);
+                if (sb.value !== 'skip') k2.push(sb.value);
+                T[tk] = k2.length ? k2.join(',') : 'skip';
+                paintChain();
+              };
+              chainBox.appendChild(sb);
+            }(i));
+            shown++;
+            if (cur === 'skip' || cur === 'off') break;
+            used.push(cur);
+          }
+        };
+        paintChain();
+        mt.appendChild(chainBox);
         miss.appendChild(mt);
         c.appendChild(miss);
       }
@@ -1232,7 +1396,7 @@ function tracksDialog(rks, what, after) {
   };
   var plan = function (w) {
     api('plex', {action: 'tracks-plan', scan: T.scan.scan, audio: T.audio, subs: T.subs,
-                 missing_audio: T.ma, missing_subs: T.ms === 'off' ? 'off' : T.ms}).then(function (p) {
+                 missing_audio: T.ma, missing_subs: T.ms}).then(function (p) {
       clear(w);
       var sum = el('div', 'px-sum');
       var met = function (v, k, cls) { var m = el('div', 'metric ' + (cls || '')); m.innerHTML = '<div class="label"></div><div class="value"></div>'; m.firstChild.textContent = k; m.lastChild.textContent = v; return m; };
@@ -1475,6 +1639,33 @@ function labelsDialog(lib, rks, after) {
         inp.onkeydown = function (e) { if (e.key === 'Enter') put3(); };
         add.appendChild(inp); add.appendChild(ab);
         w.appendChild(add);
+        /* Rename a label on these titles only (2.5.0, plex_tools' editor):
+           the rest of the library keeps it as it is. */
+        var carried = rows.filter(function (x) { return x.n > 0 && !x.fresh; });
+        if (carried.length) {
+          var rn = el('div', 'btnrow');
+          rn.style.marginTop = '10px';
+          var pickL = selectBox(carried.map(function (x) { return [x.g.title, x.g.title + ' (' + x.n + ')']; }), carried[0].g.title);
+          var to = textBox('', 'its new name…', '');
+          to.style.flex = '1';
+          var rb = cmdButton('Rename it on these', 'edit', 'small');
+          explain(rb, 'Only on these titles: the label is taken off them and the new one put on - elsewhere in the library it stays as it is.');
+          rb.onclick = function () {
+            var nv = to.value.trim();
+            if (!nv) { toast('give the new name', 'warn'); return; }
+            busy(rb, true);
+            api('plex', {action: 'labels', how: 'rename', lib: lib, rks: rks, old: pickL.value, new: nv}).then(function (r) {
+              busy(rb, false);
+              toast('renamed on ' + r.done + ' titles', 'good');
+              afterChange(lib);
+              closeModal();
+              if (after) after();
+            }).catch(function (e) { busy(rb, false); oops(e); });
+          };
+          rn.appendChild(el('span', 'muted small', 'Rename on these only:'));
+          rn.appendChild(pickL); rn.appendChild(to); rn.appendChild(rb);
+          w.appendChild(rn);
+        }
       };
       draw2();
     }).catch(function (e) { clear(w); w.appendChild(el('p', 'note bad', String(e.message || e))); });
@@ -1496,6 +1687,60 @@ function labelsDialog(lib, rks, after) {
 }
 
 /* ---- the watchlist ----------------------------------------------------------------- */
+var WLS = {on: false, sel: {}};
+/* A title not on this server, as Plex Discover knows it (2.5.0, plex_tools'
+   watchlist detail): the plot, the ratings, genres, director and cast. */
+function discoverDetail(w, after) {
+  wideModal(w.title, function (body) {
+    noI18n($('modal-title'));
+    var row = el('div', 'px-row px-disc');
+    row.style.gridTemplateColumns = '150px minmax(0,1fr)';
+    var th = el('div', 'th'); th.style.width = '150px'; th.appendChild(picture(w.thumb, 300, 450, '')); row.appendChild(th);
+    var mm = el('div', 'main');
+    mm.appendChild(txt('b', '', w.title + (w.year ? ' (' + w.year + ')' : '')));
+    mm.appendChild(el('small', '', 'not on this server'));
+    var more2 = el('div');
+    more2.appendChild(el('div', 'px-skel'));
+    more2.firstChild.style.cssText = 'aspect-ratio:auto;height:90px;margin-top:10px';
+    mm.appendChild(more2);
+    row.appendChild(mm);
+    body.appendChild(row);
+    api('plex-discover&dk=' + encodeURIComponent(w.dk), null, 40).then(function (d) {
+      clear(more2);
+      var facts = [d.released || '', d.cr || '', d.duration ? dur(d.duration) : '', d.seasons ? d.seasons + ' seasons' : '', d.studio || ''].filter(Boolean);
+      if (facts.length) more2.appendChild(dotted(el('small', 'muted'), facts.map(function (f) { return txt('span', '', String(f)); })));
+      var rs = el('div', 'px-scores');
+      (d.badges || []).forEach(function (b) { rs.appendChild(scoreBadge(b)); });
+      if (rs.childNodes.length) more2.appendChild(rs);
+      if ((d.genres || []).length) more2.appendChild(txt('div', 'muted small', d.genres.join(' · ')));
+      if (d.tagline) more2.appendChild(txt('p', 'px-summary', d.tagline));
+      var sp = txt('p', 'px-summary', d.summary || w.summary || '');
+      sp.style.fontSize = '13.5px'; sp.style.marginTop = '8px';
+      more2.appendChild(sp);
+      var people = [['Director', d.directors], ['Writer', d.writers], ['Country', d.countries]];
+      people.forEach(function (p) { if ((p[1] || []).length) { var l = el('div', 'small'); l.appendChild(el('span', 'muted', p[0] + ': ')); l.appendChild(txt('span', '', p[1].join(', '))); more2.appendChild(l); } });
+      if ((d.cast || []).length) {
+        var cs = el('div', 'px-cast');
+        cs.style.marginTop = '10px';
+        d.cast.forEach(function (c) {
+          var pc = el('div', 'px-person');
+          pc.style.cursor = 'default';
+          var ph = el('div', 'face'); ph.appendChild(picture(c.thumb, 120, 120, c.name)); pc.appendChild(ph);
+          pc.appendChild(txt('b', '', c.name));
+          if (c.role) pc.appendChild(txt('small', '', c.role));
+          cs.appendChild(pc);
+        });
+        more2.appendChild(cs);
+      }
+    }).catch(function (e) {
+      clear(more2);
+      if (w.summary) { var sp2 = txt('p', 'px-summary', w.summary); sp2.style.marginTop = '8px'; more2.appendChild(sp2); }
+      more2.appendChild(el('p', 'muted small', 'Plex Discover has nothing more: ' + String(e.message || e)));
+    });
+  }, [{words: 'Close', close: true}, {words: 'Take it off the watchlist', cls: 'danger', icon: 'trash', admin: true, close: true, go: function () {
+    api('plex', {action: 'watchlist-remove', dks: [w.dk]}).then(function () { toast('taken off the watchlist', 'good'); WLK.at = 0; if (after) after(); }).catch(oops);
+  }}]);
+}
 function drawWatchlist() {
   var m = main();
   clear(m);
@@ -1524,6 +1769,12 @@ function drawWatchlist() {
     var rf = iconButton('refresh', 'Read the watchlist again');
     rf.onclick = function () { load2(true); };
     bar.appendChild(rf);
+    /* Several taken off at once (2.5.0, plex_tools' "remove"): on this server or not. */
+    if (ADMIN) {
+      var selB = cmdButton(WLS.on ? 'Done' : 'Select', 'select', WLS.on ? 'primary small' : 'small');
+      selB.onclick = function () { WLS.on = !WLS.on; WLS.sel = {}; paint(r); };
+      bar.appendChild(selB);
+    }
     var list = (r.items || []).filter(function (w) {
       if (f === 'movie' || f === 'show') return w.type === f;
       if (f === 'here') return !!w.here;
@@ -1532,37 +1783,54 @@ function drawWatchlist() {
     });
     c.textContent = list.length + ' on the watchlist';
     clear(host);
+    if (WLS.on) {
+      var acts = el('div', 'btnrow');
+      acts.style.marginBottom = '12px';
+      var n = Object.keys(WLS.sel).length;
+      acts.appendChild(el('span', 'muted small', n + ' selected'));
+      var a1 = cmdButton('Select every one shown', 'select', 'small');
+      a1.onclick = function () { list.forEach(function (w) { WLS.sel[w.dk] = 1; }); paint(r); };
+      var a2 = cmdButton('Invert', 'invert', 'small');
+      a2.onclick = function () { list.forEach(function (w) { if (WLS.sel[w.dk]) delete WLS.sel[w.dk]; else WLS.sel[w.dk] = 1; }); paint(r); };
+      var a3 = cmdButton('None', 'close', 'small');
+      a3.onclick = function () { WLS.sel = {}; paint(r); };
+      var a4 = cmdButton('Take ' + n + ' off the watchlist', 'trash', 'small danger');
+      a4.disabled = !n;
+      a4.onclick = function () {
+        confirmThen('Take ' + n + ' titles off the watchlist?', htmlText('They go off the watchlist of the server\'s owner at Plex - nothing on this server changes.'), 'Take them off', function () {
+          api('plex', {action: 'watchlist-remove', dks: Object.keys(WLS.sel)}).then(function (x) {
+            toast((x.ok || 0) + ' taken off the watchlist' + (x.failed ? ', ' + x.failed + ' failed' : ''), x.failed ? 'bad' : 'good');
+            WLS.sel = {}; WLS.on = false; WLK.at = 0; load2(true);
+          }).catch(oops);
+        });
+      };
+      [a1, a2, a3, a4].forEach(function (b) { acts.appendChild(b); });
+      host.appendChild(acts);
+    }
     if (!list.length) { host.appendChild(emptyState('bookmark', 'Nothing here', 'Put a title on it from its detail, or select several in the library.')); return; }
-    var g = el('div', 'px-grid');
+    var g = el('div', 'px-grid' + (WLS.on ? ' px-selecting' : ''));
     g.style.setProperty('--px-poster', PX.size + 'px');
     list.forEach(function (w) {
-      var cc = el('div', 'px-card');
+      var cc = el('div', 'px-card' + (WLS.sel[w.dk] ? ' sel' : ''));
       var p = el('div', 'px-poster');
       p.appendChild(txt('div', 'ph', w.title));
       p.appendChild(picture(w.thumb, PX.size + 40, (PX.size + 40) * 1.5, w.title));
       p.appendChild(el('div', 'shade'));
       if (w.here) { var b = el('span', 'px-badge here'); b.appendChild(ico('check', 13)); b.title = 'on this server: ' + w.here.lib_title; p.appendChild(b); }
+      var sk = el('span', 'px-sel'); sk.appendChild(ico('check', 15)); p.appendChild(sk);
       cc.appendChild(p);
       var cap = el('div', 'px-cap');
       cap.appendChild(txt('b', '', w.title));
       cap.appendChild(dotted(el('small'), [w.year ? txt('span', '', String(w.year)) : '', w.type === 'show' ? 'series' : 'movie', w.here ? 'here' : '']));
       cc.appendChild(cap);
       cc.onclick = function () {
+        if (WLS.on) {
+          if (WLS.sel[w.dk]) delete WLS.sel[w.dk]; else WLS.sel[w.dk] = 1;
+          paint(r);
+          return;
+        }
         if (w.here) { detail(w.here.rk); return; }
-        modal(w.title, function (body) {
-          noI18n($('modal-title'));
-          var row = el('div', 'px-row');
-          row.style.gridTemplateColumns = '120px minmax(0,1fr)';
-          var th = el('div', 'th'); th.style.width = '120px'; th.appendChild(picture(w.thumb, 240, 360, '')); row.appendChild(th);
-          var mm = el('div', 'main');
-          mm.appendChild(txt('b', '', w.title + (w.year ? ' (' + w.year + ')' : '')));
-          mm.appendChild(el('small', '', 'not on this server'));
-          if (w.summary) { var sp = txt('p', 'px-summary', w.summary); sp.style.fontSize = '13.5px'; sp.style.marginTop = '8px'; mm.appendChild(sp); }
-          row.appendChild(mm);
-          body.appendChild(row);
-        }, [{words: 'Close', close: true}, {words: 'Take it off the watchlist', cls: 'danger', icon: 'trash', admin: true, close: true, go: function () {
-          api('plex', {action: 'watchlist-remove', dks: [w.dk]}).then(function () { toast('taken off the watchlist', 'good'); load2(true); }).catch(oops);
-        }}], true);
+        discoverDetail(w, function () { load2(true); });
       };
       g.appendChild(cc);
     });
@@ -1645,7 +1913,11 @@ function titlesList(bar, host) {
   chip('foreign', 'not in ' + target + ' (' + foreign + ')');
   chip('all', 'all (' + T.rows.length + ')');
   if (Object.keys(T.sel).length) chip('picked', 'ticked (' + Object.keys(T.sel).length + ')');
-  chip('locked', 'locked');
+  /* Which lock (2.5.0, plex_tools' scopes): the title, the sort title, either, any field. */
+  chip('lockT', 'title locked');
+  chip('lockS', 'sort title locked');
+  chip('lockTS', 'title or sort locked');
+  chip('locked', 'any field locked');
   chip('split', 'split entries');
   chip('sort', 'sort title differs');
   Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; }).slice(0, 10).forEach(function (k) {
@@ -1671,7 +1943,17 @@ function titlesList(bar, host) {
     all.onclick = function () { shown.forEach(function (r) { T.sel[r.rk] = 1; }); paintRows(); };
     var none = cmdButton('None', 'close', 'small');
     none.onclick = function () { T.sel = {}; paintRows(); };
-    acts.appendChild(all); acts.appendChild(none);
+    var inv = cmdButton('Invert', 'invert', 'small');
+    explain(inv, 'The ticks turned over among those shown (plex_tools\' i).');
+    inv.onclick = function () { shown.forEach(function (r) { if (T.sel[r.rk]) delete T.sel[r.rk]; else T.sel[r.rk] = 1; }); paintRows(); };
+    acts.appendChild(all); acts.appendChild(none); acts.appendChild(inv);
+    if (ADMIN) {
+      var rf = cmdButton('Refresh their metadata', 'refresh', 'small');
+      explain(rf, 'Plex asks its agents again for each ticked one (plex_tools\' F9 in this list) - then read the list again.');
+      rf.disabled = !n;
+      rf.onclick = function () { refreshItems(Object.keys(T.sel)); };
+      acts.appendChild(rf);
+    }
     var read = cmdButton('Read their exact language', 'search', 'small');
     explain(read, 'The language of the metadata of each ticked item, from Plex (the item’s own, or the library’s) - not a guess from the title. One question each, so only for the ticked ones.');
     read.disabled = !n;
@@ -1707,12 +1989,17 @@ function titlesList(bar, host) {
       if (f === 'foreign') return !isTarget(r.lang, target);
       if (f === 'picked') return !!T.sel[r.rk];
       if (f === 'locked') return (r.locked || []).length > 0 || r.locked === undefined;
+      if (f === 'lockT' || f === 'lockS' || f === 'lockTS') {
+        if (r.locked === undefined) return true;
+        var lt = (r.locked || []).indexOf('title') >= 0, lsrt = (r.locked || []).indexOf('titleSort') >= 0;
+        return f === 'lockT' ? lt : (f === 'lockS' ? lsrt : (lt || lsrt));
+      }
       if (f === 'split') return r.dup;
       if (f === 'sort') return r.sort_differs;
       if (f.indexOf('lang:') === 0) return r.lang === f.slice(5);
       return true;
     });
-    if (T.filter === 'locked' && T.rows.some(function (r) { return r.locked === undefined; })) {
+    if (/^lock/.test(T.filter) && T.rows.some(function (r) { return r.locked === undefined; })) {
       clear(list);
       list.appendChild(el('p', 'note', 'Which fields are locked is read with the exact language: tick the titles and press “Read their exact language”.'));
     } else {
@@ -1898,14 +2185,55 @@ function titlesOther(rks, bar, host) {
     r.appendChild(el('span', '', 'also the split entries and the locked titles (not advised: it can undo a split made by hand, or a name given by hand)'));
     r.style.marginTop = '10px';
     body.appendChild(r);
+  }, [{words: 'Close', close: true}, {words: 'Show what happens', cls: 'primary', icon: 'next', close: true, go: function () {
+    titlesOtherPlan(rks, how, risky);
+  }}], true);
+}
+/* Each title before it is changed (2.5.0, plex_tools' plan screen): now →
+   after, the ones held back and those without an entry of their own. */
+function titlesOtherPlan(rks, how, risky) {
+  var T = PX.tool;
+  var target = langName(T.lang);
+  var plan = null;
+  wideModal(how === 'fixmatch' ? 'Fix Match to their own entry, in ' + target : 'Their metadata again, in ' + target, function (body) {
+    var w = el('div');
+    body.appendChild(w);
+    follow(api('plex', {action: 'titles-preview', lib: T.lib, how: how, rks: rks, lang: T.lang, risky: risky}), w).then(function (r) {
+      plan = r.done || r;
+      clear(w);
+      var rows = plan.rows || [];
+      var go = rows.filter(function (x) { return !x.held && !x.none && !x.error; }).length;
+      w.appendChild(el('p', 'muted small', go + ' of ' + rows.length + ' change' + (plan.held ? ' · ' + plan.held + ' held back (a split entry or a locked title)' : '') + (plan.none ? ' · ' + plan.none + ' without an entry of their own in ' + target + ' - left as they are' : '')));
+      w.appendChild(listTable(['Now', '', 'After'], rows, function (x) {
+        var tr = el('tr');
+        tr.appendChild(txt('td', '', x.title + (x.year ? ' (' + x.year + ')' : '')));
+        tr.appendChild(el('td', 'muted', '→'));
+        var a = el('td');
+        if (x.held) a.appendChild(el('span', 'tag warn', 'held back: ' + x.held.join(', ')));
+        else if (x.none) a.appendChild(el('span', 'muted', 'no entry of its own - left as it is'));
+        else if (x.error) a.appendChild(txt('span', 'bad', x.error));
+        else a.appendChild(txt('b', '', x.new));
+        tr.appendChild(a);
+        return tr;
+      }, 'plain'));
+      var goB = $('px-other-go');
+      if (goB) { goB.disabled = !go; setButtonIcon(goB, 'check', 'Do it - ' + go + ' titles'); }
+    }).catch(function (e) { clear(w); w.appendChild(el('p', 'note bad', String(e.message || e))); });
   }, [{words: 'Close', close: true}, {words: 'Do it', cls: 'primary', icon: 'check', close: true, go: function () {
-    follow(api('plex', {action: 'titles-apply', lib: T.lib, how: how, rks: rks, lang: T.lang, risky: risky})).then(function (res2) {
+    if (!plan) return;
+    var keys = (plan.rows || []).filter(function (x) { return !x.held && !x.none && !x.error; }).map(function (x) { return x.rk; });
+    if (!keys.length) return;
+    follow(api('plex', {action: 'titles-apply', lib: T.lib, how: how, rks: keys, lang: T.lang, risky: risky})).then(function (res2) {
       toast((res2.ok || 0) + ' done' + ((res2.held || []).length ? ', ' + res2.held.length + ' held back' : '') + (res2.failed ? ', ' + res2.failed + ' failed' : ''), res2.failed ? 'bad' : 'good');
       delete PX.data[T.lib];
       T.sel = {};
       drawTitles();
     }).catch(oops);
-  }}], true);
+  }}]);
+  setTimeout(function () {
+    var bs = document.querySelectorAll('#modal-foot button.primary');
+    if (bs.length) { bs[bs.length - 1].id = 'px-other-go'; bs[bs.length - 1].disabled = true; }
+  }, 0);
 }
 
 /* ---- ratings -------------------------------------------------------------------------- */
@@ -1978,7 +2306,17 @@ function ratingsList(bar, host, d) {
     all.onclick = function () { shown.forEach(function (r) { T.sel[r.rk] = 1; }); paint(); };
     var none = cmdButton('None', 'close', 'small');
     none.onclick = function () { T.sel = {}; paint(); };
-    acts.appendChild(all); acts.appendChild(none);
+    var inv = cmdButton('Invert', 'invert', 'small');
+    explain(inv, 'The ticks turned over among those shown (plex_tools\' i).');
+    inv.onclick = function () { shown.forEach(function (r) { if (T.sel[r.rk]) delete T.sel[r.rk]; else T.sel[r.rk] = 1; }); paint(); };
+    acts.appendChild(all); acts.appendChild(none); acts.appendChild(inv);
+    if (ADMIN) {
+      var rf = cmdButton('Refresh their metadata', 'refresh', 'small');
+      explain(rf, 'Plex asks its agents again for each ticked one - its own badges (IMDb, Rotten Tomatoes, TMDB) come again (plex_tools\' F9 in this list).');
+      rf.disabled = !n;
+      rf.onclick = function () { refreshItems(Object.keys(T.sel)); };
+      acts.appendChild(rf);
+    }
     acts.appendChild(el('span', 'spacer'));
     if (ADMIN) {
       var pv = cmdButton('Look up the ratings of ' + n, 'search', 'primary');
@@ -2073,6 +2411,11 @@ function drawLabels() {
   T.lib = T.lib || PX.lib;
   var bar = el('div', 'px-bar');
   bar.appendChild(libSelect(T.lib, function (v) { PX.tool = {lib: v}; drawLabels(); }));
+  /* plex_tools' "raw" (2.5.0): exactly what Plex keeps - to see case variants. */
+  var rawB = cmdButton('As Plex keeps them', 'list', 'small');
+  explain(rawB, 'The exact label strings and their ids as Plex returns them, with how many titles carry each - where one label exists in two letter cases (iPrima / IPrima), both are shown.');
+  rawB.onclick = function () { labelsRaw(T.lib); };
+  bar.appendChild(rawB);
   var c = el('span', 'px-count');
   bar.appendChild(c);
   m.appendChild(bar);
@@ -2124,6 +2467,31 @@ function drawLabels() {
     });
     host.appendChild(g);
   }).catch(function (e) { clear(host); host.appendChild(emptyState('tag', 'The labels could not be read', String(e.message || e))); });
+}
+function labelsRaw(lib) {
+  wideModal('Labels as Plex keeps them', function (body) {
+    var w = el('div');
+    w.appendChild(el('div', 'px-skel'));
+    w.firstChild.style.cssText = 'aspect-ratio:auto;height:120px';
+    body.appendChild(w);
+    api('plex', {action: 'labels', how: 'raw', lib: lib}).then(function (r) {
+      clear(w);
+      var rows = r.labels || [];
+      var twins = rows.filter(function (x) { return x.variants > 1; }).length;
+      w.appendChild(el('p', 'muted small', rows.length + ' label strings' + (twins ? ' - ' + twins + ' of them in more than one letter case (marked)' : '') + '. The id is Plex\'s own; titles is how many carry that exact string.'));
+      if (!rows.length) { w.appendChild(el('p', 'muted', 'This library has no labels.')); return; }
+      w.appendChild(listTable(['Label', 'Id', 'Titles', ''], rows, function (x) {
+        var tr = el('tr');
+        tr.appendChild(txt('td', 'mono', '"' + x.title + '"'));
+        tr.appendChild(txt('td', 'mono muted', String(x.id || '')));
+        tr.appendChild(el('td', 'num', x.count === null ? '?' : String(x.count)));
+        var t = el('td');
+        if (x.variants > 1) t.appendChild(el('span', 'tag warn', 'another letter case too'));
+        tr.appendChild(t);
+        return tr;
+      }, 'plain'));
+    }).catch(function (e) { clear(w); w.appendChild(el('p', 'note bad', String(e.message || e))); });
+  }, [{words: 'Close', close: true}]);
 }
 function labelRename(lib, lab) {
   modal('Rename “' + lab.title + '”', function (body) {

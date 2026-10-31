@@ -228,7 +228,7 @@ if (isset($_GET['api'])) {
         'plex-children' => '/api/plex/children', 'plex-job' => '/api/plex/job',
         'plex-labels' => '/api/plex/labels', 'plex-titles' => '/api/plex/titles',
         'plex-matches' => '/api/plex/matches', 'plex-watchlist' => '/api/plex/watchlist',
-        'plex-person' => '/api/plex/person',
+        'plex-person' => '/api/plex/person', 'plex-discover' => '/api/plex/discover',
         'power' => '/api/power', 'ntp' => '/api/ntp', 'osup' => '/api/osup', 'db' => '/api/db',
         'rbackup' => '/api/rbackup',
     ];

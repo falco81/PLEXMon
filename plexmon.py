@@ -22,7 +22,7 @@ identical. Run it with:  python3 plexmon.py           (daemon)
 """
 from __future__ import annotations
 
-__version__ = "2.4.5"
+__version__ = "2.5.0"
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path

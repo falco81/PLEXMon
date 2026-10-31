@@ -4286,7 +4286,7 @@
   },
   "xs0004": {
    "source": "Titles",
-   "text": "Názvy"
+   "text": "Tituly"
   },
   "xs0005": {
    "source": "Ratings",
@@ -4782,7 +4782,7 @@
   },
   "xs0128": {
    "source": "not on this server",
-   "text": "na tomto serveru není"
+   "text": "není na tomto serveru"
   },
   "xs0129": {
    "source": "Take it off the watchlist",
@@ -8399,6 +8399,174 @@
   "xs0848": {
    "source": "The server is restarting - the page waits for it.",
    "text": "Server se restartuje - stránka na něj čeká."
+  },
+  "xs0849": {
+   "source": "Flip each",
+   "text": "Přepnout každé"
+  },
+  "xs0850": {
+   "source": "Flip the watched state of each?",
+   "text": "Přepnout zhlédnutí u každého?"
+  },
+  "xs0851": {
+   "source": "Each movie and episode on its own: the watched ones become unwatched, the others watched. A show or a season is every episode of it.",
+   "text": "Každý film a díl zvlášť: zhlédnuté budou nezhlédnuté, ostatní zhlédnuté. Seriál nebo série znamená všechny jeho díly."
+  },
+  "xs0852": {
+   "source": "Season: flip each",
+   "text": "Série: přepnout každý díl"
+  },
+  "xs0853": {
+   "source": "Untick all",
+   "text": "Odškrtnout vše"
+  },
+  "xs0854": {
+   "source": "Tick episodes - in any season - to mark them watched, flip them or set their tracks together",
+   "text": "Zaškrtněte díly - v libovolné sérii - a označte je jako zhlédnuté, přepněte je nebo jim nastavte stopy najednou"
+  },
+  "xs0855": {
+   "source": "1 episode ticked:",
+   "text": "1 díl zaškrtnut:"
+  },
+  "xs0856": {
+   "source": "Invert the selection of the titles shown",
+   "text": "Obrátit výběr u zobrazených titulů"
+  },
+  "xs0857": {
+   "source": "Unselect the titles shown (a search or a filter first)",
+   "text": "Zrušit výběr zobrazených titulů (nejdřív hledání nebo filtr)"
+  },
+  "xs0858": {
+   "source": "Invert",
+   "text": "Obrátit"
+  },
+  "xs0859": {
+   "source": "The ticks turned over among those shown (plex_tools' i).",
+   "text": "Obrátí zaškrtnutí u zobrazených (klávesa i v plex_tools)."
+  },
+  "xs0860": {
+   "source": "Plex asks its agents again for each ticked one (plex_tools' F9 in this list) - then read the list again.",
+   "text": "Plex se znovu zeptá svých agentů na každý zaškrtnutý titul (F9 v tomto seznamu v plex_tools) - pak seznam načtěte znovu."
+  },
+  "xs0861": {
+   "source": "Plex asks its agents again for each ticked one - its own badges (IMDb, Rotten Tomatoes, TMDB) come again (plex_tools' F9 in this list).",
+   "text": "Plex se znovu zeptá svých agentů na každý zaškrtnutý titul - jeho vlastní odznaky (IMDb, Rotten Tomatoes, TMDB) přijdou znovu (F9 v tomto seznamu v plex_tools)."
+  },
+  "xs0862": {
+   "source": "watchlist: all",
+   "text": "seznam ke zhlédnutí: vše"
+  },
+  "xs0863": {
+   "source": "on the watchlist",
+   "text": "na seznamu ke zhlédnutí"
+  },
+  "xs0864": {
+   "source": "not on the watchlist",
+   "text": "není na seznamu ke zhlédnutí"
+  },
+  "xs0865": {
+   "source": "title locked",
+   "text": "zamčený název"
+  },
+  "xs0866": {
+   "source": "sort title locked",
+   "text": "zamčený řadicí název"
+  },
+  "xs0867": {
+   "source": "title or sort locked",
+   "text": "zamčený název nebo řadicí název"
+  },
+  "xs0868": {
+   "source": "any field locked",
+   "text": "zamčené jakékoli pole"
+  },
+  "xs0869": {
+   "source": "As Plex keeps them",
+   "text": "Jak je ukládá Plex"
+  },
+  "xs0870": {
+   "source": "The exact label strings and their ids as Plex returns them, with how many titles carry each - where one label exists in two letter cases (iPrima / IPrima), both are shown.",
+   "text": "Přesné řetězce štítků a jejich ID, jak je vrací Plex, a kolik titulů každý nese - kde jeden štítek existuje ve dvou velikostech písmen (iPrima / IPrima), ukážou se oba."
+  },
+  "xs0871": {
+   "source": "Labels as Plex keeps them",
+   "text": "Štítky, jak je ukládá Plex"
+  },
+  "xs0872": {
+   "source": "another letter case too",
+   "text": "i v jiné velikosti písmen"
+  },
+  "xs0873": {
+   "source": "This library has no labels.",
+   "text": "Tato knihovna nemá žádné štítky."
+  },
+  "xs0874": {
+   "source": "Label",
+   "text": "Štítek"
+  },
+  "xs0875": {
+   "source": "Id",
+   "text": "ID"
+  },
+  "xs0876": {
+   "source": "Rename it on these",
+   "text": "Přejmenovat u těchto"
+  },
+  "xs0877": {
+   "source": "Rename on these only:",
+   "text": "Přejmenovat jen u těchto:"
+  },
+  "xs0878": {
+   "source": "its new name…",
+   "text": "nový název…"
+  },
+  "xs0879": {
+   "source": "give the new name",
+   "text": "zadejte nový název"
+  },
+  "xs0880": {
+   "source": "Only on these titles: the label is taken off them and the new one put on - elsewhere in the library it stays as it is.",
+   "text": "Jen u těchto titulů: štítek se z nich sejme a dá se nový - jinde v knihovně zůstane, jak je."
+  },
+  "xs0881": {
+   "source": "Show what happens",
+   "text": "Ukázat, co se stane"
+  },
+  "xs0882": {
+   "source": "After",
+   "text": "Potom"
+  },
+  "xs0883": {
+   "source": "no entry of its own - left as it is",
+   "text": "nemá vlastní záznam - zůstane, jak je"
+  },
+  "xs0884": {
+   "source": "Plex: waiting for it to begin…",
+   "text": "Plex: čeká se na začátek…"
+  },
+  "xs0885": {
+   "source": "Hide - Plex goes on",
+   "text": "Skrýt - Plex pokračuje"
+  },
+  "xs0886": {
+   "source": "and where that is missing too: leave them",
+   "text": "a kde chybí i ta: ponechat"
+  },
+  "xs0887": {
+   "source": "Select every one shown",
+   "text": "Vybrat všechny zobrazené"
+  },
+  "xs0888": {
+   "source": "Take them off",
+   "text": "Odebrat je"
+  },
+  "xs0889": {
+   "source": "They go off the watchlist of the server's owner at Plex - nothing on this server changes.",
+   "text": "Odeberou se ze seznamu ke zhlédnutí majitele serveru u Plexu - na tomto serveru se nic nezmění."
+  },
+  "xs0890": {
+   "source": "Writer",
+   "text": "Scénář"
   }
  },
  "patterns": {
@@ -10112,7 +10280,7 @@
   },
   "xp0057": {
    "source": "renamed on {0} titles",
-   "text": "přejmenováno u {0} {0:titulu|titulů|titulů}"
+   "text": "přejmenováno u {0} titulů"
   },
   "xp0058": {
    "source": "Plex cannot rename a label: the new one is put on the {0} titles carrying it, and the old one taken off.",
@@ -10653,6 +10821,74 @@
   "xp0180": {
    "source": "plexmon is starting again after the upgrade to {0} - the page waits for it.",
    "text": "plexmon se po aktualizaci na {0} spouští znovu - stránka na něj čeká."
+  },
+  "xp0181": {
+   "source": "without a label ({0})",
+   "text": "bez štítku ({0})"
+  },
+  "xp0182": {
+   "source": "{0} episodes ticked:",
+   "text": "zaškrtnuto dílů: {0}"
+  },
+  "xp0183": {
+   "source": "{0} now watched, {1} unwatched",
+   "text": "{0} teď zhlédnuto, {1} nezhlédnuto"
+  },
+  "xp0184": {
+   "source": "{0} now watched, {1} unwatched, {2} failed",
+   "text": "{0} teď zhlédnuto, {1} nezhlédnuto, {2} selhalo"
+  },
+  "xp0185": {
+   "source": "Take {0} off the watchlist",
+   "text": "Odebrat {0} ze seznamu ke zhlédnutí"
+  },
+  "xp0186": {
+   "source": "Take {0} titles off the watchlist?",
+   "text": "Odebrat {0} titulů ze seznamu ke zhlédnutí?"
+  },
+  "xp0187": {
+   "source": "{0} taken off the watchlist",
+   "text": "{0} odebráno ze seznamu ke zhlédnutí"
+  },
+  "xp0188": {
+   "source": "Plex is done with {0}",
+   "text": "Plex dokončil knihovnu {0}"
+  },
+  "xp0189": {
+   "source": "then {0}",
+   "text": "pak {0}"
+  },
+  "xp0190": {
+   "source": "nothing to put on the watchlist{0}",
+   "text": "nic k přidání na seznam ke zhlédnutí{0}"
+  },
+  "xp0191": {
+   "source": "{0} put on the watchlist, {1} on it already",
+   "text": "{0} přidáno na seznam ke zhlédnutí, {1} už na něm je"
+  },
+  "xp0192": {
+   "source": "Fix Match to their own entry, in {0}",
+   "text": "Fix Match na vlastní záznam, v jazyce {0}"
+  },
+  "xp0193": {
+   "source": "Their metadata again, in {0}",
+   "text": "Jejich metadata znovu, v jazyce {0}"
+  },
+  "xp0194": {
+   "source": "held back: {0}",
+   "text": "zadrženo: {0}"
+  },
+  "xp0195": {
+   "source": "Do it - {0} titles",
+   "text": "Provést - {0} titulů"
+  },
+  "xp0196": {
+   "source": "its metadata again, in {0}",
+   "text": "jeho metadata znovu, v jazyce {0}"
+  },
+  "xp0197": {
+   "source": "Plex Discover has nothing more: {0}",
+   "text": "Plex Discover nemá nic dalšího: {0}"
   }
  },
  "rich": {

@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.4.5'
+__version__ = '2.5.0'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -6133,6 +6133,12 @@ def _plex_watchlist(h):
     return _plex(PX.watchlist_view, fresh=h.arg('fresh') == '1')
 
 
+@route('GET', '/api/plex/discover')
+def _plex_discover(h):
+    h.me()
+    return _plex(PX.discover_metadata, h.arg('dk'))
+
+
 @route('GET', '/api/plex/person')
 def _plex_person(h):
     h.me()
@@ -6157,6 +6163,11 @@ def _plex_do(h):
         return {'message': 'read again from Plex'}
     if act in ('watched', 'unwatched'):
         return _plex(PX.set_watched, st, _rks(b), act == 'watched', by)
+    if act == 'activities':
+        # What Plex is doing now (2.5.0): F5 / F9 followed to their end, as plex_tools did.
+        return {'activities': PX.activities()}
+    if act == 'watched-toggle':
+        return _plex(PX.toggle_watched, st, _rks(b), by)
     if act == 'tracks-scan':
         return _plex(PX.tracks_scan, _rks(b))
     if act == 'tracks-plan':
@@ -6177,6 +6188,10 @@ def _plex_do(h):
     if act == 'titles-propose':
         lang = str(b.get('lang') or CONFIG.get('plex_title_lang') or 'en')
         return {'job': _plex(PX.titles_propose, st, lib, _rks(b), lang, by)}
+    if act == 'titles-preview':
+        return _plex(PX.titles_preview, st, lib, str(b.get('how') or ''), by, rks=_rks(b),
+                     lang=str(b.get('lang') or CONFIG.get('plex_title_lang') or 'en'),
+                     risky=bool(b.get('risky')))
     if act == 'titles-apply':
         items = [x for x in (b.get('items') or []) if isinstance(x, dict)][:5000]
         return {'job': _plex(PX.titles_apply, st, lib, str(b.get('how') or ''), by,
@@ -8182,6 +8197,8 @@ def build_parser():
     g.add_argument('--subs', metavar='X', help='keep, off, a language code or part of the name')
     g.add_argument('--plex-watched', metavar='TITLE', nargs='+', help='mark watched')
     g.add_argument('--plex-unwatched', metavar='TITLE', nargs='+', help='mark unwatched')
+    g.add_argument('--plex-flip-watched', metavar='TITLE', nargs='+', help='flip each movie and '
+                   'episode: the watched ones unwatched, the others watched')
     g.add_argument('--plex-labels', metavar='LIB', help='the labels of a library, and how many '
                    'carry each')
     g.add_argument('--plex-label', metavar='TITLE', nargs='+', help='change the labels of titles: '
@@ -8707,7 +8724,7 @@ def _px_variant(arg, variants, kind, allow_off):
 def cli_plex(args, store, pal):
     """The Plex library: None when nothing of it was asked."""
     asked = [a for a in ('plex', 'plex_items', 'plex_show', 'plex_tracks', 'plex_watched',
-                         'plex_unwatched', 'plex_labels', 'plex_label', 'plex_titles',
+                         'plex_unwatched', 'plex_flip_watched', 'plex_labels', 'plex_label', 'plex_titles',
                          'plex_ratings', 'plex_refresh', 'plex_scan', 'plex_refresh_all',
                          'plex_watchlist',
                          'plex_watchlist_add', 'plex_watchlist_remove')
@@ -8837,6 +8854,13 @@ def _cli_plex(args, store, pal, what, by):
         r = got.get('done') or _px_wait(pal)
         print(pal.ok_line('%s marked %s' % (', '.join(f['title'] for f in found),
                                            'watched' if what == 'plex_watched' else 'unwatched')))
+        return 0 if not r.get('failed') else 1
+    if what == 'plex_flip_watched':
+        found = [_px_find(x) for x in args.plex_flip_watched]
+        PX.toggle_watched(store, [f['rk'] for f in found], by)
+        r = _px_wait(pal) or {}
+        print(pal.ok_line('%s: %s now watched, %s unwatched' % (
+            ', '.join(f['title'] for f in found), r.get('watched', 0), r.get('unwatched', 0))))
         return 0 if not r.get('failed') else 1
     if what == 'plex_labels':
         lib = _px_lib(args.plex_labels)

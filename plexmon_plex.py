@@ -963,13 +963,27 @@ def _has(item, stype, v):
 
 
 def tracks_plan(ident, audio='keep', subs='keep', missing_audio='skip', missing_subs='skip'):
-    """Item by item: what its default audio and subtitles become."""
+    """Item by item: what its default audio and subtitles become. Where the
+    track chosen is not there, the replacements are tried in their order
+    (2.5.0, plex_tools' coverage loop): missing_audio / missing_subs is one
+    key, or several separated by commas - 'off' among the subtitles' ones."""
     sc = _scan(ident)
     av = None if audio in ('keep', '', None) else _variant(sc, 'audio', audio)
     sv = None if subs in ('keep', 'off', '', None) else _variant(sc, 'subs', subs)
-    alt_a = None if missing_audio in ('skip', '', None) else _variant(sc, 'audio', missing_audio)
-    alt_s = None if missing_subs in ('skip', 'off', '', None) else _variant(
-        sc, 'subs', missing_subs)
+
+    def chain(given, kind):
+        out = []
+        for k in [x.strip() for x in str(given or '').split(',') if x.strip()]:
+            if k == 'skip':
+                break
+            if k == 'off':
+                if kind == 'subs':
+                    out.append('off')
+                    break
+                continue
+            out.append(_variant(sc, kind, k))
+        return out
+    alts_a, alts_s = chain(missing_audio, 'audio'), chain(missing_subs, 'subs')
     rows = []
     for it in sc['items']:
         row = {'rk': it['rk'], 'label': it['label'], 'show': it['show'], 'parts': []}
@@ -977,10 +991,11 @@ def tracks_plan(ident, audio='keep', subs='keep', missing_audio='skip', missing_
             p = {'part': pid}
             if av is not None:
                 aid = pick_variant_id(streams, ST_AUDIO, av)
-                if aid is None and alt_a is not None:
-                    aid = pick_variant_id(streams, ST_AUDIO, alt_a)
+                for alt in alts_a if aid is None else []:
+                    aid = pick_variant_id(streams, ST_AUDIO, alt)
                     if aid is not None:
-                        p['audio_alt'] = alt_a['label']
+                        p['audio_alt'] = alt['label']
+                        break
                 if aid is not None:
                     p['audio'] = aid
                 else:
@@ -989,14 +1004,15 @@ def tracks_plan(ident, audio='keep', subs='keep', missing_audio='skip', missing_
                 p['subs'] = 0
             elif sv is not None:
                 tid = pick_variant_id(streams, ST_SUBTITLE, sv)
-                if tid is None:
-                    if missing_subs == 'off':
+                for alt in alts_s if tid is None else []:
+                    if alt == 'off':
                         tid = 0
                         p['subs_alt'] = 'off'
-                    elif alt_s is not None:
-                        tid = pick_variant_id(streams, ST_SUBTITLE, alt_s)
-                        if tid is not None:
-                            p['subs_alt'] = alt_s['label']
+                        break
+                    tid = pick_variant_id(streams, ST_SUBTITLE, alt)
+                    if tid is not None:
+                        p['subs_alt'] = alt['label']
+                        break
                 if tid is not None:
                     p['subs'] = tid
                 else:
@@ -1188,6 +1204,40 @@ def set_watched(store, rks, watched, by):
     return {'job': job_start('watched', 'watched / unwatched', by, work)}
 
 
+def toggle_watched(store, rks, by):
+    """Each movie and episode flipped on its own (2.5.0, plex_tools' "toggle
+    each"): the watched ones unwatched, the others watched. A show or a season
+    is every episode of it."""
+    rks = [str(x) for x in rks if str(x).isdigit()]
+    if not rks:
+        raise ValueError('nothing picked')
+
+    def work():
+        step(0, None, 'reading what is watched')
+        vids = _expand_to_videos(rks, stop=stopped)
+        md_map = metadata_many(vids, stop=stopped)
+        on = off = fail = 0
+        step(0, len(vids), 'each one flipped')
+        for i, rk in enumerate(vids, 1):
+            if stopped():
+                break
+            seen = int((md_map.get(rk) or {}).get('viewCount') or 0) > 0
+            st, _t = raw('GET', '/:/unscrobble' if seen else '/:/scrobble',
+                         {'identifier': 'com.plexapp.plugins.library', 'key': rk})
+            if st >= 400:
+                fail += 1
+            elif seen:
+                off += 1
+            else:
+                on += 1
+            step(i)
+        forget()
+        event(store, '%s flipped the watched state of %d video(s): %d now watched, %d unwatched'
+              % (by, on + off, on, off) + (', %d failed' % fail if fail else ''), by)
+        return {'ok': on + off, 'watched': on, 'unwatched': off, 'failed': fail}
+    return {'job': job_start('watched', 'watched state flipped, each one', by, work)}
+
+
 # ---------------------------------------------------------------------------
 # Labels
 # ---------------------------------------------------------------------------
@@ -1275,6 +1325,24 @@ def labels_do(store, lib, action, by, rks=(), add=(), remove=(), old='', new='')
             by, n, (': + ' + ', '.join(add)) if add else '',
             ('; - ' + ', '.join(remove)) if remove else ''), by)
         return {'done': n}
+    if action == 'raw':
+        # plex_tools' "raw": the exact strings and ids Plex keeps (2.5.0) - to
+        # sort out case variants ('iPrima' / 'IPrima') and what carries each.
+        num = SECTION_TYPE_NUM.get(section(lib)['type'])
+        out = []
+        for e in label_entries(lib):
+            try:
+                n = len(items_with(lib, 'label', e['id'], num))
+            except PlexError:
+                n = None
+            out.append({'id': e['id'], 'title': e['title'], 'count': n})
+        folds = {}
+        for e in out:
+            folds.setdefault(e['title'].casefold(), []).append(e['title'])
+        for e in out:
+            e['variants'] = len(set(folds[e['title'].casefold()]))
+        out.sort(key=lambda e: (e['title'].casefold(), e['title']))
+        return {'labels': out}
     groups = {g['title'].casefold(): g for g in label_groups(lib)}
     if action == 'rename':
         new = _clean_label(new)
@@ -1739,6 +1807,58 @@ def titles_apply(store, lib, method, by, items_=(), rks=(), lang='en', risky=Fal
     raise ValueError('no such way of changing a title')
 
 
+def titles_preview(store, lib, method, by, rks=(), lang='en', risky=False):
+    """What Other ways… would do, item by item, before it is done (2.5.0,
+    plex_tools' plan screen): the title now, and for a Fix Match the name of
+    the entry it is matched to (or that it has none in that language); the
+    split entries and locked titles held back."""
+    lib = str(lib)
+    rks = [str(x) for x in rks or [] if str(x).isdigit()]
+    if not rks:
+        raise ValueError('nothing picked')
+    if method not in ('relanguage', 'fixmatch'):
+        raise ValueError('no such way of changing a title')
+    lname = lang_name_from_code(lang) or lang
+    tr = {r['rk']: r for r in titles_rows(lib)['rows']}
+
+    def build(md_map, stop=None):
+        prot = _protected(tr, md_map, rks)
+        rows = []
+        for i, k in enumerate(rks, 1):
+            if stop and stop():
+                break
+            m = md_map.get(k) or {}
+            row = {'rk': k, 'title': m.get('title') or (tr.get(k) or {}).get('title') or k,
+                   'year': m.get('year')}
+            if k in prot and not risky:
+                row['held'] = prot[k]
+            elif method == 'relanguage':
+                row['new'] = 'its metadata again, in %s' % lname
+            else:
+                guid = m.get('guid')
+                try:
+                    same = next((c for c in matches(k, lang=lang)
+                                 if guid and c.get('guid') == guid), None)
+                except PlexError as e:
+                    same, row['error'] = None, str(e)
+                if same:
+                    row['new'] = same['name'] + (' (%s)' % same['year'] if same.get('year') else '')
+                elif 'error' not in row:
+                    row['none'] = True
+                step(i, None, row['title'])
+            rows.append(row)
+        return {'rows': rows, 'method': method, 'lang': lname,
+                'held': sum(1 for r in rows if r.get('held')),
+                'none': sum(1 for r in rows if r.get('none'))}
+    if method == 'relanguage':
+        return {'done': build(metadata_many(rks))}
+
+    def work():
+        step(0, len(rks), 'each entry looked up in %s' % lname)
+        return build(metadata_many(rks, stop=stopped), stopped)
+    return {'job': job_start('titles-preview', 'what a Fix Match would do', by, work)}
+
+
 def refresh_items(store, rks, by):
     rks = [str(x) for x in rks if str(x).isdigit()]
     if not rks:
@@ -1811,6 +1931,37 @@ def _discover(method, path, params=None):
     except (OSError, ValueError) as e:
         raise PlexError('Plex Discover (discover.provider.plex.tv) is not reachable: %s' %
                         getattr(e, 'reason', e))
+
+
+def discover_metadata(dk):
+    """All Plex Discover says of a title not on this server (2.5.0, plex_tools'
+    watchlist detail): the plot, ratings, genres, the director and the cast."""
+    if not re.match(r'^[0-9a-f]{12,40}\Z', str(dk or '')):
+        raise ValueError('which title?')
+    st, body = _discover('GET', '/library/metadata/%s' % dk, {'includeUserState': 0})
+    if st >= 400 or not body:
+        raise PlexError('Plex Discover has nothing more on it (%s)' % st)
+    try:
+        m = (mc(json.loads(body)).get('Metadata') or [{}])[0]
+    except ValueError:
+        raise PlexError('Plex Discover said something unreadable')
+    tags = lambda k, n=12: [x.get('tag') for x in (m.get(k) or [])[:n] if x.get('tag')]  # noqa: E731
+    cast = [{'name': r.get('tag'), 'role': r.get('role') or '', 'thumb': r.get('thumb') or ''}
+            for r in (m.get('Role') or [])[:16] if r.get('tag')]
+    ratings = [{'image': x.get('image') or '', 'value': x.get('value'), 'type': x.get('type')}
+               for x in m.get('Rating') or [] if x.get('value') is not None]
+    return {'dk': dk, 'title': m.get('title'), 'year': m.get('year'), 'type': m.get('type'),
+            'summary': m.get('summary') or '', 'tagline': m.get('tagline') or '',
+            'studio': m.get('studio') or '', 'cr': m.get('contentRating') or '',
+            'duration': m.get('duration'), 'released': m.get('originallyAvailableAt') or '',
+            'rating': m.get('rating'), 'audience': m.get('audienceRating'),
+            'rating_img': m.get('ratingImage') or '',
+            'audience_img': m.get('audienceRatingImage') or '', 'ratings': ratings,
+            'badges': rating_bits(m),
+            'genres': tags('Genre'), 'countries': tags('Country'),
+            'directors': tags('Director', 4), 'writers': tags('Writer', 4), 'cast': cast,
+            'seasons': m.get('childCount'), 'thumb': m.get('thumb') or '',
+            'art': m.get('art') or ''}
 
 
 _WL = {'at': 0.0, 'items': None}

@@ -4,6 +4,29 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.5.0 - 2026-10-31
+
+**Plex library: the rest of plex_tools.** Gone through plex_tools.py again
+and brought over what was missing or only partly there:
+
+- *Flip each* watched state (dock, a season, ticked episodes,
+  `--plex-flip-watched`); episodes ticked across seasons and acted on
+  together (watched, unwatched, flip, tracks).
+- *Invert* the selection and *Unselect the titles shown* (library, Titles,
+  Ratings) - plex_tools' `i` and `-`.
+- The filter *without a label*; *As Plex keeps them* - the exact label strings
+  and ids, case variants marked; a label renamed on the selected titles only.
+- After F5 / F9, Plex's activities followed to their end in a panel.
+- Audio and subtitles: a chain of replacements where the chosen track is
+  missing.
+- Titles: the plan before *Other ways…* (now → after, held back, no entry of
+  its own); filters for a locked title, sort title, either or any field;
+  *Refresh their metadata* of the ticked ones - in Ratings too.
+- Watchlist: several taken off at once; a bookmark on the library posters of
+  what is on it, and a filter; adding sends only the new ones and says how
+  many were on it already; the full Plex Discover detail of a title not on
+  this server (plot, ratings, genres, director, cast).
+
 ## 2.4.5 - 2026-10-31
 
 - **No red error during an upgrade.** An upgrade restarts the daemon, and for

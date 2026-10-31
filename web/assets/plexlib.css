@@ -436,3 +436,22 @@
 .cx-said{min-height:0;margin-top:8px}
 .cx-said:empty{display:none}
 @media (max-width:720px){.cx-grid,.cx-grid.three{grid-template-columns:1fr 1fr}.cx-pw{grid-template-columns:1fr}}
+
+/* On the watchlist (2.5.0): a small bookmark at the poster's foot. */
+.px-poster .px-wlb{position:absolute;right:8px;bottom:9px;width:22px;height:22px;border-radius:7px;
+  display:grid;place-items:center;background:rgba(0,0,0,.6);color:var(--accent,#e5a00d);z-index:2}
+
+/* What Plex is doing after F5 / F9 (2.5.0). */
+.px-activity{position:fixed;left:18px;bottom:18px;z-index:60;width:min(380px,calc(100vw - 36px));display:none;
+  flex-direction:column;gap:10px;padding:14px 16px;border-radius:14px;background:var(--panel,#161b22);
+  border:1px solid var(--line,#30363d);box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.px-activity.on{display:flex}
+.px-act .h{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding-right:26px}
+.px-act b{font-size:13px}
+.px-prog2{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:6px}
+.px-prog2 > span{display:block;height:100%;background:var(--px-amber,#e5a00d);transition:width .6s}
+.px-prog2.busy > span{width:35%!important;animation:px-busy 1.2s linear infinite}
+@keyframes px-busy{from{transform:translateX(-100%)}to{transform:translateX(300%)}}
+.px-act-x{position:absolute;top:8px;right:8px}
+
+.px-chain{display:flex;flex-direction:column;gap:2px;max-width:420px}
