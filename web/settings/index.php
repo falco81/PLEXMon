@@ -564,13 +564,18 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
   </div>
 
   <div class="ctl-pane" id="pane-upgrade" hidden>
-    <div class="ctl-head"><h2 class="ctl-title">Upgrades</h2>
-      <p class="ctl-lede">A new version put in from here: from the web with one click, or as a
-        package sent by hand - its signature checked, then root runs its install.sh --upgrade,
-        and plexmon comes back as the new version. The command line (install.sh --upgrade)
+    <div class="ctl-head"><h2 class="ctl-title">Upgrades and maintenance</h2>
+      <p class="ctl-lede">A new version put in from here: send the package, and the server is
+        upgraded - taken out of service first, so plexmon does nothing by itself while it is,
+        and brought back only once it answers again. The command line (install.sh --upgrade)
         works as it always has.</p></div>
-    <div class="card full" id="up-nodes-card" hidden>
-      <h2>The server</h2>
+    <div class="card full" id="up-nodes-card">
+      <h2>The nodes</h2>
+      <p class="note">A server in maintenance does nothing by itself - no backups, copies of the
+        databases, system updates or restarts on a schedule, no renewal of its certificate, no
+        routine SMART read of the disks; these pages and the dashboard go on working, and
+        everything can still be done by hand. plexmon is one server: there is no other node to
+        take over.</p>
       <div id="up-nodes"></div>
     </div>
     <div class="card full admin-only" id="up-web-card">
@@ -619,16 +624,22 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
       <h2>What root said last <span class="mono small muted" id="up-log-node" data-no-i18n></span></h2>
       <p class="note"><span>The output of install.sh, the last time this server was upgraded from these pages.</span>
         <span class="mono" data-no-i18n>/var/lib/plexmon/upgrade/last.log</span></p>
-      <div class="seg" id="up-log-nodes" hidden style="margin-bottom:10px"></div>
-      <pre class="lines" id="up-log">–</pre>
+      <!-- Folded until asked for (as otp 1.0.196): a long log pushed the rest down. -->
+      <details class="fold" id="up-log-fold">
+        <summary>the output</summary>
+        <div class="seg" id="up-log-nodes" hidden style="margin:10px 0"></div>
+        <pre class="lines" id="up-log">–</pre>
+      </details>
     </div>
     <div class="card full">
       <h2>On the command line</h2>
       <p class="note">The same, by hand, as root:</p>
-      <pre class="lines">plexmon --upgrade-check                    # what is at the address
+      <pre class="lines">plexmon --maintenance on --why "upgrade"  # out of service
+plexmon --upgrade-check                    # what is at the address
 plexmon --upgrade-online                   # the newest: fetched, checked, put in
 tar xzf plexmon-X.Y.Z.tar.gz && cd plexmon-X.Y.Z
 ./install.sh --upgrade                     # a package by hand
+plexmon --maintenance off                  # back in service (if it was put out by hand)
 plexmon --upgrade-status                   # an upgrade started on these pages</pre>
     </div>
   </div>

@@ -22,7 +22,7 @@ identical. Run it with:  python3 plexmon.py           (daemon)
 """
 from __future__ import annotations
 
-__version__ = "2.2.10"
+__version__ = "2.3.0"
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -656,6 +656,17 @@ def _nvme(text: str, label: str) -> Optional[int]:
     return int(m.group(1).replace(",", "")) if m else None
 
 
+MAINT_MARK = Path(os.environ.get("PLEXMON_RUN", "/run/plexmon")) / "maintenance"
+
+
+def in_maintenance() -> bool:
+    """Settings put this server into maintenance (plexmon_admin writes the mark)."""
+    try:
+        return MAINT_MARK.exists()
+    except OSError:
+        return False
+
+
 def run_smartctl(devpath: str, tran: str) -> dict:
     """
     Read SMART, trying several -d types, merging the best of each field.
@@ -1072,7 +1083,9 @@ class DiskMonitor:
             # intervals default to 300 s, so this aligns the reads rather than
             # adding any.
             due = align_smart or (time.time() - last_read) >= SMART_MIN_INTERVAL
-            may_read = read_smart and (force or (awake_certain and due))
+            # In maintenance (Settings → Upgrades and maintenance, 2.3.0) no
+            # routine read: smartctl touches no disk that is being worked on.
+            may_read = read_smart and (force or (awake_certain and due and not in_maintenance()))
 
             rec = {
                 "dev": name,

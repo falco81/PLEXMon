@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.2.10'
+__version__ = '2.3.0'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -4394,6 +4394,7 @@ def upgrade_cancel(store, by):
         raise ValueError('no upgrade is going on')
     plan['cancelled'] = {'by': by, 'at': time.time()}
     store.set_meta('upgrade:plan', json.dumps(plan))
+    _upgrade_back(store)
     store.add_event('starting and stopping', '%s stopped the upgrade to %s'
                     % (by, plan.get('version')), 'warn', who=by)
 
@@ -4432,8 +4433,16 @@ UPGRADE_WAKE = threading.Event()
 STARTED = [time.time()]
 
 
+def _upgrade_back(store):
+    """Back in service after an upgrade - only from the maintenance it began."""
+    m = maintenance_row(store)
+    if m.get('on') and m.get('by') == 'upgrade':
+        maintenance_set(store, False, '', 'upgrade')
+
+
 def _upgrade_failed(store, plan, said, tail=None):
     _my_step(store, plan, state='failed', said=str(said)[:500], tail=(tail or [])[-40:])
+    _upgrade_back(store)
     store.add_event('starting and stopping', 'the upgrade of %s to %s failed: %s'
                     % (node_name(), plan['version'], said), 'bad')
     log('the upgrade to %s failed: %s' % (plan['version'], said), 'error')
@@ -4467,6 +4476,8 @@ def upgrade_tick(store):
         except Exception as e:                          # noqa: BLE001
             _upgrade_failed(store, plan, 'the package could not be handed over: %s' % e)
             return
+        if not maintenance_row(store).get('on'):
+            maintenance_set(store, True, 'the upgrade to %s' % plan['version'], 'upgrade')
         _my_step(store, plan, state='installing', asked=now,
                  said='handed to root (plexmon-upgrade.service)')
         log('the upgrade to %s is handed to plexmon-upgrade.service' % plan['version'])
@@ -4517,6 +4528,7 @@ def upgrade_tick(store):
             return
         _my_step(store, plan, state='done', said='%s, checked, running' % __version__,
                  tail=(got.get('tail') or [])[-12:])
+        _upgrade_back(store)
         store.add_event('starting and stopping', '%s is upgraded to %s' % (node_name(),
                                                                           __version__))
         log('upgraded to %s' % __version__)
@@ -4764,6 +4776,60 @@ def downgrade_changelog(version):
             'here': __version__}
 
 
+# ---- maintenance (2.3.0, as otp's - one server, no cluster) ---------------------------
+# A server in maintenance is out of service: plexmon does nothing by itself -
+# no backups, copies of the databases, system updates, restarts on a schedule,
+# no renewal of the certificate, no routine SMART read of the disks - and
+# says so on every page. These pages, the dashboard and everything done by
+# hand go on working. An upgrade from the pages takes the server into
+# maintenance while it is put in, and back once it runs again.
+MAINT_CACHE = {'at': 0.0, 'row': None}
+
+
+def maintenance_row(store, name=None):
+    return _meta_json(store, 'maint:' + (name or node_name())) or {'on': False}
+
+
+def maintenance_now(store):
+    """This server's maintenance, read at most every two seconds."""
+    now = time.time()
+    if now - MAINT_CACHE['at'] > 2:
+        MAINT_CACHE['at'] = now
+        try:
+            MAINT_CACHE['row'] = maintenance_row(store)
+        except Exception:                               # noqa: BLE001
+            pass                                        # the last one known stands
+    return MAINT_CACHE['row'] or {'on': False}
+
+
+def maintenance_mark(on):
+    """The mark the dashboard's daemon (plexmon.py) reads: no routine SMART."""
+    mark = RUN_DIR / 'maintenance'
+    try:
+        if on:
+            RUN_DIR.mkdir(parents=True, exist_ok=True)
+            mark.write_text('1\n')
+        elif mark.exists():
+            mark.unlink()
+    except OSError:
+        pass
+
+
+def maintenance_set(store, on, why='', by='', name=None):
+    name = name or node_name()
+    if name != node_name():
+        raise ValueError('there is no node %s' % name)
+    row = {'on': bool(on), 'why': str(why or '')[:200], 'by': str(by or '')[:100],
+           'at': time.time()}
+    store.set_meta('maint:' + name, json.dumps(row))
+    MAINT_CACHE['at'] = 0
+    maintenance_mark(on)
+    store.add_event('starting and stopping', '%s: %s%s' % (
+        name, 'in maintenance' if on else 'back in service',
+        (' - ' + why) if why and on else ''), 'warn' if on else 'info', who=by or None)
+    return row
+
+
 def upgrade_view(store):
     meta = upgrade_package_meta(store)
     ok, why = upgrade_checks(store, meta, True) if meta else (False, [])
@@ -4772,7 +4838,7 @@ def upgrade_view(store):
     if plan and hidden.get('id') == plan.get('id') and plan['state'] != 'running':
         plan = None
     me = {'name': node_name(), 'me': True, 'alive': True, 'version': __version__,
-          'at': time.time(), 'maintenance': {'on': False}}
+          'at': time.time(), 'maintenance': maintenance_row(store)}
     out = {'version': __version__, 'node': node_name(), 'nodes': [me], 'package': meta,
            'ready': ok, 'not_ready': why, 'plan': plan, 'log': upgrade_log_tail(),
            'helper': UPGRADE_HELPER.exists(),
@@ -6972,7 +7038,11 @@ def _upgrade_do(h):
             store.drop_meta('upgrade:pkg')
             return dict(upgrade_view(store), message='the package is forgotten')
         if act == 'maintenance':
-            raise ValueError('plexmon has no maintenance: it is one server, never a cluster')
+            name = str(b.get('node') or node_name())
+            on = bool(b.get('on'))
+            maintenance_set(store, on, str(b.get('why') or 'by hand'), s['name'], name)
+            return dict(upgrade_view(store), message='%s: maintenance %s' % (
+                name, 'on' if on else 'off'))
     except ValueError as e:
         raise ApiError(400, str(e))
     except (OSError, subprocess.SubprocessError) as e:
@@ -7129,6 +7199,7 @@ class Admin(object):
                 'started': self.started, 'uptime': time.time() - self.started, 'now': time.time(),
                 'serial': '%s/%s' % (ev, int(web_status(self.store).get('at') or 0)),
                 'problems': problems, 'node': node_name(),
+                'maintenance': maintenance_now(self.store),
                 'database': {'engine': 'sqlite', 'where': self.store.db.where(),
                              'size': self.store.db.size()},
                 'counts': self.store.counts(), 'lang': CONFIG.get('ui_lang') or 'cs',
@@ -7196,6 +7267,10 @@ class Admin(object):
             self.adopt_existing_cert()
         except Exception as e:                          # noqa: BLE001
             log('taking over the certificate: %s' % e, 'warn')
+        try:
+            maintenance_mark(bool(maintenance_row(self.store).get('on')))   # 2.3.0
+        except Exception:                               # noqa: BLE001
+            pass
         api_token(make=True)
         publish_lang()
         port = int(CONFIG.get('api_port') or 9848)
@@ -7222,7 +7297,10 @@ class Admin(object):
         while not self.stop.is_set():
             UPGRADE_WAKE.wait(3)
             UPGRADE_WAKE.clear()
-            for fn in (upgrade_tick, acme_tick, online_tick, HX.tick):
+            # In maintenance plexmon does nothing by itself (2.3.0): no renewal,
+            # nothing on a schedule - the upgrade and the look for a new version go on.
+            maint = bool(maintenance_now(self.store).get('on'))
+            for fn in (upgrade_tick, online_tick) + (() if maint else (acme_tick,)) + (HX.tick,):
                 try:
                     fn(self.store)
                 except Exception as e:                  # noqa: BLE001
@@ -7807,6 +7885,11 @@ def build_parser():
     g.add_argument('--plex-refresh', metavar='TITLE', nargs='+', help='refresh their metadata')
     g.add_argument('--plex-scan', metavar='LIB', help='scan the files of a library')
     g.add_argument('--dry-run', action='store_true', help='show the plan, write nothing')
+    g = p.add_argument_group('MAINTENANCE AND UPGRADES')
+    g.add_argument('--maintenance', choices=('on', 'off', 'status'), help='this server out of '
+                   'service: plexmon does nothing by itself (backups, copies, updates, renewals, '
+                   'SMART reads) - or back in service')
+    g.add_argument('--why', metavar='TEXT', help='with --maintenance on: why, for the events')
     g = p.add_argument_group('THE MACHINE AND THE DATA (as Settings: Time, Restart and power off, '
                              'System updates, The database, Backups)')
     g.add_argument('--time', action='store_true', help='the clock: chrony, the time servers, '
@@ -7974,6 +8057,12 @@ def cli_status(store, pal, as_json, check=False, mon=None):
     print((pal.ok_line if s['daemon_alive'] else pal.bad_line)(
         'Settings %s' % ('answers on 127.0.0.1:%s' % CONFIG.get('api_port') if s['daemon_alive']
                          else 'is not answering - systemctl status %s' % SERVICE)))
+    m = maintenance_row(store)
+    if m.get('on'):
+        print(pal.warn_line('IN MAINTENANCE since %s%s - plexmon does nothing by itself '
+                            '(plexmon --maintenance off)' % (
+                                datetime.fromtimestamp(float(m.get('at') or 0)).strftime(
+                                    '%d-%m-%Y %H:%M'), (' - ' + m['why']) if m.get('why') else '')))
     d = s['dashboard']
     if d:
         tone = {'ok': pal.ok_line, 'warn': pal.warn_line}.get(d.get('overall'), pal.bad_line)
@@ -8754,7 +8843,7 @@ def cli_main(argv=None, mon=None):
                 for k, v in vars(args).items()
                 if k not in ('no_color', 'json', 'debug', 'limit', 'search', 'role', 'note',
                              'yes', 'audio', 'subs', 'label_add', 'label_remove', 'lang', 'fix',
-                             'overwrite', 'lock', 'dry_run', 'plex_own'))
+                             'overwrite', 'lock', 'dry_run', 'plex_own', 'why'))
     # Nothing asked for: under systemd (an older unit starts plexmon.py bare)
     # that is the daemon; typed by somebody - or by a script - it is the
     # question they meant, what is it doing, never a second daemon.
@@ -8992,6 +9081,24 @@ def cli_main(argv=None, mon=None):
     got = cli_host(args, store, pal)
     if got is not None:
         return got
+    if args.maintenance:
+        name = node_name()
+        if args.maintenance == 'status':
+            row = maintenance_row(store, name)
+            if args.json:
+                print(json.dumps(dict(row, node=name), default=str))
+            else:
+                print(('%s: in maintenance since %s%s' % (
+                    name, datetime.fromtimestamp(float(row.get('at') or 0)).strftime(
+                        '%d-%m-%Y %H:%M:%S'), (' - ' + row['why']) if row.get('why') else ''))
+                      if row.get('on') else '%s: in service' % name)
+            return 0 if not row.get('on') else 3
+        maintenance_set(store, args.maintenance == 'on', args.why or 'on the command line',
+                        'command line', name)
+        print(pal.ok_line('%s: %s' % (name, 'in maintenance - plexmon does nothing by itself '
+                                      '(backups, copies, updates, renewals, SMART reads)'
+                                      if args.maintenance == 'on' else 'back in service')))
+        return 0
     if args.plex_cert:
         pv = plex_view(store)
         if args.plex_cert == 'status':
@@ -11716,6 +11823,20 @@ class Console(object):
                 'It is %s now.' % ('ON' if on else 'off'), cur=0 if on else 1)
             if r and (r == 'on') != on:
                 self.act('--console-at-login', r)
+        def maint():
+            on = bool(maintenance_row(open_store()).get('on'))
+            r = self.choose('Maintenance of this server', [
+                ('on', 'Into maintenance - plexmon does nothing by itself'),
+                ('off', 'Back into service')], 'It is %s now.' % (
+                    'IN MAINTENANCE' if on else 'in service'), cur=1 if on else 0)
+            if r == 'on':
+                why = self.ask_one('Into maintenance', 'why', 'from the console', help_=(
+                    'Shown to the other administrators and in Events. Backups, copies, '
+                    'updates, renewals and SMART reads wait until it is back in service.'))
+                if why is not None:
+                    self.act('--maintenance', 'on', '--why', why)
+            elif r == 'off':
+                self.act('--maintenance', 'off')
         return self.sub('The service', [
             ('1', 'Its state', lambda: self.act_argv(
                 ['systemctl', 'status', SERVICE, '--no-pager', '-n', '60', '-l'],
@@ -11733,6 +11854,7 @@ class Console(object):
             ('6', 'Restart Plex Media Server', restart(PLEX_SERVICE, 'What is playing stops.')),
             ('7', 'Its journal, live', self.journal, 'plain'),
             ('8', 'The console at login: on or off', at_login),
+            ('9', 'Maintenance: out of service or back', maint),
         ])
 
 

@@ -2676,7 +2676,10 @@ def tick(store):
     if time.time() - _TICK['at'] < 50:
         return
     _TICK['at'] = time.time()
-    for fn in (power_tick, power_schedule, osup_schedule, db_schedule, rb_schedule):
+    # In maintenance (2.3.0) nothing on a schedule - only the follow-up of a restart.
+    maint = bool((A.maintenance_now(store) or {}).get('on'))
+    for fn in (power_tick,) + (() if maint else (power_schedule, osup_schedule, db_schedule,
+                                                 rb_schedule)):
         try:
             fn(store)
         except Exception as e:                          # noqa: BLE001

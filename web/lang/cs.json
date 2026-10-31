@@ -8167,6 +8167,26 @@
   "xs0790": {
    "source": "DNS-01: the CA reads a TXT record plexmon puts in. What has to be in your DNS for it - once - is below.",
    "text": "DNS-01: CA čte TXT záznam, který vloží plexmon. Co pro to musí být ve vašem DNS - jednou - je níže."
+  },
+  "xs0791": {
+   "source": "Upgrades and maintenance",
+   "text": "Aktualizace a údržba"
+  },
+  "xs0792": {
+   "source": "the output",
+   "text": "výstup"
+  },
+  "xs0793": {
+   "source": "A new version put in from here: send the package, and the server is upgraded - taken out of service first, so plexmon does nothing by itself while it is, and brought back only once it answers again. The command line (install.sh --upgrade) works as it always has.",
+   "text": "Nová verze nasazená odsud: pošlete balíček a server se aktualizuje - nejdřív se vyřadí z provozu, takže plexmon mezitím nic nedělá sám, a zpět se vrátí, až zase odpovídá. Příkazová řádka (install.sh --upgrade) funguje jako vždy."
+  },
+  "xs0794": {
+   "source": "A server in maintenance does nothing by itself - no backups, copies of the databases, system updates or restarts on a schedule, no renewal of its certificate, no routine SMART read of the disks; these pages and the dashboard go on working, and everything can still be done by hand. plexmon is one server: there is no other node to take over.",
+   "text": "Server v údržbě nic nedělá sám - žádné zálohy, kopie databází, aktualizace systému ani restarty podle plánu, žádné obnovení certifikátu, žádné pravidelné čtení SMART z disků; tyto stránky i dashboard fungují dál a vše jde dál dělat ručně. plexmon je jeden server: není tu jiný uzel, který by převzal provoz."
+  },
+  "xs0795": {
+   "source": "This is the only server: while it is in maintenance plexmon does nothing by itself - no backups, copies of the databases, system updates or restarts on a schedule, no renewal of the certificate, no routine SMART read of the disks. Its pages and the dashboard go on working.",
+   "text": "Toto je jediný server: dokud je v údržbě, plexmon nic nedělá sám - žádné zálohy, kopie databází, aktualizace systému ani restarty podle plánu, žádné obnovení certifikátu, žádné pravidelné čtení SMART z disků. Jeho stránky i dashboard fungují dál."
   }
  },
  "patterns": {
@@ -10337,6 +10357,30 @@
   "xp0159": {
    "source": "{0} certificates",
    "text": "{0} certifikátů"
+  },
+  "xp0160": {
+   "source": "{0}: maintenance on",
+   "text": "{0}: údržba zapnuta"
+  },
+  "xp0161": {
+   "source": "{0}: maintenance off",
+   "text": "{0}: údržba vypnuta"
+  },
+  "xp0162": {
+   "source": "{0}: in maintenance - {1}",
+   "text": "{0}: v údržbě – {1}"
+  },
+  "xp0163": {
+   "source": "{0}: in maintenance",
+   "text": "{0}: v údržbě"
+  },
+  "xp0164": {
+   "source": "{0}: back in service",
+   "text": "{0}: zpět v provozu"
+  },
+  "xp0165": {
+   "source": "the upgrade to {0}",
+   "text": "aktualizace na {0}"
   }
  },
  "rich": {

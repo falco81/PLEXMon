@@ -121,6 +121,21 @@ Příkazová řádka: `plexmon --db`, `--plex-db-copy`, `--plex-db-restore JMÉN
 `--backup-now`, `--backup-verify`, `--os-updates`, `--os-update security`,
 `--time`, `--reboot` … (`plexmon --help`), konzole menu 12.
 
+## Údržba (od 2.3.0)
+
+Nastavení → Aktualizace a údržba → **Údržba**: server je vyřazený z provozu.
+plexmon pak nic nedělá sám - žádné zálohy, kopie databází, aktualizace
+systému ani restarty podle plánu, žádné obnovení certifikátu, žádné pravidelné
+čtení SMART z disků (hodí se např. při výměně disku). Stránky, dashboard a vše
+ruční funguje dál. Aktualizace ze stránek server do údržby dá sama a po
+doběhnutí ho vrátí.
+
+```bash
+plexmon --maintenance on --why "výměna disku"
+plexmon --maintenance off
+plexmon --maintenance status
+```
+
 ## Soubory
 
 | | |

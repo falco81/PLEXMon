@@ -90,8 +90,11 @@ function paintHeader(s) {
   var overall = mon.overall || '';
   var kind = overall === 'crit' ? 'crit' : (overall === 'warn' || (s.problems && s.problems.length) ? 'warn'
     : (overall ? 'ok' : 'unknown'));
+  /* In maintenance (2.3.0, as otp): said first, whatever else. */
+  var inMaint = !!(s.maintenance && s.maintenance.on);
+  if (inMaint) kind = 'warn';
   pill.className = 'pill ' + kind;
-  pill.lastChild.textContent = !overall ? 'the dashboard has not said yet'
+  pill.lastChild.textContent = inMaint ? 'in maintenance' : !overall ? 'the dashboard has not said yet'
     : (overall === 'crit' ? 'Plex server: critical' : (overall === 'warn' ? 'Plex server: warning'
       : (s.problems && s.problems.length ? 'running, with trouble' : 'running')));
   pill.title = (mon.reasons || []).join('\n') || ('plexmon ' + (s.version || ''));
@@ -2110,14 +2113,12 @@ document.addEventListener('visibilitychange', function () {
 function maintenanceAsk(n, on, then) {
   var alone = (UP.last && (UP.last.nodes || []).filter(function (x) { return x.alive; }).length) <= 1;
   if (!on) {
-    api('upgrade', {action: 'maintenance', node: n.name, on: false}).then(function (r) { toast(r.message, 'good'); then(r); }).catch(oops);
+    api('upgrade', {action: 'maintenance', node: n.name, on: false}).then(function (r) { toast(r.message, 'good'); then(r); tick(); }).catch(oops);
     return;
   }
   modal('Take ' + n.name + ' out of service', function (body) {
     var p = el('p', 'note');
-    p.textContent = alone
-      ? 'This is the only server: while it is in maintenance nobody can sign in to the VPN. Its pages go on working.'
-      : 'It stops answering RADIUS and its /healthz says 503: the VPN and the load balancer go to the other node. Its pages go on working.';
+    p.textContent = 'This is the only server: while it is in maintenance plexmon does nothing by itself - no backups, copies of the databases, system updates or restarts on a schedule, no renewal of the certificate, no routine SMART read of the disks. Its pages and the dashboard go on working.';
     if (alone) p.className = 'note bad';
     body.appendChild(p);
     var why = textBox('', 'why - for the events', '');
@@ -2126,7 +2127,7 @@ function maintenanceAsk(n, on, then) {
   }, [{words: 'No, leave it', close: true},
       {words: 'Take it out', cls: alone ? 'danger' : 'primary', icon: 'power', close: true, go: function () {
         api('upgrade', {action: 'maintenance', node: n.name, on: true, why: ($('maint-why') || {}).value || ''})
-          .then(function (r) { toast(r.message, 'good'); then(r); }).catch(oops);
+          .then(function (r) { toast(r.message, 'good'); then(r); tick(); }).catch(oops);
       }}], true);
 }
 /* Behind the VIP address the answers come from either node, and while one

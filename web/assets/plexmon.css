@@ -3292,17 +3292,20 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .acme-steps{margin:6px 0 12px 18px;padding:0;display:flex;flex-direction:column;gap:4px;color:var(--muted)}
 /* the records and their copy buttons: the text left, the button at the column's right edge, one under the other */
 .acme-dns td{vertical-align:middle}
-/* Every column as narrow as what is in it; the room left goes to the last
-   (2.2.9) - on a wide screen the text stays beside its copy button. */
-.acme-dns .dns-guide-table th,.acme-dns .dns-guide-table td{width:1%;white-space:nowrap}
-.acme-dns .dns-guide-table th:last-child,.acme-dns .dns-guide-table td:last-child{width:auto;white-space:normal}
-/* Room between the columns (2.2.10): a text and its copy button close
-   together, then a clear gap before the next column. */
-.acme-dns .dns-guide-table th,.acme-dns .dns-guide-table td{padding-left:0;padding-right:40px}
-.acme-dns .dns-guide-table th:first-child,.acme-dns .dns-guide-table td:first-child{padding-left:12px}
-.acme-dns td.dns-text{width:1%;white-space:nowrap;padding-right:10px !important}
-.acme-dns td.dns-text > div{white-space:normal}
-.acme-dns td.dns-copy{width:1%;padding-left:0;padding-right:40px;white-space:nowrap}
+/* In your DNS (2.3.0, as isemon): the table across the whole card, each
+   column at a fixed share of it - laid out by the table's head alone
+   (table-layout: fixed), so nothing moves whatever a cell says: not between
+   F5 ("not checked yet") and Check DNS ("there"), nor on a redraw. Each copy
+   button in a narrow column of its own right after its text's. */
+.acme-dns .dns-guide-table table{table-layout:fixed;width:100%}
+.acme-dns .dns-guide-table th:nth-child(1){width:15%}
+.acme-dns .dns-guide-table th:nth-child(2){width:22%}
+.acme-dns .dns-guide-table th:nth-child(3){width:52px}
+.acme-dns .dns-guide-table th:nth-child(4){width:16%}
+.acme-dns .dns-guide-table th:nth-child(5){width:22%}
+.acme-dns .dns-guide-table th:nth-child(6){width:52px}
+.acme-dns .dns-guide-table td{overflow-wrap:anywhere;white-space:normal}
+.acme-dns td.dns-copy{padding-left:0;padding-right:0}
 .acme-dns td.dns-copy > button{vertical-align:middle}
 .node-other .node-now{font-size:12px}
 /* A setting's name: the words wrap, the (i) and the tags of a node stay one

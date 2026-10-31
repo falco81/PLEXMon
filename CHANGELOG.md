@@ -4,6 +4,28 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.3.0 - 2026-10-31
+
+- **Settings → Upgrades and maintenance**, as otp 1.0.197 has it (without its
+  cluster): *The nodes* - this server, its version, when it was heard from,
+  in service or in maintenance (why, who, since when) - with **Maintenance** /
+  **Back in service**; *From the web*; *A new version*; *The upgrade*; *What
+  root said last* folded until asked for; the command line.
+- **Maintenance**: the server out of service - plexmon does nothing by
+  itself: no backups, copies of the databases, system updates or restarts on
+  a schedule, no renewal of the certificate (ACME), no routine SMART read of
+  the disks. These pages, the dashboard and everything done by hand go on
+  working. The header says *in maintenance*; Events says who and why.
+  - An upgrade from the pages takes the server into maintenance while it is
+    put in, and back into service once it runs again (or fails, or is
+    stopped) - only a maintenance it began itself.
+  - `plexmon --maintenance on --why "…"`, `--maintenance off`,
+    `--maintenance status` (exit 3 while in maintenance); `plexmon --status`
+    says it; the console: The service → Maintenance.
+- **Automatic certificates → In your DNS** laid out across the card, each
+  column at a fixed share of it (as isemon): nothing moves between F5 (*not
+  checked yet*) and *Check DNS* (*there*), nor on a redraw.
+
 ## 2.2.10 - 2026-10-31
 
 - **Automatic certificates → In your DNS**: room between the columns - a
