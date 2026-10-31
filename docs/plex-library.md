@@ -65,8 +65,9 @@ In the console (`plexmon --console`): *11 The Plex library*.
 - **Labels**: the filter *without a label*; *As Plex keeps them* (the exact
   strings and ids, case variants marked); renaming a label on the selected
   titles only.
-- **F5 / F9**: Plex's activities followed to their end in a panel at the foot
-  of the page.
+- **Scan the library / Refresh all metadata** (buttons only - F5 and F9 stay
+  the browser's): Plex's activities followed to their end in a panel at the
+  foot of the page.
 - **Audio and subtitles**: replacement after replacement where the track
   chosen is missing (then the next, then the next).
 - **Titles**: *Other ways…* shows every title before it changes (now → after,

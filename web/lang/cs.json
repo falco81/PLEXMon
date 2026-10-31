@@ -8567,6 +8567,14 @@
   "xs0890": {
    "source": "Writer",
    "text": "Scénář"
+  },
+  "xs0891": {
+   "source": "Plex asks its agents again for each ticked one - then read the list again.",
+   "text": "Plex se znovu zeptá svých agentů na každý zaškrtnutý titul - pak seznam načtěte znovu."
+  },
+  "xs0892": {
+   "source": "Plex asks its agents again for each ticked one - its own badges (IMDb, Rotten Tomatoes, TMDB) come again.",
+   "text": "Plex se znovu zeptá svých agentů na každý zaškrtnutý titul - jeho vlastní odznaky (IMDb, Rotten Tomatoes, TMDB) přijdou znovu."
   }
  },
  "patterns": {
@@ -10897,6 +10905,14 @@
   "xp0199": {
    "source": "Plex has scanned - {0} of {1} video(s) have new tracks so far",
    "text": "Plex dohledal - nové stopy má {0} z {1} videí"
+  },
+  "xp0200": {
+   "source": "Plex scans the files of {0}: what is new on the disk comes in, what is gone goes. Nothing already there is changed.",
+   "text": "Plex prohledá soubory knihovny {0}: co je na disku nového, přibude, co zmizelo, odejde. Nic, co už tam je, se nezmění."
+  },
+  "xp0201": {
+   "source": "Plex downloads the metadata, posters and backgrounds of every item of {0} again (asked first).",
+   "text": "Plex znovu stáhne metadata, plakáty a pozadí každé položky knihovny {0} (nejdřív se zeptá)."
   }
  },
  "rich": {

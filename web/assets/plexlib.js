@@ -485,16 +485,15 @@ function toolbar(bar, d) {
   bar.appendChild(more);
   if (ADMIN) {
     /* As plex_tools' F5 and F9 (2.4.4): the whole library, named and in
-       sight - the keys work too while the library is in front. */
+       sight - by these buttons alone; the page's keys stay the browser's (2.5.3). */
     var scan = cmdButton('Scan the library', 'search', 'small');
-    explain(scan, 'F5 - Plex scans the files of ' + d.section.title + ': what is new on the disk comes in, what is gone goes. Nothing already there is changed.');
+    explain(scan, 'Plex scans the files of ' + d.section.title + ': what is new on the disk comes in, what is gone goes. Nothing already there is changed.');
     scan.onclick = function () { libraryScan(d.section, false); };
     bar.appendChild(scan);
     var all = cmdButton('Refresh all metadata', 'refresh', 'small');
-    explain(all, 'F9 - Plex downloads the metadata, posters and backgrounds of every item of ' + d.section.title + ' again (asked first).');
+    explain(all, 'Plex downloads the metadata, posters and backgrounds of every item of ' + d.section.title + ' again (asked first).');
     all.onclick = function () { libraryScan(d.section, true); };
     bar.appendChild(all);
-    PX.keysSection = d.section;
   }
   var c = el('span', 'px-count');
   c.id = 'px-count';
@@ -724,7 +723,7 @@ function libraryScan(sec, force) {
   }
   api('plex', {action: 'scan', lib: sec.key}).then(function (r) { toast(r.message, 'good'); plexActivity(sec); }).catch(oops);
 }
-/* What Plex does after F5 / F9, followed to its end (2.5.0, as plex_tools'
+/* What Plex does after Scan the library / Refresh all metadata, followed to its end (2.5.0, as plex_tools'
    progress bar from /activities): a panel at the foot of the page with each
    of Plex's activities and how far it is; it goes away when Plex is done. */
 var PXA = {timer: null, seen: false, quiet: 0, began: 0};
@@ -1949,7 +1948,7 @@ function titlesList(bar, host) {
     acts.appendChild(all); acts.appendChild(none); acts.appendChild(inv);
     if (ADMIN) {
       var rf = cmdButton('Refresh their metadata', 'refresh', 'small');
-      explain(rf, 'Plex asks its agents again for each ticked one (plex_tools\' F9 in this list) - then read the list again.');
+      explain(rf, 'Plex asks its agents again for each ticked one - then read the list again.');
       rf.disabled = !n;
       rf.onclick = function () { refreshItems(Object.keys(T.sel)); };
       acts.appendChild(rf);
@@ -2312,7 +2311,7 @@ function ratingsList(bar, host, d) {
     acts.appendChild(all); acts.appendChild(none); acts.appendChild(inv);
     if (ADMIN) {
       var rf = cmdButton('Refresh their metadata', 'refresh', 'small');
-      explain(rf, 'Plex asks its agents again for each ticked one - its own badges (IMDb, Rotten Tomatoes, TMDB) come again (plex_tools\' F9 in this list).');
+      explain(rf, 'Plex asks its agents again for each ticked one - its own badges (IMDb, Rotten Tomatoes, TMDB) come again.');
       rf.disabled = !n;
       rf.onclick = function () { refreshItems(Object.keys(T.sel)); };
       acts.appendChild(rf);
@@ -2508,22 +2507,6 @@ function labelRename(lib, lab) {
     }).catch(oops);
   }}], true);
 }
-
-/* F5 and F9 over the library in front (2.4.4), as in plex_tools: F5 scans its
-   files, F9 refreshes all its metadata (asked first). Only on the Plex library
-   tab, with no popup open and nothing being typed; Ctrl+F5 / Ctrl+R still
-   reload the page. */
-document.addEventListener('keydown', function (e) {
-  if ((e.key !== 'F5' && e.key !== 'F9') || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
-  if (typeof TAB === 'undefined' || TAB !== 'library' || !ADMIN) return;
-  if (PX.view !== 'library' || !PX.keysSection) return;
-  var m = document.getElementById('modal');
-  if (m && !m.hidden) return;
-  var t = document.activeElement;
-  if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
-  e.preventDefault();
-  libraryScan(PX.keysSection, e.key === 'F9');
-});
 
 /* ---- the page asks ---------------------------------------------------------------- */
 window.PXLIB = {

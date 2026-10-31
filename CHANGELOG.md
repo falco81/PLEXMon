@@ -4,6 +4,14 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.5.3 - 2026-10-31
+
+- **Plex library: F5 and F9 do nothing on the page** - they are the
+  browser's again (F5 reloads the page). Scanning the library and refreshing
+  all its metadata are done with the buttons *Scan the library* and *Refresh
+  all metadata* alone. (The command line and the console keep their own
+  `--plex-scan` / `--plex-refresh-all`.)
+
 ## 2.5.2 - 2026-10-31
 
 - **Posters come faster.**
