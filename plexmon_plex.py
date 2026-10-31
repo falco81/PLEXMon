@@ -84,10 +84,7 @@ class PlexError(Exception):
 
 def _web(req, timeout):
     """What is asked of the internet - images, Plex Discover, the rating
-    databases - through Settings → Proxy where it says so (2.4.0); Plex Media
-    Server itself never."""
-    if A is not None and hasattr(A, 'url_open'):
-        return A.url_open(req, timeout=timeout, purpose='plex')
+    databases - straight, as always: Settings → Proxy is for the updates alone."""
     return urllib.request.urlopen(req, timeout=timeout)
 
 

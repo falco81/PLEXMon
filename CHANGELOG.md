@@ -4,6 +4,16 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.4.1 - 2026-10-31
+
+- **Settings → Proxy is for the updates alone**: the new versions of plexmon
+  and, where switched on, the system updates (dnf). Nothing else plexmon does
+  goes through it or changes with it - the ACME CA and the DNS APIs, Plex
+  Discover, the rating databases go out exactly as before 2.4.0 (the
+  service's own environment), whatever is set there. The setting *Plex
+  Discover and the ratings through it too* is gone; *Try it* asks the way the
+  new versions are fetched.
+
 ## 2.4.0 - 2026-10-31
 
 - **Settings → Proxy**, as otp has it: where the server may reach the web only

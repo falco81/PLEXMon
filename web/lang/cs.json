@@ -8299,6 +8299,22 @@
   "xs0823": {
    "source": "Where the proxy asks for one. Empty: none.",
    "text": "Kde o ně proxy žádá. Prázdné: žádné."
+  },
+  "xs0824": {
+   "source": "An HTTP proxy for the updates alone: the new versions of plexmon and, where switched on below, the system updates (dnf). Nothing else plexmon does goes through it - not Plex, the certificates, the ratings, the televisions or the backups.",
+   "text": "HTTP proxy jen pro aktualizace: nové verze plexmonu a, kde je to níže zapnuté, aktualizace systému (dnf). Nic jiného, co plexmon dělá, přes ni nejde - ani Plex, certifikáty, hodnocení, televize nebo zálohy."
+  },
+  "xs0825": {
+   "source": "An HTTP proxy for the updates alone - the new versions of plexmon and the system updates.",
+   "text": "HTTP proxy jen pro aktualizace - nové verze plexmonu a aktualizace systému."
+  },
+  "xs0826": {
+   "source": "An HTTP proxy for the updates alone: the new versions of plexmon and the system updates (dnf) go through it. Nothing else plexmon does - Plex, the certificates, the ratings, the televisions, the backups - goes through it or changes with it.",
+   "text": "HTTP proxy jen pro aktualizace: přes ni jdou nové verze plexmonu a aktualizace systému (dnf). Nic jiného, co plexmon dělá - Plex, certifikáty, hodnocení, televize, zálohy - přes ni nejde a nastavením se nemění."
+  },
+  "xs0827": {
+   "source": "An address asked from this server the way plexmon fetches its new versions: through the proxy as it is saved, or straight where none is set or the address is in the list. Each step is shown. Empty: where the new versions are looked for.",
+   "text": "Adresa dotázaná z tohoto serveru tak, jak plexmon stahuje své nové verze: přes proxy, jak je uložená, nebo přímo, kde žádná nastavená není nebo je adresa v seznamu. Ukáže se každý krok. Prázdné: kde se hledají nové verze."
   }
  },
  "patterns": {

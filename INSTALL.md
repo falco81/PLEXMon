@@ -138,9 +138,10 @@ plexmon --maintenance status
 
 ## Proxy (since 2.4.0)
 
-Settings → Proxy: when the server may reach the web only through an HTTP proxy. Through it go
-the new versions, the certificates from the ACME CA, Plex Discover and the ratings and (optionally)
-dnf. "Try it" shows each step of the way. On the command line:
+Settings → Proxy: an HTTP proxy for the updates alone - the new versions of plexmon and
+(optionally) the system updates through dnf. Nothing else plexmon does goes through it or
+changes with it: Plex, the certificates (ACME), the ratings, the televisions and the backups go
+out exactly as before. "Try it" shows each step of the way. On the command line:
 `plexmon --proxy-test https://github.com/`.
 
 ## Files
