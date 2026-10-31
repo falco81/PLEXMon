@@ -8007,6 +8007,38 @@
   "xs0750": {
    "source": "plexmon or the server restarted while dnf ran - see dnf history",
    "text": "plexmon nebo server se restartoval během běhu dnf - viz dnf history"
+  },
+  "xs0751": {
+   "source": "RSA 2048 + ECDSA P-256 (Let's Encrypt's recommendation)",
+   "text": "RSA 2048 + ECDSA P-256 (doporučení Let's Encrypt)"
+  },
+  "xs0752": {
+   "source": "RSA 3072 + ECDSA P-384",
+   "text": "RSA 3072 + ECDSA P-384"
+  },
+  "xs0753": {
+   "source": "ECDSA P-384",
+   "text": "ECDSA P-384"
+  },
+  "xs0754": {
+   "source": "RSA 3072",
+   "text": "RSA 3072"
+  },
+  "xs0755": {
+   "source": "RSA 4096",
+   "text": "RSA 4096"
+  },
+  "xs0756": {
+   "source": "The keys Let’s Encrypt takes: RSA 2048, 3072 or 4096, ECDSA P-256 or P-384. Both (its recommendation): an RSA certificate by default and a much smaller ECDSA one to the clients that can take it - nginx offers the two, old Plex apps and televisions keep RSA, Plex Media Server gets the RSA one.",
+   "text": "Klíče, které Let’s Encrypt přijímá: RSA 2048, 3072 nebo 4096, ECDSA P-256 nebo P-384. Oba (jeho doporučení): výchozí certifikát RSA a mnohem menší ECDSA pro klienty, kteří ho umí - nginx nabízí oba, staré aplikace Plexu a televize dostanou RSA, Plex Media Server dostane ten RSA."
+  },
+  "xs0757": {
+   "source": "And beside it",
+   "text": "A vedle něj"
+  },
+  "xs0758": {
+   "source": "the ECDSA certificate beside it",
+   "text": "certifikát ECDSA vedle něj"
   }
  },
  "patterns": {
@@ -10137,6 +10169,30 @@
   "xp0149": {
    "source": "{0} - the restart by itself failed: {1}",
    "text": "{0} - automatický restart selhal: {1}"
+  },
+  "xp0150": {
+   "source": "the keys: {0}",
+   "text": "klíče: {0}"
+  },
+  "xp0151": {
+   "source": "the key: {0}",
+   "text": "klíč: {0}"
+  },
+  "xp0152": {
+   "source": "the ECDSA certificate did not come ({0}) - the RSA one alone",
+   "text": "certifikát ECDSA nepřišel ({0}) - jen RSA"
+  },
+  "xp0153": {
+   "source": "ACME: the ECDSA certificate beside the RSA one did not come: {0} - the RSA one alone is put in",
+   "text": "ACME: certifikát ECDSA vedle RSA nepřišel: {0} - nasadí se jen RSA"
+  },
+  "xp0154": {
+   "source": "and its ECDSA certificate beside it ({0})",
+   "text": "a vedle něj jeho certifikát ECDSA ({0})"
+  },
+  "xp0155": {
+   "source": "a certificate for {0} ({1}) came from the CA, good until {2} ({3})",
+   "text": "certifikát pro {0} ({1}) přišel od CA, platí do {2} ({3})"
   }
  },
  "rich": {

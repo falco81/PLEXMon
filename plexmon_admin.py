@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.2.3'
+__version__ = '2.2.4'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -122,7 +122,7 @@ DEFAULTS = {
     'acme_ca_pem': '',
     'acme_node_name': '',
     'acme_days': 30,
-    'acme_key': 'ec',
+    'acme_key': 'dual',
     'acme_challenge': 'http-01',
     'acme_dns': 'manual',
     'acme_dns_server': '',
@@ -209,7 +209,7 @@ TUNABLE = {
     'plex_cert': (0, 1), 'plex_cert_restart': (0, 1),
     'upgrade_check': (0, 1), 'upgrade_downgrade': (0, 1),
     'acme': (0, 1), 'acme_ca': ('letsencrypt', 'letsencrypt-staging', 'custom'),
-    'acme_days': (7, 60), 'acme_key': ('ec', 'rsa2048'),
+    'acme_days': (7, 60), 'acme_key': ('dual', 'dual384', 'rsa2048', 'rsa3072', 'rsa4096', 'ec', 'ec384'),
     'acme_challenge': ('http-01', 'dns-01'),
     'acme_dns': ('manual', 'rfc2136', 'cloudflare', 'acmedns', 'desec'),
     'acme_dns_tsig_alg': ('hmac-sha256', 'hmac-sha512', 'hmac-sha384', 'hmac-sha224', 'hmac-sha1',
@@ -270,7 +270,10 @@ CHOICE_WORDS = {
     'acme_ca': {'letsencrypt': 'Let’s Encrypt',
                 'letsencrypt-staging': 'Let’s Encrypt - staging (to try it)',
                 'custom': 'another ACME CA (step-ca, an internal CA...)'},
-    'acme_key': {'ec': 'ECDSA P-256', 'rsa2048': 'RSA 2048'},
+    'acme_key': {'dual': 'RSA 2048 + ECDSA P-256 (Let\'s Encrypt\'s recommendation)',
+                 'dual384': 'RSA 3072 + ECDSA P-384',
+                 'rsa2048': 'RSA 2048', 'rsa3072': 'RSA 3072', 'rsa4096': 'RSA 4096',
+                 'ec': 'ECDSA P-256', 'ec384': 'ECDSA P-384'},
     'ui_lang': {'cs': 'Čeština', 'en': 'English'},
 }
 
@@ -379,8 +382,10 @@ SAYS = {
                       '<code>plex.example.cz</code>. Empty: the name of the certificate it '
                       'has now, else its full host name.',
     'acme_days': 'Let’s Encrypt’s certificates last 90 days; 30 is what it advises.',
-    'acme_key': 'ECDSA is smaller and quicker; RSA for old clients (old Plex apps, old '
-                'televisions).',
+    'acme_key': 'The keys Let’s Encrypt takes: RSA 2048, 3072 or 4096, ECDSA P-256 or '
+                'P-384. Both (its recommendation): an RSA certificate by default and a much '
+                'smaller ECDSA one to the clients that can take it - nginx offers the two, old '
+                'Plex apps and televisions keep RSA, Plex Media Server gets the RSA one.',
     'acme_challenge': 'HTTP-01 needs port 80 of the name reachable from the internet (or from '
                       'the CA, for a CA of your own). DNS-01 needs nothing open: the CA reads a '
                       'TXT record - the way for a Plex server only the LAN reaches.',
@@ -2144,13 +2149,18 @@ def _subject(cn, org='', unit='', country='', city=''):
     return s
 
 
+# The keys Let's Encrypt takes for a certificate (2.2.4): RSA of 2048, 3072
+# or 4096 bits, ECDSA on P-256 or P-384 (letsencrypt.org/docs/integration-guide).
+EC_CURVES = {'ec': 'P-256', 'ec256': 'P-256', 'ec384': 'P-384'}
+
+
 def new_key(kind):
-    if kind == 'ec':
+    if kind in EC_CURVES:
         return _openssl(['genpkey', '-algorithm', 'EC', '-pkeyopt',
-                         'ec_paramgen_curve:P-256']).decode()
+                         'ec_paramgen_curve:%s' % EC_CURVES[kind]]).decode()
     bits = {'rsa2048': 2048, 'rsa3072': 3072, 'rsa4096': 4096}.get(kind)
     if not bits:
-        raise ValueError('the key is ec, rsa2048, rsa3072 or rsa4096')
+        raise ValueError('the key is ec256, ec384, rsa2048, rsa3072 or rsa4096')
     return _openssl(['genpkey', '-algorithm', 'RSA', '-pkeyopt',
                      'rsa_keygen_bits:%d' % bits]).decode()
 
@@ -2203,8 +2213,13 @@ def tls_view(prof):
     """A profile as the pages may see it: no key."""
     if not prof:
         return None
-    out = {k: v for k, v in prof.items() if k not in ('key', 'pending_key')}
+    out = {k: v for k, v in prof.items() if k not in ('key', 'pending_key', 'ec_key')}
     out['has_key'] = bool(prof.get('key'))
+    ec = tls_ec_of(prof)
+    out['ec'] = {'info': ec.get('ec_info')} if ec else None
+    for k in ('ec_cert', 'ec_chain', 'ec_for'):
+        out.pop(k, None)
+    out.pop('ec_info', None)
     out['pending'] = bool(prof.get('pending_key'))
     return out
 
@@ -2252,6 +2267,9 @@ def tls_resolved(prof):
     if prof.get('cert') and prof.get('key'):
         out.update(cert=prof['cert'], chain=prof.get('chain') or '', root=prof.get('root') or '',
                    key=unseal_secret(prof['key'], 'web:tls'))
+        if tls_ec_of(prof):
+            out.update(ec_cert=prof['ec_cert'], ec_chain=prof.get('ec_chain') or '',
+                       ec_key=unseal_secret(prof['ec_key'], 'web:tls'))
     return out
 
 
@@ -2584,12 +2602,25 @@ def _dh_file(choice, had):
     return str(NGINX_DH)
 
 
+def ec_paths(cert_path, key_path):
+    """Where the ECDSA certificate of a dual one goes: beside the main one."""
+    def side(p):
+        root, ext = os.path.splitext(str(p))
+        return root + '-ecdsa' + (ext or '.pem')
+    return side(cert_path), side(key_path)
+
+
 def tls_conf_text(t, cert_path, key_path, dh_path):
     lines = ['# Written by plexmon (Settings → Certificates and TLS).',
              '# Changed on the pages; changes made here are overwritten.',
              'ssl_certificate     %s;' % cert_path,
-             'ssl_certificate_key %s;' % key_path,
-             'ssl_protocols %s;' % ' '.join(t['protocols'])]
+             'ssl_certificate_key %s;' % key_path]
+    if t.get('ec_cert'):
+        # A dual certificate (2.2.4): RSA first - the default - and ECDSA beside
+        # it, given to the clients that say they take it.
+        ec_cert, ec_key = ec_paths(cert_path, key_path)
+        lines += ['ssl_certificate     %s;' % ec_cert, 'ssl_certificate_key %s;' % ec_key]
+    lines.append('ssl_protocols %s;' % ' '.join(t['protocols']))
     if t['ciphers']:
         lines.append('ssl_ciphers %s;' % t['ciphers'])
     lines.append('ssl_prefer_server_ciphers %s;' % ('on' if t['prefer'] else 'off'))
@@ -2618,6 +2649,8 @@ def web_hash(store):
         return '', plex
     keep = {k: prof.get(k) for k in ('cert', 'chain', 'key', 'preset', 'protocols', 'ciphers',
                                      'dh', 'prefer', 'hsts')}
+    if tls_ec_of(prof):
+        keep.update(ec_cert=prof['ec_cert'], ec_chain=prof.get('ec_chain'), ec_key=prof['ec_key'])
     return hashlib.sha256(json.dumps([keep, plex], sort_keys=True).encode()).hexdigest(), plex
 
 
@@ -2641,7 +2674,8 @@ def web_apply(store):
     WEB_WORK.update(busy=True, progress={'step': 1, 'total': 5, 'at': time.time(),
                                          'now': time.time(), 'words': 'starting'})
     cert_path, key_path = nginx_conf_cert_paths()
-    snap = _snapshot([cert_path, key_path, NGINX_TLS_CONF, NGINX_DH])
+    ec_cert_path, ec_key_path = ec_paths(cert_path, key_path)
+    snap = _snapshot([cert_path, key_path, NGINX_TLS_CONF, NGINX_DH, ec_cert_path, ec_key_path])
     try:
         adopted = nginx_adopted()
         if t.get('cert'):
@@ -2651,6 +2685,12 @@ def web_apply(store):
             said.append('certificate: %s, until %s' % ((prof.get('info') or {}).get('subject'),
                                                        stamp((prof.get('info') or {})
                                                              .get('not_after'))))
+        if t.get('ec_cert') and not adopted:
+            t = dict(t, ec_cert='')         # nginx's file is not plexmon's: RSA alone
+        if t.get('ec_cert'):
+            write_replacing(ec_cert_path, t['ec_cert'] + t['ec_chain'], 0o644)
+            write_replacing(ec_key_path, t['ec_key'], 0o600)
+            said.append('and its ECDSA certificate beside it (%s)' % ec_cert_path)
         if adopted:
             dh = _dh_file(t['dh'], st.get('dh'))
             web_progress_set('writing the TLS settings', 3)
@@ -3191,7 +3231,7 @@ class Acme(object):
                 raise AcmeError('%s: the CA has not said in %d s (%s)' % (what, secs, st))
             time.sleep(2)
 
-    def order(self, names, say):
+    def order(self, names, say, kind=None):
         say('ordered from the CA')
         got, headers = self.post_json(self.dir['newOrder'], {
             'identifiers': [{'type': 'dns', 'value': n} for n in names]})
@@ -3234,7 +3274,7 @@ class Acme(object):
                 self._poll(az, ('valid',), 'the CA did not take %s' % name)
             finally:
                 acme_chal_drop(token)
-        key, csr = make_csr(names[0], names[1:], CONFIG.get('acme_key') or 'ec')
+        key, csr = make_csr(names[0], names[1:], kind or 'rsa2048')
         der = _openssl(['req', '-in', '/dev/stdin', '-outform', 'DER'], data=csr.encode(),
                        what='the request')
         say('the certificate is made')
@@ -3364,6 +3404,27 @@ def acme_due(store, target, name):
     return ''
 
 
+KEY_WORDS = {'rsa2048': 'RSA 2048', 'rsa3072': 'RSA 3072', 'rsa4096': 'RSA 4096',
+             'ec': 'ECDSA P-256', 'ec256': 'ECDSA P-256', 'ec384': 'ECDSA P-384'}
+
+
+def acme_key_kinds():
+    """The keys of what is ordered: one, or RSA then ECDSA for a dual one."""
+    k = CONFIG.get('acme_key') or 'dual'
+    return {'dual': ['rsa2048', 'ec256'], 'dual384': ['rsa3072', 'ec384']}.get(k) or \
+        [k if k in KEY_WORDS else 'rsa2048']
+
+
+def tls_ec_of(prof):
+    """The ECDSA certificate beside the main one - only while it belongs to it
+    (a certificate put in some other way leaves it behind)."""
+    if not prof or not prof.get('ec_cert') or not prof.get('ec_key') or not prof.get('cert'):
+        return None
+    if prof.get('ec_for') != hashlib.sha256(prof['cert'].encode()).hexdigest():
+        return None
+    return prof
+
+
 def acme_order(store, target, name, by, say=None):
     """One certificate ordered and put in; the state kept, an event written -
     and what was done on the way (1.0.175), for the card."""
@@ -3380,9 +3441,24 @@ def acme_order(store, target, name, by, say=None):
     a = None
     try:
         a = Acme(store)
-        key, chain = a.order([name], say)
+        kinds = acme_key_kinds()
+        say('the key%s: %s' % ('s' if len(kinds) > 1 else '', ' + '.join(KEY_WORDS[k] for k in kinds)))
+        key, chain = a.order([name], say, kinds[0])
         got = cert_bundle(chain, key)
         info = got['info']
+        ec = None
+        if len(kinds) > 1:
+            # The second certificate of a dual one (2.2.4): ECDSA, for the clients
+            # that take it - ordered again for the same name; the authorization
+            # the CA has just given is used again, nothing is checked twice.
+            try:
+                say('the ECDSA certificate beside it')
+                ekey, echain = a.order([name], say, kinds[1])
+                ec = cert_bundle(echain, ekey)
+            except (AcmeError, ValueError, OSError) as e:
+                say('the ECDSA certificate did not come (%s) - the RSA one alone' % e)
+                store.add_event('settings', 'ACME: the ECDSA certificate beside the RSA one did '
+                                'not come: %s - the RSA one alone is put in' % e, 'warn', who=by)
         prof = tls_profile(store, target) or {}
         if prof.get('cert') and prof.get('how') != 'ACME':
             # The certificate it had - uploaded, from your own CA - kept to go
@@ -3398,16 +3474,24 @@ def acme_order(store, target, name, by, say=None):
                     verify=got['verify'], how='ACME')
         prof.pop('pending_key', None)
         prof.pop('csr', None)
+        for k in ('ec_cert', 'ec_chain', 'ec_key', 'ec_info', 'ec_for'):
+            prof.pop(k, None)
+        if ec:
+            prof.update(ec_cert=ec['cert'], ec_chain=ec['chain'],
+                        ec_key=seal_secret(ec['key'], 'web:tls'), ec_info=ec['info'],
+                        ec_for=hashlib.sha256(got['cert'].encode()).hexdigest())
         prof.setdefault('preset', 'standard')
         prof.setdefault('dh', 'none')
         tls_save(store, target, prof, by)
         st.update(ok=True, not_after=info.get('not_after'), issuer=info.get('issuer'),
-                  ordered_at=time.time())
+                  ordered_at=time.time(), keys=[KEY_WORDS[k] for k in kinds[:2 if ec else 1]],
+                  ec_not_after=(ec or {}).get('info', {}).get('not_after'))
         st['steps'] = steps[-25:]
         store.set_meta('acme:state:' + target, json.dumps(st))
         store.add_event('settings', 'a certificate for %s (%s) came from the CA, good until %s'
-                        % (name, target,
-                           stamp(info.get('not_after')) if info.get('not_after') else '?'),
+                        ' (%s)' % (name, target,
+                                   stamp(info.get('not_after')) if info.get('not_after') else '?',
+                                   ' + '.join(st['keys'])),
                         'info', who=by)
         return st
     except (AcmeError, ValueError, OSError) as e:

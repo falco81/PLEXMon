@@ -2212,7 +2212,7 @@ def rb_files_named():
             out.append(p)
     try:
         cert, key = A.nginx_conf_cert_paths()
-        for p in (str(cert), str(key)):
+        for p in (str(cert), str(key)) + tuple(A.ec_paths(cert, key)):
             if os.path.isfile(p) and p not in out:
                 out.append(p)
     except Exception:                                   # noqa: BLE001

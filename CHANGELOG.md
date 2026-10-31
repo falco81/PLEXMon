@@ -4,6 +4,27 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.2.4 - 2026-10-31
+
+- **ACME: every key Let's Encrypt takes, and its dual certificate**
+  (letsencrypt.org/docs/integration-guide). *The key of the certificate* is
+  now RSA 2048, 3072 or 4096, ECDSA P-256 or P-384 - or **both**, as Let's
+  Encrypt recommends and now the default: an RSA certificate served by
+  default and a much smaller ECDSA one to the clients that say they take it.
+  - Both are ordered at once (the second order reuses the authorization the
+    CA has just given - nothing is checked twice); *RSA 2048 + ECDSA P-256* or
+    *RSA 3072 + ECDSA P-384*.
+  - nginx gets both: `ssl_certificate` twice in `/etc/nginx/plexmon/tls.conf`,
+    the ECDSA one in `server-ecdsa.pem` / `server-ecdsa.key` beside the RSA
+    one; `nginx -t` first, everything put back if it says no. The ciphers of
+    every preset already carry ECDHE-ECDSA and ECDHE-RSA alike.
+  - Plex Media Server keeps the RSA one (old Plex apps, televisions).
+  - Should the ECDSA one not come, the RSA one is put in alone (said in
+    Events). A certificate put in some other way leaves the ECDSA one behind.
+  - Certificates and TLS shows it under the main one (*And beside it*).
+  - The account key stays its own (ECDSA P-256), never a certificate's.
+- A request or a self-signed certificate can be ECDSA P-384 too.
+
 ## 2.2.3 - 2026-10-31
 
 - **Backups to SMB (Windows / Samba share)**: *smbclient: ERROR: Could not

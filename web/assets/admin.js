@@ -2649,6 +2649,8 @@ function certCard(d, target) {
       facts.push(['Chain', prof.chain_info ? (prof.chain_info.length + ' between it and the root') : '–']);
       facts.push(['Root', prof.root_info && prof.root_info.length ? noI18n(el('span', '', prof.root_info[0].cn || 'given')) : 'not given']);
       if (prof.verify) facts.push(['Checked', prof.verify === 'ok' ? el('span', 'good', 'the chain leads to the root') : el('span', 'bad', prof.verify)]);
+      /* A dual certificate (2.2.4): the ECDSA one nginx offers beside it. */
+      if (prof.ec && prof.ec.info) facts.push(['And beside it', noI18n(el('span', '', (prof.ec.info.key || 'ECDSA') + ' · ' + (prof.ec.info.not_after ? stamp(prof.ec.info.not_after) : '')))]);
     }
     var kv = el('dl', 'cert-kv');
     facts.forEach(function (f) {
@@ -2877,7 +2879,7 @@ function certSubjectFields(body, target, d, withDays) {
   var g = el('div', 'formgrid');
   var cn = textBox(certNamesDefault(target, d), 'plex.example.cz', 'mono'); cn.id = 'cs-cn';
   var names = textBox('', 'plex.lan, 192.168.1.10', 'mono'); names.id = 'cs-names';
-  var kind = selectBox([['rsa2048', 'RSA 2048'], ['rsa3072', 'RSA 3072'], ['rsa4096', 'RSA 4096'], ['ec', 'EC P-256']], 'rsa2048'); kind.id = 'cs-kind';
+  var kind = selectBox([['rsa2048', 'RSA 2048'], ['rsa3072', 'RSA 3072'], ['rsa4096', 'RSA 4096'], ['ec', 'ECDSA P-256'], ['ec384', 'ECDSA P-384']], 'rsa2048'); kind.id = 'cs-kind';
   g.appendChild(formField('The name (CN)', cn, 'What people type in the browser.'));
   g.appendChild(formField('Other names', names, 'More names or addresses it is good for, by commas.'));
   g.appendChild(formField('The key', kind));
