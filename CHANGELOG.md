@@ -4,6 +4,15 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.1.4 - 2026-10-31
+
+- **PHP goes onto the 8.3 branch** - at least 8.3.36, fixed against php2shell
+  - with every install and upgrade (the one from Settings too): PHP 8.0, 8.1
+  or 8.2 is moved onto `php:8.3`, one on 8.3 brought up to its newest build,
+  a newer fixed one (8.4) left as it is. As in 2.1.2: the settings kept and
+  copied first, php-fpm checked and restarted, and everything put back on the
+  branch it was on if it does not come up.
+
 ## 2.1.3 - 2026-10-31
 
 - **Ratings on every title**: a *Ratings* button on the card of a movie, a show

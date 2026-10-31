@@ -13,9 +13,9 @@
 #
 # PHP (php2shell, CVE-2026-109618 / CVE-2026-109619 - fixed 21 October 2026),
 # as otp does it - on every install and every upgrade:
-#   --php-stream X.Y             the AppStream stream PHP is put on (8.2 - at least 8.2.35);
-#                                an older PHP (8.0, 8.1) is moved onto it, a newer fixed one
-#                                (8.3, 8.4) is left as it is
+#   --php-stream X.Y             the AppStream stream PHP is put on (8.3 - at least 8.3.36);
+#                                an older PHP (8.0, 8.1, 8.2) is moved onto it, a newer fixed
+#                                one (8.4) is left as it is
 #   --remi                       PHP 8.4 from Remi's repository instead
 #   --no-php-update              PHP left as it is (still checked, still guarded)
 #
@@ -43,15 +43,15 @@ NGINX_SITE=/etc/nginx/conf.d/plex.conf
 MODE=install
 YES=0
 PHP_UPDATE=yes
-PHP_STREAM=8.2
-PHP_MIN=8.2.35
+PHP_STREAM=8.3
+PHP_MIN=8.3.36
 USE_REMI=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --upgrade) MODE=upgrade ;;
         --uninstall) MODE=uninstall ;;
         --yes|-y) YES=1 ;;
-        --php-stream) PHP_STREAM="${2:-8.2}"; shift ;;
+        --php-stream) PHP_STREAM="${2:-8.3}"; shift ;;
         --remi) USE_REMI=yes ;;
         --no-php-update) PHP_UPDATE="" ;;
         --help|-h) sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
@@ -316,7 +316,7 @@ ensure_php() {
                 say "PHP $(php_fpm_version) is updated within its stream"
                 dnf upgrade -y --refresh 'php*' || warn "dnf upgrade 'php*' did not go through"
             else
-                # 8.0 or 8.1: onto php:8.2, at least 8.2.35.
+                # Older than the stream (8.0, 8.1, 8.2): onto php:8.3, 8.3.36 at least.
                 php_switch_stream || true
             fi
         else

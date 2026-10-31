@@ -37,12 +37,12 @@ Co `install.sh` udělá na serveru se současným plexmonem (`plex-status.servic
    převezme do Nastavení tak, jak je - nic se nepřepisuje.
 7. **PHP a php2shell** (CVE-2026-109618, CVE-2026-109619 - vzdálené spuštění
    kódu, opraveno 21. 10. 2026) - při každé instalaci i aktualizaci (i té ze
-   stránek) přejde PHP na **větev 8.2, nejméně 8.2.35**: starší PHP (výchozí
-   8.0, 8.1) se přepne na `php:8.2` (`dnf module reset/enable`, `distro-sync
-   'php*'`), PHP na 8.2 se aktualizuje na nejnovější build, novější opravené
-   (8.3, 8.4) zůstane. php.ini, php.d a pooly php-fpm zůstanou (a předtím se
+   stránek) přejde PHP na **větev 8.3, nejméně 8.3.36**: starší PHP (výchozí
+   8.0, 8.1, 8.2) se přepne na `php:8.3` (`dnf module reset/enable`,
+   `distro-sync 'php*'`), PHP na 8.3 se aktualizuje na nejnovější build,
+   novější opravené (8.4) zůstane. php.ini, php.d a pooly php-fpm zůstanou (a předtím se
    zkopírují do `/var/lib/plexmon/backup/php-*`); php-fpm se ověří (`php-fpm
-   -t`) a restartuje - když na 8.2 nenaběhne, vše se vrátí na původní větev. Kde AppStream opravené PHP nemá, nabídne PHP
+   -t`) a restartuje - když na 8.3 nenaběhne, vše se vrátí na původní větev. Kde AppStream opravené PHP nemá, nabídne PHP
    8.4 z repozitáře Remi (jen na dotaz nebo `--remi`, nikdy samo při
    aktualizaci). Navíc druhá vrstva: `/etc/php.d/99-php2shell.ini` a nginx
    odmítá formulářové a multipart tělo stránkám pod `/smart/`
