@@ -4,6 +4,15 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.2.7 - 2026-10-31
+
+- **Automatic certificates → The CA's own certificate** is a proper memo:
+  the whole width, twelve lines tall (and taller by its corner), monospace,
+  the PEM's lines as they are (not wrapped) - room for a root and its
+  intermediates. Under it: *Load a file…* (.pem, .crt, .cer), *Empty it*,
+  and a line saying what is in it - how many certificates and lines, or that
+  it is not a whole PEM, or that a private key does not belong there.
+
 ## 2.2.6 - 2026-10-31
 
 ACME made the same as upsmon's (4.1.6 and 4.1.7), its UI and what it does:

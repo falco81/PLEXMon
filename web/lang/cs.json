@@ -8131,6 +8131,38 @@
   "xs0781": {
    "source": "the key: RSA 4096",
    "text": "klíč: RSA 4096"
+  },
+  "xs0782": {
+   "source": "Load a file…",
+   "text": "Načíst ze souboru…"
+  },
+  "xs0783": {
+   "source": "Empty it",
+   "text": "Vyprázdnit"
+  },
+  "xs0784": {
+   "source": "empty - the system’s own trusted roots are used",
+   "text": "prázdné - použijí se kořenové certifikáty, kterým věří systém"
+  },
+  "xs0785": {
+   "source": "a private key does not belong here - only the CA’s certificate",
+   "text": "soukromý klíč sem nepatří - jen certifikát CA"
+  },
+  "xs0786": {
+   "source": "not a whole certificate in PEM (BEGIN … END)",
+   "text": "není to celý certifikát v PEM (BEGIN … END)"
+  },
+  "xs0787": {
+   "source": "1 certificate",
+   "text": "1 certifikát"
+  },
+  "xs0788": {
+   "source": "lines",
+   "text": "řádků"
+  },
+  "xs0789": {
+   "source": "the file is bigger than a certificate (256 kB at most)",
+   "text": "soubor je větší než certifikát (nejvýš 256 kB)"
   }
  },
  "patterns": {
@@ -10297,6 +10329,10 @@
   "xp0158": {
    "source": "{0} + {1} bit (a second certificate beside it)",
    "text": "{0} + {1} bit (druhý certifikát vedle něj)"
+  },
+  "xp0159": {
+   "source": "{0} certificates",
+   "text": "{0} certifikátů"
   }
  },
  "rich": {

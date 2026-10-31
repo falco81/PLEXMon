@@ -3362,3 +3362,11 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .offline + .tabs,.offline + .offline{margin-top:10px}
 .tabs{margin-bottom:16px}
 
+
+/* The CA's certificate as a memo (2.2.7). */
+.pem-wrap{min-width:0}
+.pem-wrap > textarea.pem-memo{width:100%;min-height:250px;font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:12px;line-height:1.45;white-space:pre;overflow:auto;resize:vertical;tab-size:2;padding:10px 12px}
+.pem-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 2px}
+.pem-bar .pem-said{margin-left:4px}
+.pem-said.good{color:var(--ok)} .pem-said.bad{color:var(--crit)}

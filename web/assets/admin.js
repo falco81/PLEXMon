@@ -600,6 +600,64 @@ function settingByKey(key) {
 function isBool(s) {
   return typeof s.default === 'boolean' || (s.min === 0 && s.max === 1 && typeof s.default === 'number');
 }
+/* A certificate in PEM as a memo (2.2.7): room for a root and its
+   intermediates, the lines as they are (64 characters, not wrapped), a file
+   loaded into it, and a line saying what is in it. */
+function pemMemo(item, input) {
+  item.classList.add('pem-item');
+  input.classList.add('pem-memo');
+  input.rows = 12;
+  input.spellcheck = false;
+  input.wrap = 'off';
+  input.setAttribute('autocomplete', 'off');
+  input.placeholder = '-----BEGIN CERTIFICATE-----\nMIIB…\n-----END CERTIFICATE-----';
+  var bar = el('div', 'pem-bar');
+  var said = el('span', 'pem-said small');
+  var file = el('input');
+  file.type = 'file';
+  file.accept = '.pem,.crt,.cer,.txt,application/x-pem-file';
+  file.hidden = true;
+  var load = cmdButton('Load a file…', 'upload', 'small');
+  var wipe = cmdButton('Empty it', 'close', 'small');
+  var look = function () {
+    var v = input.value.trim();
+    var n = (v.match(/-----BEGIN CERTIFICATE-----/g) || []).length;
+    var ends = (v.match(/-----END CERTIFICATE-----/g) || []).length;
+    said.className = 'pem-said small ' + (!v ? 'muted' : (n && n === ends && !/PRIVATE KEY/.test(v) ? 'good' : 'bad'));
+    said.textContent = !v ? txT('empty - the system’s own trusted roots are used')
+      : (/PRIVATE KEY/.test(v) ? txT('a private key does not belong here - only the CA’s certificate')
+        : (!n || n !== ends ? txT('not a whole certificate in PEM (BEGIN … END)')
+          : txT(n === 1 ? '1 certificate' : n + ' certificates') + ' · ' + v.split('\n').length + ' ' + txT('lines')));
+    wipe.disabled = !v || input.disabled;
+  };
+  load.onclick = function () { file.click(); };
+  file.onchange = function () {
+    var f = file.files && file.files[0];
+    if (!f) return;
+    if (f.size > 256 * 1024) { toast('the file is bigger than a certificate (256 kB at most)', 'bad'); return; }
+    var r = new FileReader();
+    r.onload = function () {
+      input.value = String(r.result || '').replace(/\r\n?/g, '\n').trim() + '\n';
+      input.dispatchEvent(new Event('input')); look();
+    };
+    r.readAsText(f);
+    file.value = '';
+  };
+  wipe.onclick = function () { input.value = ''; input.dispatchEvent(new Event('input')); look(); };
+  input.addEventListener('input', look);
+  load.disabled = !ADMIN;
+  bar.appendChild(load); bar.appendChild(wipe); bar.appendChild(said); bar.appendChild(file);
+  /* The memo and its bar one block, in the place of the box - the
+     setting's grid keeps its rows. */
+  setTimeout(function () {
+    if (!input.parentNode) return;
+    var wrap = el('div', 'pem-wrap');
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+    wrap.appendChild(bar);
+    look();
+  }, 0);
+}
 var TALL = {acme_ca_pem: 1, portal_help: 1, portal_groups: 1, sms_body: 1, sms_headers: 1, isemon_targets: 1, admin_group_full: 1,
             admin_group_token: 1, admin_group_readonly: 1};
 
@@ -874,6 +932,7 @@ function settingItemBare(s) {
     input = el('textarea');
     input.value = s.value === null || s.value === undefined ? '' : String(s.value);
     input.rows = s.key === 'portal_help' ? 6 : 2;
+    if (s.key === 'acme_ca_pem') pemMemo(item, input);
   } else {
     input = s.secret ? maskBox(s.value, '', '') : textBox(s.value, '', '');
     if (s.secret) {
