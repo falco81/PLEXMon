@@ -4,6 +4,23 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.1.2 - 2026-10-31
+
+- **PHP goes onto the 8.2 branch** (AlmaLinux 9 AppStream, at least 8.2.35 -
+  fixed against php2shell) with every install and upgrade, the one from
+  Settings too: a PHP older than 8.2 (the default 8.0, 8.1) is moved onto
+  `php:8.2` (`dnf module reset/enable`, `distro-sync 'php*'`), one on 8.2
+  brought up to its newest build; a newer fixed one (8.3, 8.4) is left as it
+  is. php.ini, php.d and the php-fpm pools are kept (and copied to
+  `/var/lib/plexmon/backup/php-*` first); php-fpm is checked (`php-fpm -t`)
+  and restarted, and if it does not come up on 8.2 everything goes back to the
+  branch it was on. `--php-stream X.Y` for another branch.
+- **Spacing** across the pages: the blocks of the Plex library (the libraries,
+  the toolbar, the posters) no longer touch, cards and rows of buttons have
+  one rhythm (8 / 12 / 16 / 20 px), the buttons of a certificate are evenly
+  spaced, popups and settings breathe.
+- Czech for the events of the Plex library and of a certificate exported.
+
 ## 2.1.1 - 2026-10-31
 
 - **Certificates and TLS → Download** opens a window to choose the format:

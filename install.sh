@@ -13,7 +13,9 @@
 #
 # PHP (php2shell, CVE-2026-109618 / CVE-2026-109619 - fixed 21 October 2026),
 # as otp does it - on every install and every upgrade:
-#   --php-stream X.Y             the AppStream stream for a PHP not installed yet (8.3)
+#   --php-stream X.Y             the AppStream stream PHP is put on (8.2 - at least 8.2.35);
+#                                an older PHP (8.0, 8.1) is moved onto it, a newer fixed one
+#                                (8.3, 8.4) is left as it is
 #   --remi                       PHP 8.4 from Remi's repository instead
 #   --no-php-update              PHP left as it is (still checked, still guarded)
 #
@@ -41,14 +43,15 @@ NGINX_SITE=/etc/nginx/conf.d/plex.conf
 MODE=install
 YES=0
 PHP_UPDATE=yes
-PHP_STREAM=8.3
+PHP_STREAM=8.2
+PHP_MIN=8.2.35
 USE_REMI=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --upgrade) MODE=upgrade ;;
         --uninstall) MODE=uninstall ;;
         --yes|-y) YES=1 ;;
-        --php-stream) PHP_STREAM="${2:-8.3}"; shift ;;
+        --php-stream) PHP_STREAM="${2:-8.2}"; shift ;;
         --remi) USE_REMI=yes ;;
         --no-php-update) PHP_UPDATE="" ;;
         --help|-h) sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
@@ -244,6 +247,54 @@ remi_php() {
     dnf distro-sync -y 'php*'
     dnf install -y php-fpm php-cli php-common
 }
+php_enabled_stream() {
+    awk '/^php /{print $2; exit}' <<< "$(dnf -q module list --enabled php 2>/dev/null || true)"
+}
+php_on_target() {      # 0: php-fpm is on PHP_STREAM (or newer) and fixed
+    local v
+    v="$(php_fpm_version)"
+    [[ -n "$v" ]] || return 1
+    ver_ge "$v" "$PHP_STREAM" || return 1
+    php_fixed
+}
+php_fpm_ok() {         # php-fpm takes its configuration and runs
+    local b unit ok=0
+    b="$(php_fpm_bin)"
+    [[ -n "$b" ]] || return 1
+    "$b" -t >/dev/null 2>&1 || return 1
+    for unit in $(php_fpm_units); do
+        systemctl is-enabled --quiet "$unit" 2>/dev/null || systemctl is-active --quiet "$unit" 2>/dev/null || continue
+        systemctl restart "$unit" >/dev/null 2>&1 || return 1
+        sleep 2
+        systemctl is-active --quiet "$unit" || return 1
+        ok=1
+    done
+    [[ $ok == 1 ]] || ! systemctl list-unit-files 'php*-fpm.service' --no-legend 2>/dev/null | grep -q .
+}
+php_switch_stream() {  # PHP moved onto php:$PHP_STREAM - put back as it was on any doubt
+    local prev saved
+    prev="$(php_enabled_stream)"
+    saved="$STATE/backup/php-$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "$saved"
+    cp -a /etc/php.ini /etc/php.d /etc/php-fpm.conf /etc/php-fpm.d "$saved/" 2>/dev/null || true
+    rpm -qa 'php*' --qf '%{NAME}\n' 2>/dev/null | sort > "$saved/packages.txt"
+    say "PHP $(php_fpm_version) (stream ${prev:-default}) goes onto php:$PHP_STREAM - its settings are"
+    say "kept (and copied to $saved)"
+    if dnf -y module reset php >/dev/null 2>&1 && dnf -y module enable "php:$PHP_STREAM" \
+        && dnf -y --refresh distro-sync 'php*' && php_fpm_ok; then
+        ok "PHP is now $(php_fpm_version) (php:$PHP_STREAM)"
+        return 0
+    fi
+    warn "PHP did not come up on php:$PHP_STREAM - it is put back on ${prev:-the default stream}"
+    dnf -y module reset php >/dev/null 2>&1 || true
+    [[ -n "$prev" ]] && { dnf -y module enable "php:$prev" >/dev/null 2>&1 || true; }
+    dnf -y distro-sync 'php*' >/dev/null 2>&1 || true
+    cp -a "$saved"/php.ini /etc/ 2>/dev/null || true
+    cp -a "$saved"/php.d "$saved"/php-fpm.d /etc/ 2>/dev/null || true
+    cp -a "$saved"/php-fpm.conf /etc/ 2>/dev/null || true
+    php_fpm_ok || warn "php-fpm does not run - journalctl -u php-fpm"
+    return 1
+}
 ensure_php() {
     step "PHP, and php2shell"
     local had_php="" unit
@@ -252,25 +303,30 @@ ensure_php() {
         say "--no-php-update: PHP is left as it is"
         php_says; php_guard; return 0
     fi
-    if [[ -n "$had_php" && -z "$USE_REMI" ]] && php_fixed; then
-        say "PHP is installed and fixed: left as it is (updates come with dnf upgrade)"
+    if [[ -n "$had_php" && -z "$USE_REMI" ]] && php_fixed && { [[ "$PKG" != "dnf" ]] || php_on_target; }; then
+        say "PHP $(php_fpm_version) is fixed and on $PHP_STREAM or newer: left as it is"
         php_says; php_guard; return 0
     fi
     if [[ "$PKG" == "dnf" ]]; then
         if [[ -n "$USE_REMI" ]]; then
             remi_php || true
         elif [[ -n "$had_php" ]]; then
-            say "PHP is installed but not fixed: the packages that are there are updated"
-            dnf upgrade -y --refresh 'php*' || warn "dnf upgrade 'php*' did not go through"
+            if ver_ge "$(php_fpm_version)" "$PHP_STREAM"; then
+                # On the stream already (or a newer one): its newest build.
+                say "PHP $(php_fpm_version) is updated within its stream"
+                dnf upgrade -y --refresh 'php*' || warn "dnf upgrade 'php*' did not go through"
+            else
+                # 8.0 or 8.1: onto php:8.2, at least 8.2.35.
+                php_switch_stream || true
+            fi
         else
-            local streams now
-            streams="$(dnf -q module list php 2>/dev/null || true)"
-            now="$(dnf -q module list --enabled php 2>/dev/null || true)"
-            now="$(awk '/^php /{print $2; exit}' <<< "$now")"
-            if [[ -z "$now" ]] && grep -qE "^php +${PHP_STREAM//./\\.}( |$)" <<< "$streams"; then
+            local now
+            now="$(php_enabled_stream)"
+            if [[ -z "$now" ]] || ! ver_ge "$now" "$PHP_STREAM"; then
                 say "PHP comes from the stream php:$PHP_STREAM"
+                dnf module reset -y php >/dev/null 2>&1 || true
                 dnf module enable -y "php:$PHP_STREAM" || true
-            elif [[ -n "$now" ]]; then
+            else
                 say "the PHP stream php:$now is enabled already: it is kept"
             fi
             dnf install -y php-fpm php-cli php-common || warn "php-fpm could not be installed"
@@ -297,6 +353,9 @@ ensure_php() {
         fi
     fi
     php_says
+    if [[ "$PKG" == "dnf" ]] && ! ver_ge "$(php_fpm_version)" "$PHP_MIN"; then
+        warn "PHP is $(php_fpm_version), not $PHP_MIN or newer yet"
+    fi
     if ! php_fixed; then
         warn "Until it is fixed: dnf upgrade --refresh 'php*' as soon as the fixed build is out,"
         warn "and ./install.sh --upgrade. plexmon's pages are guarded meanwhile: upload progress"

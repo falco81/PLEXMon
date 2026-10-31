@@ -8021,6 +8021,66 @@
   "rp00012": {
    "source": "the dashboard",
    "text": "dashboard"
+  },
+  "xp0070": {
+   "source": "{0} exported the certificate of {1} WITH its private key ({2}, locked with a password)",
+   "text": "{0} exportoval certifikát {1} S PRIVÁTNÍM KLÍČEM ({2}, zamčeno heslem)"
+  },
+  "xp0071": {
+   "source": "{0} exported the certificate of {1} WITH its private key ({2}, not locked)",
+   "text": "{0} exportoval certifikát {1} S PRIVÁTNÍM KLÍČEM ({2}, nezamčeno)"
+  },
+  "xp0072": {
+   "source": "{0} exported the certificate of {1} ({2})",
+   "text": "{0} exportoval certifikát {1} ({2})"
+  },
+  "xp0073": {
+   "source": "{0} marked {1} item(s) watched",
+   "text": "{0} označil {1} položek jako zhlédnuté"
+  },
+  "xp0074": {
+   "source": "{0} marked {1} item(s) unwatched",
+   "text": "{0} označil {1} položek jako nezhlédnuté"
+  },
+  "xp0075": {
+   "source": "{0} changed the labels of {1} item(s): {2}",
+   "text": "{0} změnil štítky {1} položek: {2}"
+  },
+  "xp0076": {
+   "source": "{0} changed the labels of {1} item(s)",
+   "text": "{0} změnil štítky {1} položek"
+  },
+  "xp0077": {
+   "source": "{0} set the default tracks (audio: {1}, subtitles: {2}) of {3} video(s)",
+   "text": "{0} nastavil výchozí stopy (zvuk: {1}, titulky: {2}) u {3} videí"
+  },
+  "xp0078": {
+   "source": "{0} wrote {1} title(s) in {2}",
+   "text": "{0} zapsal {1} názvů v knihovně {2}"
+  },
+  "xp0079": {
+   "source": "{0} wrote {1} rating(s)",
+   "text": "{0} zapsal {1} hodnocení"
+  },
+  "xp0080": {
+   "source": "{0} refreshed the metadata of {1} item(s)",
+   "text": "{0} obnovil metadata {1} položek"
+  },
+  "xp0081": {
+   "source": "{0} renamed the label {1} to {2} on {3} item(s)",
+   "text": "{0} přejmenoval štítek {1} na {2} u {3} položek"
+  },
+  "xp0082": {
+   "source": "{0} put {1} title(s) on the watchlist",
+   "text": "{0} přidal {1} titulů do seznamu ke zhlédnutí"
+  },
+  "xp0083": {
+   "source": "{0} took {1} title(s) off the watchlist",
+   "text": "{0} odebral {1} titulů ze seznamu ke zhlédnutí"
+  },
+  "xp0084": {
+   "source": "{0} asked Plex to scan the files of {1}",
+   "text": "{0} požádal Plex o prohledání souborů knihovny {1}"
   }
  },
  "rich": {

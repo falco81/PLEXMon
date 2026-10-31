@@ -379,3 +379,19 @@
 .cx-said{min-height:18px;margin-top:10px;font-size:13px;color:var(--tx-dim)}
 .cx-said.bad{color:var(--crit)}
 @media (max-width:640px){.cx-pw{grid-template-columns:1fr}}
+
+/* ---- spacing (2.1.2): every block of the library its own breath ------------- */
+.px-main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.px-main > .px-tool,.px-main > .px-wl{margin-top:0}
+.px-bar{row-gap:10px}
+.px-libs{gap:10px}
+.px-grid{padding-top:4px}
+.px-tool{gap:14px}
+.px-tool > .btnrow,.px-main > .btnrow{gap:8px;flex-wrap:wrap;align-items:center}
+.px-labels{gap:14px}
+.px-labcard .btnrow{gap:8px;flex-wrap:wrap}
+.px-acts{gap:10px}
+.px-body h3{margin:26px 0 12px}
+.px-tracks{gap:18px}
+.px-sum{gap:12px;margin:4px 0 12px}
+.px-follow .btnrow{gap:8px}

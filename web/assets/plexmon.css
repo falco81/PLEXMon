@@ -3326,3 +3326,33 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .sd-tokens td.acts{text-align:right;white-space:nowrap}
 .sd-tokens td.acts .btn + .btn{margin-left:8px}
 
+
+/* ==========================================================================
+   Spacing (2.1.2): one rhythm across the pages - 8 / 12 / 16 / 20 px.
+   Cards apart from each other, buttons apart from each other and from the
+   text above them, a toolbar never touching what it controls.
+   ========================================================================== */
+.card + .card{margin-top:18px}
+.grid > .card + .card{margin-top:0}
+.grid{gap:18px}
+.ctl-head{margin:2px 0 20px}
+.ctl-head .ctl-lede{margin-top:8px}
+.btnrow{gap:10px}
+.btnrow + .btnrow{margin-top:12px}
+.card > .btnrow:not(:first-child),
+.card .note + .btnrow,
+.card p + .btnrow,
+.card .drop + .btnrow{margin-top:14px}
+.card > h2 + .note,.card > h2 + p{margin-top:6px}
+.card .note + .note{margin-top:8px}
+.btnrow .btn{min-height:36px}
+.btnrow .btn.small{min-height:32px}
+.cert-tools{gap:10px;margin-top:16px;padding-top:14px}
+.cert-tools > .btn{min-height:38px;padding:8px 10px;line-height:1.25;white-space:normal;text-align:center}
+.set-grid{column-gap:28px;row-gap:22px}
+.modal .foot{gap:10px;padding-top:14px}
+.modal .body > * + .btnrow{margin-top:14px}
+.filters{margin-bottom:14px}
+.pager{margin-top:14px}
+.offline + .tabs,.offline + .offline{margin-top:10px}
+.tabs{margin-bottom:16px}
