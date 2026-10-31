@@ -1203,12 +1203,15 @@ function tracksDialog(rks, what, after) {
     var row = el('div', 'btnrow');
     row.style.marginTop = '14px';
     var rescan = cmdButton('Scan the files again', 'search', '');
-    explain(rescan, 'A subtitle file just put beside the video is not a track until Plex has scanned the folder: this asks Plex to scan the library and reads these videos again until their new tracks are there (up to 90 s).');
+    explain(rescan, 'A subtitle file just put beside the video is not a track until Plex has scanned its folder: Plex is asked to scan just the folders of these videos, and they are read again once it is done - up to two minutes.');
     rescan.onclick = function () {
       follow(api('plex', {action: 'tracks-rescan', scan: r.scan}), w).then(function (got) {
         T.scan = Object.assign({}, T.scan, got);
         choose(w);
-        toast('read again', 'good');
+        /* What the scan found (2.4.3): before, only "read again", whatever it was. */
+        var n = (got && got.changed) || 0;
+        toast(n ? n + ' video(s) have new tracks'
+                : 'Plex scanned the folders and found no new tracks - a file beside the video needs the video\'s own name (Name.cs.srt, Name.forced.cz.srt)', n ? 'good' : 'warn');
       }).catch(function (e) { toast(String(e.message || e), 'bad'); choose(w); });
     };
     var next = cmdButton('Show the plan', 'next', 'primary');

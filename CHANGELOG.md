@@ -4,6 +4,19 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.4.3 - 2026-10-31
+
+- **Plex library → Audio and subtitles → Scan the files again** works:
+  - Plex is asked to scan just the folders of the videos shown (a partial scan
+    by path), not the whole library, and they are read again as soon as Plex
+    says its scan is done - seconds, not a blind 90 s wait.
+  - It says what it found: how many videos have new tracks, or that Plex
+    found none (with the reminder that a subtitle file needs the video's own
+    name: `Name.cs.srt`, `Name.forced.cz.srt`).
+  - A scan still waiting from another title no longer blocks it ("…is under
+    way already"): it only reads, so it is stopped and the new one starts. A
+    job that writes to Plex is never stopped this way.
+
 ## 2.4.2 - 2026-10-31
 
 - **Settings → Proxy: what uses it, chosen one by one.** The proxy is off and

@@ -1048,30 +1048,80 @@ def tracks_apply(store, ident, by):
     return job_start('tracks', 'the default audio and subtitles', by, work)
 
 
-def tracks_rescan(store, ident, by, wait_s=90):
-    """Scan Library Files, then read the items of the scan again until their
-    new tracks are there (fresh .srt files beside the videos)."""
+def _libs_scanning(libs):
+    """Whether Plex is scanning any of these libraries now (refreshing="1")."""
+    try:
+        dirs = mc(get('/library/sections')).get('Directory') or []
+    except Exception:                                   # noqa: BLE001
+        return False
+    return any(str(d.get('key')) in libs and str(d.get('refreshing')).lower() in ('1', 'true')
+               for d in dirs)
+
+
+def tracks_rescan(store, ident, by, wait_s=120):
+    """A subtitle (or audio) file just put beside the videos is not a track
+    until Plex has scanned their folder (2.4.3): Plex is asked to scan just the
+    folders of these videos - not the whole library - and they are read again
+    once Plex says it is done, or as soon as their new tracks are there."""
     sc = _scan(ident)
 
     def work():
-        libs = sorted({d['lib'] for d in sc['items'] if d['lib']})
+        items = sc['items']
+        rks = [d['rk'] for d in items]
+        libs = sorted({str(d['lib']) for d in items if d['lib']})
+        count = lambda d: sum(len(st) for _p, st in d['parts'])          # noqa: E731
+        before = {d['rk']: count(d) for d in items}
+        folders = {}
+        for rk, m in metadata_many(rks).items():
+            lib = str(m.get('librarySectionID') or next((d['lib'] for d in items
+                                                         if d['rk'] == rk), '') or '')
+            for media in m.get('Media') or []:
+                for part in media.get('Part') or []:
+                    if part.get('file') and lib:
+                        folders.setdefault(lib, set()).add(os.path.dirname(part['file']))
+        asked = 0
         for lib in libs:
-            raw('GET', '/library/sections/%s/refresh' % lib)
-        step(0, len(sc['items']), 'Plex scans the files; their tracks are read again')
-        end = time.time() + wait_s
-        before = {d['rk']: sum(len(st) for _p, st in d['parts']) for d in sc['items']}
-        while time.time() < end and not stopped():
-            time.sleep(4)
-            md_map = metadata_many([d['rk'] for d in sc['items']])
+            dirs = sorted(folders.get(lib) or [])
+            if dirs and len(dirs) <= 40:
+                for path in dirs:
+                    raw('GET', '/library/sections/%s/refresh' % lib, {'path': path})
+                    asked += 1
+            else:
+                raw('GET', '/library/sections/%s/refresh' % lib)   # the whole library
+                asked += 1
+        step(0, len(items), 'Plex scans %d folder(s) of these videos' % asked)
+        began = time.time()
+        seen_busy = False
+        changed = 0
+        while time.time() - began < wait_s and not stopped():
+            time.sleep(3)
+            busy = _libs_scanning(libs)
+            seen_busy = seen_busy or busy
+            md_map = metadata_many(rks)
             changed = 0
-            for d in sc['items']:
+            for d in items:
                 m = md_map.get(d['rk'])
                 if m:
                     d['parts'] = list(iter_parts(m))
-                    if sum(len(st) for _p, st in d['parts']) != before[d['rk']]:
+                    if count(d) != before[d['rk']]:
                         changed += 1
             step(changed, None, '%d video(s) have new tracks so far' % changed)
-        return tracks_scan_again(ident)
+            if changed == len(items):
+                break
+            # Done once Plex has scanned (or never had to: a few seconds of quiet).
+            if not busy and (seen_busy or time.time() - began > 12):
+                break
+        out = tracks_scan_again(ident)
+        out.update(changed=changed, folders=asked, secs=int(time.time() - began))
+        return out
+    # An earlier look for new tracks (of this or another title) still waiting
+    # only reads: it is stopped and this one starts - never refused (2.4.3).
+    # Any other job (one that writes to Plex) is left alone.
+    if JOB['running'] and JOB['kind'] == 'rescan':
+        job_stop()
+        end = time.time() + 10
+        while JOB['running'] and time.time() < end:
+            time.sleep(0.2)
     return job_start('rescan', 'scanning the files for new tracks', by, work)
 
 

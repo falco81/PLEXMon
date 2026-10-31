@@ -8375,6 +8375,14 @@
   "xs0842": {
    "source": "An address asked from this server through the proxy as it is saved - whatever is switched on below it - or straight where none is set or the address is in the list. Each step is shown. Empty: where the new versions are looked for.",
    "text": "Adresa dotázaná z tohoto serveru přes proxy, jak je uložená - ať je u ní zapnuté cokoli - nebo přímo, kde žádná nastavená není nebo je adresa v seznamu. Ukáže se každý krok. Prázdné: kde se hledají nové verze."
+  },
+  "xs0843": {
+   "source": "Plex scanned the folders and found no new tracks - a file beside the video needs the video's own name (Name.cs.srt, Name.forced.cz.srt)",
+   "text": "Plex prohledal složky a nové stopy nenašel - soubor vedle videa musí mít jméno videa (Jmeno.cs.srt, Jmeno.forced.cz.srt)"
+  },
+  "xs0844": {
+   "source": "A subtitle file just put beside the video is not a track until Plex has scanned its folder: Plex is asked to scan just the folders of these videos, and they are read again once it is done - up to two minutes.",
+   "text": "Soubor s titulky právě vložený vedle videa není stopou, dokud Plex neprohledá jeho složku: Plex se požádá o prohledání jen složek těchto videí a ta se přečtou znovu, jakmile skončí - nejvýš dvě minuty."
   }
  },
  "patterns": {
@@ -10104,7 +10112,7 @@
   },
   "xp0061": {
    "source": "{0} video(s) have new tracks so far",
-   "text": "nové stopy zatím má {0} videí"
+   "text": "zatím {0} videí s novými stopami"
   },
   "xp0062": {
    "source": "the metadata language becomes {0} and they are refreshed",
@@ -10609,6 +10617,14 @@
   "xp0175": {
    "source": "the proxy said {0} {1}",
    "text": "proxy odpověděla {0} {1}"
+  },
+  "xp0176": {
+   "source": "{0} video(s) have new tracks",
+   "text": "{0} videí má nové stopy"
+  },
+  "xp0177": {
+   "source": "Plex scans {0} folder(s) of these videos",
+   "text": "Plex prohledává {0} složek těchto videí"
   }
  },
  "rich": {

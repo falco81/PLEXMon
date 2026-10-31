@@ -17,7 +17,7 @@ if (PHP_SAPI !== 'cli' && isset($_SERVER['SCRIPT_FILENAME'])
     exit;
 }
 
-const PM_VERSION = '2.4.2';
+const PM_VERSION = '2.4.3';
 const PM_LANG_CODE = '/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/';
 
 header('Cache-Control: no-cache, no-store, must-revalidate');
