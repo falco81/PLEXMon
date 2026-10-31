@@ -6495,24 +6495,24 @@
    "text": "· o {0} s později"
   },
   "xp0001": {
-   "source": "{0} free",
-   "text": "{0} volno"
+   "source": "PHP {0} running this page may have php2shell (CVE-2026-109618, CVE-2026-109619): remote code execution by anybody who can reach the web server. Update it - {1}",
+   "text": "PHP {0}, které obsluhuje tuto stránku, může mít php2shell (CVE-2026-109618, CVE-2026-109619): vzdálené spuštění kódu kýmkoli, kdo dosáhne na webový server. Aktualizujte ho – {1}"
   },
   "xp0002": {
-   "source": "updated {0} ago",
-   "text": "aktualizováno před {0}"
+   "source": "PHP {0} has the php2shell fix (CVE-2026-109618, CVE-2026-109619)",
+   "text": "PHP {0} má opravu php2shell (CVE-2026-109618, CVE-2026-109619)"
   },
   "xp0003": {
-   "source": "web {0} · server {1}",
-   "text": "web {0} · server {1}"
+   "source": "PHP {0} has the php2shell fix (CVE-2026-109618, CVE-2026-109619) - backported, as its changelog says",
+   "text": "PHP {0} má opravu php2shell (CVE-2026-109618, CVE-2026-109619) – backportovanou, jak říká changelog balíčku"
   },
   "xp0004": {
-   "source": "data.json age {0}s · collector runs as root via systemd timer · disks are never woken to draw this page · auto-refresh 60s",
-   "text": "stáří data.json {0} s · kolektor běží jako root · disky se kvůli vykreslení stránky nikdy nebudí · obnova každých 60 s"
+   "source": "PHP {0} does NOT have the php2shell fix (CVE-2026-109618, CVE-2026-109619): ./install.sh --upgrade, or Settings → Upgrades, brings it up to date",
+   "text": "PHP {0} NEMÁ opravu php2shell (CVE-2026-109618, CVE-2026-109619): ./install.sh --upgrade nebo Nastavení → Aktualizace ho aktualizuje"
   },
   "xp0005": {
-   "source": "This USB bridge does not report power state, so it is worked out from disk activity (idle for {0}).",
-   "text": "Tento USB most nehlásí stav napájení, proto se odvozuje z aktivity disku (nečinný {0})."
+   "source": "PHP {0} does not have the php2shell fix (CVE-2026-109618, CVE-2026-109619): ./install.sh --upgrade (or Settings → Upgrades) brings it up to date",
+   "text": "PHP {0} nemá opravu php2shell (CVE-2026-109618, CVE-2026-109619): ./install.sh --upgrade (nebo Nastavení → Aktualizace) ho aktualizuje"
   },
   "xp0006": {
    "source": "{0} disks awake",

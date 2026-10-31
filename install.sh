@@ -11,6 +11,12 @@
 #   ./install.sh --uninstall     take plexmon away (the history, the config
 #                                and nginx's files are left as they are)
 #
+# PHP (php2shell, CVE-2026-109618 / CVE-2026-109619 - fixed 21 October 2026),
+# as otp does it - on every install and every upgrade:
+#   --php-stream X.Y             the AppStream stream for a PHP not installed yet (8.3)
+#   --remi                       PHP 8.4 from Remi's repository instead
+#   --no-php-update              PHP left as it is (still checked, still guarded)
+#
 # What it never does: touch Plex Media Server, its library or its database,
 # change the Plex reverse proxy beyond handing its TLS lines and the ACME
 # answers to plexmon (once, checked with nginx -t, put back on any doubt), or
@@ -34,14 +40,21 @@ NGINX_SITE=/etc/nginx/conf.d/plex.conf
 
 MODE=install
 YES=0
-for a in "$@"; do
-    case "$a" in
+PHP_UPDATE=yes
+PHP_STREAM=8.3
+USE_REMI=""
+while [ $# -gt 0 ]; do
+    case "$1" in
         --upgrade) MODE=upgrade ;;
         --uninstall) MODE=uninstall ;;
         --yes|-y) YES=1 ;;
-        --help|-h) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-        *) echo "install.sh: what is $a? (--upgrade, --uninstall, --yes, --help)"; exit 2 ;;
+        --php-stream) PHP_STREAM="${2:-8.3}"; shift ;;
+        --remi) USE_REMI=yes ;;
+        --no-php-update) PHP_UPDATE="" ;;
+        --help|-h) sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) echo "install.sh: what is $1? (--upgrade, --uninstall, --yes, --php-stream X.Y, --remi, --no-php-update, --help)"; exit 2 ;;
     esac
+    shift
 done
 
 if [ -t 1 ] && [ "${TERM:-dumb}" != dumb ]; then
@@ -126,6 +139,179 @@ ok "python: $PY ($("$PY" -c 'import platform; print(platform.python_version())')
 command -v openssl >/dev/null || die "openssl is needed (dnf install -y openssl)"
 ok "openssl: $(openssl version | awk '{print $2}')"
 if command -v nginx >/dev/null; then ok "nginx: $(nginx -v 2>&1 | sed 's/.*\///')"; else warn "nginx is not installed - the dashboard and Settings need it in front"; fi
+# ---------------------------------------------------------------------------
+# PHP, fixed against php2shell - as otp does it
+# ---------------------------------------------------------------------------
+# On 21 October 2026 PHP fixed two remote code execution flaws reached through
+# how PHP takes a request apart before any page runs (CVE-2026-109618,
+# CVE-2026-109619). Fixed upstream: 8.2.35, 8.3.36, 8.4.27, 8.5.12. AlmaLinux
+# 9 rebuilt its streams the same day - php:8.3 is 8.3.36, php:8.2 is 8.2.35,
+# its default 8.0 has the fix backported and keeps its number - so the
+# package's changelog is read as well as the version.
+#
+# What this does: a PHP already fixed is left exactly as it is; one that is
+# not has its packages brought up to the newest build on the stream it is on
+# (never switched to another stream by itself - that would move every PHP
+# site on the machine); where AppStream has no fixed build, Remi's PHP 8.4 is
+# offered (asked, or --remi; never during an upgrade by itself). Either way
+# the guard goes on: upload progress off and strict sessions for every PHP on
+# the machine, and nginx refusing a multipart body to plexmon's pages, which
+# take no request body apart (they read php://input).
+PKG=""
+command -v dnf >/dev/null 2>&1 && PKG=dnf
+[ -z "$PKG" ] && command -v apt-get >/dev/null 2>&1 && PKG=apt
+OS_MAJOR="$(sed -n 's/^VERSION_ID="\{0,1\}\([0-9]*\).*/\1/p' /etc/os-release 2>/dev/null | head -1)"
+PHP_RELOAD=""
+
+php_fpm_units() {
+    local found="" listed unit
+    systemctl cat php-fpm.service >/dev/null 2>&1 && found="php-fpm"
+    listed="$(systemctl list-unit-files --no-legend 'php*-fpm.service' 2>/dev/null || true)"
+    for unit in $(awk '{print $1}' <<< "$listed" | sed 's/\.service$//'); do
+        [[ -n "$unit" && "$unit" != "php-fpm" && "$unit" =~ ^php[0-9.]*-fpm$ ]] && found="$found $unit"
+    done
+    echo "$found"
+}
+php_fpm_bin() {         # the php-fpm that serves the pages: the newest one installed
+    local b
+    b="$(command -v php-fpm 2>/dev/null || true)"
+    [[ -z "$b" && -x /usr/sbin/php-fpm ]] && b=/usr/sbin/php-fpm
+    [[ -z "$b" ]] && b="$(ls -1 /usr/sbin/php-fpm[0-9]* 2>/dev/null | sort -V | tail -n 1 || true)"
+    echo "$b"
+}
+php_fpm_version() {     # from php-fpm itself, not the command-line php
+    local b v
+    b="$(php_fpm_bin)"
+    [[ -n "$b" ]] || { echo ""; return; }
+    v="$("$b" -v 2>/dev/null | head -n 1 | awk '{print $2}')"
+    echo "${v%%[-+~]*}"
+}
+ver_ge() { [[ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n 1)" == "$2" ]]; }
+php_fixed() {           # is the PHP php-fpm runs fixed? 0 yes, 1 no
+    local v b f log
+    v="$(php_fpm_version)"
+    [[ -n "$v" ]] || return 1
+    b="$(echo "$v" | cut -d. -f1,2)"
+    case "$b" in
+        8.2) f=8.2.35 ;; 8.3) f=8.3.36 ;; 8.4) f=8.4.27 ;; 8.5) f=8.5.12 ;;
+        *) if ver_ge "$b" 8.6; then return 0; fi; f="" ;;
+    esac
+    [[ -n "$f" ]] && ver_ge "$v" "$f" && return 0
+    # A backport keeps the old number: the changelog says it instead (read
+    # whole first, then searched - rpm | grep -q dies on the pipe).
+    if [[ "$PKG" == "dnf" ]]; then
+        log="$(rpm -q --changelog php-fpm php-common 2>/dev/null || true)"
+        grep -q 'CVE-2026-109618' <<< "$log" && return 0
+    elif [[ "$PKG" == "apt" ]]; then
+        for log in /usr/share/doc/php*-fpm/changelog.Debian.gz /usr/share/doc/php*-common/changelog.Debian.gz; do
+            [[ -f "$log" ]] || continue
+            grep -q 'CVE-2026-109618' <<< "$(zcat "$log" 2>/dev/null || true)" && return 0
+        done
+    fi
+    return 1
+}
+php_says() {
+    local v
+    v="$(php_fpm_version)"; v="${v:-?}"
+    if php_fixed; then
+        ok "PHP $v has the php2shell fix (CVE-2026-109618, CVE-2026-109619)"
+    else
+        warn "PHP $v does NOT have the php2shell fix (CVE-2026-109618, CVE-2026-109619)"
+    fi
+}
+php_guard() {           # the second layer, for every PHP on the machine
+    local dir
+    for dir in /etc/php.d /etc/php/*/fpm/conf.d /etc/php/*/cli/conf.d; do
+        [[ -d "$dir" ]] || continue
+        if [[ -f "$dir/99-php2shell.ini" ]] && grep -q 'upload_progress.enabled *= *0' "$dir/99-php2shell.ini"; then
+            continue
+        fi
+        install -m 0644 "$HERE/deploy/99-php2shell.ini" "$dir/99-php2shell.ini"
+        PHP_RELOAD=yes
+        ok "$dir/99-php2shell.ini - session upload progress off, sessions strict"
+    done
+}
+remi_php() {
+    [[ "$PKG" == "dnf" ]] || { warn "Remi's repository is for the RHEL family only"; return 1; }
+    say "Remi's repository (rpms.remirepo.net), PHP 8.4"
+    if ! rpm -q remi-release >/dev/null 2>&1; then
+        dnf install -y "https://rpms.remirepo.net/enterprise/remi-release-${OS_MAJOR:-9}.rpm" \
+            || { warn "remi-release could not be installed (is rpms.remirepo.net reachable?)"; return 1; }
+    fi
+    dnf config-manager --set-enabled remi-modular >/dev/null 2>&1 || true
+    dnf module reset -y php || true
+    dnf module enable -y php:remi-8.4 || { warn "php:remi-8.4 could not be enabled"; return 1; }
+    dnf distro-sync -y 'php*'
+    dnf install -y php-fpm php-cli php-common
+}
+ensure_php() {
+    step "PHP, and php2shell"
+    local had_php="" unit
+    if command -v php-fpm >/dev/null 2>&1 || ls /usr/sbin/php-fpm* >/dev/null 2>&1; then had_php=yes; fi
+    if [[ -z "$PHP_UPDATE" ]]; then
+        say "--no-php-update: PHP is left as it is"
+        php_says; php_guard; return 0
+    fi
+    if [[ -n "$had_php" && -z "$USE_REMI" ]] && php_fixed; then
+        say "PHP is installed and fixed: left as it is (updates come with dnf upgrade)"
+        php_says; php_guard; return 0
+    fi
+    if [[ "$PKG" == "dnf" ]]; then
+        if [[ -n "$USE_REMI" ]]; then
+            remi_php || true
+        elif [[ -n "$had_php" ]]; then
+            say "PHP is installed but not fixed: the packages that are there are updated"
+            dnf upgrade -y --refresh 'php*' || warn "dnf upgrade 'php*' did not go through"
+        else
+            local streams now
+            streams="$(dnf -q module list php 2>/dev/null || true)"
+            now="$(dnf -q module list --enabled php 2>/dev/null || true)"
+            now="$(awk '/^php /{print $2; exit}' <<< "$now")"
+            if [[ -z "$now" ]] && grep -qE "^php +${PHP_STREAM//./\\.}( |$)" <<< "$streams"; then
+                say "PHP comes from the stream php:$PHP_STREAM"
+                dnf module enable -y "php:$PHP_STREAM" || true
+            elif [[ -n "$now" ]]; then
+                say "the PHP stream php:$now is enabled already: it is kept"
+            fi
+            dnf install -y php-fpm php-cli php-common || warn "php-fpm could not be installed"
+        fi
+    elif [[ "$PKG" == "apt" ]]; then
+        apt-get update || true
+        if [[ -n "$had_php" ]]; then
+            local have
+            have="$(dpkg-query -W -f='${Package} ${Status}\n' 'php*' 2>/dev/null | awk '/ installed$/{print $1}' | tr '\n' ' ' || true)"
+            [[ -n "$have" ]] && { apt-get install -y --only-upgrade $have || true; }
+        else
+            apt-get install -y php-fpm php-cli || true
+        fi
+    else
+        warn "this distribution is not one this knows: install php-fpm yourself, fixed against php2shell"
+    fi
+    if ! php_fixed && [[ "$PKG" == "dnf" && -z "$USE_REMI" ]]; then
+        warn "the PHP AppStream has here is not fixed yet: $(php_fpm_version)"
+        # Never by itself in an upgrade: it moves every PHP site to 8.4.
+        if [[ "$MODE" == upgrade || "$YES" == 1 ]]; then
+            say "Remi's PHP 8.4 is not taken by itself: ./install.sh --upgrade --remi"
+        elif [ -t 0 ] && ask "Take PHP 8.4 from Remi's repository instead (fixed in 8.4.27)?"; then
+            remi_php || true
+        fi
+    fi
+    php_says
+    if ! php_fixed; then
+        warn "Until it is fixed: dnf upgrade --refresh 'php*' as soon as the fixed build is out,"
+        warn "and ./install.sh --upgrade. plexmon's pages are guarded meanwhile: upload progress"
+        warn "is off everywhere and nginx refuses every multipart body to /smart/."
+    fi
+    php_guard
+    # The new build only counts once php-fpm runs it.
+    for unit in $(php_fpm_units); do
+        systemctl is-active --quiet "$unit" 2>/dev/null || continue
+        systemctl restart "$unit" || warn "$unit would not restart"
+    done
+    PHP_RELOAD=""
+}
+ensure_php
+
 FPM_USER=""
 for f in /etc/php-fpm.d/www.conf /etc/php/*/fpm/pool.d/www.conf; do
     [ -f "$f" ] && FPM_USER=$(sed -n 's/^\s*user\s*=\s*\(\S*\).*/\1/p' "$f" | head -1) && break
@@ -246,6 +432,8 @@ step "nginx: the Plex vhost"
 if [ -f "$NGINX_SITE" ]; then
     if grep -q "include /etc/nginx/plexmon/tls.conf" "$NGINX_SITE"; then
         ok "$NGINX_SITE is plexmon's already"
+        # php2shell: plexmon's PHP pages refuse a form or multipart body.
+        PLEXMON_WEB_GROUP="$WEB_GROUP" "$PY" "$LIB/plexmon_admin.py" --nginx-adopt | sed -n '2,$p' | sed 's/^/    /'
     else
         say "its ssl_* lines go to /etc/nginx/plexmon/tls.conf as they are, and every server"
         say "answers /.well-known/acme-challenge/ for the CA - nothing else changes; a copy"

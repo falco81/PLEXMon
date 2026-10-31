@@ -329,6 +329,7 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
 </header>
 
 <div id="offline" class="offline" hidden></div>
+<div id="phpsafety" class="offline" hidden></div>
 <div id="problems" class="offline warnish" hidden></div>
 
 <div class="tabs" role="tablist">
@@ -567,6 +568,7 @@ plexmon --upgrade-status                   # an upgrade started on these pages</
 <script nonce="<?= h($nonce) ?>">
 var ME = <?= json_encode($me, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 var STATUS = <?= $initial ? json_encode($initial, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) : 'null' ?>;
+var PHP_SAFETY = <?= ($me['role'] ?? '') === 'fulladmin' ? json_encode(pm_php_safety(), JSON_HEX_TAG | JSON_HEX_AMP) : 'null' ?>;
 </script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/core.js?v=<?= h(PM_VERSION) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/cols.js?v=<?= h(PM_VERSION) ?>"></script>

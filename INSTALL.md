@@ -7,8 +7,8 @@ Serverem, Python 3.9 nebo novější (pro dálkové ovládání televizí 3.10+,
 ## 1. Nová instalace i přechod ze současného plexmonu
 
 ```bash
-tar xzf plexmon-2.0.0.tar.gz
-cd plexmon-2.0.0
+tar xzf plexmon-X.Y.Z.tar.gz
+cd plexmon-X.Y.Z
 sudo ./install.sh
 ```
 
@@ -35,7 +35,19 @@ Co `install.sh` udělá na serveru se současným plexmonem (`plex-status.servic
    Kopie původního souboru je v `/var/lib/plexmon/backup/`.
 6. **Certifikát**, který nginx má (`/etc/nginx/certs/server.pem` a `.key`),
    převezme do Nastavení tak, jak je - nic se nepřepisuje.
-7. **První účet**: `admin` s náhodným heslem (vypíše ho a uloží do
+7. **PHP a php2shell** (CVE-2026-109618, CVE-2026-109619 - vzdálené spuštění
+   kódu, opraveno 21. 10. 2026) - stejně jako otp, při každé instalaci i
+   aktualizaci (i té ze stránek): PHP, které opravu má, nechá být; jinak
+   aktualizuje balíčky PHP na proudu, na kterém jsou (`dnf upgrade --refresh
+   'php*'`; AlmaLinux 9: php:8.3 = 8.3.36, php:8.2 = 8.2.35, výchozí 8.0 má
+   opravu backportovanou a číslo verze si nechává - proto čte i changelog
+   balíčku) a restartuje php-fpm. Kde AppStream opravené PHP nemá, nabídne PHP
+   8.4 z repozitáře Remi (jen na dotaz nebo `--remi`, nikdy samo při
+   aktualizaci). Navíc druhá vrstva: `/etc/php.d/99-php2shell.ini` a nginx
+   odmítá formulářové a multipart tělo stránkám pod `/smart/`
+   (`/etc/nginx/plexmon/php-guard.conf`, ověřeno `nginx -t`). Volby:
+   `--php-stream X.Y`, `--remi`, `--no-php-update`.
+8. **První účet**: `admin` s náhodným heslem (vypíše ho a uloží do
    `/var/lib/plexmon/first-login.txt`); při prvním přihlášení si zvolíte vlastní.
 
 Pak: `https://<server>/smart/settings/`.

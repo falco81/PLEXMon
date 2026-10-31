@@ -4,6 +4,33 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.0.3 - 2026-10-31
+
+PHP and php2shell (CVE-2026-109618, CVE-2026-109619 - remote code execution
+through how PHP takes a request apart, fixed 21 October 2026), as otp does it.
+
+- **install.sh brings PHP up to the fixed release** - on every install and
+  every upgrade, so also when the upgrade comes from Settings → Upgrades. A PHP
+  already fixed is left exactly as it is; one that is not has its packages
+  updated on the stream it is on (`dnf upgrade --refresh 'php*'`; AlmaLinux 9:
+  php:8.3 is 8.3.36, php:8.2 is 8.2.35, the default 8.0 has the fix backported
+  and keeps its number - so the packages' changelog is read as well as the
+  version), and php-fpm is restarted. Where AppStream has no fixed build,
+  Remi's PHP 8.4 is offered (asked; `./install.sh --upgrade --remi`; never
+  taken by itself during an upgrade - it would move every PHP site on the
+  machine). `--php-stream X.Y` for a machine without PHP, `--no-php-update` to
+  leave it alone (it is still checked and guarded).
+- **The guard as a second layer**: `/etc/php.d/99-php2shell.ini` (upload
+  progress off, strict sessions) for every PHP on the machine, and nginx
+  refusing a form or multipart body to plexmon's PHP pages under `/smart/`
+  (`/etc/nginx/plexmon/php-guard.conf`, included in the vhost's PHP location,
+  checked with `nginx -t` and put back on a refusal). The pages never had PHP
+  take a body apart - they read JSON or a file from php://input.
+- Settings says it: a red bar at the top for a full administrator while the
+  PHP running the pages may lack the fix (gone once the daemon reads the fix in
+  the packages' changelog), the line in *Problems*, the PHP and its state in
+  About, and `plexmon --check` (`PHP 8.x.y has the php2shell fix`).
+
 ## 2.0.2 - 2026-10-31
 
 - A secret kept in Settings (the ACME DNS tokens, keys and passwords) is shown

@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.0.2'
+__version__ = '2.0.3'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -82,6 +82,7 @@ NGINX_DIR = Path(os.environ.get('PLEXMON_NGINX', '/etc/nginx'))
 NGINX_SNIPPETS = NGINX_DIR / 'plexmon'
 NGINX_TLS_CONF = NGINX_SNIPPETS / 'tls.conf'
 NGINX_ACME_CONF = NGINX_SNIPPETS / 'acme.conf'
+NGINX_PHP_GUARD = NGINX_SNIPPETS / 'php-guard.conf'
 NGINX_SITE = Path(os.environ.get('PLEXMON_NGINX_SITE', str(NGINX_DIR / 'conf.d' / 'plex.conf')))
 NGINX_CERT = Path(os.environ.get('PLEXMON_NGINX_CERT', str(NGINX_DIR / 'certs' / 'server.pem')))
 NGINX_KEY = Path(os.environ.get('PLEXMON_NGINX_KEY', str(NGINX_DIR / 'certs' / 'server.key')))
@@ -2060,6 +2061,7 @@ TLS_LINES = re.compile(r'^\s*(ssl_certificate|ssl_certificate_key|ssl_protocols|
                        re.I)
 INCLUDE_TLS = 'include %s;' % NGINX_TLS_CONF
 INCLUDE_ACME = 'include %s;' % NGINX_ACME_CONF
+INCLUDE_PHP_GUARD = 'include %s;' % NGINX_PHP_GUARD
 
 
 def _server_blocks(text):
@@ -2213,6 +2215,71 @@ def nginx_adopt(dry=False):
         return False, 'left as it was: %s' % e
     return True, 'adopted: %d line(s) went into %s; the CA is answered from %s' % (
         len(moved), NGINX_TLS_CONF, ACME_WEBROOT)
+
+
+PHP_GUARD_TEXT = '''# Written by plexmon - php2shell (CVE-2026-109618, CVE-2026-109619), as otp
+# guards its pages. plexmon's pages read what is sent to them from php://input
+# (JSON, or a file as it is) and never have PHP take a body apart: a form or a
+# multipart body is refused here, before PHP sees it. Updating PHP is the fix
+# (install.sh does it); this stays as a second layer.
+if ($http_content_type ~* "^[[:space:]]*(multipart/|application/x-www-form-urlencoded)") {
+    return 415;
+}
+'''
+
+PHP_LOCATION_RE = re.compile(r'^([ \t]*)location\s+~\*?\s+[^{\n]*php[^{\n]*\{[ \t]*$', re.M)
+
+
+def nginx_php_guard(dry=False):
+    """php-guard.conf put in every PHP location of the Plex vhost (the pages
+    under /smart/), on every install and upgrade: (changed, words). Kept as it
+    was when nginx does not take it."""
+    text = nginx_conf_text()
+    if not text:
+        return False, '%s is not there' % NGINX_SITE
+    found = list(PHP_LOCATION_RE.finditer(text))
+    if not found:
+        return False, 'no PHP location in %s - nothing to guard' % NGINX_SITE
+    have = ''
+    try:
+        have = NGINX_PHP_GUARD.read_text(encoding='utf-8')
+    except OSError:
+        pass
+    out, at, added = [], 0, 0
+    for m in found:
+        end = m.end()
+        nxt = text[end:end + 400]
+        out.append(text[at:end])
+        if INCLUDE_PHP_GUARD not in nxt.split('}', 1)[0]:
+            out.append('\n%s    %s' % (m.group(1), INCLUDE_PHP_GUARD))
+            added += 1
+        at = end
+    out.append(text[at:])
+    new_text = ''.join(out)
+    if not added and have == PHP_GUARD_TEXT:
+        return False, 'the PHP pages are guarded already (%s)' % NGINX_PHP_GUARD
+    if dry:
+        return True, new_text
+    snap = _snapshot([NGINX_SITE, NGINX_PHP_GUARD])
+    try:
+        NGINX_SNIPPETS.mkdir(parents=True, exist_ok=True)
+        write_replacing(NGINX_PHP_GUARD, PHP_GUARD_TEXT, 0o644)
+        if added:
+            backup = STATE_DIR / 'backup'
+            backup.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(str(NGINX_SITE), str(backup / ('%s.%s' % (
+                NGINX_SITE.name, time.strftime('%Y%m%d-%H%M%S')))))
+            mode = os.stat(str(NGINX_SITE)).st_mode & 0o777
+            write_replacing(NGINX_SITE, new_text, mode)
+        ok, said = nginx_test()
+        if not ok:
+            raise ValueError('nginx does not take it: %s' % said)
+        nginx_reload()
+    except Exception as e:                              # noqa: BLE001
+        _put_back(snap)
+        return False, 'left as it was: %s' % e
+    return True, 'the PHP pages are guarded: a form or multipart body is refused (%s)' % (
+        NGINX_PHP_GUARD)
 
 
 def _snapshot(paths):
@@ -4485,6 +4552,83 @@ def plex_version():
     return ''
 
 
+# ---------------------------------------------------------------------------
+# PHP and php2shell, as the daemon can tell from outside it (as otp)
+# ---------------------------------------------------------------------------
+# The pages say what version of PHP they run on; a version below the fixed
+# ones (8.2.35, 8.3.36, 8.4.27, 8.5.12) is "may be affected", because a
+# distribution that backported the fix keeps its old number. The packages'
+# own changelog says whether the fix is in, and the daemon can read it where
+# PHP cannot: so the warning on the pages goes away when the fix is there.
+PHP_FIXED = {'8.2': (8, 2, 35), '8.3': (8, 3, 36), '8.4': (8, 4, 27), '8.5': (8, 5, 12)}
+_PHP_STATE = {'at': 0, 'state': None, 'busy': False}
+
+
+def _php_state_now():
+    out = {'version': '', 'fixed': None, 'how': ''}
+    import glob
+    fpm = sorted(glob.glob('/usr/sbin/php-fpm*'))
+    php = (fpm[-1] if fpm else None) or shutil.which('php')
+    if php:
+        try:
+            line = subprocess.run([php, '-v'], capture_output=True, text=True,
+                                  timeout=10).stdout.strip()
+            m = re.match(r'^PHP\s+(\d+\.\d+\.\d+)', line)
+            out['version'] = m.group(1) if m else ''
+        except (OSError, subprocess.SubprocessError):
+            pass
+    m = re.match(r'^(\d+)\.(\d+)\.(\d+)', out['version'])
+    if m:
+        v = tuple(int(x) for x in m.groups())
+        want = PHP_FIXED.get('%d.%d' % v[:2])
+        if (want and v >= want) or (not want and v[:2] > (8, 5)):
+            out.update(fixed=True, how='version')
+    if not out['fixed']:
+        said = ''
+        rpm = shutil.which('rpm')
+        if rpm:
+            for pkg in ('php-fpm', 'php-common'):
+                try:
+                    said += subprocess.run([rpm, '-q', '--changelog', pkg], capture_output=True,
+                                           text=True, timeout=20).stdout
+                except (OSError, subprocess.SubprocessError):
+                    pass
+        else:
+            import gzip
+            for f in glob.glob('/usr/share/doc/php*-fpm/changelog.Debian.gz') + glob.glob(
+                    '/usr/share/doc/php*-common/changelog.Debian.gz'):
+                try:
+                    with gzip.open(f, 'rt', errors='replace') as g:
+                        said += g.read(200000)
+                except OSError:
+                    pass
+        if 'CVE-2026-109618' in said:
+            out.update(fixed=True, how='changelog')
+        elif out['version']:
+            out['fixed'] = False
+    return out
+
+
+def php_state(wait=False):
+    """What PHP php-fpm runs and whether it has the php2shell fix - read in a
+    thread of its own once an hour (rpm --changelog takes seconds), so a page
+    asking never waits; `wait` for the command line."""
+    if wait and (_PHP_STATE['state'] is None or time.time() - _PHP_STATE['at'] > 3600):
+        _PHP_STATE.update(state=_php_state_now(), at=time.time())
+    elif time.time() - _PHP_STATE['at'] > 3600 and not _PHP_STATE['busy']:
+        _PHP_STATE['busy'] = True
+
+        def go():
+            try:
+                _PHP_STATE['state'] = _php_state_now()
+            except Exception:                           # noqa: BLE001
+                pass
+            finally:
+                _PHP_STATE.update(at=time.time(), busy=False)
+        threading.Thread(target=go, name='plexmon-php', daemon=True).start()
+    return dict(_PHP_STATE['state'] or {'version': '', 'fixed': None, 'how': ''})
+
+
 def software_info():
     if _SOFTWARE['state'] is not None and time.time() - _SOFTWARE['at'] < 600:
         return dict(_SOFTWARE['state'])
@@ -4524,6 +4668,7 @@ def software_info():
         out['programs'][name] = m.group(1) if m else (line[:60] if line else '')
     out['php_cli'] = out['programs'].pop('php', '')
     out['plex'] = plex_version()
+    out['php'] = php_state()
     _SOFTWARE.update(at=time.time(), state=out)
     return dict(out)
 
@@ -5837,6 +5982,11 @@ class Admin(object):
             problems.append('the last order from the ACME CA failed: %s' % ac.get('said'))
         if BAD_CONFIG:
             problems.append('%s: %s' % (CONFIG_FILE, ', '.join(BAD_CONFIG)))
+        ph = php_state()
+        if ph.get('fixed') is False:
+            problems.append('PHP %s does not have the php2shell fix (CVE-2026-109618, '
+                            'CVE-2026-109619): ./install.sh --upgrade (or Settings → Upgrades) '
+                            'brings it up to date' % ph.get('version'))
         mon = {}
         try:
             mon = self.monitor() if self.monitor else {}
@@ -5854,6 +6004,7 @@ class Admin(object):
                              'size': self.store.db.size()},
                 'counts': self.store.counts(), 'lang': CONFIG.get('ui_lang') or 'cs',
                 'monitor': mon, 'cert': cert, 'acme_on': bool(CONFIG.get('acme')),
+                'php': php_state(),
                 'newer': newest if newest and _ver_tuple(newest) > _ver_tuple(__version__)
                 else '', 'high_security': False, 'hisec_waived': [],
                 'nodes': [{'name': node_name(), 'alive': True, 'age': 0,
@@ -6693,6 +6844,16 @@ def _settings_checks(store, s, say):
                'upgrades from the pages: %s and plexmon-upgrade.path' % UPGRADE_HELPER)
     keys = sorted((LIB_DIR / 'release-keys').glob('*.pub'))
     bad += one(bool(keys), 'release keys: %s' % (', '.join(k.name for k in keys) or 'none'))
+    ph = php_state(wait=True)
+    if ph.get('version'):
+        bad += one(bool(ph.get('fixed')), 'PHP %s %s' % (
+            ph['version'], 'has the php2shell fix' if ph.get('fixed')
+            else 'does NOT have the php2shell fix (CVE-2026-109618/109619) - '
+                 './install.sh --upgrade puts it right'))
+    guard = nginx_conf_text()
+    if PHP_LOCATION_RE.search(guard or ''):
+        bad += one(INCLUDE_PHP_GUARD in guard, 'the PHP pages refuse a form or multipart body '
+                   '(%s)' % NGINX_PHP_GUARD)
     return bad
 
 
@@ -7088,6 +7249,8 @@ def cli_main(argv=None, mon=None):
     if args.nginx_adopt:
         changed, words = nginx_adopt()
         print((pal.ok_line if changed or 'already' in words else pal.bad_line)(words))
+        gch, gwords = nginx_php_guard()
+        print((pal.ok_line if gch or 'already' in gwords else pal.bad_line)(gwords))
         return 0 if changed or 'already' in words else 1
     if args.plex_cert:
         pv = plex_view(store)

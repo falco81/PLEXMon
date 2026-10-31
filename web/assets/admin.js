@@ -27,6 +27,23 @@ function roleTone(role) {
 }());
 dressButtons(document);
 
+/* ---- PHP and php2shell, said to an administrator (as on otp) -------------- */
+(function phpSafety() {
+  var box = $('phpsafety'), s = window.PHP_SAFETY;
+  if (!box || !s || s.patched) return;
+  /* A distribution that backported the fix keeps the old number; the daemon
+     reads the packages' changelog, and when it says the fix is in, so be it. */
+  if (STATUS && STATUS.php && STATUS.php.fixed) return;
+  box.hidden = false;
+  box.classList.toggle('warnish', !!s.guarded);
+  box.textContent = 'PHP ' + s.version + ' running this page may have php2shell '
+    + '(CVE-2026-109618, CVE-2026-109619): remote code execution by anybody who can reach the '
+    + 'web server. Update it - ' + (s.needs ? s.needs + ' or later, ' : '') + 'or the package '
+    + 'your distribution fixed (dnf upgrade \'php*\') - and restart php-fpm; ./install.sh '
+    + '--upgrade does it. A distribution that backported the fix keeps the old number: check '
+    + 'rpm -q --changelog php-fpm | grep CVE-2026-109618.';
+}());
+
 /* ---- tabs ------------------------------------------------------------------ */
 var TABS = ['settings', 'events'];
 window.optShowTab = function (name) {
@@ -1815,6 +1832,10 @@ function drawSoftware(host) {
       box.appendChild(el('h3', 'sw-h', 'The pages’ PHP (as php-fpm runs it here)'));
       box.appendChild(peekFacts([['PHP', pages.php], ['How', pages.sapi], ['OPcache', pages.opcache ? 'on' : 'off'],
                                  ['Web server', pages.server || '–']]));
+      var phs = (STATUS && STATUS.php) || {};
+      if (phs.version) box.appendChild(el('p', 'note ' + (phs.fixed ? 'good' : (phs.fixed === false ? 'bad' : '')),
+        'PHP ' + phs.version + (phs.fixed ? ' has the php2shell fix (CVE-2026-109618, CVE-2026-109619)' + (phs.how === 'changelog' ? ' - backported, as its changelog says' : '')
+          : (phs.fixed === false ? ' does NOT have the php2shell fix (CVE-2026-109618, CVE-2026-109619): ./install.sh --upgrade, or Settings → Upgrades, brings it up to date' : ''))));
       var ex = el('div', 'sw-ext');
       Object.keys(pages.extensions || {}).forEach(function (k) {
         var v = pages.extensions[k];
