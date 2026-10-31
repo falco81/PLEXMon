@@ -4,6 +4,22 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.2.2 - 2026-10-31
+
+- **System updates after a restart by itself**: the page no longer stays in
+  a strange state. The restart did happen, but the page went on showing what
+  was said before it - *needs a restart* (the update's own words, kept from
+  before the boot) and *looking…* (a look for updates started just after the
+  update, killed by the restart). Now:
+  - with *Restart by itself*, the server is restarted straight after the
+    update, with no look for updates in between to be cut off;
+  - after every boot what was said before it is put right (*updated -
+    restarted*) and the updates are looked for again once by themselves;
+  - a look or an update that plexmon or the server cut off is shown as such,
+    never as running for ever;
+  - a restart by itself that cannot be asked is said on the card and in
+    Events (before, only in the log).
+
 ## 2.2.1 - 2026-10-31
 
 - **System updates**: *restart after the update* (and *restart needed*) on a

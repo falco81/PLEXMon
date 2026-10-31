@@ -187,7 +187,7 @@ def thread(name, fn, *args):
 # Restart and power off
 # ---------------------------------------------------------------------------
 POWER_LIVE_S = 1800
-STARTED = {'at': time.time()}
+STARTED = {'at': time.time(), 'daemon': False}   # daemon: set by tick()
 
 
 def power_plan(store):
@@ -590,9 +590,18 @@ def osup_row(store):
     return meta(store, 'host:osup:row', {}) or {}
 
 
+def _osup_stale(row, flag):
+    """Running, says the database - but not in this daemon, and begun before it
+    or the server started: a restart (of the server or of plexmon) ended it."""
+    since = max(boot_time() or 0, STARTED['at'] if STARTED['daemon'] else 0)
+    return row.get('state') == 'running' and not OSUP_WORK[flag] and \
+        float(row.get('began') or row.get('at') or 0) < since
+
+
 def osup_busy(store):
-    return osup_plan(store).get('state') == 'running' or osup_check_row(store).get('state') == \
-        'running'
+    p, c = osup_plan(store), osup_check_row(store)
+    return (p.get('state') == 'running' and not _osup_stale(dict(p, began=p.get('at')), 'run')) \
+        or (c.get('state') == 'running' and not _osup_stale(c, 'check'))
 
 
 def _exclude():
@@ -710,15 +719,20 @@ def osup_start(store, reboot, by, security=False):
             event(store, 'settings', 'the update of the system: %s' % (row.get('said') or
                                                                        plan['state']),
                   'info' if plan['state'] == 'done' else 'bad')
+        if plan['state'] == 'done' and row.get('reboot') and plan['reboot'] == 'auto':
+            # Restarted now; looked for updates again once it is up (osup_after_boot).
+            try:
+                power_ask(store, 'reboot', 'plexmon (after the update)', 'the update needs it')
+                return
+            except ValueError as e:
+                log('the restart after the update: %s' % e, 'warn')
+                row['said'] = '%s - the restart by itself failed: %s' % (row.get('said'), e)
+                put_meta(store, 'host:osup:row', row)
+                event(store, 'settings', 'the restart after the update failed: %s' % e, 'bad')
         try:
             osup_check(store, 'plexmon (after the update)')
         except ValueError:
             pass
-        if plan['state'] == 'done' and row.get('reboot') and plan['reboot'] == 'auto':
-            try:
-                power_ask(store, 'reboot', 'plexmon (after the update)', 'the update needs it')
-            except ValueError as e:
-                log('the restart after the update: %s' % e, 'warn')
     thread('osup', go)
     return plan
 
@@ -736,10 +750,19 @@ def osup_view(store):
         if lines and c and c.get('mark') == '%s|%s' % (p.get('plan') or '', p.get('began') or ''):
             at = max((i for i, ln in enumerate(lines) if ln == c.get('last')), default=None)
             p['lines'] = lines[at + 1:] if at is not None else lines
+    # What was said before the server last started is over (2.2.2): an update's
+    # "a restart is needed" once it has restarted, a look killed by the restart.
+    boot = boot_time() or 0
+    if _osup_stale(chk, 'check'):
+        chk = dict(chk, state='done', checked=chk.get('began'), interrupted=True,
+                   error='stopped by the restart - looked again in a minute')
+    stale_row = float(row.get('at') or 0) < boot
     node = {'name': node_name(), 'me': True, 'alive': True,
             'row': row if row.get('plan') == plan.get('id') else {}, 'check': chk,
             'reboot': bool(row.get('reboot') and row.get('plan') == plan.get('id')
-                           and not power_busy(store)) or bool(chk.get('reboot_now')),
+                           and not stale_row and not power_busy(store))
+            or bool(chk.get('reboot_now') and float(chk.get('checked') or 0) > boot),
+            'restarted': bool(row.get('reboot') and stale_row),
             'started': STARTED['at']}
     return {'plan': {} if hidden else plan, 'nodes': [node], 'now': time.time(),
             'cluster': False, 'helper': True, 'pm': pm(), 'plex_too': bool(int(
@@ -770,7 +793,36 @@ def osup_cancel(store, by):
     return 'dnf is putting packages in: it finishes - stopping it in the middle would break them'
 
 
+def osup_after_boot(store):
+    """After a restart (2.2.2): what the update and the look said before it is
+    put right, and the updates looked for again - once per boot."""
+    boot = boot_time() or 0
+    if not boot or store.get_meta('osup:boot:seen') == str(int(boot)):
+        return
+    store.set_meta('osup:boot:seen', str(int(boot)))
+    plan, chk = osup_plan(store), osup_check_row(store)
+    if plan.get('state') == 'running' and _osup_stale(dict(plan, began=plan.get('at')), 'run'):
+        plan['state'] = 'failed'
+        put_meta(store, 'host:osup:plan', plan)
+        row = osup_row(store)
+        row.update(state='failed', at=time.time(), said='plexmon or the server restarted while '
+                   'dnf ran - see dnf history')
+        put_meta(store, 'host:osup:row', row)
+    row = osup_row(store)
+    if row.get('reboot') and row.get('state') == 'done' and float(row.get('at') or 0) < boot:
+        row.update(reboot=False, said='updated - restarted')
+        put_meta(store, 'host:osup:row', row)
+    if not chk or pm() != 'dnf':
+        return
+    if _osup_stale(chk, 'check') or float(chk.get('checked') or 0) < boot:
+        try:
+            osup_check(store, 'plexmon (after a restart)')
+        except ValueError:
+            pass
+
+
 def osup_schedule(store):
+    osup_after_boot(store)
     if cfg('osup_check'):
         day = due('daily', '', cfg('osup_check_at', '06:15'),
                   store.get_meta('osup:check:day') or '')
@@ -2595,6 +2647,7 @@ _TICK = {'at': 0.0}
 
 
 def tick(store):
+    STARTED['daemon'] = True
     if time.time() - _TICK['at'] < 50:
         return
     _TICK['at'] = time.time()

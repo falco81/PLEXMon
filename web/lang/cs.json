@@ -7991,6 +7991,22 @@
   "xs0746": {
    "source": "dnf updates every package, Plex Media Server too (it restarts). Plex goes on playing meanwhile; a restart it needs is offered at the end.",
    "text": "dnf aktualizuje každý balíček, i Plex Media Server (restartuje se). Restart, který bude potřeba, se nabídne na konci."
+  },
+  "xs0747": {
+   "source": "stopped by the restart - looked again in a minute",
+   "text": "zastaveno restartem - za minutu se zjistí znovu"
+  },
+  "xs0748": {
+   "source": "updated - restarted",
+   "text": "aktualizováno - restartováno"
+  },
+  "xs0749": {
+   "source": "updated - a restart is needed",
+   "text": "aktualizováno - je potřeba restart"
+  },
+  "xs0750": {
+   "source": "plexmon or the server restarted while dnf ran - see dnf history",
+   "text": "plexmon nebo server se restartoval během běhu dnf - viz dnf history"
   }
  },
  "patterns": {
@@ -10113,6 +10129,14 @@
   "xp0147": {
    "source": "{0} need a restart after this update: {1}.",
    "text": "{0} budou po této aktualizaci potřebovat restart: {1}."
+  },
+  "xp0148": {
+   "source": "the restart after the update failed: {0}",
+   "text": "restart po aktualizaci selhal: {0}"
+  },
+  "xp0149": {
+   "source": "{0} - the restart by itself failed: {1}",
+   "text": "{0} - automatický restart selhal: {1}"
   }
  },
  "rich": {
