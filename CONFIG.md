@@ -1,172 +1,172 @@
-# Konfigurace plexmon
+# plexmon configuration
 
-Vše se nastavuje v **jednom** JSON objektu v `/etc/plex-status/config.json`.
-Cokoli, co v souboru neuvedeš, si podrží výchozí hodnotu — klidně tam nech jen
-to, co opravdu měníš.
+Everything is set in **one** JSON object in `/etc/plex-status/config.json`.
+Anything you leave out of the file keeps its default value — feel free to keep
+only what you actually change.
 
-JSON neumí komentáře, takže tenhle soubor slouží jako referenční příručka
-a čistou šablonu k vložení najdeš na konci.
+JSON has no comments, so this file serves as the reference manual,
+and a clean template to paste is at the end.
 
 ```bash
 mkdir -p /etc/plex-status
-# ... vlož obsah ...
+# ... paste the content ...
 systemctl restart plex-status.service
-plexmon --diag        # sekce "effective settings" ukáže, co doopravdy platí
+plexmon --diag        # the "effective settings" section shows what actually applies
 ```
 
-Neznámý klíč se **nepoužije a démon to nahlásí** (v logu, v `--diag` i v
-`--check`) — překlep tedy nezapadne. Totéž platí pro rozbitý JSON.
+An unknown key is **not used, and the daemon reports it** (in the log, in `--diag` and in
+`--check`) — so a typo does not go unnoticed. The same holds for broken JSON.
 
-Každou volbu lze alternativně nastavit proměnnou prostředí s prefixem
-`PLEXMON_`, např. `PLEXMON_TEMP_WARN=55`. Prostředí má přednost před souborem.
+Every option can alternatively be set by an environment variable with the prefix
+`PLEXMON_`, e.g. `PLEXMON_TEMP_WARN=55`. The environment takes precedence over the file.
 
 ---
 
-## Teploty
+## Temperatures
 
-| volba | výchozí | význam |
+| option | default | meaning |
 |---|---|---|
-| `temp_warn` | `60` | °C, od kdy hlásit plotnový disk jako teplý |
-| `temp_crit` | `70` | °C, od kdy hlásit kritickou teplotu |
-| `temp_warn_nvme` | `70` | totéž pro NVMe, které nehlásí vlastní limity |
+| `temp_warn` | `60` | °C at which a platter disk is reported as warm |
+| `temp_crit` | `70` | °C at which a critical temperature is reported |
+| `temp_warn_nvme` | `70` | the same for NVMe drives that report no limits of their own |
 | `temp_crit_nvme` | `80` | |
 
-Práh se pro každý disk vybírá v tomhle pořadí:
+The threshold for each disk is chosen in this order:
 
-1. **co hlásí sám disk** — zná svoje zatížitelnost nejlíp (tvůj Intel hlásí
-   77 °C varování / 80 °C kritické)
-2. **NVMe výchozí hodnoty**, pokud jde o NVMe a nic nehlásí
-3. **globální hodnoty**, určené pro plotnové disky
+1. **what the disk itself reports** — it knows its own tolerances best (your Intel reports
+   77 °C warning / 80 °C critical)
+2. **the NVMe defaults**, if it is an NVMe drive and reports nothing
+3. **the global values**, meant for platter disks
 
-Flash snese víc než plotny: NVMe při 60 °C je běžný stav, plotnový disk při
-60 °C už ne. Kdyby se na NVMe použily globální prahy, hlásil by poplach dávno
-předtím, než by výrobce považoval teplotu za problém.
+Flash takes more than platters: an NVMe drive at 60 °C is normal, a platter disk at
+60 °C is not. If the global thresholds were used for NVMe, it would raise an alarm long
+before the manufacturer would consider the temperature a problem.
 
-## Uspávání disků
+## Disk spin-down
 
-| volba | výchozí | význam |
+| option | default | meaning |
 |---|---|---|
-| `spindown_after_s` | `900` | po kolika sekundách bez I/O považovat disk za uspaný |
+| `spindown_after_s` | `900` | after how many seconds without I/O a disk is considered spun down |
 
-Je to **předpoklad, ne měření** — démon se disku na stav nikdy neptá, protože
-přes USB most se na odpověď nedá spolehnout a dotaz by disk probudil. Skutečnou
-hodnotu zjistíš skriptem `spindown-info.sh`. Démon si předpoklad pasivně hlídá:
-když čítač roztočení naroste, aniž by disk kdy hlásil jako uspaný, upozorní na
-to v `plexmon --check`.
+This is **an assumption, not a measurement** — the daemon never asks the disk for its state, because
+over a USB bridge the answer cannot be relied on and the query would wake the disk. You find the actual
+value with the `spindown-info.sh` script. The daemon watches the assumption passively:
+when the spin-up counter grows without the disk ever having been reported as spun down, it points
+this out in `plexmon --check`.
 
-| volba | výchozí | význam |
+| option | default | meaning |
 |---|---|---|
-| `bridge_wakes_siblings` | `true` | disky na jednom USB mostu sdílejí stav napájení |
+| `bridge_wakes_siblings` | `true` | disks on one USB bridge share their power state |
 
-Vícepozicové USB skříně roztáčejí všechny své disky společně. Se zapnutou volbou
-se disk, jehož soused pracuje, hlásí jako točící se (protože se točí) a smí se
-z něj číst SMART zadarmo. Disky na **jiném** mostu to neovlivní. Nastav `false`
-pro skříně, které opravdu napájejí každou pozici zvlášť.
+Multi-bay USB enclosures spin all their disks up together. With this option on,
+a disk whose neighbour is working is reported as spinning (because it is spinning) and SMART
+may be read from it for free. Disks on a **different** bridge are not affected. Set `false`
+for enclosures that really power each bay separately.
 
-| volba | výchozí | význam |
+| option | default | meaning |
 |---|---|---|
-| `use_hdparm` | `false` | ptát se na stav napájení přes hdparm |
-| `wake_standby` | `false` | číst SMART i z uspaného disku při běžném běhu |
+| `use_hdparm` | `false` | ask for the power state through hdparm |
+| `wake_standby` | `false` | read SMART even from a spun-down disk during a normal run |
 
-Obojí nech vypnuté. `hdparm -C` přes JMicron most vrací nesmyslné výsledky
-a navíc disk probudí. `wake_standby` ruší hlavní záruku celého démona.
+Leave both off. `hdparm -C` over a JMicron bridge returns nonsense
+and wakes the disk as well. `wake_standby` breaks the main guarantee of the whole daemon.
 
-## Čtení SMART
+## SMART reads
 
-| volba | výchozí | význam |
+| option | default | meaning |
 |---|---|---|
-| `smart_min_interval` | `300` | minimální odstup mezi rutinními čteními SMART (s) |
-| `smart_daily_at` | `4` | hodina, kdy jednou denně přečíst SMART ze všech disků |
+| `smart_min_interval` | `300` | minimum gap between routine SMART reads (s) |
+| `smart_daily_at` | `4` | the hour at which SMART is read from all disks once a day |
 
-Bdělý disk se nečte při každém průchodu — hodnoty se mění v řádu minut a každé
-čtení spouští `smartctl`. Tento odstup ignoruje wake tlačítko, denní průchod
-a příkaz `plexmon --refresh`.
+An awake disk is not read on every pass — the values change over minutes and every
+read runs `smartctl`. This gap is ignored by the wake button, the daily pass
+and the `plexmon --refresh` command.
 
-Do historie se zapisují **jen čerstvé odečty ze SMART**. Když disk spí, zůstane
-v grafu mezera: zapsat místo toho poslední známou hodnotu by znamenalo tvrdit
-něco, co jsme nezměřili, a všechna roztočení nasbíraná za dobu spánku by se pak
-připsala k pěti minutám mezi dvěma vzorky.
+**Only fresh SMART readings** are written to the history. While a disk sleeps, a gap stays
+in the graph: writing the last known value instead would mean claiming
+something we did not measure, and all the spin-ups gathered during the sleep would then
+be attributed to the five minutes between two samples.
 
-## Kadence sběru
+## Collection cadence
 
-| volba | výchozí | význam |
+| option | default | meaning |
 |---|---|---|
-| `fast_interval` | `10` | rychlá smyčka (s) — přehrávání, aktivita, stav napájení |
-| `slow_interval` | `300` | pomalá práce (s) — odezva API, databáze, vzorek historie |
+| `fast_interval` | `10` | the fast loop (s) — playback, activity, power state |
+| `slow_interval` | `300` | the slow work (s) — API response time, databases, history sample |
 
-Rychlá smyčka pracuje jen s pamětí (`/proc`, `/sys`, Plex API) a disků se
-nedotýká.
+The fast loop works only with memory (`/proc`, `/sys`, Plex API) and does not touch
+the disks.
 
-## Historie a grafy
+## History and graphs
 
-| volba | výchozí | význam |
+| option | default | meaning |
 |---|---|---|
-| `history_days` | `7` | jak dlouho držet vzorky |
-| `history_max` | `25000` | tvrdý strop počtu vzorků |
-| `history_points` | `140` | kolik bodů vložit do `data.json` pro první vykreslení |
+| `history_days` | `7` | how long to keep samples |
+| `history_max` | `25000` | hard cap on the number of samples |
+| `history_points` | `140` | how many points to put into `data.json` for the first render |
 
-Retence se řídí stářím, ne počtem — změna kadence tedy historii nezkrátí.
+Retention is governed by age, not count — so changing the cadence does not shorten the history.
 
-## Výkonnostní sonda
+## Performance probe
 
-| volba | výchozí | význam |
+| option | default | meaning |
 |---|---|---|
-| `perf_endpoints` | `["/identity","/library/sections","/hubs"]` | co měřit |
-| `perf_samples` | `5` | kolik vzorků na endpoint (bere se medián) |
-| `perf_proxy_url` | `"https://plex.falco81.net"` | adresa přes reverzní proxy |
+| `perf_endpoints` | `["/identity","/library/sections","/hubs"]` | what to measure |
+| `perf_samples` | `5` | how many samples per endpoint (the median is taken) |
+| `perf_proxy_url` | `"https://plex.falco81.net"` | the address through the reverse proxy |
 
-Rozdíl mezi měřením napřímo a přes proxy dává číslo na kartě „Reverse proxy".
-Prázdný řetězec `""` sondu vypne. Měří se přes jedno znovupoužité spojení, aby
-se do výsledku nepočítal TLS handshake.
+The difference between measuring directly and through the proxy gives the number on the "Reverse proxy" card.
+An empty string `""` turns the probe off. It measures over one reused connection, so that
+the TLS handshake is not counted in the result.
 
-## Síť a API
+## Network and API
 
-| volba | výchozí | význam |
+| option | default | meaning |
 |---|---|---|
-| `api_host` | `"127.0.0.1"` | adresa, na které démon poslouchá |
-| `api_port` | `9847` | port API |
+| `api_host` | `"127.0.0.1"` | the address the daemon listens on |
+| `api_port` | `9847` | the API port |
 
-`api_host` nech na `127.0.0.1`. Démon běží jako root a přes API jde probouzet
-disky — vystavit ho do sítě není dobrý nápad ani s tokenem. Když změníš port,
-uprav ho i nahoře v `plexmon-api.php`.
+Leave `api_host` at `127.0.0.1`. The daemon runs as root and the API can wake
+disks — exposing it to the network is not a good idea, even with a token. If you change the port,
+change it at the top of `plexmon-api.php` too.
 
-| volba | výchozí | význam |
+| option | default | meaning |
 |---|---|---|
 | `plex_url` | `"http://127.0.0.1:32400"` | Plex Media Server |
-| `plex_prefs` | cesta k `Preferences.xml` | odsud se čte token |
+| `plex_prefs` | path to `Preferences.xml` | the token is read from here |
 
-## Ovládání televizí
+## TV control
 
-| volba | výchozí | význam |
+| option | default | meaning |
 |---|---|---|
-| `atv_enable` | `false` | zapne ovládání přehrávání (platí pro všechny značky) |
-| `atv_remote` | `""` | cesta k `atvremote`; prázdné = najde si ho sám |
-| `atv_storage` | `/var/lib/plex-status/atv-creds.json` | údaje z párování Apple TV |
-| `tv_creds` | `/var/lib/plex-status/tv-creds.json` | údaje z párování LG a Samsung |
-| `tv_samsung_keys` | viz níže | které klávesy posílat na Samsung |
-| `tv_pair_timeout` | `90` | kolik sekund čekat, než potvrdíš dotaz na televizi |
+| `atv_enable` | `false` | turns playback control on (applies to all brands) |
+| `atv_remote` | `""` | path to `atvremote`; empty = it finds it by itself |
+| `atv_storage` | `/var/lib/plex-status/atv-creds.json` | Apple TV pairing credentials |
+| `tv_creds` | `/var/lib/plex-status/tv-creds.json` | LG and Samsung pairing credentials |
+| `tv_samsung_keys` | see below | which keys to send to a Samsung |
+| `tv_pair_timeout` | `90` | how many seconds to wait for you to confirm the prompt on the television |
 
-Podporované jsou tři značky. Plex vlastní klienty ovládat neumí — jeho aplikace
-se serveru jako ovladatelné nehlásí a `/clients` vrací prázdno — takže démon
-mluví s televizí přímo jejím vlastním protokolem.
+Three brands are supported. Plex cannot control its own clients — its apps
+do not announce themselves to the server as controllable and `/clients` returns nothing — so the daemon
+talks to the television directly in its own protocol.
 
-| značka | knihovna | co umí |
+| brand | library | what it can do |
 |---|---|---|
-| Apple TV | [pyatv](https://pyatv.dev) | skutečné ovládání přehrávání, skok o 10 s |
-| LG (webOS) | [aiowebostv](https://pypi.org/project/aiowebostv/) | skutečné ovládání přehrávání |
-| Samsung (Tizen) | [samsungtvws](https://pypi.org/project/samsungtvws/) | jen stisky kláves dálkového ovladače |
+| Apple TV | [pyatv](https://pyatv.dev) | real playback control, 10 s skip |
+| LG (webOS) | [aiowebostv](https://pypi.org/project/aiowebostv/) | real playback control |
+| Samsung (Tizen) | [samsungtvws](https://pypi.org/project/samsungtvws/) | only remote control key presses |
 
-### Rozdíl mezi značkami
+### The difference between brands
 
-U **Apple TV a LG** jde o opravdové ovládání přehrávání: řekneš „pauza" a
-televize pauzne, bez ohledu na to, co je zrovna na obrazovce zaostřené.
+With **Apple TV and LG** it is real playback control: you say "pause" and
+the television pauses, whatever happens to be focused on the screen.
 
-U **Samsungu** taková možnost neexistuje. Jeho rozhraní umí jen posílat kódy
-kláves dálkového ovladače a co s nimi udělá, rozhoduje aplikace na popředí.
-V praxi to funguje, protože Plex na Tizenu na tyhle klávesy reaguje, ale je
-to křehčí: když je na obrazovce menu nebo dialog, stisk se použije tam.
+With **Samsung** no such option exists. Its interface can only send remote control
+key codes, and what is done with them is decided by the app in the foreground.
+In practice it works, because Plex on Tizen responds to these keys, but it is
+more fragile: when a menu or a dialog is on the screen, the key press goes there.
 
-Které klávesy se posílají, jde změnit — ne každý ovladač posílá stejné kódy:
+Which keys are sent can be changed — not every remote sends the same codes:
 
 ```json
 {
@@ -179,32 +179,32 @@ Které klávesy se posílají, jde změnit — ne každý ovladač posílá stej
 }
 ```
 
-Hodnotou může být **jedna klávesa nebo posloupnost**. Výchozí je jedna, protože
-dvě jsou nepředvídatelné: jestli šipka přetočí, nebo jen probudí ovládací lištu,
-záleží na tom, jestli je lišta zrovna vidět — dvojstisk tak přeskočil deset
-sekund, dvacet, nebo nic. Posloupnost použij jen tehdy, když ji tvoje televize
-opravdu potřebuje; `tv_samsung_key_delay` je prodleva mezi klávesami v sekundách.
+The value can be **one key or a sequence**. The default is one, because
+two are unpredictable: whether an arrow skips or only wakes the control bar
+depends on whether the bar happens to be visible — so a double press skipped ten
+seconds, twenty, or nothing. Use a sequence only when your television
+really needs it; `tv_samsung_key_delay` is the delay between keys in seconds.
 
-### Když tlačítko nic nedělá
+### When a button does nothing
 
-Který kód co udělá, není nikde dané — rozhoduje aplikace na popředí. Proto je
-lepší to vyzkoušet než hádat:
+Which code does what is not fixed anywhere — the app in the foreground decides. So it is
+better to try it than to guess:
 
 ```bash
-plexmon --atv-key "Obývák" KEY_FF
+plexmon --atv-key "Living Room" KEY_FF
 ```
 
-Pošle jednu klávesu a ty se podíváš, jestli televize zareagovala. Kandidáti na
-přetáčení, seřazení podle toho, jak často fungují:
+It sends one key and you look whether the television responded. Candidates for
+skipping, in order of how often they work:
 
-| kód | co to bývá | jak daleko skočí |
+| code | what it usually is | how far it skips |
 |---|---|---|
-| `KEY_FF`, `KEY_REWIND` | rychlé přetáčení — výchozí | v Plexu 30 s |
-| `KEY_RIGHT`, `KEY_LEFT` | šipky | v Plexu 10 s, ale často až po probuzení lišty |
-| `KEY_ENTER` | probudí ovládací lištu | — |
+| `KEY_FF`, `KEY_REWIND` | fast forward / rewind — the default | 30 s in Plex |
+| `KEY_RIGHT`, `KEY_LEFT` | arrows | 10 s in Plex, but often only after the bar is woken |
+| `KEY_ENTER` | wakes the control bar | — |
 
-**O kolik se skočí, neurčuje démon, ale aplikace na televizi.** My posíláme jen
-stisk klávesy. Chceš-li místo třiceti sekund deset, přepni na šipky:
+**How far it skips is decided not by the daemon but by the app on the television.** We only send
+a key press. If you want ten seconds instead of thirty, switch to the arrows:
 
 ```json
 {
@@ -216,52 +216,52 @@ stisk klávesy. Chceš-li místo třiceti sekund deset, přepni na šipky:
 }
 ```
 
-Nevýhoda šipek je, že první stisk po chvíli nečinnosti může jen vyvolat ovládací
-lištu a nepřetočit. Lišta pak ale zůstává viditelná několik sekund, takže při
-opakovaném mačkání to sedí — nazmar přijde jen ten úplně první stisk.
+The drawback of the arrows is that the first press after a while of inactivity may only bring up the control
+bar and not skip. The bar then stays visible for a few seconds, though, so with
+repeated presses it fits — only the very first press is wasted.
 
-Ověřuj to vždy **jedním stiskem**. Když se ti zdá, že klávesa „funguje jen
-někdy", bývá to tím, že jich posíláš víc za sebou a aplikace na ně reaguje
-pokaždé jinak podle toho, co je na obrazovce.
+Always check it with **a single press**. When it seems to you that a key "works only
+sometimes", it is usually because you send several in a row and the app responds to them
+differently each time depending on what is on the screen.
 
-Až najdeš, co funguje, zapiš to do `tv_samsung_keys`. Když je potřeba nejdřív
-probudit lištu, použij posloupnost, třeba `["KEY_ENTER", "KEY_RIGHT"]`.
+Once you find what works, write it into `tv_samsung_keys`. When the bar needs to be
+woken first, use a sequence, e.g. `["KEY_ENTER", "KEY_RIGHT"]`.
 
-Starší modely mohou chtít `KEY_PLAY` a `KEY_PAUSE` zvlášť; pak nastav
-`play_pause` na jednu z nich a druhou nechej být, nebo použij `KEY_ENTER`.
+Older models may want `KEY_PLAY` and `KEY_PAUSE` separately; then set
+`play_pause` to one of them and leave the other alone, or use `KEY_ENTER`.
 
-Poznámka k párování: některé modely (třeba řada Q60) posílají hned po připojení
-zprávu `ms.remote.touchDisable`, kterou knihovna považuje za selhání spojení.
-Démon proto seznam tolerovaných zpráv rozšiřuje — kdyby ti párování hlásilo
-`the television refused` s nějakou jinou zprávou `ms.*`, pošli ji a doplním ji
-mezi tolerované.
+A note on pairing: some models (e.g. the Q60 series) send, right after connecting,
+the message `ms.remote.touchDisable`, which the library takes as a connection failure.
+The daemon therefore extends the list of tolerated messages — if pairing reports
+`the television refused` with some other `ms.*` message, send it and I will add it
+to the tolerated ones.
 
-### Hledání televizí
+### Finding televisions
 
-Apple TV se hledají po síti (mDNS). LG a Samsung ne — nemá to smysl, protože
-adresu televize, na které se zrovna hraje, **hlásí sám Plex**. Démon tedy jen
-ověří tu jednu adresu:
+Apple TVs are found over the network (mDNS). LG and Samsung are not — there is no point, because
+the address of the television that is playing is **reported by Plex itself**. So the daemon only
+checks that one address:
 
-- Samsung odpoví na `http://<ip>:8001/api/v2/` popisem zařízení
-- LG má otevřený WebSocket na portu 3000
+- Samsung answers on `http://<ip>:8001/api/v2/` with a device description
+- LG has an open WebSocket on port 3000
 
-Výsledek se pamatuje, takže se to neopakuje při každém dotazu.
+The result is remembered, so this is not repeated on every query.
 
-### Párování
+### Pairing
 
-**Apple TV** ukáže na obrazovce čtyřmístný kód, který zadáš do okna na stránce.
+**Apple TV** shows a four-digit code on the screen, which you enter in the window on the page.
 
-**LG a Samsung** se místo toho zeptají přímo na televizi — objeví se dotaz,
-který potvrdíš fyzickým ovladačem. Žádný kód se nezadává, takže je to jeden
-krok. Stránka to pozná sama a okno na PIN nenabídne.
+**LG and Samsung** instead ask directly on the television — a prompt appears,
+which you confirm with the physical remote. No code is entered, so it is one
+step. The page recognizes this by itself and does not offer the PIN window.
 
-Na potvrzení máš `tv_pair_timeout` sekund, výchozí 90. Když nestíháš dojít
-k ovladači, zvyš to — čeká se na člověka, ne na stroj.
+You have `tv_pair_timeout` seconds to confirm, 90 by default. If you cannot get
+to the remote in time, raise it — it is waiting for a person, not a machine.
 
-### Instalace knihoven
+### Installing the libraries
 
-Všechny potřebují **Python 3.10 nebo novější** a musí být dostupné tomu
-Pythonu, pod kterým běží démon:
+All of them need **Python 3.10 or newer** and must be available to the
+Python the daemon runs under:
 
 ```bash
 dnf install -y python3.12
@@ -270,41 +270,41 @@ python3.12 -m pip install aiowebostv     # LG
 python3.12 -m pip install samsungtvws    # Samsung
 ```
 
-Stačí nainstalovat jen ty, které opravdu máš. Když knihovna chybí, vypne se
-jen ta jedna značka — ostatní i hlídání disků běží dál.
+It is enough to install only the ones you actually have. When a library is missing, only
+that one brand is turned off — the others and the disk monitoring keep running.
 
-Pokud démon dosud běžel pod systémovým Pythonem, přepni ho v unit souboru:
+If the daemon has so far run under the system Python, switch it in the unit file:
 
 ```ini
 ExecStart=/usr/bin/python3.12 /usr/local/lib/plexmon/plexmon.py
 ```
 
-Do systémového Pythonu spravovaného RPM nic z toho **neinstaluj** — `pip` se
-pokusí přepsat balíčky patřící `dnf` a skončí chybou.
+Do **not install** any of this into the RPM-managed system Python — `pip` will
+try to overwrite packages that belong to `dnf` and end with an error.
 
-### Jak to funguje uvnitř
+### How it works inside
 
-U Apple TV a LG démon **drží spojení otevřené**. Navázání šifrovaného sezení
-trvá tři až pět sekund, takže kdyby se dělalo při každém stisku, tlačítko pauzy
-by reagovalo za pět sekund a bylo by k ničemu. Spojení se otevře na pozadí,
-jakmile se objeví přehrávání, takže i první stisk je okamžitý.
+With Apple TV and LG the daemon **keeps the connection open**. Setting up an encrypted session
+takes three to five seconds, so if it were done on every press, the pause button
+would respond after five seconds and be useless. The connection is opened in the background
+as soon as playback appears, so even the first press is instant.
 
-Když spojení spadne (televize usnula, změnila adresu), démon se jednou pokusí
-připojit znovu. U Apple TV navíc existuje záloha přes `atvremote` — pomalejší,
-řádově sekundy, ale tlačítka fungují dál.
+When the connection drops (the television went to sleep, changed its address), the daemon tries once
+to connect again. For Apple TV there is also a fallback through `atvremote` — slower,
+on the order of seconds, but the buttons keep working.
 
-Samsung spojení nedrží: jeho knihovna je synchronní a jedno spojení na příkaz
-je tam levné.
+Samsung does not keep a connection: its library is synchronous and one connection per command
+is cheap there.
 
-Kvůli rychlému spojení démon knihovny **importuje**. Import je odložený na
-první použití, běží na pozadí a je ošetřený: když se knihovna nenačte, ta
-značka se vypne a hlídání disků tím není dotčené. Je to ale slabší záruka než
-u zbytku démona, který vystačí se standardní knihovnou.
+For the fast connection the daemon **imports** the libraries. The import is deferred until
+first use, runs in the background and is guarded: when a library fails to load, that
+brand is turned off and the disk monitoring is not affected. It is, however, a weaker guarantee than
+for the rest of the daemon, which makes do with the standard library.
 
-### Limity služby
+### Service limits
 
-S načtenými knihovnami sedí démon kolem 90–110 MB. Výchozí strop 200 MB je na
-to málo:
+With the libraries loaded the daemon sits around 90–110 MB. The default cap of 200 MB is
+too little for that:
 
 ```ini
 # /etc/systemd/system/plex-status.service.d/atv.conf
@@ -313,76 +313,76 @@ MemoryMax=400M
 CPUQuota=60%
 ```
 
-Podle spotřeby se dá poznat, jestli je rychlá cesta aktivní:
+From the memory use you can tell whether the fast path is active:
 
 ```bash
 systemctl show plex-status.service -p MemoryCurrent
 ```
 
-Pod 30 MB = knihovna ještě není načtená; kolem 90–110 MB = spojení běží.
+Under 30 MB = the library is not loaded yet; around 90–110 MB = the connection is running.
 
-### Používání
+### Usage
 
-Zapni `atv_enable`, restartuj démona a v panelu Now Playing se u přehrávajícího
-streamu objeví tlačítko **Pair this TV**. Po spárování se z něj stanou ovládací
-prvky: zpět, přehrát/pauza, vpřed.
+Turn on `atv_enable`, restart the daemon, and in the Now Playing panel the button **Pair this TV**
+appears by the playing stream. After pairing it turns into controls:
+back, play/pause, forward.
 
-Totéž jde z příkazové řádky:
+The same can be done from the command line:
 
 ```bash
-plexmon --atv                      # co je známé a co je spárované, včetně značky
-plexmon --atv-scan                 # projít síť znovu (najde jen Apple TV)
-plexmon --atv-probe 192.168.40.55  # co je za televize na téhle adrese
-plexmon --atv-pair 192.168.40.55   # spárovat LG nebo Samsung podle adresy
-plexmon --atv-pair "Obývák"        # nebo podle názvu, když už je známá
-plexmon --atv-key "Obývák" KEY_FF   # vyzkoušet jednu klávesu (jen Samsung)
-plexmon --atv-unpair "Obývák"
+plexmon --atv                      # what is known and what is paired, including the brand
+plexmon --atv-scan                 # scan the network again (finds only Apple TV)
+plexmon --atv-probe 192.168.40.55  # what television is at this address
+plexmon --atv-pair 192.168.40.55   # pair an LG or Samsung by address
+plexmon --atv-pair "Living Room"   # or by name, once it is known
+plexmon --atv-key "Living Room" KEY_FF  # try a single key (Samsung only)
+plexmon --atv-unpair "Living Room"
 plexmon --atv-unpair-all
 ```
 
-Apple TV se hlásí po síti, takže je ve výpisu hned. **LG a Samsung ne** — dokud
-nejsou spárované, nikdo o nich neví, a proto se zadávají **IP adresou**. Tu
-najdeš buď v nastavení televize, nebo v panelu Now Playing, kde ji hlásí Plex.
+Apple TV announces itself over the network, so it is in the listing right away. **LG and Samsung are not** — until
+they are paired, nobody knows about them, and that is why they are given by **IP address**. You
+find it either in the television's settings, or in the Now Playing panel, where Plex reports it.
 
-Stream se s televizí páruje podle **IP adresy**, kterou Plex u přehrávače
-hlásí — ne podle názvu, který nemusí být jedinečný.
+A stream is matched to a television by the **IP address** Plex reports for the player
+— not by the name, which need not be unique.
 
-V pravém horním rohu karty je tlumený odkaz **unpair** (první klik se zeptá,
-druhý provede). Zruší to jen *náš* přístup — televize si server dál vede mezi
-spárovanými ovladači a odebrat ho tam jde jen v jejím nastavení.
+In the top right corner of the card is a muted **unpair** link (the first click asks,
+the second does it). It removes only *our* access — the television keeps the server among its
+paired remotes, and it can be removed there only in its own settings.
 
-Když něco nefunguje, důvod je v logu:
+When something does not work, the reason is in the log:
 
 ```bash
 journalctl -u plex-status.service -f | grep -iE "apple tv|samsung|lg |television"
 ```
 
-## Cesty
+## Paths
 
-| volba | výchozí | význam |
+| option | default | meaning |
 |---|---|---|
-| `state_dir` | `/var/lib/plex-status` | cache SMART a historie |
-| `web_dir` | `/var/www/html/smart` | kam se píše `data.json` a plakáty |
-| `run_dir` | `/run/plex-status` | token API |
+| `state_dir` | `/var/lib/plex-status` | SMART cache and history |
+| `web_dir` | `/var/www/html/smart` | where `data.json` and the posters are written |
+| `run_dir` | `/run/plex-status` | API token |
 
-Změníš-li adresář, soubory v něm se posunou s ním. Jednotlivé soubory
+If you change a directory, the files in it move with it. The individual files
 (`data_file`, `cache_file`, `history_file`, `sessions_web`, `history_web`,
-`token_file`) jde nastavit i samostatně, pak mají přednost.
+`token_file`) can also be set separately, and then they take precedence.
 
-Při změně `web_dir` nezapomeň upravit `ReadWritePaths` v `plex-status.service`
-a nasadit `index.php` do nového umístění.
+When changing `web_dir`, do not forget to adjust `ReadWritePaths` in `plex-status.service`
+and to deploy `index.php` to the new location.
 
-| volba | výchozí | význam |
+| option | default | meaning |
 |---|---|---|
-| `smartctl` | `/usr/sbin/smartctl` | cesta k binárce |
-| `hdparm` | `/usr/sbin/hdparm` | cesta k binárce (nepoužívá se) |
+| `smartctl` | `/usr/sbin/smartctl` | path to the binary |
+| `hdparm` | `/usr/sbin/hdparm` | path to the binary (not used) |
 
 ---
 
-## Šablona k vložení
+## Template to paste
 
-Běžně měněné volby s výchozími hodnotami. Smaž řádky, které neměníš — co
-neuvedeš, si podrží výchozí hodnotu.
+Commonly changed options with their default values. Delete the lines you do not change — what
+you leave out keeps its default value.
 
 ```json
 {
@@ -414,10 +414,10 @@ neuvedeš, si podrží výchozí hodnotu.
 }
 ```
 
-## Úplná šablona
+## Full template
 
-Všechno, co jde nastavit — včetně cest a voleb, které se běžně nemění.
-Ber ji spíš jako referenci než jako soubor k nasazení.
+Everything that can be set — including paths and options that are not normally changed.
+Take it as a reference rather than as a file to deploy.
 
 ```json
 {
@@ -477,13 +477,13 @@ Ber ji spíš jako referenci než jako soubor k nasazení.
 }
 ```
 
-Poslední blok cest uveď jen tehdy, když chceš jednotlivé soubory jinam než do
-jejich adresáře — jinak stačí `state_dir` / `web_dir` / `run_dir` a soubory se
-posunou s nimi.
+Give the last block of paths only when you want individual files somewhere other than
+their directory — otherwise `state_dir` / `web_dir` / `run_dir` is enough and the files
+move with them.
 
-## Minimální varianta
+## Minimal variant
 
-Pro tvůj server v praxi stačí tohle:
+For your server, in practice this is enough:
 
 ```json
 {
