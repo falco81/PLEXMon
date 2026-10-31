@@ -3292,6 +3292,11 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .acme-steps{margin:6px 0 12px 18px;padding:0;display:flex;flex-direction:column;gap:4px;color:var(--muted)}
 /* the records and their copy buttons: the text left, the button at the column's right edge, one under the other */
 .acme-dns td{vertical-align:middle}
+/* Every column as narrow as what is in it; the room left goes to the last
+   (2.2.9) - on a wide screen the text stays beside its copy button. */
+.acme-dns .dns-guide-table th,.acme-dns .dns-guide-table td{width:1%;white-space:nowrap}
+.acme-dns .dns-guide-table th:last-child,.acme-dns .dns-guide-table td:last-child{width:auto;white-space:normal}
+.acme-dns .dns-guide-table td:first-child,.acme-dns .dns-guide-table th:first-child{padding-right:28px}
 .acme-dns td.dns-text{width:1%;white-space:nowrap;padding-right:6px}
 .acme-dns td.dns-text > div{white-space:normal}
 .acme-dns td.dns-copy{width:1%;padding-left:0;padding-right:18px;white-space:nowrap}

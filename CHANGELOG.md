@@ -4,6 +4,13 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.2.9 - 2026-10-31
+
+- **Automatic certificates → In your DNS** on a wide screen: every column is
+  as narrow as what is in it and the room left goes to the last one (*In DNS
+  now*), so the copy buttons stand right after the text - before, the table
+  spread the spare width over the columns and left wide gaps.
+
 ## 2.2.8 - 2026-10-31
 
 - **Automatic certificates → In your DNS**: the copy buttons no longer
