@@ -51,14 +51,14 @@ import traceback
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.1.6'
+__version__ = '2.2.0'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -158,11 +158,48 @@ DEFAULTS = {
     'plex_omdb_key': '',
     'plex_trakt_id': '',
     'plex_tvmaze': 1,
+    # --- the database (2.2.0) -------------------------------------------------------
+    'backup_daily': 1,
+    'backup_keep': 14,
+    'backup_at': '03:30',
+    'plex_db_daily': 0,
+    'plex_db_every': 'daily',
+    'plex_db_day': '7',
+    'plex_db_at': '03:45',
+    'plex_db_keep': 7,
+    'plex_db_check': 1,
+    'plex_db_dir': '',
+    # --- backups to another machine ---------------------------------------------------
+    'rbackup': 0,
+    'rbackup_at': '04:15',
+    'rbackup_every': 'daily',
+    'rbackup_day': 7,
+    'rbackup_keep': 30,
+    'rbackup_keep_days': 0,
+    'rbackup_password': '',
+    'rbackup_verify': 'off',
+    'rbackup_plex_db': 1,
+    # --- system updates ----------------------------------------------------------------
+    'osup_check': 0,
+    'osup_check_at': '06:15',
+    'osup_auto': 0,
+    'osup_auto_what': 'security',
+    'osup_auto_every': 'weekly',
+    'osup_auto_day': '7',
+    'osup_auto_at': '04:45',
+    'osup_auto_reboot': 'auto',
+    'osup_plex': 0,
+    # --- restart and power off ------------------------------------------------------------
+    'power_auto': 0,
+    'power_auto_every': 'weekly',
+    'power_auto_day': '7',
+    'power_auto_at': '05:40',
+    'power_auto_needed': 1,
 }
 
 FILE_ONLY_KEYS = ()
 SECRET_KEYS = ('acme_dns_tsig_secret', 'acme_dns_token', 'acme_dns_key', 'acme_desec_token',
-               'plex_tmdb_key', 'plex_omdb_key', 'plex_trakt_id')
+               'plex_tmdb_key', 'plex_omdb_key', 'plex_trakt_id', 'rbackup_password')
 SEALED_KEYS = SECRET_KEYS
 
 TUNABLE = {
@@ -180,6 +217,17 @@ TUNABLE = {
     'acme_dns_wait': (0, 600),
     'ui_lang': ('cs', 'en'), 'api_port': (1024, 65535), 'debug_api': (0, 1),
     'retain_events_days': (0, 36500),
+    'backup_daily': (0, 1), 'backup_keep': (1, 365),
+    'plex_db_daily': (0, 1), 'plex_db_every': ('daily', 'weekly'), 'plex_db_day': ('1', '2', '3', '4', '5', '6', '7'),
+    'plex_db_keep': (1, 100), 'plex_db_check': (0, 1),
+    'rbackup': (0, 1), 'rbackup_every': ('daily', 'weekly'), 'rbackup_day': (1, 7),
+    'rbackup_keep': (1, 1000), 'rbackup_keep_days': (0, 3650),
+    'rbackup_verify': ('off', 'after', 'weekly'), 'rbackup_plex_db': (0, 1),
+    'osup_check': (0, 1), 'osup_auto': (0, 1), 'osup_auto_what': ('security', 'all'),
+    'osup_auto_every': ('daily', 'weekly', 'monthly'), 'osup_auto_day': ('1', '2', '3', '4', '5', '6', '7'),
+    'osup_auto_reboot': ('ask', 'auto'), 'osup_plex': (0, 1),
+    'power_auto': (0, 1), 'power_auto_every': ('weekly', 'monthly'), 'power_auto_day': ('1', '2', '3', '4', '5', '6', '7'),
+    'power_auto_needed': (0, 1),
     'plex_tvmaze': (0, 1),
     'plex_title_lang': ('en', 'cs', 'ar', 'bg', 'ca', 'zh', 'hr', 'da', 'nl', 'et', 'fi', 'fr',
                         'de', 'el', 'he', 'hi', 'hu', 'id', 'it', 'ja', 'ko', 'lv', 'lt', 'ms',
@@ -188,6 +236,20 @@ TUNABLE = {
 }
 
 CHOICE_WORDS = {
+    'rbackup_verify': {'off': 'only by hand', 'after': 'after every backup, the one just sent',
+                       'weekly': 'once a week, the newest one'},
+    'osup_auto_what': {'security': 'only the security updates', 'all': 'every update'},
+    'osup_auto_every': {'daily': 'every day', 'weekly': 'every week, on the day below',
+                        'monthly': 'on the first of every month'},
+    'osup_auto_day': {'1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday'},
+    'osup_auto_reboot': {'auto': 'restarted by itself where an update needs it',
+                         'ask': 'a restart offered on the page'},
+    'power_auto_every': {'weekly': 'every week, on the day below',
+                         'monthly': 'on the first of every month'},
+    'power_auto_day': {'1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday'},
+    'plex_db_every': {'daily': 'every day', 'weekly': 'every week, on the day below'},
+    'plex_db_day': {'1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday'},
+    'rbackup_every': {'daily': 'every day', 'weekly': 'every week, on the day below'},
     'plex_title_lang': {'en': 'English', 'cs': 'Czech', 'ar': 'Arabic', 'bg': 'Bulgarian',
                         'ca': 'Catalan', 'zh': 'Chinese', 'hr': 'Croatian', 'da': 'Danish',
                         'nl': 'Dutch', 'et': 'Estonian', 'fi': 'Finnish', 'fr': 'French',
@@ -261,6 +323,25 @@ NAMES = {
     'plex_omdb_key': 'OMDb API key (IMDb, Rotten Tomatoes)',
     'plex_trakt_id': 'Trakt client id',
     'plex_tvmaze': 'TVmaze (no key needed)',
+    'backup_daily': 'A copy of the database every day', 'backup_keep': 'Copies kept',
+    'backup_at': 'At',
+    'plex_db_daily': 'A copy of Plex Media Server\'s database on a schedule',
+    'plex_db_every': 'How often', 'plex_db_day': 'On the day', 'plex_db_at': 'At',
+    'plex_db_keep': 'Copies kept', 'plex_db_check': 'Check every copy',
+    'plex_db_dir': 'Where the copies are kept',
+    'rbackup': 'Backups to the destinations on a schedule', 'rbackup_at': 'At',
+    'rbackup_every': 'How often', 'rbackup_day': 'On (1 Monday - 7 Sunday)',
+    'rbackup_keep': 'Backups kept at each destination',
+    'rbackup_keep_days': 'And none older than (days)',
+    'rbackup_password': 'The password of the backups', 'rbackup_verify': 'Try the backups',
+    'rbackup_plex_db': 'Plex Media Server\'s database in them too',
+    'osup_check': 'Look for updates every day', 'osup_check_at': 'At',
+    'osup_auto': 'Updates on a schedule', 'osup_auto_what': 'Which', 'osup_auto_every': 'How often',
+    'osup_auto_day': 'On the day', 'osup_auto_at': 'At', 'osup_auto_reboot': 'After the update',
+    'osup_plex': 'Plex Media Server\'s own package too',
+    'power_auto': 'A restart on a schedule', 'power_auto_every': 'How often',
+    'power_auto_day': 'On the day', 'power_auto_at': 'At',
+    'power_auto_needed': 'Only when an update needs it',
 }
 
 SAYS = {
@@ -365,6 +446,59 @@ SAYS = {
                      '<code>omdbapi.com/apikey.aspx</code> (1000 a day).',
     'plex_trakt_id': 'The client id of an API app at <code>trakt.tv/oauth/applications</code>.',
     'plex_tvmaze': 'The ratings of shows and episodes from TVmaze - no key, no account.',
+    'backup_daily': 'A copy of plexmon\'s database once a day, into '
+                    '<code>/var/lib/plexmon/backups</code>.',
+    'backup_keep': 'How many of those copies are kept; the oldest goes first.',
+    'backup_at': 'When, as <code>HH:MM</code> on this machine’s clock.',
+    'plex_db_daily': 'A copy of Plex Media Server\'s library database taken while it runs '
+                     '(SQLite\'s own online backup - Plex goes on, nothing in it is written), '
+                     'packed and kept here. Plex makes its own every three days too '
+                     '(Settings → Scheduled Tasks in Plex), and a backup timer of the server '
+                     'may as well - both are listed below and left as they are.',
+    'plex_db_every': 'Every day, or a week on the day below.',
+    'plex_db_day': 'The day of a weekly copy.',
+    'plex_db_at': 'When, as <code>HH:MM</code> - a quiet hour: the copy reads the whole '
+                  'database.',
+    'plex_db_keep': 'How many copies are kept; the oldest goes first.',
+    'plex_db_check': 'Every copy read through (Plex\'s own SQLite when it is there, '
+                     '<code>integrity_check</code>) - on the copy, never on Plex\'s own file.',
+    'plex_db_dir': 'A folder on this machine (another disk, a mount). Empty: '
+                   '<code>/var/lib/plexmon/plex-db</code>.',
+    'rbackup': 'A backup made and sent to every destination switched on, at the time below. '
+               'Without it, only Back up now sends one.',
+    'rbackup_at': 'When, as <code>HH:MM</code> on this machine’s clock.',
+    'rbackup_every': 'Daily, or weekly on the day below.',
+    'rbackup_day': 'The day of a weekly backup: 1 is Monday, 7 Sunday.',
+    'rbackup_keep': 'How many backups each destination keeps; the oldest go first, the newest '
+                    'never.',
+    'rbackup_keep_days': 'Older ones are taken away too - 0: only the count above decides.',
+    'rbackup_password': 'Every backup is locked with it (AES-256, opened with plexmon or with '
+                        'openssl alone). Keep it apart from the backups too - in a password '
+                        'vault: without it nobody, you included, opens them. Without it no '
+                        'backup is sent.',
+    'rbackup_verify': 'The newest backup fetched back, opened with the password, every file '
+                      'checked and the databases read through - nothing is put back.',
+    'rbackup_plex_db': 'A copy of Plex Media Server\'s library database (and its '
+                       'Preferences.xml) goes into every backup - taken while Plex runs. '
+                       'Off: plexmon alone (much smaller).',
+    'osup_check': 'dnf looks what it has waiting every day at the time below - for the card '
+                  'here. Nothing is put in.',
+    'osup_check_at': 'When, as <code>HH:MM</code> on this machine’s clock.',
+    'osup_auto': 'The updates put in by themselves in the window below. Off until switched on.',
+    'osup_auto_what': 'Only the security updates (dnf --security), or every update.',
+    'osup_auto_every': 'A day, a week or a month.',
+    'osup_auto_day': 'The day a weekly update goes.',
+    'osup_auto_at': 'When, as <code>HH:MM</code> - a quiet hour, away from the backups.',
+    'osup_auto_reboot': 'When an update needs a restart - made by itself, or offered on the '
+                        'page.',
+    'osup_plex': 'Off: an update of the system leaves <code>plexmediaserver</code> out - it '
+                 'restarts Plex in the middle of a film. On: Plex is updated with the rest.',
+    'power_auto': 'The server restarted in the window below. Off until switched on.',
+    'power_auto_every': 'A week or a month.',
+    'power_auto_day': 'The day a weekly restart goes.',
+    'power_auto_at': 'When, as <code>HH:MM</code> on this machine’s clock.',
+    'power_auto_needed': 'Only when an update left something only a restart brings in; off: '
+                         'every time.',
 }
 SAYS_SHORT = {}
 
@@ -380,11 +514,30 @@ PANES = {
              'acme_dns_key', 'acme_dns_subdomain', 'acme_desec_domain', 'acme_desec_token',
              'acme_dns_alias', 'acme_dns_wait', 'acme_resolvers'],
     'upgrade': ['upgrade_check', 'upgrade_url', 'upgrade_downgrade'],
-    'about': ['site_name', 'ui_lang', 'api_port', 'retain_events_days', 'debug', 'debug_api'],
+    'about': ['site_name', 'ui_lang', 'api_port', 'debug', 'debug_api'],
     'plex': ['plex_title_lang', 'plex_tmdb_key', 'plex_omdb_key', 'plex_trakt_id', 'plex_tvmaze'],
+    'db': ['backup_daily', 'backup_keep', 'backup_at', 'retain_events_days'],
+    'plexdb': ['plex_db_daily', 'plex_db_every', 'plex_db_day', 'plex_db_at', 'plex_db_keep',
+               'plex_db_check', 'plex_db_dir'],
+    'backup': ['rbackup', 'rbackup_at', 'rbackup_every', 'rbackup_day', 'rbackup_keep',
+               'rbackup_keep_days', 'rbackup_password', 'rbackup_verify', 'rbackup_plex_db'],
+    'osup': ['osup_check', 'osup_check_at', 'osup_auto', 'osup_auto_what', 'osup_auto_every',
+             'osup_auto_day', 'osup_auto_at', 'osup_auto_reboot', 'osup_plex'],
+    'power': ['power_auto', 'power_auto_every', 'power_auto_day', 'power_auto_at',
+              'power_auto_needed'],
 }
 
 ONLY_WHEN = {
+    'backup_keep': ['backup_daily', '1'], 'backup_at': ['backup_daily', '1'],
+    'plex_db_every': ['plex_db_daily', '1'], 'plex_db_day': ['plex_db_every', 'weekly'],
+    'plex_db_at': ['plex_db_daily', '1'],
+    'rbackup_at': ['rbackup', '1'], 'rbackup_every': ['rbackup', '1'],
+    'rbackup_day': ['rbackup_every', 'weekly'],
+    'osup_check_at': ['osup_check', '1'], 'osup_auto_what': ['osup_auto', '1'],
+    'osup_auto_every': ['osup_auto', '1'], 'osup_auto_day': ['osup_auto_every', 'weekly'],
+    'osup_auto_at': ['osup_auto', '1'], 'osup_auto_reboot': ['osup_auto', '1'],
+    'power_auto_every': ['power_auto', '1'], 'power_auto_day': ['power_auto_every', 'weekly'],
+    'power_auto_at': ['power_auto', '1'], 'power_auto_needed': ['power_auto', '1'],
     'admin_2fa_app': ['admin_2fa', '1'],
     'plex_cert_domain': ['plex_cert', '1'], 'plex_cert_restart': ['plex_cert', '1'],
     'acme_email': ['acme', '1'], 'acme_ca': ['acme', '1'],
@@ -470,6 +623,13 @@ def check_setting(key, value):
             raise BadSetting('%s: no line breaks or other control characters' % key)
     if key in SECRET_KEYS and any(ord(ch) < 32 or ord(ch) == 127 for ch in str(got or '')):
         raise BadSetting('%s: no line breaks or other control characters' % key)
+    if key in ('backup_at', 'plex_db_at', 'rbackup_at', 'osup_check_at', 'osup_auto_at',
+               'power_auto_at') and not re.match(r'^([01]?\d|2[0-3]):[0-5]\d\Z', str(got).strip()):
+        raise BadSetting('%s: a time of day as HH:MM, like 03:30' % key)
+    if key == 'plex_db_dir' and str(got).strip() and (
+            not str(got).startswith('/') or re.search(r'(^|/)\.\.(/|$)', str(got))
+            or str(got).rstrip('/') in ('', '/etc', '/usr', '/boot', '/proc', '/sys', '/dev')):
+        raise BadSetting('plex_db_dir: a whole path of a folder on this machine (/mnt/backup/plex)')
     if key == 'acme_resolvers':
         for one in [w for w in re.split(r'[\s,;]+', str(got)) if w]:
             try:
@@ -1747,8 +1907,17 @@ def _meta_json(store, k):
 STORE = {'store': None}
 
 
-def open_store():
+def open_store(restore=False):
     load_config()
+    if restore:
+        # A copy waiting to be put back (Settings → The database / Backups):
+        # put in place before the database is opened, by the daemon only.
+        try:
+            import plexmon_host
+            if plexmon_host.apply_pending_restore(DB_FILE):
+                log('a copy of the database was put back as plexmon started', 'warn')
+        except Exception as e:                          # noqa: BLE001
+            log('the copy waiting to be put back could not be: %s' % e, 'error')
     st = Storage(Db())
     load_config(saved=st.settings_saved())
     STORE['store'] = st
@@ -2262,6 +2431,11 @@ PHP_GUARD_TEXT = '''# Written by plexmon - php2shell (CVE-2026-109618, CVE-2026-
 if ($http_content_type ~* "^[[:space:]]*(multipart/|application/x-www-form-urlencoded)") {
     return 415;
 }
+# A backup or a new version sent to be put back is the body itself (read by
+# the page from php://input, a lump at a time): the size of one, here only.
+client_max_body_size 8g;
+fastcgi_param PHP_VALUE "post_max_size=8G";
+fastcgi_request_buffering off;
 '''
 
 PHP_LOCATION_RE = re.compile(r'^([ \t]*)location\s+~\*?\s+[^{\n]*php[^{\n]*\{[ \t]*$', re.M)
@@ -4830,6 +5004,19 @@ class ApiHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def send_file(self, path, name, ctype='application/octet-stream'):
+        """A file of any size, a lump at a time, as a download."""
+        size = os.path.getsize(path)
+        self.send_response(200)
+        self.send_header('Content-Type', ctype)
+        self.send_header('Content-Length', str(size))
+        self.send_header('Content-Disposition', 'attachment; filename="%s"' %
+                         re.sub(r'[^A-Za-z0-9@._-]', '', name))
+        self.send_header('Cache-Control', 'no-store')
+        self.end_headers()
+        with open(path, 'rb') as f:
+            shutil.copyfileobj(f, self.wfile, 1 << 20)
+
     def body(self):
         if hasattr(self, '_body'):
             return self._body
@@ -4851,6 +5038,9 @@ class ApiHandler(BaseHTTPRequestHandler):
             raise ApiError(400, 'the body is not an object')
         for k in BODY_WORDS:
             v = self._body.get(k)
+            if k == 'target' and isinstance(v, dict) and \
+                    self.path.split('?')[0] == '/api/rbackup':
+                continue                        # a backup destination's fields (2.2.0)
             if isinstance(v, (list, dict, bool)):
                 raise ApiError(400, '%s is a piece of text here' % k)
             if isinstance(v, float) and k != 'code':
@@ -5518,6 +5708,493 @@ def _plex_do(h):
     raise ApiError(400, 'no such thing to do')
 
 
+# ---- the machine: Restart and power off, Time, System updates, The database,
+# Backups (2.2.0, as otp's) -----------------------------------------------------------------
+@route('GET', '/api/power')
+def _power(h):
+    h.me('fulladmin')
+    return HX.power_view(h.store)
+
+
+@route('POST', '/api/power')
+def _power_do(h):
+    s = h.me('fulladmin')
+    b = h.body()
+    if b.get('action') == 'hide':
+        plan = HX.power_plan(h.store)
+        if plan.get('id'):
+            h.store.set_meta('power:seen', str(plan['id']))
+        return HX.power_view(h.store)
+    plan = HX.power_ask(h.store, str(b.get('how') or ''), s['name'])
+    return {'message': 'asked: %s in 5 seconds' % ('the restart' if plan['how'] == 'reboot'
+                                                    else 'the power-off'), 'plan': plan}
+
+
+@route('GET', '/api/ntp')
+def _ntp(h):
+    h.me('fulladmin')
+    return HX.ntp_view(h.store)
+
+
+@route('POST', '/api/ntp')
+def _ntp_do(h):
+    s = h.me('fulladmin')
+    b = h.body()
+    act = b.get('action')
+    if act == 'save':
+        HX.ntp_save(h.store, b.get('conf') or {}, s['name'])
+        return {'message': 'saved; the time servers are set within seconds'}
+    if act == 'read':
+        HX.ntp_job(HX.ntp_publish, h.store, True)
+        return {'message': 'read again within seconds'}
+    if act == 'sync':
+        HX.ntp_job(HX.ntp_sync, h.store, s['name'])
+        return {'message': 'the clock is stepped within seconds'}
+    raise ApiError(400, 'no such thing to do')
+
+
+@route('GET', '/api/osup')
+def _osup(h):
+    h.me('fulladmin')
+    return HX.osup_view(h.store)
+
+
+@route('POST', '/api/osup')
+def _osup_do(h):
+    s = h.me('fulladmin')
+    b = h.body()
+    act = str(b.get('action') or '')
+    if act == 'check':
+        HX.osup_check(h.store, s['name'])
+        return {'message': 'looking for updates'}
+    if act == 'start':
+        HX.osup_start(h.store, str(b.get('reboot') or 'ask'), s['name'],
+                      security=bool(b.get('security')))
+        return {'message': 'the update starts'}
+    if act == 'cancel':
+        return {'message': HX.osup_cancel(h.store, s['name'])}
+    if act == 'clear':
+        HX.osup_clear(h.store)
+        return HX.osup_view(h.store)
+    if act == 'hide':
+        plan = HX.osup_plan(h.store)
+        if plan.get('state') == 'running':
+            raise ApiError(400, 'it is still going on')
+        if plan.get('id'):
+            h.store.set_meta('host:osup:seen', str(plan['id']))
+        return HX.osup_view(h.store)
+    if act == 'reboot':
+        plan = HX.power_ask(h.store, 'reboot', s['name'], 'after the update')
+        return {'message': 'restarting in 5 seconds', 'plan': plan}
+    raise ApiError(400, 'no such thing to do')
+
+
+@route('GET', '/api/db')
+def _db(h):
+    h.me('fulladmin')
+    return HX.db_view(h.store)
+
+
+@route('GET', '/api/db/file')
+def _db_file(h):
+    s = h.me('fulladmin')
+    kind, name = h.arg('kind'), os.path.basename(h.arg('name'))
+    if kind == 'own':
+        d, ok = HX.own_dir(), name.startswith('plexmon-') and name.endswith('.db.gz')
+    elif kind == 'plex':
+        d, ok = HX.plex_dir(), name.startswith('plexdb-') and name.endswith('.tar.gz')
+    else:
+        raise ApiError(400, 'which copy?')
+    path = os.path.join(str(d), name)
+    if not ok or not os.path.isfile(path):
+        raise ApiError(404, 'there is no copy %s' % name)
+    h.store.add_event('database', '%s downloaded the copy %s' % (s['name'], name), 'warn',
+                      who=s['name'])
+    h.send_file(path, name)
+    return None
+
+
+@route('POST', '/api/db')
+def _db_do(h):
+    s = h.me('fulladmin')
+    by = s['name']
+    b = h.body()
+    act = str(b.get('action') or '')
+    st = h.store
+    name = str(b.get('name') or '')
+    if act == 'job':
+        return {'job': dict(HX.DB_JOB)}
+    if act == 'own-copy':
+        return {'message': 'a copy made: %s' % HX.own_copy(st, 'made by %s' % by)}
+    if act == 'own-check':
+        got = HX.own_check(st)
+        st.add_event('database', '%s checked the database: %s' % (by, ', '.join(got['said'][:3])),
+                     'info' if got['ok'] else 'bad', who=by)
+        return dict(got, message='the database is whole' if got['ok'] else
+                    'the database is NOT whole: %s' % '; '.join(got['said'][:3]))
+    if act == 'own-optimize':
+        got = HX.own_optimize(st, by)
+        return dict(got, message='%s → %s' % (HX.human_bytes(got['before']),
+                                             HX.human_bytes(got['after'])))
+    if act == 'own-tidy':
+        st.tidy()
+        return {'message': 'what is kept is applied now'}
+    if act == 'own-erase':
+        got = HX.own_erase(st, str(b.get('what') or ''), by)
+        return dict(got, message='erased: %s' % got['erased'])
+    if act == 'own-restore':
+        return HX.own_restore(st, name, by)
+    if act == 'own-forget':
+        p = HX.own_dir() / os.path.basename(name)
+        if not name.startswith('plexmon-') or not p.is_file():
+            raise ApiError(404, 'there is no copy %s' % name)
+        p.unlink()
+        st.add_event('database', '%s deleted the copy %s' % (by, name), 'warn', who=by)
+        return {'message': 'deleted'}
+    if act in ('plex-copy', 'plex-check'):
+        return {'job': HX.db_job('a copy of Plex\'s database', by,
+                                 lambda: HX.plex_copy(st, by, check=True))}
+    if act == 'plex-restore':
+        own = bool(b.get('own'))
+        return {'job': HX.db_job('Plex\'s database put back', by,
+                                 lambda: HX.plex_restore(st, name, by, own=own))}
+    if act == 'plex-forget':
+        p = HX.plex_dir() / os.path.basename(name)
+        if not name.startswith('plexdb-') or not p.is_file():
+            raise ApiError(404, 'there is no copy %s' % name)
+        p.unlink()
+        st.add_event('database', '%s deleted the copy %s of Plex\'s database' % (by, name), 'warn',
+                     who=by)
+        return {'message': 'deleted'}
+    if act == 'plex-optimize':
+        HX.plex_api('/library/optimize?async=1')
+        st.add_event('database', '%s asked Plex Media Server to optimize its database' % by,
+                     who=by)
+        return {'message': 'Plex Media Server optimizes its database now (its own task)'}
+    if act == 'plex-clean':
+        HX.plex_api('/library/clean/bundles?async=1')
+        st.add_event('database', '%s asked Plex Media Server to clean its bundles' % by, who=by)
+        return {'message': 'Plex Media Server cleans its bundles now'}
+    if act == 'timer':
+        unit = str(b.get('unit') or '')
+        if unit not in [t['unit'] for t in HX.user_timer()]:
+            raise ApiError(400, 'no such timer')
+        on = bool(b.get('on'))
+        rc, out = HX.host_run([HX.SYSTEMCTL, 'enable' if on else 'disable', '--now', unit], 60)
+        if rc != 0:
+            raise ApiError(400, out.strip()[-200:] or 'systemctl said no')
+        st.add_event('database', '%s switched %s %s' % (by, 'on' if on else 'off', unit), 'warn',
+                     who=by)
+        return {'message': '%s is %s' % (unit, 'on' if on else 'off')}
+    raise ApiError(400, 'no such thing to do')
+
+
+def _rb_target_for(h, b):
+    t = HX.rb_target(h.store, b.get('id')) if b.get('id') else None
+    if b.get('target'):
+        t = HX.rb_checked(b['target'], t)
+    if not t:
+        raise ApiError(404, 'no such destination')
+    return t
+
+
+def _rb_list(store, tid):
+    out = []
+    mine = HX.rb_slug(node_name())
+    for x in HX.rb_remote_list(store, tid):
+        m = HX.RB_NAME_RE.match(x['name'])
+        if not m or x['name'].endswith(('.sha256', '.md')):
+            continue
+        try:
+            when = datetime.strptime(m.group('stamp'), '%Y%m%d-%H%M%S').timestamp()
+        except ValueError:
+            when = 0
+        out.append({'name': x['name'], 'bytes': x.get('size'), 'when': when,
+                    'node': m.group('node'), 'mine': m.group('node') == mine,
+                    'encrypted': x['name'].endswith('.enc')})
+    out.sort(key=lambda x: -x['when'])
+    return out
+
+
+def _rb_next():
+    if not CONFIG.get('rbackup'):
+        return 0
+    try:
+        hh, mm = (int(x) for x in str(CONFIG.get('rbackup_at') or '04:15').split(':', 1))
+    except ValueError:
+        return 0
+    now = datetime.now()
+    for add in range(0, 9):
+        d = (now + timedelta(days=add)).replace(hour=hh, minute=mm, second=0, microsecond=0)
+        if d <= now:
+            continue
+        if CONFIG.get('rbackup_every') == 'weekly' and d.isoweekday() != int(
+                CONFIG.get('rbackup_day') or 7):
+            continue
+        return int(d.timestamp() * 1000)
+    return 0
+
+
+@route('GET', '/api/rbackup')
+def _rbackup(h):
+    h.me('fulladmin')
+    v = HX.rb_view_all(h.store)
+    runs = v['runs']
+    v.update(locked=v['password'], next=_rb_next(),
+             tools={k: bool(shutil.which(k)) for k in ('ssh', 'sftp', 'scp', 'ssh-keygen',
+                                                       'ssh-keyscan', 'smbclient', 'openssl')},
+             kinds=[{'kind': k, 'words': HX.RB_KIND_WORDS[k], 'port': HX.RB_PORTS.get(k)}
+                    for k in HX.RB_KINDS], iter=HX.RB_ITER,
+             site=CONFIG.get('site_name') or 'plexmon',
+             last_by_node={node_name(): runs[0]} if runs else {},
+             verified=[dict(x, node=node_name(), target_name=x.get('target'))
+                       for x in v['verified']])
+    return v
+
+
+@route('POST', '/api/rbackup')
+def _rbackup_do(h):
+    s = h.me('fulladmin')
+    b = h.body()
+    act = str(b.get('action') or '')
+    by = s['name']
+    st = h.store
+    if act == 'save':
+        t = HX.rb_save(st, dict(b.get('target') or {}, id=b.get('id') or
+                                (b.get('target') or {}).get('id')), by)
+        return {'message': 'saved', 'target': HX.rb_view(t)}
+    if act == 'delete':
+        HX.rb_delete(st, b.get('id'), by)
+        return {'message': 'taken away'}
+    if act == 'try':
+        t = _rb_target_for(h, b)
+        if t['kind'] in ('sftp', 'scp') and not t.get('hostkey'):
+            lines, fps = HX.ssh_keyscan(t['host'], t['port'])
+            return {'hostkey_needed': True, 'hostkey': lines, 'fingerprints': fps,
+                    'message': 'the server\'s host key is not trusted yet'}
+        out = HX.rb_try(t)
+        st.add_event('settings', '%s tried the backup destination %s: %s' % (
+            by, t['name'], 'it works' if out['ok'] else out.get('error')), who=by)
+        if t.get('id') and HX.rb_target(st, t['id']):
+            HX.rb_set_fields(st, t['id'], '', '', tried={'at': time.time(), 'ok': out['ok'],
+                                                        'error': out.get('error') or ''})
+        return out
+    if act == 'hostkey_scan':
+        t = _rb_target_for(h, b)
+        lines, fps = HX.ssh_keyscan(t['host'], t['port'])
+        return {'hostkey': lines, 'fingerprints': fps}
+    if act == 'hostkey_trust':
+        t = _rb_target_for(h, b)
+        lines = str(b.get('hostkey') or '')
+        fresh, fps = HX.ssh_keyscan(t['host'], t['port'])
+        if sorted(x.strip() for x in lines.splitlines() if x.strip()) != \
+                sorted(x.strip() for x in fresh.splitlines() if x.strip()):
+            raise ApiError(400, 'the server shows other host keys now than the ones shown: '
+                                'Try it again')
+        HX.rb_set_fields(st, t['id'], by, 'its host key trusted (%s)' % '; '.join(fps),
+                         hostkey=fresh)
+        return {'message': 'trusted', 'fingerprints': fps}
+    if act == 'hostkey_forget':
+        t = _rb_target_for(h, b)
+        HX.rb_set_fields(st, t['id'], by, 'its host key forgotten', hostkey=None)
+        return {'message': 'forgotten'}
+    if act == 'keygen':
+        t = _rb_target_for(h, b)
+        private, public = HX.ssh_keygen('plexmon-backup@%s' % node_name())
+        HX.rb_set_fields(st, t['id'], by, 'a new ssh key made here',
+                         key=seal_secret(private, bind=HX.RB_BIND), pub=public, key_pass=None)
+        return {'message': 'made', 'pub': public}
+    if act == 'key_paste':
+        t = _rb_target_for(h, b)
+        pp = str(b.get('passphrase') or '')
+        private, public = HX.ssh_public_of(b.get('key'), pp)
+        HX.rb_set_fields(st, t['id'], by, 'an ssh key of their own given',
+                         key=seal_secret(private, bind=HX.RB_BIND), pub=public,
+                         key_pass=seal_secret(pp, bind=HX.RB_BIND) if pp else None)
+        return {'message': 'taken', 'pub': public}
+    if act == 'key_download':
+        t = _rb_target_for(h, b)
+        private = HX.rb_secret(t, 'key')
+        if not private:
+            raise ApiError(404, 'there is no key')
+        st.add_event('settings', '%s downloaded the private ssh key of the backup destination %s'
+                     % (by, t['name']), 'warn', who=by)
+        return {'pem': private if private.endswith('\n') else private + '\n',
+                'file': 'plexmon-backup-%s-key' % HX.rb_slug(t['name'])}
+    if act == 'key_forget':
+        t = _rb_target_for(h, b)
+        HX.rb_set_fields(st, t['id'], by, 'its ssh key forgotten', key=None, pub=None,
+                         key_pass=None, ssh_cert=None)
+        return {'message': 'forgotten'}
+    if act == 'cert_make':
+        t = _rb_target_for(h, b)
+        key, crt = HX.rb_client_cert_make(b.get('cn') or 'plexmon-backup-%s' %
+                                          HX.rb_slug(node_name()))
+        HX.rb_set_fields(st, t['id'], by, 'a client certificate made here', client_cert=crt,
+                         client_key=seal_secret(key, bind=HX.RB_BIND))
+        return {'message': 'made', 'cert': crt, 'info': cert_info(crt)}
+    if act == 'cert_given':
+        t = _rb_target_for(h, b)
+        key, crt = HX.rb_client_cert_given(b.get('text'), str(b.get('password') or ''))
+        HX.rb_set_fields(st, t['id'], by, 'a client certificate of their own given',
+                         client_cert=crt, client_key=seal_secret(key, bind=HX.RB_BIND))
+        return {'message': 'taken', 'cert': crt, 'info': cert_info(crt)}
+    if act == 'cert_forget':
+        t = _rb_target_for(h, b)
+        HX.rb_set_fields(st, t['id'], by, 'its client certificate forgotten', client_cert=None,
+                         client_key=None)
+        return {'message': 'forgotten'}
+    if act == 'pin':
+        t = _rb_target_for(h, b)
+        pin = re.sub(r'[^0-9a-f]', '', str(b.get('pin') or '').lower())
+        if len(pin) != 64:
+            raise ApiError(400, 'the fingerprint is SHA-256: 64 hex digits')
+        HX.rb_set_fields(st, t['id'], by, 'the server\'s certificate pinned (%s)' % pin, pin=pin,
+                         tls_check='pin')
+        return {'message': 'pinned'}
+    if act == 'run':
+        only = [str(x) for x in (b.get('ids') or [])] or None
+        return {'message': 'the backup is being made', 'job': HX.rb_job_start(st, by, only)}
+    if act == 'job':
+        return {'job': dict(HX.RB_JOB)}
+    if act == 'verify':
+        return {'message': 'the backup is being tried',
+                'job': HX.rb_verify_start(st, by, str(b.get('id') or '') or None,
+                                          str(b.get('name') or '') or None)}
+    if act == 'verified_forget':
+        got = HX.meta(st, 'rbackup:verified', []) or []
+        left = [] if b.get('all') else [x for x in got if abs(float(x.get('at') or 0) -
+                                                             float(b.get('at') or 0)) > 0.001]
+        HX.put_meta(st, 'rbackup:verified', left)
+        st.add_event('backups', '%s cleared %d line(s) of the backups tried' % (
+            by, len(got) - len(left)), who=by)
+        return {'message': 'cleared', 'verified': [dict(x, node=node_name(),
+                                                         target_name=x.get('target'))
+                                                    for x in left]}
+    if act == 'runs_forget':
+        runs = HX.rb_history(st)
+        left = [] if b.get('all') else [r for r in runs if not (
+            abs(float(r.get('at') or 0) - float(b.get('at') or 0)) < 0.001 and
+            str(r.get('file') or '') == str(b.get('file') or ''))]
+        HX.put_meta(st, 'rbackup:runs', left)
+        st.add_event('backups', '%s cleared %d line(s) of the backups sent (the backups stay)' % (
+            by, len(runs) - len(left)), who=by)
+        return {'message': 'cleared', 'runs': left}
+    if act == 'list':
+        return {'files': _rb_list(st, b.get('id'))}
+    if act == 'delete_file':
+        t = HX.rb_target(st, b.get('id'))
+        name = os.path.basename(str(b.get('name') or ''))
+        if not t or not HX.RB_NAME_RE.match(name):
+            raise ApiError(404, 'no such backup')
+        tr = HX.rb_transport(t)
+        try:
+            tr.open()
+            for n in [name] + HX.rb_companions(name):
+                try:
+                    tr.delete(n)
+                except Exception:                       # noqa: BLE001
+                    pass
+        finally:
+            tr.close()
+        st.add_event('backups', '%s deleted the backup %s at %s' % (by, name, t['name']), 'warn',
+                     who=by)
+        return {'message': 'deleted'}
+    if act == 'restore_md':
+        site = HX.rb_slug(CONFIG.get('site_name') or 'plexmon')
+        node = HX.rb_slug(node_name())
+        m = {'plexmon': __version__, 'made_words': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+             'node': node_name(), 'host': socket.getfqdn(), 'encrypted': bool(HX.rb_password()),
+             'iter': HX.RB_ITER, 'plex_db': bool(int(CONFIG.get('rbackup_plex_db', 1) or 0)),
+             'file': 'plexmon-backup-%s-%s-%s.tar.gz%s' % (
+                 site, node, datetime.now().strftime('%Y%m%d-%H%M%S'),
+                 '.enc' if HX.rb_password() else '')}
+        return {'md': HX.rb_restore_md(m), 'name': 'RESTORE-%s-%s.md' % (site, node),
+                'file': m['file']}
+    if act == 'restore':
+        pw = str(b.get('password') or '')
+        if b.get('upload'):
+            up = re.sub(r'[^a-f0-9]', '', str(b.get('upload')))
+            path = str(HX.upload_dir() / ('%s.bin' % up))
+            if not up or not os.path.isfile(path):
+                raise ApiError(404, 'the file sent is gone - send it again')
+
+            def go():
+                return HX.rb_restore(st, path, pw, by)
+        else:
+            t = HX.rb_target(st, b.get('id'))
+            name = os.path.basename(str(b.get('name') or ''))
+            if not t or not HX.RB_NAME_RE.match(name):
+                raise ApiError(404, 'no such backup')
+
+            def go():
+                HX.says('fetched from %s' % t['name'], 0, 5)
+                local = str(HX.upload_dir() / ('fetched-%s' % name))
+                tr = HX.rb_transport(t)
+                try:
+                    tr.open()
+                    tr.get(name, local)
+                finally:
+                    tr.close()
+                try:
+                    return HX.rb_restore(st, local, pw, by)
+                finally:
+                    try:
+                        os.unlink(local)
+                    except OSError:
+                        pass
+        return {'message': 'the backup is being put back', 'job': HX.db_job(
+            'a backup put back', by, go)}
+    raise ApiError(400, 'no such thing to do')
+
+
+@route('POST', '/api/rbackup/upload')
+def _rbackup_upload(h):
+    s = h.me('fulladmin')
+    ident = secrets.token_hex(8)
+    path = str(HX.upload_dir() / ('%s.bin' % ident))
+    h.body_to_file(path, 8 << 30)
+    try:
+        look = HX.rb_upload_look(path)
+    except Exception as e:                              # noqa: BLE001
+        os.unlink(path)
+        raise ApiError(400, 'that is not a backup of plexmon: %s' % e)
+    h.store.add_event('backups', '%s sent a backup to be put back' % s['name'], who=s['name'])
+    return {'upload': ident, 'locked': look['locked'], 'manifest': look['manifest']}
+
+
+@route('GET', '/api/rbackup/download')
+def _rbackup_download(h):
+    s = h.me('fulladmin')
+    st = h.store
+    if h.arg('id'):
+        t = HX.rb_target(st, h.arg('id'))
+        name = os.path.basename(h.arg('name'))
+        if not t or not HX.RB_NAME_RE.match(name):
+            raise ApiError(404, 'no such backup')
+        work = tempfile.mkdtemp(prefix='plexmon-dl-', dir=str(STATE_DIR))
+        try:
+            tr = HX.rb_transport(t)
+            try:
+                tr.open()
+                tr.get(name, os.path.join(work, name))
+            finally:
+                tr.close()
+            h.send_file(os.path.join(work, name), name)
+        finally:
+            shutil.rmtree(work, ignore_errors=True)
+        return None
+    work = tempfile.mkdtemp(prefix='plexmon-dl-', dir=str(STATE_DIR))
+    try:
+        path, m, _md = HX.rb_build(st, work)
+        st.add_event('backups', '%s downloaded a backup made now (%s)' % (
+            s['name'], HX.human_bytes(m['bytes'])), 'warn', who=s['name'])
+        h.send_file(path, m['file'])
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+    return None
+
+
 @route('GET', '/api/console-login')
 def _console_login(h):
     h.me('fulladmin')
@@ -6177,7 +6854,7 @@ class Admin(object):
 
     def __init__(self, monitor=None):
         self.monitor = monitor              # () -> what the dashboard's daemon says
-        self.store = open_store()
+        self.store = open_store(restore=True)
         self.started = time.time()
         STARTED[0] = self.started
         self.login_fails = {}
@@ -6293,6 +6970,12 @@ class Admin(object):
             problems.append('PHP %s does not have the php2shell fix (CVE-2026-109618, '
                             'CVE-2026-109619): ./install.sh --upgrade (or Settings → Upgrades) '
                             'brings it up to date' % ph.get('version'))
+        try:
+            tp = HX.ntp_problem(self.store)
+            if tp:
+                problems.append(tp)
+        except Exception:                               # noqa: BLE001
+            pass
         mon = {}
         try:
             mon = self.monitor() if self.monitor else {}
@@ -6399,7 +7082,7 @@ class Admin(object):
         while not self.stop.is_set():
             UPGRADE_WAKE.wait(3)
             UPGRADE_WAKE.clear()
-            for fn in (upgrade_tick, acme_tick, online_tick):
+            for fn in (upgrade_tick, acme_tick, online_tick, HX.tick):
                 try:
                     fn(self.store)
                 except Exception as e:                  # noqa: BLE001
@@ -6834,6 +7517,8 @@ def help_text(parser, pal):
 
 import plexmon_plex as PX  # noqa: E402
 PX.bind(sys.modules[__name__])
+import plexmon_host as HX  # noqa: E402
+HX.bind(sys.modules[__name__])
 
 
 def build_parser():
@@ -6982,6 +7667,33 @@ def build_parser():
     g.add_argument('--plex-refresh', metavar='TITLE', nargs='+', help='refresh their metadata')
     g.add_argument('--plex-scan', metavar='LIB', help='scan the files of a library')
     g.add_argument('--dry-run', action='store_true', help='show the plan, write nothing')
+    g = p.add_argument_group('THE MACHINE AND THE DATA (as Settings: Time, Restart and power off, '
+                             'System updates, The database, Backups)')
+    g.add_argument('--time', action='store_true', help='the clock: chrony, the time servers, '
+                   'the time zone')
+    g.add_argument('--time-sync', action='store_true', help='step the clock to the time servers now')
+    g.add_argument('--db', action='store_true', help='plexmon\'s database and Plex Media '
+                   'Server\'s: sizes, copies, Plex\'s own backups')
+    g.add_argument('--db-copy', action='store_true', help='a copy of plexmon\'s database now')
+    g.add_argument('--db-check', action='store_true', help='plexmon\'s database read through')
+    g.add_argument('--db-restore', metavar='NAME', help='put a copy of plexmon\'s database back '
+                   '(plexmon starts again)')
+    g.add_argument('--plex-db-copy', action='store_true', help='a copy of Plex Media Server\'s '
+                   'database now, taken while it runs, checked')
+    g.add_argument('--plex-db-restore', metavar='NAME', help='put a copy of Plex\'s database '
+                   'back: Plex stopped, its files set aside, the copy in, Plex started')
+    g.add_argument('--plex-own', action='store_true', help='with --plex-db-restore: NAME is one '
+                   'of Plex\'s own backups (com.plexapp.plugins.library.db-YYYY-MM-DD)')
+    g.add_argument('--backups', action='store_true', help='the destinations and the last backups')
+    g.add_argument('--backup-now', action='store_true', help='a backup made and sent to every '
+                   'destination switched on')
+    g.add_argument('--backup-verify', action='store_true', help='the newest backup fetched back '
+                   'and tried')
+    g.add_argument('--os-updates', action='store_true', help='look for updates of the system (dnf)')
+    g.add_argument('--os-update', nargs='?', const='all', choices=('all', 'security'),
+                   help='update the system now (Plex Media Server left out unless osup_plex=1)')
+    g.add_argument('--reboot', action='store_true', help='restart the server (asked first)')
+    g.add_argument('--poweroff', action='store_true', help='switch the server off (asked first)')
     g = p.add_argument_group('THE CONSOLE')
     g.add_argument('--console', action='store_true', help='plexmon by its menus: the live log, '
                    'the accounts, the certificates, upgrades')
@@ -7005,6 +7717,9 @@ HELP_EXAMPLES = [
     ('plexmon --plex-items Filmy --search matrix', 'the movies of a library'),
     ('plexmon --plex-tracks "Crash Landing on You" --audio kor --subs cze', 'every episode'),
     ('plexmon --plex-ratings Filmy --dry-run', 'the missing ratings, shown, not written'),
+    ('plexmon --plex-db-copy', 'a checked copy of Plex Media Server\'s database'),
+    ('plexmon --backup-now', 'a backup to every destination'),
+    ('plexmon --os-update security', 'the security updates of the system'),
 ]
 
 
@@ -7671,6 +8386,208 @@ def _cli_plex(args, store, pal, what, by):
         return 0
     return None
 
+HOST_ASKS = ('time', 'time_sync', 'db', 'db_copy', 'db_check', 'db_restore', 'plex_db_copy',
+             'plex_db_restore', 'backups', 'backup_now', 'backup_verify', 'os_updates',
+             'os_update', 'reboot', 'poweroff')
+
+
+def cli_host(args, store, pal):
+    """Time, restart and power off, system updates, the databases, backups:
+    None when nothing of it was asked."""
+    asked = [a for a in HOST_ASKS if getattr(args, a, None)]
+    if not asked:
+        return None
+    try:
+        return _cli_host(args, store, pal, asked[0], 'root (command line)')
+    except ValueError as e:
+        if args.json:
+            out_json({'ok': False, 'error': str(e)})
+        else:
+            print(pal.bad_line(str(e)))
+        return 1
+
+
+def _cli_sure(args, words):
+    if args.yes:
+        return True
+    if not sys.stdin.isatty():
+        raise ValueError('%s - add --yes to do it without being asked' % words)
+    try:
+        return input('%s [y/N] ' % words).strip().lower() in ('y', 'yes', 'a', 'ano')
+    except EOFError:
+        return False
+
+
+def _cli_job_wait(pal, job, quiet=False):
+    """A job of the database (or a backup) followed until it is over."""
+    last = ''
+    while job['running']:
+        says = '%s %s/%s' % (job.get('says') or '', job.get('done') or 0, job.get('whole') or 0)
+        if says != last and not quiet:
+            print(pal.dim('  ... ' + says))
+            last = says
+        time.sleep(0.5)
+    if job.get('error'):
+        raise ValueError(job['error'])
+    return job.get('result')
+
+
+def _cli_host(args, store, pal, what, by):
+    j = args.json
+    if what == 'time' or what == 'time_sync':
+        if what == 'time_sync':
+            HX.ntp_sync(store, by)
+        d = HX.ntp_read()
+        if j:
+            out_json(d)
+            return 0
+        t = d.get('tracking') or {}
+        if not d.get('chrony'):
+            print(pal.warn_line('chrony is not installed - the clock follows nothing'))
+        else:
+            print((pal.ok_line if t.get('stratum') else pal.bad_line)(
+                'follows %s, stratum %s, %+.6f s off' % (t.get('ref') or '-', t.get('stratum'),
+                                                       float(t.get('offset') or 0))))
+            for src in d.get('sources') or []:
+                print('  %s %s %s' % (src.get('mode'), src.get('state'), src.get('name')))
+        print('  the time zone: %s' % (d.get('timezone') or '-'))
+        print('  the time servers set here: %s' % (', '.join(HX.ntp_conf(store).get('servers')
+                                                             or []) or 'the machine\'s own'))
+        return 0
+    if what == 'db':
+        d = HX.db_view(store)
+        if j:
+            out_json(d)
+            return 0
+        o, px = d['own'], d['plex']
+        print(pal.head('plexmon\'s database') + '  %s, %s' % (o['where'], HX.human_bytes(o['bytes'])))
+        for c in o['copies'][:10]:
+            print('  %s  %s' % (c['name'], HX.human_bytes(c['bytes'])))
+        print(pal.head('Plex Media Server\'s database') + '  %s (Plex %s)' % (
+            px['dir'], 'running' if px['running'] else 'stopped'))
+        for f in px['files']:
+            print('  %s  %s' % (f['name'], HX.human_bytes(f['bytes'])))
+        last = px.get('last') or {}
+        print('  the last copy: %s' % (time.strftime('%Y-%m-%d %H:%M', time.localtime(last['at']))
+                                       if last.get('at') else 'never'))
+        print(pal.head('  copies made here') + '  (%s)' % px['copies_dir'])
+        for c in px['copies'][:10]:
+            print('  %s  %s' % (c['name'], HX.human_bytes(c['bytes'])))
+        print(pal.head('  Plex\'s own backups'))
+        for c in px['own_backups']:
+            print('  %s  %s' % (c['name'], HX.human_bytes(c['bytes'])))
+        for t in px.get('timers') or []:
+            print('  a timer of this server: %s (%s, next %s)' % (t['unit'], t['enabled'],
+                                                               t['next'] or '-'))
+        return 0
+    if what == 'db_copy':
+        name = HX.own_copy(store, 'made by %s' % by)
+        print(pal.ok_line('a copy made: %s' % name))
+        return 0
+    if what == 'db_check':
+        r = HX.own_check(store)
+        print((pal.ok_line if r['ok'] else pal.bad_line)('plexmon\'s database: %s' % '; '.join(
+            r['said'])))
+        return 0 if r['ok'] else 1
+    if what == 'db_restore':
+        if not _cli_sure(args, 'plexmon\'s database becomes %s, and plexmon starts again'
+                         % args.db_restore):
+            return 1
+        print(pal.ok_line(str(HX.own_restore(store, args.db_restore, by))))
+        return 0
+    if what == 'plex_db_copy':
+        r = HX.plex_copy(store, by, check=True)
+        if j:
+            out_json(r)
+            return 0
+        ck = r.get('check') or {}
+        print((pal.bad_line if ck.get('ok') is False else pal.ok_line)(
+            'a copy of Plex Media Server\'s database: %s (%s)%s' % (
+                r.get('name'), HX.human_bytes(r.get('bytes') or 0),
+                ' - checked: %s' % ('; '.join(ck.get('said') or [])) if ck else '')))
+        return 1 if ck.get('ok') is False else 0
+    if what == 'plex_db_restore':
+        if not _cli_sure(args, 'Plex Media Server is stopped, its database set aside and %s put '
+                         'in its place' % args.plex_db_restore):
+            return 1
+        r = HX.plex_restore(store, args.plex_db_restore, by, own=args.plex_own)
+        print(pal.ok_line(r if isinstance(r, str) else json.dumps(r, default=str)))
+        return 0
+    if what == 'backups':
+        d = HX.rb_view_all(store)
+        if j:
+            out_json(d)
+            return 0
+        print(pal.head('destinations') + ('' if d['password'] else '  ' + pal.bad_line(
+            'no password set: rbackup_password')))
+        for t in d['targets']:
+            print('  %s %s (%s)' % ('on ' if t.get('enabled') else 'off', t['name'],
+                                   t.get('kind_words')))
+        print(pal.head('the last backups'))
+        for r in d['runs'][:10]:
+            print('  %s  %s  %s' % (time.strftime('%Y-%m-%d %H:%M', time.localtime(r['at'])),
+                                    'ok  ' if r.get('ok') else 'FAIL', r.get('file') or
+                                    r.get('error') or ''))
+        return 0
+    if what == 'backup_now':
+        run = HX.rb_run(store, by)
+        for t in run.get('targets') or []:
+            print((pal.ok_line if t.get('ok') else pal.bad_line)('%s: %s' % (
+                t['name'], 'sent' if t.get('ok') else t.get('error') or 'failed')))
+        return 0 if run.get('ok') else 1
+    if what == 'backup_verify':
+        r = HX.rb_verify(store, by)
+        for c in r.get('checks') or []:
+            print((pal.ok_line if c.get('ok') else pal.bad_line)(c.get('what')))
+        return 0 if r.get('ok') else 1
+    if what == 'os_updates':
+        HX.osup_check(store, by)
+        while (HX.meta(store, 'host:osup:check', {}) or {}).get('state') == 'running':
+            time.sleep(1)
+        r = HX.meta(store, 'host:osup:check', {}) or {}
+        if j:
+            out_json(r)
+            return 0
+        if r.get('error'):
+            raise ValueError(r['error'])
+        print((pal.warn_line if r.get('count') else pal.ok_line)(
+            '%s update(s) waiting, %s of them security' % (r.get('count'), r.get('security'))))
+        for p in (r.get('packages') or [])[:60]:
+            print('  ' + p)
+        if r.get('reboot_after'):
+            print(pal.warn_line('a restart is needed after them: %s' % ', '.join(r['reboot_why'])))
+        return 0
+    if what == 'os_update':
+        sec = args.os_update == 'security'
+        if not _cli_sure(args, 'update %s of the system now' % ('the security updates' if sec
+                                                               else 'every package')):
+            return 1
+        plan = HX.osup_start(store, 'ask', by, security=sec)
+        seen = 0
+        while True:
+            row = HX.meta(store, 'host:osup:row', {}) or {}
+            lines = row.get('lines') or []
+            for ln in lines[seen:]:
+                print('  ' + ln)
+            seen = len(lines)
+            if row.get('plan') == plan['id'] and row.get('state') in ('done', 'failed') \
+                    and not HX.OSUP_WORK['run']:
+                break
+            time.sleep(1)
+        print((pal.ok_line if row['state'] == 'done' else pal.bad_line)(row.get('said') or
+                                                                        row['state']))
+        return 0 if row['state'] == 'done' else 1
+    if what in ('reboot', 'poweroff'):
+        how = 'reboot' if what == 'reboot' else 'poweroff'
+        if not _cli_sure(args, 'Plex Media Server and everything on this server stops - %s now'
+                         % ('restart' if how == 'reboot' else 'switch off')):
+            return 1
+        HX.power_ask(store, how, by, 'asked on the command line')
+        print(pal.ok_line('in 5 seconds'))
+        return 0
+    return None
+
+
 def cli_main(argv=None, mon=None):
     """plexmon on the command line. `mon` is plexmon.py - the dashboard's daemon -
     for --daemon, --check, --wake, --atv and the rest of its own."""
@@ -7697,7 +8614,7 @@ def cli_main(argv=None, mon=None):
                 for k, v in vars(args).items()
                 if k not in ('no_color', 'json', 'debug', 'limit', 'search', 'role', 'note',
                              'yes', 'audio', 'subs', 'label_add', 'label_remove', 'lang', 'fix',
-                             'overwrite', 'lock', 'dry_run'))
+                             'overwrite', 'lock', 'dry_run', 'plex_own'))
     # Nothing asked for: under systemd (an older unit starts plexmon.py bare)
     # that is the daemon; typed by somebody - or by a script - it is the
     # question they meant, what is it doing, never a second daemon.
@@ -7930,6 +8847,9 @@ def cli_main(argv=None, mon=None):
         print((pal.ok_line if gch or 'already' in gwords else pal.bad_line)(gwords))
         return 0 if changed or 'already' in words else 1
     got = cli_plex(args, store, pal)
+    if got is not None:
+        return got
+    got = cli_host(args, store, pal)
     if got is not None:
         return got
     if args.plex_cert:
@@ -10006,6 +10926,8 @@ class Console(object):
             ('9', 'Upgrades', self.m_upgrades),
             ('10', 'The service', self.m_service),
             ('11', 'The Plex library', self.m_plex),
+            ('12', 'The machine and the data: time, databases, backups, updates, restart',
+             self.m_machine),
         ]
         os.environ.setdefault('ESCDELAY', '25')
         os.environ.setdefault('NCURSES_NO_UTF8_ACS', '1')
@@ -10261,6 +11183,56 @@ class Console(object):
             ('5', 'The labels of a library', labels),
             ('6', 'The watchlist', lambda: self.act('--plex-watchlist')),
             ('7', 'Scan the files of a library', scan),
+        ])
+
+    # ---- 12 the machine and the data (2.2.0) -------------------------------------------
+    def m_machine(self):
+        def plex_back():
+            opts = [(c['name'], 'a copy made here - %s' % c['name']) for c in HX.plex_copies()]
+            opts += [('own:' + c['name'], 'Plex\'s own backup - %s' % c['date'])
+                     for c in HX.plex_own_backups() if not c['blobs']]
+            if not opts:
+                self.note('Put Plex\'s database back', 'There is no copy yet.')
+                return
+            r = self.choose('Put Plex\'s database back', opts[:30], 'Plex Media Server is stopped, '
+                            'its database files set aside (kept), the copy put in, Plex started.')
+            if not r:
+                return
+            own = r.startswith('own:')
+            name = r[4:] if own else r
+            if self.confirm('Put it back', 'Everything since the copy was made is not in it. '
+                            'Whoever is watching is stopped.', 'Put it back'):
+                self.act('--plex-db-restore', name, *(['--plex-own'] if own else []), '--yes')
+
+        def update():
+            r = self.choose('Update the system', [
+                ('security', 'Only the security updates'), ('all', 'Every update')],
+                'dnf, Plex Media Server\'s own package left out (osup_plex). A restart it needs '
+                'is not made by itself here.')
+            if r:
+                self.live(lambda: self.show_live('--os-update', r, '--yes'))
+
+        def power(how, words):
+            def go():
+                if self.confirm(words, 'Plex Media Server, the dashboard, these menus - '
+                                'everything on this server stops.', words):
+                    self.act('--' + how, '--yes')
+            return go
+        return self.sub('The machine and the data', [
+            ('1', 'The clock (chrony)', lambda: self.act('--time')),
+            ('2', 'Step the clock to the time servers now', lambda: self.act('--time-sync')),
+            ('3', 'The databases: plexmon\'s and Plex Media Server\'s', lambda: self.act('--db')),
+            ('4', 'A copy of plexmon\'s database now', lambda: self.act('--db-copy')),
+            ('5', 'A copy of Plex Media Server\'s database now (checked)',
+             lambda: self.act('--plex-db-copy')),
+            ('6', 'Put Plex Media Server\'s database back…', plex_back),
+            ('7', 'Backups: destinations and the last ones', lambda: self.act('--backups')),
+            ('8', 'Back up now', lambda: self.act('--backup-now')),
+            ('9', 'Try the newest backup', lambda: self.act('--backup-verify')),
+            ('10', 'Look for updates of the system', lambda: self.act('--os-updates')),
+            ('11', 'Update the system…', update),
+            ('12', 'Restart the server', power('reboot', 'Restart')),
+            ('13', 'Switch the server off', power('poweroff', 'Switch off')),
         ])
 
     # ---- 4 the televisions ------------------------------------------------------------

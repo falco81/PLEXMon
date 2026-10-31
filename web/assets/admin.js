@@ -476,6 +476,11 @@ function showPane(name) {
   if (name === 'acme') loadAcme(); else acPoll(false);
   if (name === 'about') drawAbout();
   if (name === 'upgrade') loadUpgrade();
+  if (name === 'time' && typeof loadNtp === 'function') loadNtp();
+  if (name === 'power' && typeof loadPower === 'function') loadPower();
+  if (name === 'osup' && typeof loadOsup === 'function') loadOsup();
+  if (name === 'db' && typeof loadDb === 'function') loadDb();
+  if (name === 'backup' && typeof loadRbackup === 'function') loadRbackup();
   if (name === 'web') loadWeb();
   markDirtyCount();
 }
@@ -715,7 +720,6 @@ function drawSettings() {
   applyOnlyWhen();
   if (typeof AC !== 'undefined' && AC.d) acmeNamesInSettings(AC.d);
   explainWhatWasDrawn($('tab-settings'));
-  if (typeof PANE !== 'undefined' && PANE === 'db') dbLinkNote();   /* drawn again (1.0.107) */
   if (typeof PANE !== 'undefined' && PANE === 'backup' && typeof rbPassTools === 'function') rbPassTools();
 }
 

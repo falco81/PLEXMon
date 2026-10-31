@@ -27,7 +27,7 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 TOP="plexmon-$VERSION"
 mkdir -p "$WORK/$TOP"
-FILES=(install.sh plexmon.py plexmon_admin.py plexmon_plex.py README.md INSTALL.md CHANGELOG.md CONFIG.md LICENSE.md
+FILES=(install.sh plexmon.py plexmon_admin.py plexmon_plex.py plexmon_host.py README.md INSTALL.md CHANGELOG.md CONFIG.md LICENSE.md
        deploy web tools docs)
 for f in "${FILES[@]}"; do cp -a "$f" "$WORK/$TOP/"; done
 find "$WORK/$TOP" -name '__pycache__' -prune -exec rm -rf {} + 2>/dev/null || true

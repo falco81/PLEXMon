@@ -6335,6 +6335,1654 @@
   "xs0332": {
    "source": "the season and its episodes",
    "text": "série a její epizody"
+  },
+  "xs0333": {
+   "source": " · security updates only",
+   "text": " · jen bezpečnostní aktualizace"
+  },
+  "xs0334": {
+   "source": "(none)",
+   "text": "(žádné)"
+  },
+  "xs0335": {
+   "source": "(not locked)",
+   "text": "(nezamčeno)"
+  },
+  "xs0336": {
+   "source": "- as each machine has it -",
+   "text": "- jak to má každý stroj -"
+  },
+  "xs0337": {
+   "source": "64 hex digits - Try reaching it shows the server’s",
+   "text": "64 hex číslic – Zkusit spojení ukáže ten serverový"
+  },
+  "xs0338": {
+   "source": "A Windows or Samba share: the account, its domain, SMB3 encryption.",
+   "text": "Sdílení Windows nebo Samba: účet, jeho doména, šifrování SMB3."
+  },
+  "xs0339": {
+   "source": "A backup made now and sent to every destination switched on - the same as the scheduled one.",
+   "text": "Záloha udělaná teď a poslaná do každého zapnutého úložiště – stejná jako ta plánovaná."
+  },
+  "xs0340": {
+   "source": "A backup made now, saved on the computer you are sitting at - locked with the password as the others.",
+   "text": "Záloha udělaná teď a uložená do počítače, u kterého sedíte – zamčená heslem jako ostatní."
+  },
+  "xs0341": {
+   "source": "A certificate and its key you have: PEM (both, in any order) or a PFX / PKCS#12 file with its password.",
+   "text": "Certifikát a jeho klíč, které máte: PEM (obojí, v libovolném pořadí) nebo soubor PFX / PKCS#12 s heslem."
+  },
+  "xs0342": {
+   "source": "A folder on this machine - an NFS or other share mounted here.",
+   "text": "Složka na tomto stroji – NFS nebo jiné sdílení připojené sem."
+  },
+  "xs0343": {
+   "source": "A key (below) or a password - or both.",
+   "text": "Klíč (níže), nebo heslo – nebo obojí."
+  },
+  "xs0344": {
+   "source": "A key and a certificate for it, made here (EC P-256, five years). Any one kept is replaced.",
+   "text": "Klíč a certifikát k němu vytvořené tady (EC P-256, pět let). Dosavadní se nahradí."
+  },
+  "xs0345": {
+   "source": "A restart",
+   "text": "Restart"
+  },
+  "xs0346": {
+   "source": "Add a destination",
+   "text": "Přidat úložiště"
+  },
+  "xs0347": {
+   "source": "Add a server",
+   "text": "Přidat server"
+  },
+  "xs0348": {
+   "source": "After the update",
+   "text": "Po aktualizaci"
+  },
+  "xs0349": {
+   "source": "Apply what is kept, now",
+   "text": "Uplatnit uchovávání hned"
+  },
+  "xs0350": {
+   "source": "Ask me when a restart is needed",
+   "text": "Zeptat se, když je potřeba restart"
+  },
+  "xs0351": {
+   "source": "Asked every",
+   "text": "Dotaz každých"
+  },
+  "xs0352": {
+   "source": "Back up now",
+   "text": "Zálohovat teď"
+  },
+  "xs0353": {
+   "source": "Backups go here",
+   "text": "Zálohy jdou sem"
+  },
+  "xs0354": {
+   "source": "Backups go here. Switch off to stop sending, keeping everything set.",
+   "text": "Zálohy jdou sem. Vypněte, aby se přestaly posílat; nastavení zůstane."
+  },
+  "xs0355": {
+   "source": "Backups stop going there until it is trusted again.",
+   "text": "Zálohy tam přestanou chodit, dokud se znovu neověří."
+  },
+  "xs0356": {
+   "source": "Backups there",
+   "text": "Zálohy tam"
+  },
+  "xs0357": {
+   "source": "Both nodes",
+   "text": "Oba nody"
+  },
+  "xs0358": {
+   "source": "Both nodes are switched off. Nothing answers - RADIUS, the pages - until somebody switches them on again at the machines.",
+   "text": "Oba nody se vypnou. Nic nebude odpovídat – RADIUS ani stránky –, dokud je někdo znovu nezapne u strojů."
+  },
+  "xs0359": {
+   "source": "Both restart at the same moment: for a minute or two nothing answers - RADIUS, the pages, the VIP address.",
+   "text": "Oba se restartují ve stejnou chvíli: minutu či dvě nic neodpovídá – RADIUS, stránky ani VIP adresa."
+  },
+  "xs0360": {
+   "source": "Can be put back",
+   "text": "Lze obnovit"
+  },
+  "xs0361": {
+   "source": "Check it",
+   "text": "Ověřit ji"
+  },
+  "xs0362": {
+   "source": "Clear the list",
+   "text": "Vymazat seznam"
+  },
+  "xs0363": {
+   "source": "Clear the list of backups sent?",
+   "text": "Vymazat seznam odeslaných záloh?"
+  },
+  "xs0364": {
+   "source": "Clear the list of backups tried?",
+   "text": "Vyprázdnit seznam vyzkoušených záloh?"
+  },
+  "xs0365": {
+   "source": "Clear the window",
+   "text": "Vyčistit výpis"
+  },
+  "xs0366": {
+   "source": "Click to copy.",
+   "text": "Kliknutím zkopírujete."
+  },
+  "xs0367": {
+   "source": "Client certificate",
+   "text": "Klientský certifikát"
+  },
+  "xs0368": {
+   "source": "Copied",
+   "text": "Zkopírováno"
+  },
+  "xs0369": {
+   "source": "Copies",
+   "text": "Kopie"
+  },
+  "xs0370": {
+   "source": "Delete it",
+   "text": "Smazat ji"
+  },
+  "xs0371": {
+   "source": "Delete it there",
+   "text": "Smazat ji tam"
+  },
+  "xs0372": {
+   "source": "Delete the private key from this machine. Unless the server takes a password instead, nothing here reaches it until a new key is made and put on it.",
+   "text": "Smaže soukromý klíč z tohoto stroje. Pokud server nebere heslo, nic odsud se k němu nedostane, dokud se nevytvoří nový klíč a nedá se na něj."
+  },
+  "xs0373": {
+   "source": "Destinations",
+   "text": "Úložiště"
+  },
+  "xs0374": {
+   "source": "Domain (workgroup)",
+   "text": "Doména (pracovní skupina)"
+  },
+  "xs0375": {
+   "source": "Download RESTORE.md",
+   "text": "Stáhnout RESTORE.md"
+  },
+  "xs0376": {
+   "source": "Download a backup that is not locked?",
+   "text": "Stáhnout zálohu, která není zamčená?"
+  },
+  "xs0377": {
+   "source": "Download it",
+   "text": "Stáhnout"
+  },
+  "xs0378": {
+   "source": "Download one here",
+   "text": "Stáhnout sem"
+  },
+  "xs0379": {
+   "source": "Download the private key",
+   "text": "Stáhnout soukromý klíč"
+  },
+  "xs0380": {
+   "source": "Each node is one more source for the other: if the servers above are out of reach, the two nodes at least keep one time - which is what codes need.",
+   "text": "Každý node je dalším zdrojem pro druhý: když servery výše nejsou dostupné, oba nody si aspoň drží stejný čas – a to kódy potřebují."
+  },
+  "xs0381": {
+   "source": "Empty the window of every node - for every page, and after a reload too; what comes after is shown.",
+   "text": "Vyprázdní výpis všech uzlů – pro každou stránku i po obnovení; zobrazí se jen to, co přijde potom."
+  },
+  "xs0382": {
+   "source": "Every update",
+   "text": "Všechny aktualizace"
+  },
+  "xs0383": {
+   "source": "Everything on the wire encrypted; a server that cannot is refused.",
+   "text": "Vše po síti šifrované; server, který to neumí, se odmítne."
+  },
+  "xs0384": {
+   "source": "FTP over TLS - explicit (port 21) or implicit (990); the server’s certificate checked, a client certificate if it wants one.",
+   "text": "FTP přes TLS – explicitní (port 21) nebo implicitní (990); certifikát serveru ověřený, klientský certifikát, pokud ho chce."
+  },
+  "xs0385": {
+   "source": "Followed before the others when it is good.",
+   "text": "Má přednost před ostatními, když je v pořádku."
+  },
+  "xs0386": {
+   "source": "Follows",
+   "text": "Sleduje"
+  },
+  "xs0387": {
+   "source": "Forget it",
+   "text": "Zapomenout"
+  },
+  "xs0388": {
+   "source": "Forget the client certificate",
+   "text": "Zapomenout klientský certifikát"
+  },
+  "xs0389": {
+   "source": "Forget the host key",
+   "text": "Zapomenout klíč serveru"
+  },
+  "xs0390": {
+   "source": "Forget the key",
+   "text": "Zapomenout klíč"
+  },
+  "xs0391": {
+   "source": "Four quick questions at the start: synchronised in seconds, not minutes.",
+   "text": "Čtyři rychlé dotazy na začátku: synchronizace za sekundy, ne minuty."
+  },
+  "xs0392": {
+   "source": "Frequency",
+   "text": "Frekvence"
+  },
+  "xs0393": {
+   "source": "Further off than this, the clock jumps to the right time instead of being slowed or sped up gently.",
+   "text": "Při větší odchylce hodiny skočí na správný čas, místo aby se pozvolna zpomalovaly či zrychlovaly."
+  },
+  "xs0394": {
+   "source": "Give the disk back",
+   "text": "Vrátit místo disku"
+  },
+  "xs0395": {
+   "source": "Hidden by itself half an hour after it began.",
+   "text": "Samo se skryje půl hodiny po začátku."
+  },
+  "xs0396": {
+   "source": "Hide it",
+   "text": "Skrýt"
+  },
+  "xs0397": {
+   "source": "How many updates after chronyd starts may step it: 3 is after a boot; -1 any time.",
+   "text": "Kolik aktualizací po startu chronyd smí skokově srovnat: 3 je po bootu; -1 kdykoli."
+  },
+  "xs0398": {
+   "source": "How to put a backup back",
+   "text": "Jak obnovit zálohu"
+  },
+  "xs0399": {
+   "source": "How to put it back",
+   "text": "Jak zálohu obnovit"
+  },
+  "xs0400": {
+   "source": "It does not work",
+   "text": "Nefunguje to"
+  },
+  "xs0401": {
+   "source": "Its key is deleted from this machine. A server that asks for one will refuse backups until another is made and given to it.",
+   "text": "Jeho klíč se smaže z tohoto stroje. Server, který ho chce, bude zálohy odmítat, dokud se nevytvoří jiný a nedá se mu."
+  },
+  "xs0402": {
+   "source": "Its own /etc/chrony.conf: ",
+   "text": "Jeho vlastní /etc/chrony.conf: "
+  },
+  "xs0403": {
+   "source": "Its passphrase, if it has one",
+   "text": "Jeho heslo, pokud nějaké má"
+  },
+  "xs0404": {
+   "source": "Its password",
+   "text": "Její heslo"
+  },
+  "xs0405": {
+   "source": "Its time",
+   "text": "Jeho čas"
+  },
+  "xs0406": {
+   "source": "Keep this certificate",
+   "text": "Uložit tento certifikát"
+  },
+  "xs0407": {
+   "source": "Keep this key",
+   "text": "Uložit tento klíč"
+  },
+  "xs0408": {
+   "source": "Kept, sealed. Type a new one to change it.",
+   "text": "Uloženo, zapečetěné. Pro změnu napište nové."
+  },
+  "xs0409": {
+   "source": "Last correction",
+   "text": "Poslední korekce"
+  },
+  "xs0410": {
+   "source": "Last heard",
+   "text": "Naposledy slyšen"
+  },
+  "xs0411": {
+   "source": "Leap status",
+   "text": "Leap status"
+  },
+  "xs0412": {
+   "source": "Look for updates",
+   "text": "Podívat se po aktualizacích"
+  },
+  "xs0413": {
+   "source": "Look on every node",
+   "text": "Zjistit na všech uzlech"
+  },
+  "xs0414": {
+   "source": "Made",
+   "text": "Pořízeno"
+  },
+  "xs0415": {
+   "source": "Made if it is not there.",
+   "text": "Vytvoří se, pokud tam není."
+  },
+  "xs0416": {
+   "source": "Made if it is not there. Without / at the start: under the account’s home.",
+   "text": "Vytvoří se, pokud tam není. Bez / na začátku: v domovské složce účtu."
+  },
+  "xs0417": {
+   "source": "Make a client certificate",
+   "text": "Vytvořit klientský certifikát"
+  },
+  "xs0418": {
+   "source": "Make a copy now",
+   "text": "Pořídit kopii teď"
+  },
+  "xs0419": {
+   "source": "Make a fresh ed25519 pair here. The private half stays on this machine, sealed; the public half is shown below for you to put on the server. Any key already kept is replaced.",
+   "text": "Vytvoří tady nový pár ed25519. Soukromá polovina zůstane na tomto stroji, zapečetěná; veřejná se ukáže níže, abyste ji dali na server. Dosavadní klíč se nahradí."
+  },
+  "xs0420": {
+   "source": "Make a key",
+   "text": "Vytvořit klíč"
+  },
+  "xs0421": {
+   "source": "Make a strong one",
+   "text": "Vytvořit silné"
+  },
+  "xs0422": {
+   "source": "NAS in the server room",
+   "text": "NAS v serverovně"
+  },
+  "xs0423": {
+   "source": "NOT GOOD",
+   "text": "NENÍ V POŘÁDKU"
+  },
+  "xs0424": {
+   "source": "NOT locked - set the password",
+   "text": "NEZAMČENO – nastavte heslo"
+  },
+  "xs0425": {
+   "source": "Network Time Security: the server proves who it is (time.cloudflare.com, ptbtime1.ptb.de, nts.netnod.se…). Needs TCP 4460 out.",
+   "text": "Network Time Security: server prokáže, kdo je (time.cloudflare.com, ptbtime1.ptb.de, nts.netnod.se…). Potřebuje odchozí TCP 4460."
+  },
+  "xs0426": {
+   "source": "No backup of this node has been sent yet",
+   "text": "Žádná záloha tohoto uzlu se zatím neodeslala"
+  },
+  "xs0427": {
+   "source": "No backup sent yet.",
+   "text": "Zatím se žádná záloha neodeslala."
+  },
+  "xs0428": {
+   "source": "No client certificate — most servers want none.",
+   "text": "Žádný klientský certifikát – většina serverů žádný nechce."
+  },
+  "xs0429": {
+   "source": "No destination yet - backups go nowhere",
+   "text": "Zatím žádné úložiště – zálohy nejdou nikam"
+  },
+  "xs0430": {
+   "source": "No destination yet. A backup kept only on this machine is lost with it: add a place on another machine.",
+   "text": "Zatím žádné úložiště. Záloha jen na tomto stroji se ztratí s ním: přidejte místo na jiném stroji."
+  },
+  "xs0431": {
+   "source": "No key yet — make one, or let it sign in with a password.",
+   "text": "Zatím žádný klíč – vytvořte ho, nebo se přihlašujte heslem."
+  },
+  "xs0432": {
+   "source": "No source - chrony has none, or is not installed.",
+   "text": "Žádný zdroj – chrony žádný nemá, nebo není nainstalované."
+  },
+  "xs0433": {
+   "source": "Not good",
+   "text": "Není v pořádku"
+  },
+  "xs0434": {
+   "source": "Not trusted yet — Try reaching it shows the fingerprint to trust.",
+   "text": "Zatím neověřený – Zkusit spojení ukáže otisk k ověření."
+  },
+  "xs0435": {
+   "source": "Nothing is deleted on the server; backups simply stop going there, and its keys and certificates set here are forgotten.",
+   "text": "Na serveru se nic nesmaže; zálohy tam jen přestanou chodit a jeho klíče a certifikáty nastavené tady se zapomenou."
+  },
+  "xs0436": {
+   "source": "Of the machines: the logs and the times on these pages. Codes do not depend on it.",
+   "text": "Strojů: logy a časy na těchto stránkách. Kódy na něm nezávisí."
+  },
+  "xs0437": {
+   "source": "Of them security",
+   "text": "Z toho bezpečnostních"
+  },
+  "xs0438": {
+   "source": "One after the other: each goes into maintenance, the VIP address moves to the other node, it restarts and comes back into service - then the next. RADIUS and the pages go on answering all the time.",
+   "text": "Jeden po druhém: každý přejde do údržby, VIP adresa se přesune na druhý node, restartuje se a vrátí do provozu – pak další. RADIUS i stránky odpovídají celou dobu."
+  },
+  "xs0439": {
+   "source": "Only the security updates",
+   "text": "Jen bezpečnostní"
+  },
+  "xs0440": {
+   "source": "Only when it was locked with another password than the one set here now.",
+   "text": "Jen pokud byla zamčená jiným heslem než tím, které je tu nastavené teď."
+  },
+  "xs0441": {
+   "source": "Or a file",
+   "text": "Nebo soubor"
+  },
+  "xs0442": {
+   "source": "Passive mode",
+   "text": "Pasivní režim"
+  },
+  "xs0443": {
+   "source": "Pin this certificate",
+   "text": "Připnout tento certifikát"
+  },
+  "xs0444": {
+   "source": "Pinned SHA-256 fingerprint",
+   "text": "Připnutý otisk SHA-256"
+  },
+  "xs0445": {
+   "source": "Plain FTP: the password and the file go over unencrypted - only inside a network you trust (the file itself is locked).",
+   "text": "Obyčejné FTP: heslo i soubor jdou nešifrovaně – jen uvnitř sítě, které věříte (soubor sám je zamčený)."
+  },
+  "xs0446": {
+   "source": "Power off",
+   "text": "Vypnout"
+  },
+  "xs0447": {
+   "source": "Power off both",
+   "text": "Vypnout oba"
+  },
+  "xs0448": {
+   "source": "Put back.",
+   "text": "Obnoveno."
+  },
+  "xs0449": {
+   "source": "Put back. Sign in again - with an account the backup has.",
+   "text": "Obnoveno. Přihlaste se znovu – účtem, který je v záloze."
+  },
+  "xs0450": {
+   "source": "Put it into your password vault now - this is the only time it is shown whole. Without it no backup can be opened, by anybody. Then press Save the changes.",
+   "text": "Uložte ho hned do trezoru hesel – celé se ukáže jen teď. Bez něj nikdo žádnou zálohu neotevře. Pak stiskněte Uložit změny."
+  },
+  "xs0451": {
+   "source": "Put one back…",
+   "text": "Obnovit ze souboru…"
+  },
+  "xs0452": {
+   "source": "Put this backup back?",
+   "text": "Obnovit tuto zálohu?"
+  },
+  "xs0453": {
+   "source": "Put this back…",
+   "text": "Obnovit tuto…"
+  },
+  "xs0454": {
+   "source": "Putting the backup back",
+   "text": "Obnovuji zálohu"
+  },
+  "xs0455": {
+   "source": "RESTORE.md - the exact steps to bring everything back from a backup, filled in with this installation, as every backup carries it. To read now, and to keep apart from the backups.",
+   "text": "RESTORE.md – přesný postup, jak ze zálohy vše obnovit, vyplněný pro tuto instalaci, tak jak ho nese každá záloha. Ke čtení hned a k uložení mimo zálohy."
+  },
+  "xs0456": {
+   "source": "Reached",
+   "text": "Dosaženo"
+  },
+  "xs0457": {
+   "source": "Read it again",
+   "text": "Načíst znovu"
+  },
+  "xs0458": {
+   "source": "Restart after the update",
+   "text": "Restart po aktualizaci"
+  },
+  "xs0459": {
+   "source": "Restart both at once",
+   "text": "Restartovat oba najednou"
+  },
+  "xs0460": {
+   "source": "Restart by itself when needed",
+   "text": "Restartovat samo, když je potřeba"
+  },
+  "xs0461": {
+   "source": "Restart one after the other",
+   "text": "Restartovat jeden po druhém"
+  },
+  "xs0462": {
+   "source": "Restart them, one at a time",
+   "text": "Restartovat je, jeden po druhém"
+  },
+  "xs0463": {
+   "source": "Restarted one after the other, each in maintenance while it is, the service never stops.",
+   "text": "Restartují se jeden po druhém, každý mezitím v údržbě, služba se nezastaví."
+  },
+  "xs0464": {
+   "source": "Root delay / dispersion",
+   "text": "Root delay / disperze"
+  },
+  "xs0465": {
+   "source": "SMB3 encrypted",
+   "text": "SMB3 šifrované"
+  },
+  "xs0466": {
+   "source": "SMB3 encryption required",
+   "text": "Vyžadovat šifrování SMB3"
+  },
+  "xs0467": {
+   "source": "SSH certificate of the key (only if the server wants one)",
+   "text": "SSH certifikát klíče (jen pokud ho server chce)"
+  },
+  "xs0468": {
+   "source": "SSH file transfer: a key made here or your own, or a password; the server’s host key checked.",
+   "text": "Přenos souborů přes SSH: klíč vytvořený tady nebo vlastní, nebo heslo; klíč serveru ověřený."
+  },
+  "xs0469": {
+   "source": "Saved with the bar at the bottom; each node then puts them in by itself within seconds.",
+   "text": "Ukládá se lištou dole; každý node je pak do pár sekund sám nastaví."
+  },
+  "xs0470": {
+   "source": "Serve the time to",
+   "text": "Poskytovat čas sítím"
+  },
+  "xs0471": {
+   "source": "Sign in, write a small file, find it in the list and take it away again - with what is typed above, saved or not.",
+   "text": "Přihlásit se, zapsat malý soubor, najít ho ve výpisu a zase ho smazat – s tím, co je napsané výše, uložené nebo ne."
+  },
+  "xs0472": {
+   "source": "Source",
+   "text": "Zdroj"
+  },
+  "xs0473": {
+   "source": "Sources that have to agree",
+   "text": "Kolik zdrojů se musí shodnout"
+  },
+  "xs0474": {
+   "source": "Step it",
+   "text": "Srovnat"
+  },
+  "xs0475": {
+   "source": "Step it now",
+   "text": "Srovnat hned"
+  },
+  "xs0476": {
+   "source": "Step when off by more than (s)",
+   "text": "Skokově srovnat při odchylce nad (s)"
+  },
+  "xs0477": {
+   "source": "Stop the update",
+   "text": "Zastavit aktualizaci"
+  },
+  "xs0478": {
+   "source": "Stratum",
+   "text": "Stratum"
+  },
+  "xs0479": {
+   "source": "Switch it off",
+   "text": "Vypnout"
+  },
+  "xs0480": {
+   "source": "Switched off: nothing is sent here.",
+   "text": "Vypnuto: nic se sem neposílá."
+  },
+  "xs0481": {
+   "source": "Take it off the list",
+   "text": "Odebrat ze seznamu"
+  },
+  "xs0482": {
+   "source": "Take this destination away",
+   "text": "Odebrat toto úložiště"
+  },
+  "xs0483": {
+   "source": "The SSH key",
+   "text": "SSH klíč"
+  },
+  "xs0484": {
+   "source": "The authority (PEM)",
+   "text": "Autorita (PEM)"
+  },
+  "xs0485": {
+   "source": "The certificate as a file (not its key), for the server’s administrator.",
+   "text": "Certifikát jako soubor (bez klíče) pro správce serveru."
+  },
+  "xs0486": {
+   "source": "The certificate of the authority that signed the server’s.",
+   "text": "Certifikát autority, která podepsala certifikát serveru."
+  },
+  "xs0487": {
+   "source": "The certificate. Click it to copy.",
+   "text": "Certifikát. Kliknutím zkopírujete."
+  },
+  "xs0488": {
+   "source": "The clock is set only when at least this many sources agree. 1 with one server; 2 or 3 with several.",
+   "text": "Hodiny se nastaví, jen když se shodne aspoň tolik zdrojů. 1 při jednom serveru; 2 nebo 3 při více."
+  },
+  "xs0489": {
+   "source": "The clock set to the time servers at once (chronyc makestep), not slewed slowly - for a clock that is far off.",
+   "text": "Hodiny se nastaví podle časových serverů okamžitě (chronyc makestep), ne pomalým doladěním – pro hodiny, které jsou hodně mimo."
+  },
+  "xs0490": {
+   "source": "The folder",
+   "text": "Složka"
+  },
+  "xs0491": {
+   "source": "The folder in it",
+   "text": "Složka v něm"
+  },
+  "xs0492": {
+   "source": "The folder there",
+   "text": "Složka tam"
+  },
+  "xs0493": {
+   "source": "The nodes need a restart",
+   "text": "Uzly potřebují restart"
+  },
+  "xs0494": {
+   "source": "The nodes not yet begun stay as they are; one being updated finishes.",
+   "text": "Uzly, které ještě nezačaly, zůstanou, jak jsou; právě aktualizovaný uzel dokončí."
+  },
+  "xs0495": {
+   "source": "The nodes take each other too",
+   "text": "Nody se synchronizují i navzájem"
+  },
+  "xs0496": {
+   "source": "The other node first, then this one - each in maintenance while it restarts, so the VIP address and the service never stop.",
+   "text": "Nejdřív druhý node, pak tento – každý je během restartu v údržbě, takže VIP adresa ani služba se nezastaví."
+  },
+  "xs0497": {
+   "source": "The other node first, then this one - each out of service while it is updated, the VIP address on the other, RADIUS answered there; back in service before the next one starts.",
+   "text": "Nejdřív druhý uzel, pak tento – každý je během aktualizace mimo provoz, VIP adresa i RADIUS jsou na druhém; do provozu se vrátí dřív, než začne další."
+  },
+  "xs0498": {
+   "source": "The password of the backups",
+   "text": "Heslo záloh"
+  },
+  "xs0499": {
+   "source": "The password of the key or of the PFX, if it has one",
+   "text": "Heslo klíče nebo PFX, pokud nějaké má"
+  },
+  "xs0500": {
+   "source": "The private half as a file, for keeping somewhere safe. That it was downloaded, and by whom, is written into Events.",
+   "text": "Soukromá polovina jako soubor k bezpečnému uložení. Že byl stažen a kým, se zapíše do Událostí."
+  },
+  "xs0501": {
+   "source": "The private key is deleted from this machine. Unless the server takes a password instead, backups will not reach it until a new key is made and put on it.",
+   "text": "Soukromý klíč se smaže z tohoto stroje. Pokud server nebere heslo, zálohy se k němu nedostanou, dokud se nevytvoří nový klíč a nedá se na něj."
+  },
+  "xs0502": {
+   "source": "The public half. Click it to copy.",
+   "text": "Veřejná polovina. Kliknutím zkopírujete."
+  },
+  "xs0503": {
+   "source": "The root helper of this node is not installed (install.sh --upgrade puts it in).",
+   "text": "Pomocník roota na tomto uzlu není nainstalovaný (doinstaluje ho install.sh --upgrade)."
+  },
+  "xs0504": {
+   "source": "The server shows this host key. Compare it with the server’s own fingerprint before you trust it:",
+   "text": "Server ukazuje tento klíč. Než mu uvěříte, porovnejte ho s otiskem přímo na serveru:"
+  },
+  "xs0505": {
+   "source": "The server’s certificate is checked",
+   "text": "Certifikát serveru se ověřuje"
+  },
+  "xs0506": {
+   "source": "The server’s host key",
+   "text": "Klíč serveru"
+  },
+  "xs0507": {
+   "source": "The share",
+   "text": "Sdílení"
+  },
+  "xs0508": {
+   "source": "The time servers",
+   "text": "Časové servery"
+  },
+  "xs0509": {
+   "source": "The update",
+   "text": "Aktualizace"
+  },
+  "xs0510": {
+   "source": "The usual one, through firewalls and NAT.",
+   "text": "Ten obvyklý, projde firewally i NAT."
+  },
+  "xs0511": {
+   "source": "This page's server is restarting",
+   "text": "Server této stránky se restartuje"
+  },
+  "xs0512": {
+   "source": "Time zone",
+   "text": "Časové pásmo"
+  },
+  "xs0513": {
+   "source": "Trust it",
+   "text": "Důvěřovat"
+  },
+  "xs0514": {
+   "source": "Trusted. Click to copy.",
+   "text": "Důvěryhodný. Kliknutím zkopírujete."
+  },
+  "xs0515": {
+   "source": "Try it",
+   "text": "Vyzkoušet"
+  },
+  "xs0516": {
+   "source": "Try reaching it",
+   "text": "Zkusit spojení"
+  },
+  "xs0517": {
+   "source": "Try the newest",
+   "text": "Vyzkoušet nejnovější"
+  },
+  "xs0518": {
+   "source": "Update",
+   "text": "Aktualizovat"
+  },
+  "xs0519": {
+   "source": "Update it now",
+   "text": "Aktualizovat teď"
+  },
+  "xs0520": {
+   "source": "Update the nodes",
+   "text": "Aktualizovat uzly"
+  },
+  "xs0521": {
+   "source": "Update them, one at a time",
+   "text": "Aktualizovat je, jeden po druhém"
+  },
+  "xs0522": {
+   "source": "Update this server",
+   "text": "Aktualizovat tento server"
+  },
+  "xs0523": {
+   "source": "Updated by",
+   "text": "Aktualizuje"
+  },
+  "xs0524": {
+   "source": "Updates waiting",
+   "text": "Čekající aktualizace"
+  },
+  "xs0525": {
+   "source": "Use a private key you already have. Paste it whole, with its BEGIN and END lines; its public half is worked out here.",
+   "text": "Použít soukromý klíč, který už máte. Vložte ho celý i s řádky BEGIN a END; veřejná polovina se dopočítá tady."
+  },
+  "xs0526": {
+   "source": "Use my own",
+   "text": "Použít vlastní"
+  },
+  "xs0527": {
+   "source": "Use my own client certificate",
+   "text": "Použít vlastní klientský certifikát"
+  },
+  "xs0528": {
+   "source": "Use my own key",
+   "text": "Použít vlastní klíč"
+  },
+  "xs0529": {
+   "source": "What it is called",
+   "text": "Jak se jmenuje"
+  },
+  "xs0530": {
+   "source": "What it says",
+   "text": "Výpis"
+  },
+  "xs0531": {
+   "source": "Where it went",
+   "text": "Kam došla"
+  },
+  "xs0532": {
+   "source": "Where should the backups go?",
+   "text": "Kam mají zálohy chodit?"
+  },
+  "xs0533": {
+   "source": "Where the time comes from",
+   "text": "Odkud se bere čas"
+  },
+  "xs0534": {
+   "source": "a new key was made — put the public half on the server",
+   "text": "nový klíč je vytvořen – dejte veřejnou polovinu na server"
+  },
+  "xs0535": {
+   "source": "a pool (several addresses)",
+   "text": "pool (víc adres)"
+  },
+  "xs0536": {
+   "source": "against an authority of my own",
+   "text": "proti vlastní autoritě"
+  },
+  "xs0537": {
+   "source": "against the authorities this machine trusts",
+   "text": "proti autoritám, kterým věří tento stroj"
+  },
+  "xs0538": {
+   "source": "by hand only",
+   "text": "jen ručně"
+  },
+  "xs0539": {
+   "source": "certificate NOT checked",
+   "text": "certifikát NEOVĚŘOVÁN"
+  },
+  "xs0540": {
+   "source": "certificate: own authority",
+   "text": "certifikát: vlastní autorita"
+  },
+  "xs0541": {
+   "source": "certificate: system authorities",
+   "text": "certifikát: systémové autority"
+  },
+  "xs0542": {
+   "source": "chrony is not installed",
+   "text": "chrony není nainstalované"
+  },
+  "xs0543": {
+   "source": "did not go everywhere",
+   "text": "neodešla všude"
+  },
+  "xs0544": {
+   "source": "every node is up again",
+   "text": "všechny nody znovu běží"
+  },
+  "xs0545": {
+   "source": "explicit - AUTH TLS on port 21",
+   "text": "explicitní – AUTH TLS na portu 21"
+  },
+  "xs0546": {
+   "source": "host key not trusted yet",
+   "text": "klíč serveru zatím neověřen"
+  },
+  "xs0547": {
+   "source": "implicit - TLS from the start, port 990",
+   "text": "implicitní – TLS od začátku, port 990"
+  },
+  "xs0548": {
+   "source": "looking…",
+   "text": "zjišťuje se…"
+  },
+  "xs0549": {
+   "source": "made — give the certificate to the server",
+   "text": "vytvořeno – dejte certifikát serveru"
+  },
+  "xs0550": {
+   "source": "needed now, before any update",
+   "text": "potřeba už teď, ještě před aktualizací"
+  },
+  "xs0551": {
+   "source": "no backup yet",
+   "text": "zatím bez zálohy"
+  },
+  "xs0552": {
+   "source": "not checked (not safe)",
+   "text": "neověřuje se (nebezpečné)"
+  },
+  "xs0553": {
+   "source": "not combined",
+   "text": "nekombinovaný"
+  },
+  "xs0554": {
+   "source": "not encrypted on the way",
+   "text": "po cestě nešifrované"
+  },
+  "xs0555": {
+   "source": "not locked",
+   "text": "nezamčeno"
+  },
+  "xs0556": {
+   "source": "not looked yet",
+   "text": "zatím nezjištěno"
+  },
+  "xs0557": {
+   "source": "not needed by these updates",
+   "text": "tyto aktualizace ho nepotřebují"
+  },
+  "xs0558": {
+   "source": "not read yet",
+   "text": "zatím nenačteno"
+  },
+  "xs0559": {
+   "source": "not synchronised",
+   "text": "nesynchronizováno"
+  },
+  "xs0560": {
+   "source": "nothing sent here yet",
+   "text": "sem se zatím nic neposlalo"
+  },
+  "xs0561": {
+   "source": "openssl is not on this machine: backups cannot be locked (dnf install openssl).",
+   "text": "openssl na tomto stroji není: zálohy nejde zamknout (dnf install openssl)."
+  },
+  "xs0562": {
+   "source": "pinned - Save to keep it",
+   "text": "připnuto – uložte, aby se to drželo"
+  },
+  "xs0563": {
+   "source": "pinned: exactly this certificate",
+   "text": "připnutý: přesně tento certifikát"
+  },
+  "xs0564": {
+   "source": "restart after the update",
+   "text": "restart po aktualizaci"
+  },
+  "xs0565": {
+   "source": "scp over SSH, and ssh to list and take away old ones - needs a shell on the server.",
+   "text": "scp přes SSH a ssh pro výpis a mazání starých – potřebuje shell na serveru."
+  },
+  "xs0566": {
+   "source": "select it and copy it by hand",
+   "text": "označte to a zkopírujte ručně"
+  },
+  "xs0567": {
+   "source": "ssh-keygen is not on this machine, so a key cannot be made or read here: dnf install openssh-clients. A password still works.",
+   "text": "ssh-keygen na tomto stroji není, takže klíč tu nejde vytvořit ani přečíst: dnf install openssh-clients. Heslo funguje dál."
+  },
+  "xs0568": {
+   "source": "switching off",
+   "text": "vypíná se"
+  },
+  "xs0569": {
+   "source": "synchronised (not chrony)",
+   "text": "synchronizováno (ne chrony)"
+  },
+  "xs0570": {
+   "source": "synchronised, but off",
+   "text": "synchronizováno, ale mimo"
+  },
+  "xs0571": {
+   "source": "the backup did not reach every destination",
+   "text": "záloha nedošla do všech úložišť"
+  },
+  "xs0572": {
+   "source": "the backup is back",
+   "text": "záloha je obnovená"
+  },
+  "xs0573": {
+   "source": "the backup is being made - the download starts when it is ready",
+   "text": "záloha se dělá – stahování začne, až bude hotová"
+  },
+  "xs0574": {
+   "source": "the backup went to every destination",
+   "text": "záloha došla do všech úložišť"
+  },
+  "xs0575": {
+   "source": "the certificate is on the clipboard",
+   "text": "certifikát je ve schránce"
+  },
+  "xs0576": {
+   "source": "the certificate was stored",
+   "text": "certifikát je uložen"
+  },
+  "xs0577": {
+   "source": "the database is back",
+   "text": "databáze je obnovena"
+  },
+  "xs0578": {
+   "source": "the key is gone",
+   "text": "klíč je pryč"
+  },
+  "xs0579": {
+   "source": "the key was stored",
+   "text": "klíč je uložen"
+  },
+  "xs0580": {
+   "source": "the last backup",
+   "text": "poslední záloha"
+  },
+  "xs0581": {
+   "source": "the password of the backups - empty: the one set here",
+   "text": "heslo záloh – prázdné: to nastavené tady"
+  },
+  "xs0582": {
+   "source": "the public key is on the clipboard",
+   "text": "veřejný klíč je ve schránce"
+  },
+  "xs0583": {
+   "source": "the window is empty",
+   "text": "výpis je prázdný"
+  },
+  "xs0584": {
+   "source": "what is waiting",
+   "text": "co čeká"
+  },
+  "xs0585": {
+   "source": "with the password (AES-256)",
+   "text": "heslem (AES-256)"
+  },
+  "xs0586": {
+   "source": "…in the first updates",
+   "text": "…v prvních aktualizacích"
+  },
+  "xs0587": {
+   "source": "A copy of the database every day",
+   "text": "Každý den kopie databáze"
+  },
+  "xs0588": {
+   "source": "A day, a week or a month.",
+   "text": "Den, týden, nebo měsíc."
+  },
+  "xs0589": {
+   "source": "A restart on a schedule",
+   "text": "Restart podle plánu"
+  },
+  "xs0590": {
+   "source": "A week or a month.",
+   "text": "Týden, nebo měsíc."
+  },
+  "xs0591": {
+   "source": "And none older than (days)",
+   "text": "A žádná starší než (dny)"
+  },
+  "xs0592": {
+   "source": "Backups kept at each destination",
+   "text": "Záloh drženo v každém úložišti"
+  },
+  "xs0593": {
+   "source": "Backups to the destinations on a schedule",
+   "text": "Zálohy do úložišť podle plánu"
+  },
+  "xs0594": {
+   "source": "Backups tried",
+   "text": "Vyzkoušené zálohy"
+  },
+  "xs0595": {
+   "source": "Copies kept",
+   "text": "Uchovávaných kopií"
+  },
+  "xs0596": {
+   "source": "Friday",
+   "text": "pátek"
+  },
+  "xs0597": {
+   "source": "How many of those copies are kept; the oldest goes first.",
+   "text": "Kolik těchto kopií se uchovává; nejstarší jde první."
+  },
+  "xs0598": {
+   "source": "How often",
+   "text": "Jak často"
+  },
+  "xs0599": {
+   "source": "Look for updates every day",
+   "text": "Zjišťovat aktualizace každý den"
+  },
+  "xs0600": {
+   "source": "Monday",
+   "text": "pondělí"
+  },
+  "xs0601": {
+   "source": "Older ones are taken away too - 0: only the count above decides.",
+   "text": "Starší se odeberou také – 0: rozhoduje jen počet výše."
+  },
+  "xs0602": {
+   "source": "On (1 Monday - 7 Sunday)",
+   "text": "V den (1 pondělí – 7 neděle)"
+  },
+  "xs0603": {
+   "source": "On a schedule",
+   "text": "Podle plánu"
+  },
+  "xs0604": {
+   "source": "Saturday",
+   "text": "sobota"
+  },
+  "xs0605": {
+   "source": "Sunday",
+   "text": "neděle"
+  },
+  "xs0606": {
+   "source": "System updates",
+   "text": "Aktualizace systému"
+  },
+  "xs0607": {
+   "source": "The day a weekly restart goes.",
+   "text": "Den, kdy proběhne týdenní restart."
+  },
+  "xs0608": {
+   "source": "The day a weekly update goes.",
+   "text": "Den, kdy proběhne týdenní aktualizace."
+  },
+  "xs0609": {
+   "source": "The day of a weekly backup: 1 is Monday, 7 Sunday.",
+   "text": "Den týdenní zálohy: 1 je pondělí, 7 neděle."
+  },
+  "xs0610": {
+   "source": "Thursday",
+   "text": "čtvrtek"
+  },
+  "xs0611": {
+   "source": "Try the backups",
+   "text": "Zkoušet zálohy"
+  },
+  "xs0612": {
+   "source": "Tuesday",
+   "text": "úterý"
+  },
+  "xs0613": {
+   "source": "Updates on a schedule",
+   "text": "Aktualizace podle plánu"
+  },
+  "xs0614": {
+   "source": "Wednesday",
+   "text": "středa"
+  },
+  "xs0615": {
+   "source": "What was sent",
+   "text": "Co se odeslalo"
+  },
+  "xs0616": {
+   "source": "When, how many, and the password",
+   "text": "Kdy, kolik a heslo"
+  },
+  "xs0617": {
+   "source": "Where they go",
+   "text": "Kam chodí"
+  },
+  "xs0618": {
+   "source": "a restart offered on the page",
+   "text": "restart nabídnout na stránce"
+  },
+  "xs0619": {
+   "source": "after every backup, the one just sent",
+   "text": "po každé záloze, právě odeslanou"
+  },
+  "xs0620": {
+   "source": "every update",
+   "text": "všechny aktualizace"
+  },
+  "xs0621": {
+   "source": "every week, on the day below",
+   "text": "každý týden, v den níže"
+  },
+  "xs0622": {
+   "source": "on the first of every month",
+   "text": "prvního každý měsíc"
+  },
+  "xs0623": {
+   "source": "once a week, the newest one",
+   "text": "jednou týdně, nejnovější"
+  },
+  "xs0624": {
+   "source": "only by hand",
+   "text": "jen ručně"
+  },
+  "xs0625": {
+   "source": "only the security updates",
+   "text": "jen bezpečnostní aktualizace"
+  },
+  "xs0626": {
+   "source": "restarted by itself where an update needs it",
+   "text": "restartovat samo, kde to aktualizace potřebuje"
+  },
+  "xs0627": {
+   "source": "When, as HH:MM on this machine’s clock.",
+   "text": "Kdy, jako HH:MM podle hodin tohoto stroje."
+  },
+  "xs0628": {
+   "source": "When, as",
+   "text": "Kdy, jako"
+  },
+  "xs0629": {
+   "source": "on this machine’s clock.",
+   "text": "podle hodin tohoto stroje."
+  },
+  "xs0630": {
+   "source": "the backup is being tried",
+   "text": "záloha se zkouší"
+  },
+  "xs0631": {
+   "source": "SCP (ssh)",
+   "text": "SCP (ssh)"
+  },
+  "xs0632": {
+   "source": "SMB (Windows share, Samba)",
+   "text": "SMB (sdílení Windows, Samba)"
+  },
+  "xs0633": {
+   "source": "A copy of the library database (and its blobs) taken now while Plex runs - SQLite's own online backup, nothing in Plex's file is written - checked, packed and kept here.",
+   "text": "Kopie databáze knihovny (i jejích blobů) pořízená teď za běhu Plexu - vlastní online záloha SQLite, do souboru Plexu se nic nezapisuje - ověřená, zabalená a uložená zde."
+  },
+  "xs0634": {
+   "source": "A timer of systemd on this server that backs Plex's database up by itself - left exactly as it is; it can be switched off here if plexmon's copies take its place.",
+   "text": "Časovač systemd na tomto serveru, který sám zálohuje databázi Plexu - nechává se přesně tak, jak je; dá se tu vypnout, pokud jeho místo převezmou kopie plexmonu."
+  },
+  "xs0635": {
+   "source": "Backups of it by this server's own timers",
+   "text": "Její zálohy vlastními časovači serveru"
+  },
+  "xs0636": {
+   "source": "Changed",
+   "text": "Změněno"
+  },
+  "xs0637": {
+   "source": "Checked with",
+   "text": "Ověřuje se"
+  },
+  "xs0638": {
+   "source": "Clean the bundles (Plex's own)",
+   "text": "Vyčistit bundly (funkce Plexu)"
+  },
+  "xs0639": {
+   "source": "Copies kept in",
+   "text": "Kopie se ukládají do"
+  },
+  "xs0640": {
+   "source": "Copies made here",
+   "text": "Kopie pořízené zde"
+  },
+  "xs0641": {
+   "source": "Day",
+   "text": "Den"
+  },
+  "xs0642": {
+   "source": "Erase every event?",
+   "text": "Smazat všechny události?"
+  },
+  "xs0643": {
+   "source": "Erase every event…",
+   "text": "Smazat všechny události…"
+  },
+  "xs0644": {
+   "source": "Erase them",
+   "text": "Smazat je"
+  },
+  "xs0645": {
+   "source": "Every line of Events goes - sign-ins, changes, certificates. Accounts, settings and certificates are not touched. A copy of the database is made just before.",
+   "text": "Zmizí každý řádek Událostí - přihlášení, změny, certifikáty. Účtů, nastavení a certifikátů se to nedotkne. Těsně předtím se pořídí kopie databáze."
+  },
+  "xs0646": {
+   "source": "Free where the copies are",
+   "text": "Volno tam, kde jsou kopie"
+  },
+  "xs0647": {
+   "source": "It backs the database up again on its own schedule.",
+   "text": "Znovu bude zálohovat databázi podle vlastního plánu."
+  },
+  "xs0648": {
+   "source": "Its backups stop; what it made stays where it is.",
+   "text": "Jeho zálohy přestanou; co už vytvořil, zůstane, kde je."
+  },
+  "xs0649": {
+   "source": "Its last copy",
+   "text": "Její poslední kopie"
+  },
+  "xs0650": {
+   "source": "Let Plex optimize its database?",
+   "text": "Nechat Plex optimalizovat jeho databázi?"
+  },
+  "xs0651": {
+   "source": "Made by Plex itself every three days (in Plex: Settings → Scheduled Tasks → Back up database), beside its database. They can be put back too.",
+   "text": "Dělá je sám Plex každé tři dny (v Plexu: Nastavení → Naplánované úlohy → Zálohovat databázi) vedle své databáze. Dají se vrátit také."
+  },
+  "xs0652": {
+   "source": "No copy yet.",
+   "text": "Zatím žádná kopie."
+  },
+  "xs0653": {
+   "source": "Optimize",
+   "text": "Optimalizovat"
+  },
+  "xs0654": {
+   "source": "Optimize it (Plex's own)",
+   "text": "Optimalizovat (funkce Plexu)"
+  },
+  "xs0655": {
+   "source": "Plex Media Server is stopped (whoever is watching too), its database files are set aside - kept, not deleted - the copy is put in their place, and Plex is started again. Everything since the copy was made is not in it: what was watched, added or changed after. The copy is checked first; if it is not whole, nothing happens.",
+   "text": "Plex Media Server se zastaví (i těm, kdo se právě dívají), jeho soubory databáze se odloží - zůstanou, nesmažou se - na jejich místo se vloží kopie a Plex se znovu spustí. Nebude v ní nic, co se stalo po pořízení kopie: co se potom zhlédlo, přidalo nebo změnilo. Kopie se nejdřív ověří; pokud není celá, nestane se nic."
+  },
+  "xs0656": {
+   "source": "Plex Media Server's database is not where it is looked for.",
+   "text": "Databáze Plex Media Serveru není tam, kde se hledá."
+  },
+  "xs0657": {
+   "source": "Plex Media Server's own Clean Bundles: metadata bundles of what is no longer in the library deleted by Plex.",
+   "text": "Vlastní funkce Plex Media Serveru Vyčistit bundly: Plex smaže balíčky metadat toho, co už v knihovně není."
+  },
+  "xs0658": {
+   "source": "Plex Media Server's own Optimize Database (as in Plex: Troubleshooting) - asked of Plex, done by Plex. A copy first is wise.",
+   "text": "Vlastní funkce Plex Media Serveru Optimalizovat databázi (jako v Plexu: Řešení problémů) - o ni se požádá Plex a udělá ji Plex. Rozumné je nejdřív pořídit kopii."
+  },
+  "xs0659": {
+   "source": "Plex SQLite (integrity_check)",
+   "text": "Plex SQLite (integrity_check)"
+  },
+  "xs0660": {
+   "source": "Plex is running",
+   "text": "Plex běží"
+  },
+  "xs0661": {
+   "source": "Plex is stopped",
+   "text": "Plex je zastavený"
+  },
+  "xs0662": {
+   "source": "Plex rebuilds its database file to give the room back and tidy its indexes. While it does, the library may answer slowly. Make a copy first if there is none of today.",
+   "text": "Plex přestaví soubor své databáze, vrátí uvolněné místo a uklidí indexy. Mezitím může knihovna odpovídat pomalu. Nejdřív pořiďte kopii, pokud dnes žádná není."
+  },
+  "xs0663": {
+   "source": "Plex's database",
+   "text": "Databáze Plexu"
+  },
+  "xs0664": {
+   "source": "Plex's database is being put back",
+   "text": "Databáze Plexu se vrací"
+  },
+  "xs0665": {
+   "source": "Plex's own backups",
+   "text": "Vlastní zálohy Plexu"
+  },
+  "xs0666": {
+   "source": "Put Plex's database back?",
+   "text": "Vrátit databázi Plexu?"
+  },
+  "xs0667": {
+   "source": "Put it back…",
+   "text": "Vrátit ji…"
+  },
+  "xs0668": {
+   "source": "SQLite (quick_check)",
+   "text": "SQLite (quick_check)"
+  },
+  "xs0669": {
+   "source": "SQLite's integrity_check: the database read through.",
+   "text": "integrity_check SQLite: databáze se celá přečte."
+  },
+  "xs0670": {
+   "source": "The copy",
+   "text": "Kopie"
+  },
+  "xs0671": {
+   "source": "The copy is deleted from this server.",
+   "text": "Kopie se z tohoto serveru smaže."
+  },
+  "xs0672": {
+   "source": "The events older than \"Events kept for\" deleted now - as every hour by itself.",
+   "text": "Události starší než „Události se drží“ se smažou hned - jako každou hodinu samy."
+  },
+  "xs0673": {
+   "source": "The key of its secrets",
+   "text": "Klíč jejích tajemství"
+  },
+  "xs0674": {
+   "source": "Timer",
+   "text": "Časovač"
+  },
+  "xs0675": {
+   "source": "VACUUM: the room of what was deleted given back to the disk.",
+   "text": "VACUUM: místo po smazaném se vrátí disku."
+  },
+  "xs0676": {
+   "source": "What it runs",
+   "text": "Co spouští"
+  },
+  "xs0677": {
+   "source": "checked: NOT whole",
+   "text": "ověřeno: NENÍ celá"
+  },
+  "xs0678": {
+   "source": "checked: whole",
+   "text": "ověřeno: celá"
+  },
+  "xs0679": {
+   "source": "not checked",
+   "text": "neověřeno"
+  },
+  "xs0680": {
+   "source": "plexmon's database",
+   "text": "Databáze plexmonu"
+  },
+  "xs0681": {
+   "source": "plexmon's database becomes this copy - accounts, settings, certificates, events as they were then; who is signed in too: you may have to sign in again. A copy of now is made first. plexmon starts again in a few seconds.",
+   "text": "Databází plexmonu se stane tato kopie - účty, nastavení, certifikáty, události, jak byly tehdy; i kdo je přihlášen: možná se budete muset přihlásit znovu. Nejdřív se pořídí kopie současného stavu. plexmon se za pár sekund spustí znovu."
+  },
+  "xs0682": {
+   "source": "the copies made here",
+   "text": "kopie pořízené zde"
+  },
+  "xs0683": {
+   "source": "the copy is being made",
+   "text": "kopie se pořizuje"
+  },
+  "xs0684": {
+   "source": "A whole path on this machine; plexmon (root) writes into it.",
+   "text": "Celá cesta na tomto stroji; plexmon (root) do ní zapisuje."
+  },
+  "xs0685": {
+   "source": "No backup of plexmon there.",
+   "text": "Žádná záloha plexmonu tam není."
+  },
+  "xs0686": {
+   "source": "The newest backup of this node fetched back from the first destination, opened with the password, every file checked, the databases read through (plexmon's and Plex's) - nothing is put back.",
+   "text": "Nejnovější záloha tohoto serveru se stáhne zpět z prvního cíle, otevře heslem, zkontroluje se každý soubor a přečtou databáze (plexmonu i Plexu) - nic se nevrací."
+  },
+  "xs0687": {
+   "source": "plexmon's database is replaced with what the backup holds - accounts, settings, certificates, events, and who is signed in: you sign in again afterwards, with an account the backup has. Its key and the dashboard's configuration come back too; plexmon starts again. A copy of what is here now is made first (Settings → The database). Plex Media Server's database in it is put back apart, in The database.",
+   "text": "Databáze plexmonu se nahradí tím, co je v záloze - účty, nastavení, certifikáty, události i kdo je přihlášen: potom se přihlásíte znovu, účtem, který záloha obsahuje. Vrátí se i její klíč a konfigurace dashboardu; plexmon se spustí znovu. Nejdřív se pořídí kopie současného stavu (Nastavení → Databáze). Databáze Plex Media Serveru v ní se vrací zvlášť, v sekci Databáze."
+  },
+  "xs0688": {
+   "source": "A new kernel or libraries are in that only a restart brings into use. ",
+   "text": "Je nasazené nové jádro nebo knihovny, které začnou platit až po restartu. "
+  },
+  "xs0689": {
+   "source": "For a minute or two Plex Media Server does not answer.",
+   "text": "Minutu či dvě Plex Media Server neodpovídá."
+  },
+  "xs0690": {
+   "source": "The server is switched off: Plex Media Server, the dashboard and these pages stop - whoever is watching too. It has to be switched on again at the machine.",
+   "text": "Server se vypne: Plex Media Server, dashboard i tyto stránky skončí - i těm, kdo se dívají. Znovu zapnout se musí přímo u stroje."
+  },
+  "xs0691": {
+   "source": "The server restarts: for a minute or two nothing answers - Plex Media Server, the dashboard, these pages; whoever is watching is stopped.",
+   "text": "Server se restartuje: minutu či dvě nic neodpovídá - Plex Media Server, dashboard, tyto stránky; kdo se dívá, tomu se přehrávání zastaví."
+  },
+  "xs0692": {
+   "source": "Every package of the system is updated",
+   "text": "Aktualizuje se každý balíček systému"
+  },
+  "xs0693": {
+   "source": "dnf updates every package",
+   "text": "dnf aktualizuje každý balíček"
+  },
+  "xs0694": {
+   "source": ", Plex Media Server too (it restarts)",
+   "text": ", i Plex Media Server (restartuje se)"
+  },
+  "xs0695": {
+   "source": ", Plex Media Server's own left out",
+   "text": ", vlastní balíček Plex Media Serveru se vynechá"
+  },
+  "xs0696": {
+   "source": "plexmon sets the time servers",
+   "text": "Časové servery nastavuje plexmon"
+  },
+  "xs0697": {
+   "source": "Off: the machine keeps its own /etc/chrony.conf (AlmaLinux's pool, or what you set by hand) - shown and checked here, not changed. On: the servers below; the file's own server and pool lines are commented out, and put back when switched off again.",
+   "text": "Vypnuto: stroj si nechá vlastní /etc/chrony.conf (pool AlmaLinuxu nebo co jste nastavili ručně) - zde se zobrazí a kontroluje, nemění se. Zapnuto: servery níže; vlastní řádky server a pool v souboru se zakomentují a po vypnutí se vrátí."
+  },
+  "xs0698": {
+   "source": "Networks that may ask this server for the time (UDP 123) - the televisions and players of the LAN, say. Empty: nobody. Open UDP 123 in the firewall yourself.",
+   "text": "Sítě, které se smějí tohoto serveru ptát na čas (UDP 123) - třeba televize a přehrávače v LAN. Prázdné: nikdo. UDP 123 si ve firewallu otevřete sami."
+  },
+  "xs0699": {
+   "source": "Not synchronised",
+   "text": "Nesynchronizováno"
+  },
+  "xs0700": {
+   "source": " off the time servers",
+   "text": " od časových serverů"
+  },
+  "xs0701": {
+   "source": "The clock jumps to the time servers' time at once. Codes and logs written in that moment may look out of order.",
+   "text": "Hodiny okamžitě skočí na čas časových serverů. Záznamy zapsané v tu chvíli se mohou zdát mimo pořadí."
+  },
+  "xs0702": {
+   "source": "Only a full administrator sees and changes the backups: they hold the key of every secret.",
+   "text": "Zálohy vidí a mění jen plný administrátor: obsahují klíč ke všem tajemstvím."
+  },
+  "xs0703": {
+   "source": "missing here: ",
+   "text": "zde chybí: "
+  },
+  "xs0704": {
+   "source": "the backup: ",
+   "text": "záloha: "
+  },
+  "xs0705": {
+   "source": "putting it back failed: ",
+   "text": "vrácení selhalo: "
+  },
+  "xs0706": {
+   "source": "failed: ",
+   "text": "selhalo: "
+  },
+  "xs0707": {
+   "source": "the server said ",
+   "text": "server řekl "
+  },
+  "xs0708": {
+   "source": "A backup is everything plexmon is: its database (accounts, settings, the certificates, the events), the key that opens its secrets, the dashboard's and Settings' configuration and the files of nginx's TLS - and, if wanted, a copy of Plex Media Server's database and its Preferences.xml - with RESTORE.md, the exact steps to bring it back on a machine installed from nothing. Locked with the password below; sent to every destination switched on - a folder, FTP, FTPS, SFTP, SCP or a Windows/Samba share.",
+   "text": "Záloha je vše, čím plexmon je: jeho databáze (účty, nastavení, certifikáty, události), klíč, který otevírá jeho tajemství, konfigurace dashboardu a Nastavení a soubory TLS nginxu - a je-li to žádáno, kopie databáze Plex Media Serveru a jeho Preferences.xml - s RESTORE.md, přesným postupem, jak vše vrátit na stroji nainstalovaném od nuly. Zamčená heslem níže; posílá se do každého zapnutého cíle - složka, FTP, FTPS, SFTP, SCP nebo sdílená složka Windows/Samba."
+  },
+  "xs0709": {
+   "source": "A backup made and sent to every destination switched on, at the time below. Without it, only Back up now sends one.",
+   "text": "Záloha se pořídí a pošle do každého zapnutého cíle v čase níže. Bez toho ji pošle jen Zálohovat teď."
+  },
+  "xs0710": {
+   "source": "A copy of Plex Media Server's database on a schedule",
+   "text": "Kopie databáze Plex Media Serveru podle plánu"
+  },
+  "xs0711": {
+   "source": "A copy of Plex Media Server's library database (and its Preferences.xml) goes into every backup - taken while Plex runs. Off: plexmon alone (much smaller).",
+   "text": "Kopie databáze knihovny Plex Media Serveru (a jeho Preferences.xml) jde do každé zálohy - pořízená za běhu Plexu. Vypnuto: jen plexmon (mnohem menší)."
+  },
+  "xs0712": {
+   "source": "A copy of Plex Media Server's library database taken while it runs (SQLite's own online backup - Plex goes on, nothing in it is written), packed and kept here. Plex makes its own every three days too (Settings → Scheduled Tasks in Plex), and a backup timer of the server may as well - both are listed below and left as they are.",
+   "text": "Kopie databáze knihovny Plex Media Serveru pořízená za jeho běhu (vlastní online záloha SQLite - Plex běží dál, do ní se nic nezapisuje), zabalená a uložená zde. Plex dělá vlastní zálohy také, každé tři dny (v Plexu Nastavení → Naplánované úlohy), a může je dělat i časovač serveru - obojí je níže a zůstává, jak je."
+  },
+  "xs0713": {
+   "source": "Check every copy",
+   "text": "Ověřit každou kopii"
+  },
+  "xs0714": {
+   "source": "Copies of Plex's database on a schedule",
+   "text": "Kopie databáze Plexu podle plánu"
+  },
+  "xs0715": {
+   "source": "Copies of plexmon's database, and what is kept",
+   "text": "Kopie databáze plexmonu a co se uchovává"
+  },
+  "xs0716": {
+   "source": "Daily, or weekly on the day below.",
+   "text": "Denně, nebo týdně ve dni níže."
+  },
+  "xs0717": {
+   "source": "Every backup is locked with it (AES-256, opened with plexmon or with openssl alone). Keep it apart from the backups too - in a password vault: without it nobody, you included, opens them. Without it no backup is sent.",
+   "text": "Každá záloha je jím zamčená (AES-256, otevře ji plexmon nebo samotný openssl). Uchovejte ho odděleně od záloh - ve správci hesel: bez něj je nikdo, ani vy, neotevře. Bez něj se žádná záloha nepošle."
+  },
+  "xs0718": {
+   "source": "Every day, or a week on the day below.",
+   "text": "Každý den, nebo jednou týdně ve dni níže."
+  },
+  "xs0719": {
+   "source": "How many backups each destination keeps; the oldest go first, the newest never.",
+   "text": "Kolik záloh drží každý cíl; nejstarší jdou první, nejnovější nikdy."
+  },
+  "xs0720": {
+   "source": "How many copies are kept; the oldest goes first.",
+   "text": "Kolik kopií se drží; nejstarší jde první."
+  },
+  "xs0721": {
+   "source": "Only the security updates (dnf --security), or every update.",
+   "text": "Jen bezpečnostní aktualizace (dnf --security), nebo všechny."
+  },
+  "xs0722": {
+   "source": "Only when an update left something only a restart brings in; off: every time.",
+   "text": "Jen když aktualizace nechala něco, co začne platit až po restartu; vypnuto: pokaždé."
+  },
+  "xs0723": {
+   "source": "Only when an update needs it",
+   "text": "Jen když to aktualizace potřebuje"
+  },
+  "xs0724": {
+   "source": "Plex Media Server's database",
+   "text": "Databáze Plex Media Serveru"
+  },
+  "xs0725": {
+   "source": "Plex Media Server's database in them too",
+   "text": "I databáze Plex Media Serveru"
+  },
+  "xs0726": {
+   "source": "Plex Media Server's own package too",
+   "text": "I vlastní balíček Plex Media Serveru"
+  },
+  "xs0727": {
+   "source": "The clock of this server, kept with chrony: how far off it is, which servers it follows, the time servers set here and the time zone. The logs, the history of the dashboard and the certificates are worked out from it.",
+   "text": "Hodiny tohoto serveru, udržované chrony: jak moc se odchylují, které servery sledují, časové servery nastavené zde a časové pásmo. Počítají se z nich logy, historie dashboardu i certifikáty."
+  },
+  "xs0728": {
+   "source": "The day of a weekly copy.",
+   "text": "Den týdenní kopie."
+  },
+  "xs0729": {
+   "source": "The newest backup fetched back, opened with the password, every file checked and the databases read through - nothing is put back.",
+   "text": "Nejnovější záloha se stáhne zpět, otevře heslem, zkontroluje se každý soubor a přečtou se databáze - nic se nevrací."
+  },
+  "xs0730": {
+   "source": "The operating system's packages, updated by dnf - in a job of its own, its output here as it comes. Plex Media Server's own package is left out unless asked: updating it restarts Plex in the middle of a film. A restart an update needs is offered when it is done, or made by itself.",
+   "text": "Balíčky operačního systému, aktualizované přes dnf - ve vlastní úloze, s výstupem zde, jak přichází. Vlastní balíček Plex Media Serveru se vynechá, pokud se nepožádá: jeho aktualizace restartuje Plex uprostřed filmu. Restart, který aktualizace potřebuje, se po dokončení nabídne, nebo provede sám."
+  },
+  "xs0731": {
+   "source": "The server restarted in the window below. Off until switched on.",
+   "text": "Server se restartuje v okně níže. Vypnuto, dokud se nezapne."
+  },
+  "xs0732": {
+   "source": "The updates put in by themselves in the window below. Off until switched on.",
+   "text": "Aktualizace se nasadí samy v okně níže. Vypnuto, dokud se nezapne."
+  },
+  "xs0733": {
+   "source": "This server restarted or switched off from here. While it is down nothing answers - Plex Media Server, the dashboard, these pages; whoever is watching is stopped. The page follows it down and up again.",
+   "text": "Restart nebo vypnutí tohoto serveru odsud. Dokud neběží, nic neodpovídá - Plex Media Server, dashboard, tyto stránky; kdo se dívá, tomu se přehrávání zastaví. Stránka ho sleduje při vypínání i znovu nahoru."
+  },
+  "xs0734": {
+   "source": "Two databases live on this server. plexmon's own (SQLite) holds the accounts, the settings, the certificates and the events. Plex Media Server's holds the whole library - what you have, what was watched, the posters chosen, the collections; it is copied here while Plex runs, and checked on the copy, never on Plex's own file.",
+   "text": "Na tomto serveru jsou dvě databáze. Vlastní databáze plexmonu (SQLite) drží účty, nastavení, certifikáty a události. Databáze Plex Media Serveru drží celou knihovnu - co máte, co se zhlédlo, vybrané plakáty, kolekce; kopíruje se sem za běhu Plexu a ověřuje se na kopii, nikdy na vlastním souboru Plexu."
+  },
+  "xs0735": {
+   "source": "When an update needs a restart - made by itself, or offered on the page.",
+   "text": "Když aktualizace potřebuje restart - provede se sám, nebo se nabídne na stránce."
+  },
+  "xs0736": {
+   "source": "Where the copies are kept",
+   "text": "Kam se ukládají kopie"
+  },
+  "xs0737": {
+   "source": "dnf looks what it has waiting every day at the time below - for the card here. Nothing is put in.",
+   "text": "dnf se každý den v čase níže podívá, co čeká - pro kartu zde. Nic se nenasazuje."
+  },
+  "xs0738": {
+   "source": "The machine",
+   "text": "Stroj"
+  },
+  "xs0739": {
+   "source": "A copy of plexmon's database once a day, into /var/lib/plexmon/backups.",
+   "text": "Kopie databáze plexmonu jednou denně do /var/lib/plexmon/backups."
+  },
+  "xs0740": {
+   "source": "A folder on this machine (another disk, a mount). Empty: /var/lib/plexmon/plex-db.",
+   "text": "Složka na tomto stroji (jiný disk, připojení). Prázdné: /var/lib/plexmon/plex-db."
+  },
+  "xs0741": {
+   "source": "Every copy read through (Plex's own SQLite when it is there, integrity_check) - on the copy, never on Plex's own file.",
+   "text": "Každá kopie se celá přečte (vlastním SQLite Plexu, pokud je k dispozici, integrity_check) - na kopii, nikdy na vlastním souboru Plexu."
+  },
+  "xs0742": {
+   "source": "Off: an update of the system leaves plexmediaserver out - it restarts Plex in the middle of a film. On: Plex is updated with the rest.",
+   "text": "Vypnuto: aktualizace systému vynechá plexmediaserver - restartovala by Plex uprostřed filmu. Zapnuto: Plex se aktualizuje se vším ostatním."
+  },
+  "xs0743": {
+   "source": "When, as HH:MM - a quiet hour: the copy reads the whole database.",
+   "text": "Kdy, jako HH:MM - v klidnou hodinu: kopie čte celou databázi."
+  },
+  "xs0744": {
+   "source": "When, as HH:MM - a quiet hour, away from the backups.",
+   "text": "Kdy, jako HH:MM - v klidnou hodinu, mimo zálohy."
   }
  },
  "patterns": {
@@ -8217,6 +9865,238 @@
   "xp0087": {
    "source": "Looked up and shown first; written when you say so.",
    "text": "Nejdřív se vyhledají a ukážou; zapíšou se, až řeknete."
+  },
+  "xp0088": {
+   "source": "A new destination: {0}",
+   "text": "Nové úložiště: {0}"
+  },
+  "xp0089": {
+   "source": "Backups at {0}",
+   "text": "Zálohy v {0}"
+  },
+  "xp0090": {
+   "source": "Between the two nodes: {0}",
+   "text": "Mezi oběma nody: {0}"
+  },
+  "xp0091": {
+   "source": "Between the two nodes: {0} - codes right on one node may be refused on the other",
+   "text": "Mezi oběma nody: {0} – kódy správné na jednom nodu může druhý odmítnout"
+  },
+  "xp0092": {
+   "source": "Delete {0}?",
+   "text": "Smazat {0}?"
+  },
+  "xp0093": {
+   "source": "Hidden - {0} line(s).",
+   "text": "Skryto – {0} {0:řádek|řádky|řádků}."
+  },
+  "xp0094": {
+   "source": "It is deleted at {0}, with its checksum and its RESTORE.md.",
+   "text": "Smaže se v {0} i s kontrolním součtem a RESTORE.md."
+  },
+  "xp0095": {
+   "source": "It works ({0} s)",
+   "text": "Funguje to ({0} s)"
+  },
+  "xp0096": {
+   "source": "Made {0}",
+   "text": "Vytvořen {0}"
+  },
+  "xp0097": {
+   "source": "Make a key for {0}",
+   "text": "Vytvořit klíč pro {0}"
+  },
+  "xp0098": {
+   "source": "Not answering for {0} - asked again every two seconds; the page comes back by itself.",
+   "text": "Neodpovídá {0} – dotaz každé dvě sekundy; stránka se vrátí sama."
+  },
+  "xp0099": {
+   "source": "Now: {0} · {1}",
+   "text": "Teď: {0} · {1}"
+  },
+  "xp0100": {
+   "source": "On the server, as {0}:",
+   "text": "Na serveru, jako {0}:"
+  },
+  "xp0101": {
+   "source": "Power off {0}?",
+   "text": "Vypnout {0}?"
+  },
+  "xp0102": {
+   "source": "Restarted now: {0}, one after the other.",
+   "text": "Restartuje se teď: {0}, jeden po druhém."
+  },
+  "xp0103": {
+   "source": "Restarted now: {0}.",
+   "text": "Restartuje se teď: {0}."
+  },
+  "xp0104": {
+   "source": "Restarting: {0} - followed on Restart and power off.",
+   "text": "Restartuje se: {0} – průběh na stránce Restart a vypnutí."
+  },
+  "xp0105": {
+   "source": "Step the clock of {0} now?",
+   "text": "Srovnat hodiny nodu {0} hned?"
+  },
+  "xp0106": {
+   "source": "Take the destination {0} away?",
+   "text": "Odebrat úložiště {0}?"
+  },
+  "xp0107": {
+   "source": "Take {0} off the list",
+   "text": "Vyřadit {0} ze seznamu"
+  },
+  "xp0108": {
+   "source": "The clock jumps to the time servers' time at once. Codes and logs written in that moment may look out of order.",
+   "text": "Hodiny okamžitě skočí na čas časových serverů. Kódy a logy zapsané v tu chvíli mohou vypadat v nesprávném pořadí."
+  },
+  "xp0109": {
+   "source": "The last backup of {0} did not reach every destination",
+   "text": "Poslední záloha {0} nedošla do všech úložišť"
+  },
+  "xp0110": {
+   "source": "The last backup of {0} went to every destination",
+   "text": "Poslední záloha {0} došla do všech úložišť"
+  },
+  "xp0111": {
+   "source": "This page's server is not answering for {0} - restarting, or the VIP address moving; asked again every few seconds.",
+   "text": "Server této stránky neodpovídá {0} – restartuje se, nebo se přesouvá VIP adresa; dotaz se opakuje každých pár sekund."
+  },
+  "xp0112": {
+   "source": "Time servers NOT set {0}: {1}",
+   "text": "Časové servery NENASTAVENY {0}: {1}"
+  },
+  "xp0113": {
+   "source": "Time servers set {0}: {1}",
+   "text": "Časové servery nastaveny {0}: {1}"
+  },
+  "xp0114": {
+   "source": "Trying {0}",
+   "text": "Zkouška: {0}"
+  },
+  "xp0115": {
+   "source": "What was here is kept as {0}",
+   "text": "Co tu bylo, je uloženo jako {0}"
+  },
+  "xp0116": {
+   "source": "done by {0}",
+   "text": "provedl {0}"
+  },
+  "xp0117": {
+   "source": "last copy {0}",
+   "text": "poslední kopie {0}"
+  },
+  "xp0118": {
+   "source": "missing here: {0}",
+   "text": "tady chybí: {0}"
+  },
+  "xp0119": {
+   "source": "needed after the update - {0}",
+   "text": "potřeba po aktualizaci – {0}"
+  },
+  "xp0120": {
+   "source": "putting it back failed: {0}",
+   "text": "obnova selhala: {0}"
+  },
+  "xp0121": {
+   "source": "reach {0} over TLS",
+   "text": "spojit se s {0} přes TLS"
+  },
+  "xp0122": {
+   "source": "sent to {0}",
+   "text": "odesláno na {0}"
+  },
+  "xp0123": {
+   "source": "sent to {0} ({1} of {2})",
+   "text": "posílá se do {0} ({1} z {2})"
+  },
+  "xp0124": {
+   "source": "sent to {0} - {1}",
+   "text": "posláno na {0} – {1}"
+  },
+  "xp0125": {
+   "source": "sent to {0} in {1} s - {2}",
+   "text": "posláno na {0} za {1} s – {2}"
+  },
+  "xp0126": {
+   "source": "the backup: {0}",
+   "text": "záloha: {0}"
+  },
+  "xp0127": {
+   "source": "written into {0} as {1}",
+   "text": "zapsáno do {0} jako {1}"
+  },
+  "xp0128": {
+   "source": "{0} - the last 8 tries",
+   "text": "{0} – posledních 8 pokusů"
+  },
+  "xp0129": {
+   "source": "{0} downloaded {1}",
+   "text": "{0} stáhl(a) {1}"
+  },
+  "xp0130": {
+   "source": "{0} goes into maintenance, the VIP address moves to the other node, and it restarts; back up, it comes back into service by itself.",
+   "text": "{0} přejde do údržby, VIP adresa se přesune na druhý node a restartuje se; po naběhnutí se sám vrátí do provozu."
+  },
+  "xp0131": {
+   "source": "{0} is switched off; the VIP address moves to the other node, which goes on answering alone. It has to be switched on again at the machine.",
+   "text": "{0} se vypne; VIP adresa přejde na druhý node, který odpovídá sám. Znovu se musí zapnout u stroje."
+  },
+  "xp0132": {
+   "source": "{0} needs a restart",
+   "text": "{0} potřebuje restart"
+  },
+  "xp0133": {
+   "source": "✓ last sent {0} · {1}",
+   "text": "✓ naposledy odesláno {0} · {1}"
+  },
+  "xp0134": {
+   "source": "{0} · {1}",
+   "text": "{0} · {1}"
+  },
+  "xp0135": {
+   "source": "The client {0}",
+   "text": "Klient {0}"
+  },
+  "xp0136": {
+   "source": "To {0}",
+   "text": "Na {0}"
+  },
+  "xp0137": {
+   "source": "{0} ago",
+   "text": "před {0}"
+  },
+  "xp0138": {
+   "source": "on {0}",
+   "text": "na {0}"
+  },
+  "xp0139": {
+   "source": "Put {0} back?",
+   "text": "Vrátit {0}?"
+  },
+  "xp0140": {
+   "source": "Switch off {0}?",
+   "text": "Vypnout {0}?"
+  },
+  "xp0141": {
+   "source": "Switch on {0}?",
+   "text": "Zapnout {0}?"
+  },
+  "xp0142": {
+   "source": "The last copy is NOT whole: {0}",
+   "text": "Poslední kopie NENÍ celá: {0}"
+  },
+  "xp0143": {
+   "source": "{0} copies",
+   "text": "{0} kopií"
+  },
+  "xp0144": {
+   "source": "a copy made: {0}",
+   "text": "kopie pořízena: {0}"
+  },
+  "xp0145": {
+   "source": "{0}: done",
+   "text": "{0}: hotovo"
   }
  },
  "rich": {
@@ -8351,6 +10231,42 @@
   "rr00006": {
    "source": "Off: nothing on these pages offers going back to an older version. On: Settings → Upgrades shows <i>Going back to an older version</i> - only the versions it is safe to go back to, each with what changed in it. On the server, root can always: plexmon --downgrade.",
    "text": "Vypnuto: nic na těchto stránkách nenabízí návrat ke starší verzi. Zapnuto: Nastavení → Aktualizace ukazuje <i>Návrat ke starší verzi</i> - jen verze, na které je bezpečné se vrátit, každou s tím, co se v ní změnilo. Na serveru root může vždy: plexmon --downgrade."
+  },
+  "xr0016": {
+   "source": "When, as <code>HH:MM</code> - a quiet hour, away from the backups.",
+   "text": "Kdy, jako <code>HH:MM</code> - v klidnou hodinu, mimo zálohy."
+  },
+  "xr0017": {
+   "source": "When, as <code>HH:MM</code> on this machine’s clock.",
+   "text": "Kdy, jako <code>HH:MM</code> podle hodin tohoto stroje."
+  },
+  "xr0018": {
+   "source": "No password of the backups is set: the file will hold <b>the key of every secret</b> readable. Set the password first unless you know where the file goes.",
+   "text": "Heslo záloh není nastavené: soubor bude obsahovat <b>klíč ke všem tajemstvím</b> čitelně. Nejdřív nastavte heslo, pokud nevíte, kam soubor půjde."
+  },
+  "xr0019": {
+   "source": "The <code>RESTORE.md</code> every backup carries, as one made now would have it. Keep a copy apart from the backups - with the password of the backups in a vault.",
+   "text": "<code>RESTORE.md</code>, který nese každá záloha, tak jak by ho měla záloha pořízená teď. Uložte si kopii odděleně od záloh - s heslem záloh v trezoru."
+  },
+  "xr0020": {
+   "source": "A copy of plexmon's database once a day, into <code>/var/lib/plexmon/backups</code>.",
+   "text": "Kopie databáze plexmonu jednou denně do <code>/var/lib/plexmon/backups</code>."
+  },
+  "xr0021": {
+   "source": "A folder on this machine (another disk, a mount). Empty: <code>/var/lib/plexmon/plex-db</code>.",
+   "text": "Složka na tomto stroji (jiný disk, připojení). Prázdné: <code>/var/lib/plexmon/plex-db</code>."
+  },
+  "xr0022": {
+   "source": "Every copy read through (Plex's own SQLite when it is there, <code>integrity_check</code>) - on the copy, never on Plex's own file.",
+   "text": "Každá kopie se celá přečte (vlastním SQLite Plexu, pokud je k dispozici, <code>integrity_check</code>) - na kopii, nikdy na vlastním souboru Plexu."
+  },
+  "xr0023": {
+   "source": "Off: an update of the system leaves <code>plexmediaserver</code> out - it restarts Plex in the middle of a film. On: Plex is updated with the rest.",
+   "text": "Vypnuto: aktualizace systému vynechá <code>plexmediaserver</code> - restartovala by Plex uprostřed filmu. Zapnuto: Plex se aktualizuje se vším ostatním."
+  },
+  "xr0024": {
+   "source": "When, as <code>HH:MM</code> - a quiet hour: the copy reads the whole database.",
+   "text": "Kdy, jako <code>HH:MM</code> - v klidnou hodinu: kopie čte celou databázi."
   }
  }
 }

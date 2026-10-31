@@ -30,7 +30,7 @@ IOSchedulingClass=idle
 ProtectSystem=full
 ReadWritePaths=/var/www/html/smart /var/lib/plex-status /run/plex-status
 ReadWritePaths=/var/lib/plexmon /var/log/plexmon /etc/plexmon /etc/nginx /var/www/plexmon-acme
-ReadWritePaths=-/var/lib/plexmediaserver /etc/profile.d
+ReadWritePaths=-/var/lib/plexmediaserver /etc/profile.d -/etc/chrony.conf -/etc/localtime
 RuntimeDirectory=plex-status plexmon
 # The small posters of Settings → Plex library (400 MB at most).
 CacheDirectory=plexmon

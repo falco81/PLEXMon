@@ -168,6 +168,47 @@ if (isset($_GET['api'])) {
         echo $body;
         exit;
     }
+    if ($what === 'rbackup-upload' && $post) {
+        /* A backup to be put back: the file itself as the body, a full
+           administrator only, asked before a byte is read. */
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        $who = pm_whoami();
+        if (!is_array($who) || ($who['role'] ?? '') !== 'fulladmin') {
+            http_response_code(401);
+            echo json_encode(['ok' => false, 'error' => 'only a full administrator may put a backup back']);
+            exit;
+        }
+        [$tmp, $why] = pm_take_body(8 * 1024 * 1024 * 1024);
+        if ($tmp === null) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => $why]);
+            exit;
+        }
+        try {
+            [$status, $body] = pm_send_file('/api/rbackup/upload', $tmp);
+        } finally {
+            @unlink($tmp);
+        }
+        http_response_code($status ?: 503);
+        echo $body ?: json_encode(['ok' => false, 'error' => 'the daemon is not answering']);
+        exit;
+    }
+    if (($what === 'db-file' || $what === 'rbackup-download') && !$post) {
+        /* A copy or a backup, as a download - passed through a lump at a time. */
+        $q = $_GET;
+        unset($q['api']);
+        $path = ($what === 'db-file' ? '/api/db/file' : '/api/rbackup/download')
+            . ($q ? '?' . http_build_query($q) : '');
+        [$status, $body] = pm_pipe($path, '', 3600.0);
+        if ($status !== 200) {
+            http_response_code($status ?: 503);
+            header('Content-Type: text/plain; charset=utf-8');
+            $d = json_decode((string) $body, true);
+            echo is_array($d) && !empty($d['error']) ? $d['error'] : 'it could not be fetched';
+        }
+        exit;
+    }
     if ($what === 'logout' && $post) {
         pm_call('/api/auth/logout', 'POST', [], 10.0);
         pm_clear_session();
@@ -188,6 +229,8 @@ if (isset($_GET['api'])) {
         'plex-labels' => '/api/plex/labels', 'plex-titles' => '/api/plex/titles',
         'plex-matches' => '/api/plex/matches', 'plex-watchlist' => '/api/plex/watchlist',
         'plex-person' => '/api/plex/person',
+        'power' => '/api/power', 'ntp' => '/api/ntp', 'osup' => '/api/osup', 'db' => '/api/db',
+        'rbackup' => '/api/rbackup',
     ];
     $writes = [
         'settings' => '/api/settings', 'users' => '/api/users', 'sessions' => '/api/sessions',
@@ -196,6 +239,8 @@ if (isset($_GET['api'])) {
         'upgrade' => '/api/upgrade', 'web' => '/api/web', 'lockouts' => '/api/lockouts',
         'console-login' => '/api/console-login', 'mfa' => '/api/auth/mfa', 'acme' => '/api/acme',
         'plex' => '/api/plex',
+        'power' => '/api/power', 'ntp' => '/api/ntp', 'osup' => '/api/osup', 'db' => '/api/db',
+        'rbackup' => '/api/rbackup',
     ];
     if ($post) {
         if (!isset($writes[$what])) {
@@ -424,6 +469,13 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
     <div class="ctl-group">Certificates</div>
     <button type="button" data-pane="web" data-icon="lock" title="The certificate the Plex address answers with, and how TLS is spoken - and Plex Media Server's own.">Certificates and TLS</button>
     <button type="button" class="fulladmin-only" data-pane="acme" data-icon="lock" title="The certificate ordered from Let's Encrypt (or another ACME CA) and renewed by itself.">Automatic certificates</button>
+    <div class="ctl-group">The machine</div>
+    <button type="button" class="fulladmin-only" data-pane="time" data-icon="clock" title="The clock of this server: chrony, its time servers, how far off it is, the time zone.">Time</button>
+    <button type="button" class="fulladmin-only" data-pane="power" data-icon="power" title="Restart or switch off this server - now, or a restart on a schedule.">Restart and power off</button>
+    <button type="button" class="fulladmin-only" data-pane="osup" data-icon="download" title="The operating system's packages updated by dnf; a restart offered when one is needed.">System updates</button>
+    <div class="ctl-group">Data</div>
+    <button type="button" class="fulladmin-only" data-pane="db" data-icon="db" title="plexmon's database and Plex Media Server's own: copies, a check, putting one back.">The database</button>
+    <button type="button" class="fulladmin-only" data-pane="backup" data-icon="archive" title="Backups of everything to another machine - FTP, FTPS, SFTP, SCP, SMB or a folder - locked with a password, on a schedule, Plex's database in them too.">Backups</button>
     <div class="ctl-group">The server</div>
     <button type="button" class="fulladmin-only" data-pane="upgrade" data-icon="up" title="A new version, put in from here - from the web or as a file.">Upgrades</button>
     <button type="button" data-pane="plex" data-icon="list" title="The language titles are put into, and the keys of the databases the ratings come from (TMDB, OMDb, Trakt, TVmaze).">Plex library</button>
@@ -581,6 +633,59 @@ plexmon --upgrade-status                   # an upgrade started on these pages</
     </div>
   </div>
 
+  <div class="ctl-pane" id="pane-time" hidden>
+    <div class="ctl-head"><h2 class="ctl-title">Time</h2>
+      <p class="ctl-lede">The clock of this server, kept with chrony: how far off it is, which servers it
+        follows, the time servers set here and the time zone. The logs, the history of the dashboard
+        and the certificates are worked out from it.</p></div>
+    <div id="ntp-host"></div>
+  </div>
+  <div class="ctl-pane" id="pane-power" hidden>
+    <div class="ctl-head"><h2 class="ctl-title">Restart and power off</h2>
+      <p class="ctl-lede">This server restarted or switched off from here. While it is down nothing answers -
+        Plex Media Server, the dashboard, these pages; whoever is watching is stopped. The page follows it
+        down and up again.</p></div>
+    <div id="pw-host"></div>
+    <div class="card full fulladmin-only"><h2>On a schedule</h2><div id="sect-power"></div></div>
+  </div>
+  <div class="ctl-pane" id="pane-osup" hidden>
+    <div class="ctl-head"><h2 class="ctl-title">System updates</h2>
+      <p class="ctl-lede">The operating system's packages, updated by dnf - in a job of its own, its output
+        here as it comes. Plex Media Server's own package is left out unless asked: updating it restarts
+        Plex in the middle of a film. A restart an update needs is offered when it is done, or made by
+        itself.</p></div>
+    <div id="ou-host"></div>
+    <div class="card full fulladmin-only"><h2>On a schedule</h2><div id="sect-osup"></div></div>
+  </div>
+  <div class="ctl-pane" id="pane-db" hidden>
+    <div class="ctl-head"><h2 class="ctl-title">The database</h2>
+      <p class="ctl-lede">Two databases live on this server. plexmon's own (SQLite) holds the accounts,
+        the settings, the certificates and the events. Plex Media Server's holds the whole library -
+        what you have, what was watched, the posters chosen, the collections; it is copied here while
+        Plex runs, and checked on the copy, never on Plex's own file.</p></div>
+    <div id="db-top"></div>
+    <div class="card full"><h2>Plex Media Server's database <span class="right" id="pdb-tools"></span></h2>
+      <div id="pdb-host"></div></div>
+    <div class="card full"><h2>Copies of Plex's database on a schedule</h2><div id="sect-plexdb"></div></div>
+    <div class="card full"><h2>plexmon's database <span class="right" id="odb-tools"></span></h2>
+      <div id="odb-host"></div></div>
+    <div class="card full"><h2>Copies of plexmon's database, and what is kept</h2><div id="sect-db"></div></div>
+  </div>
+  <div class="ctl-pane" id="pane-backup" hidden>
+    <div class="ctl-head"><h2 class="ctl-title">Backups</h2>
+      <p class="ctl-lede">A backup is everything plexmon is: its database (accounts, settings, the
+        certificates, the events), the key that opens its secrets, the dashboard's and Settings'
+        configuration and the files of nginx's TLS - and, if wanted, a copy of Plex Media Server's
+        database and its Preferences.xml - with RESTORE.md, the exact steps to bring it back on a
+        machine installed from nothing. Locked with the password below; sent to every destination
+        switched on - a folder, FTP, FTPS, SFTP, SCP or a Windows/Samba share.</p></div>
+    <div id="rb-top"></div>
+    <div class="card full" id="rb-tried-card" hidden><h2>Backups tried <span class="right" id="rb-tried-tools"></span></h2><div id="rb-tried"></div></div>
+    <div class="card full"><h2>When, how many, and the password</h2><div id="sect-backup"></div></div>
+    <div class="card full"><h2>Where they go <span class="right" id="rb-add-host"></span></h2>
+      <div id="rb-targets"></div></div>
+    <div class="card full"><h2>What was sent <span class="right" id="rb-runs-tools"></span></h2><div id="rb-runs"></div></div>
+  </div>
   <div class="ctl-pane" id="pane-plex" hidden>
     <div class="ctl-head"><h2 class="ctl-title">Plex library</h2>
       <p class="ctl-lede">The tools of the Plex library (the tab above) ask Plex Media Server on this
@@ -628,6 +733,7 @@ var PHP_SAFETY = <?= ($me['role'] ?? '') === 'fulladmin' ? json_encode(pm_php_sa
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/core.js?v=<?= h(PM_VERSION) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/cols.js?v=<?= h(PM_VERSION) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/admin.js?v=<?= h(PM_VERSION) ?>"></script>
+<script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/host.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/host.js')) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/plexlib.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/plexlib.js')) ?>"></script>
 </body>
 </html>

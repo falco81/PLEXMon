@@ -4,6 +4,60 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.2.0 - 2026-10-31
+
+Five new parts of Settings, as otp has them - the same pages, the same
+behaviour - and, beyond otp, Plex Media Server's own database looked after.
+
+- **Time** - the clock of the server through chrony: how far off it is, which
+  servers it follows, the time servers set here (or the machine's own
+  `/etc/chrony.conf` left alone), the time zone, step it now. A clock that is
+  off shows among the problems.
+- **Restart and power off** - the server restarted or switched off from the
+  page (asked twice), followed down and up again; a restart on a schedule,
+  weekly or monthly, optionally only when an update needs one
+  (`needs-restarting -r`).
+- **System updates** - dnf: what is waiting (and how much of it is security),
+  every update or only the security ones, its output live on the page, a
+  restart offered at the end or made by itself; looked for daily and/or put in
+  on a schedule. **Plex Media Server's own package is left out** unless
+  `osup_plex` is switched on - updating it restarts Plex in the middle of a
+  film.
+- **The database** - two of them:
+  - *Plex Media Server's library database*: a copy taken while Plex runs
+    (SQLite's online backup - nothing in Plex's file is written), checked with
+    Plex SQLite (`integrity_check`), packed and kept (`plex_db_keep`), on a
+    schedule if wanted; downloaded; **put back** - checked first, Plex stopped,
+    its files set aside (kept, never deleted), the copy put in with Plex's
+    owner, Plex started, everything rolled back if a step fails. Plex's own
+    backups (every three days, beside its database) listed and can be put back
+    too. Plex's own *Optimize database* and *Clean bundles* from the page. A
+    timer of the server's own that backs Plex's database up (such as
+    `plex-db-backup.timer`) shown and can be switched off.
+  - *plexmon's own*: its tables, copies (daily, kept), check, give the disk
+    back (VACUUM), the events trimmed or erased, a copy put back.
+- **Backups** - otp's backups to another machine, as they are: destinations by
+  folder, FTP, FTPS, SFTP, SCP or SMB, ssh keys and host keys, client
+  certificates, a schedule, how many kept, AES-256 with a password, tried by
+  themselves (fetched back, opened, every file and database checked), a
+  backup downloaded here or sent from a file and **put back**. A backup holds
+  plexmon (database, secrets key, dashboard and nginx/TLS configuration) and,
+  with `rbackup_plex_db`, **a checked copy of Plex Media Server's database and
+  its Preferences.xml** - put back from a backup it lands in The database, to
+  be put into Plex there.
+- The command line and the console have all of it: `--time`, `--time-sync`,
+  `--db`, `--db-copy`, `--db-check`, `--db-restore`, `--plex-db-copy`,
+  `--plex-db-restore NAME [--plex-own]`, `--backups`, `--backup-now`,
+  `--backup-verify`, `--os-updates`, `--os-update [security]`, `--reboot`,
+  `--poweroff`; console menu 12.
+- **Python goes to the newest AlmaLinux 9 has** - 3.14, 3.13 or 3.12 from
+  AppStream, put in beside the system's `python3` (which dnf runs on and which
+  is never touched). The libraries of the TV remotes are put in for it first,
+  and the daemon moves only when everything it needs imports there; otherwise
+  it stays where it was. `PLEXMON_KEEP_PYTHON=1` leaves it alone.
+- Upgrade from a file in Settings → Upgrades works again (its uploader was
+  missing on the page).
+
 ## 2.1.6 - 2026-10-31
 
 - **Nothing closes by a click beside it** - neither a popup nor the detail of a

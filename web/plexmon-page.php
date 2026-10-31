@@ -17,7 +17,7 @@ if (PHP_SAPI !== 'cli' && isset($_SERVER['SCRIPT_FILENAME'])
     exit;
 }
 
-const PM_VERSION = '2.1.6';
+const PM_VERSION = '2.2.0';
 const PM_LANG_CODE = '/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/';
 
 header('Cache-Control: no-cache, no-store, must-revalidate');
@@ -212,7 +212,7 @@ function pm_guard_post(): void
        body, with a header of ours a form on another page cannot send, and a
        kind such a form cannot send without asking either. Never multipart. */
     // ...and a new version of plexmon sent from the pages, the same way (1.0.37).
-    $restore = in_array(($_GET['api'] ?? ''), ['upgrade-package'], true)
+    $restore = in_array(($_GET['api'] ?? ''), ['upgrade-package', 'rbackup-upload'], true)
         && strpos($kind, 'application/octet-stream') === 0
         && (string) ($_SERVER['HTTP_X_PM_RESTORE'] ?? '') === '1';
     if ($told > 8 * 1024 * 1024 && !$restore) {

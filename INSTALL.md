@@ -17,8 +17,15 @@ Co `install.sh` udělá na serveru se současným plexmonem (`plex-status.servic
 1. **Převezme starou službu**: `plex-status.service` zastaví a nahradí
    `plexmon.service` (jméno `plex-status.service` dál funguje - je to alias).
    Vaše limity z `plex-status.service.d/` (např. `atv.conf` s `MemoryMax=400M`)
-   přenese do `plexmon.service.d/`. Python, na kterém démon běžel (`python3.12`
-   kvůli pyatv), zůstane.
+   přenese do `plexmon.service.d/`.
+   **Python** (od 2.2.0): démon přejde na nejnovější Python, který AlmaLinux 9
+   má v AppStreamu - 3.14, 3.13 nebo 3.12 (`dnf install python3.X
+   python3.X-pip`), vedle systémového `python3`, na kterém běží dnf a který
+   se nikdy nemění. Knihovny ovládání televizí (aiowebostv, samsungtvws,
+   colorama), které měl dosavadní Python, se pro nový nainstalují pipem
+   předem; démon přejde, jen když se v něm všechno potřebné naimportuje -
+   jinak zůstane na dosavadním. `PLEXMON_KEEP_PYTHON=1 ./install.sh --upgrade`
+   Python nechá, jak je. pyatv (Apple TV) má vlastní virtualenv a nemění se.
 2. **Historie zůstane**: `/var/lib/plex-status` (SMART cache, historie grafů),
    `/etc/plex-status/config.json` (nastavení dashboardu) se nemění.
 3. **Program**: `/usr/local/lib/plexmon/` (plexmon.py, plexmon_admin.py,
@@ -83,6 +90,36 @@ sudo ./install.sh --uninstall
 Historie, `/etc/plexmon`, databáze a certifikáty nginxu zůstanou; `plex.conf`
 dál obsahuje `include /etc/nginx/plexmon/*.conf` (soubory zůstávají), aby nginx
 fungoval. Původní `plex.conf` je v `/var/lib/plexmon/backup/`.
+
+## Čas, restart, aktualizace systému, databáze, zálohy (od 2.2.0)
+
+V Nastavení ve skupinách **Stroj** a **Data** - stejně jako v otp:
+
+- **Čas** - chrony: odchylka, servery, vlastní NTP servery (blok v
+  `/etc/chrony.conf`, původní řádky jen zakomentované), časové pásmo.
+- **Restart a vypnutí** - ze stránky nebo podle plánu (jen když to aktualizace
+  potřebuje: `needs-restarting -r`).
+- **Aktualizace systému** - dnf, vše nebo jen bezpečnostní, výstup živě.
+  Balíček `plexmediaserver` se **vynechává** (`--exclude=plexmediaserver*`),
+  dokud se nezapne `osup_plex`.
+- **Databáze** - databáze Plex Media Serveru: kopie za běhu Plexu (online
+  backup SQLite, do souboru Plexu se nic nezapisuje), ověření Plex SQLite
+  (`integrity_check`), kopie v `/var/lib/plexmon/plex-db` (nebo `plex_db_dir`),
+  stažení, **vrácení** (Plex se zastaví, jeho soubory se odloží do
+  `before-restore-…` - nic se nemaže - kopie se vloží s vlastníkem Plexu, Plex
+  se spustí; při chybě se vše vrátí). Vlastní zálohy Plexu
+  (`com.plexapp.plugins.library.db-YYYY-MM-DD`) jdou vrátit také. Optimalizace
+  a čištění bundlů přes API Plexu. Vlastní timer serveru (např.
+  `plex-db-backup.timer`) se zobrazí a jde vypnout. A databáze plexmonu:
+  kopie, kontrola, VACUUM, mazání událostí, vrácení.
+- **Zálohy** - na jiný stroj (složka, FTP, FTPS, SFTP, SCP, SMB), šifrované
+  AES-256 heslem `rbackup_password`, se zkouškou obnovy. Záloha obsahuje
+  plexmon a s `rbackup_plex_db` i ověřenou kopii databáze Plexu a jeho
+  Preferences.xml; `RESTORE.md` v každé záloze popisuje obnovu na čistém stroji.
+
+Příkazová řádka: `plexmon --db`, `--plex-db-copy`, `--plex-db-restore JMÉNO`,
+`--backup-now`, `--backup-verify`, `--os-updates`, `--os-update security`,
+`--time`, `--reboot` … (`plexmon --help`), konzole menu 12.
 
 ## Soubory
 

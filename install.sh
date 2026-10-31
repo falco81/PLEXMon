@@ -139,6 +139,61 @@ fi
 "$PY" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' \
     || die "$PY is older than 3.9"
 ok "python: $PY ($("$PY" -c 'import platform; print(platform.python_version())'))"
+
+# The newest Python AlmaLinux / RHEL 9 ships (2.2.0): 3.14, 3.13 or 3.12 from
+# AppStream, put in beside the system's python3 (which dnf itself runs on and
+# which is never touched). The daemon moves to it only when everything it
+# imports imports there - the libraries of the TV remotes put in with its own
+# pip first; anything short of that and it stays on the one it has.
+# PLEXMON_KEEP_PYTHON=1 leaves the interpreter as it is.
+py_ver() { "$1" -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null; }
+py_newest() {
+    [ "${PLEXMON_KEEP_PYTHON:-}" = 1 ] && { ok "python: kept as it is (PLEXMON_KEEP_PYTHON=1)"; return 0; }
+    command -v dnf >/dev/null || return 0
+    local have want="" v cand mods m missing=""
+    have=$(py_ver "$PY")
+    for v in 3.14 3.13 3.12; do
+        [ "$(printf '%s\n%s\n' "$v" "$have" | sort -V | tail -1)" = "$have" ] && break
+        if [ -x "/usr/bin/python$v" ] || dnf -q list --available "python$v" >/dev/null 2>&1; then
+            want="$v"; break
+        fi
+    done
+    if [ -z "$want" ]; then ok "python: $have is the newest there is for this system"; return 0; fi
+    cand="/usr/bin/python$want"
+    say "python $want is there for this system (the daemon runs on $have) - putting it in beside it"
+    if [ ! -x "$cand" ] || ! "$cand" -m pip --version >/dev/null 2>&1; then
+        if ! dnf -y -q install "python$want" "python$want-pip" >/dev/null 2>&1; then
+            warn "python $want could not be put in (dnf) - the daemon stays on $have"; return 0
+        fi
+    fi
+    [ -x "$cand" ] || { warn "python $want is not at $cand - the daemon stays on $have"; return 0; }
+    # What the daemon imports beyond the standard library, wherever the old
+    # interpreter has it: the same put in for the new one.
+    mods=""
+    for m in colorama aiowebostv samsungtvws; do
+        "$PY" -c "import $m" >/dev/null 2>&1 && mods="$mods $m"
+    done
+    for m in $mods; do
+        "$cand" -c "import $m" >/dev/null 2>&1 && continue
+        "$cand" -m pip install -q --disable-pip-version-check "$m" >/dev/null 2>&1 \
+            || dnf -y -q install "python$want-$m" >/dev/null 2>&1 || true
+    done
+    for m in sqlite3 ssl curses json asyncio $mods; do
+        "$cand" -c "import $m" >/dev/null 2>&1 || missing="$missing $m"
+    done
+    if [ -n "$missing" ]; then
+        warn "python $want lacks:$missing - the daemon stays on $have"; return 0
+    fi
+    for m in plexmon.py plexmon_admin.py plexmon_plex.py plexmon_host.py deploy/plexmon_upgrade.py; do
+        [ -f "$HERE/$m" ] || continue
+        if ! "$cand" -c 'import ast, sys; ast.parse(open(sys.argv[1]).read())' "$HERE/$m" 2>/dev/null; then
+            warn "python $want does not read $m - the daemon stays on $have"; return 0
+        fi
+    done
+    ok "python: $have -> $want ($cand; the system's python3 left as it is)"
+    PY="$cand"
+}
+py_newest
 command -v openssl >/dev/null || die "openssl is needed (dnf install -y openssl)"
 ok "openssl: $(openssl version | awk '{print $2}')"
 if command -v nginx >/dev/null; then ok "nginx: $(nginx -v 2>&1 | sed 's/.*\///')"; else warn "nginx is not installed - the dashboard and Settings need it in front"; fi
@@ -428,6 +483,7 @@ mkdir -p "$LIB/release-keys" "$LIB/tools"
 install -m 755 "$HERE/plexmon.py" "$LIB/plexmon.py"
 install -m 644 "$HERE/plexmon_admin.py" "$LIB/plexmon_admin.py"
 install -m 644 "$HERE/plexmon_plex.py" "$LIB/plexmon_plex.py"
+install -m 644 "$HERE/plexmon_host.py" "$LIB/plexmon_host.py"
 install -m 755 "$HERE/deploy/plexmon_upgrade.py" "$LIB/plexmon_upgrade.py"
 install -m 644 "$HERE/CHANGELOG.md" "$LIB/CHANGELOG.md"
 for f in "$HERE"/tools/*; do install -m 755 "$f" "$LIB/tools/$(basename "$f")"; done
