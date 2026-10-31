@@ -1,0 +1,15 @@
+# /etc/systemd/system/plexmon-upgrade.service - written by plexmon's install.sh
+#
+# Started by plexmon-upgrade.path, never by hand: it puts in the package the
+# pages asked for - only one signed by a release key in
+# /usr/local/lib/plexmon/release-keys/, and only after checking every file in
+# it. It runs apart from plexmon.service, which the upgrade restarts.
+[Unit]
+Description=plexmon - putting in a new version asked for on the pages
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=@PYTHON@ -I /usr/local/lib/plexmon/plexmon_upgrade.py
+TimeoutStartSec=25min
+PrivateTmp=no

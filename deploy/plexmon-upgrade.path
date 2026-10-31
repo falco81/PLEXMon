@@ -1,0 +1,15 @@
+# /etc/systemd/system/plexmon-upgrade.path - written by plexmon's install.sh
+#
+# Watches for a new version asked for on the pages: plexmon lays a signed
+# package and request.json down in /var/lib/plexmon/upgrade/, and this starts
+# plexmon-upgrade.service, which checks the package as root and runs its
+# install.sh --upgrade. Nothing else can be asked for this way.
+[Unit]
+Description=plexmon - a new version asked for on the pages
+
+[Path]
+PathExists=/var/lib/plexmon/upgrade/request.json
+Unit=plexmon-upgrade.service
+
+[Install]
+WantedBy=multi-user.target

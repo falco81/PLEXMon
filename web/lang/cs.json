@@ -1,0 +1,6620 @@
+{
+ "_meta": {
+  "code": "cs",
+  "name": "Čeština",
+  "english": "Czech",
+  "version": "2.0.0",
+  "made": "2026-10-31",
+  "about": "Texty stránek plexmon v češtině (Settings i dashboard). Měňte jen \"text\", nikdy \"source\". Prázdný text znamená: zobrazit anglicky."
+ },
+ "strings": {
+  "s0002": {
+   "source": " keeps ",
+   "text": " drží "
+  },
+  "s0004": {
+   "source": " on every node",
+   "text": " na všech nodech"
+  },
+  "s0009": {
+   "source": "(empty)",
+   "text": "(prázdné)"
+  },
+  "s0016": {
+   "source": "), then",
+   "text": "), pak"
+  },
+  "s0020": {
+   "source": ", and",
+   "text": ", a"
+  },
+  "s0026": {
+   "source": ", which is what this page runs as. On the server:",
+   "text": ", pod kterým tato stránka běží. Na serveru:"
+  },
+  "s0027": {
+   "source": ", with",
+   "text": ", s"
+  },
+  "s0034": {
+   "source": "-----BEGIN CERTIFICATE-----\n1. the certificate of this name (the server's own)\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n2. the intermediate certificate(s), if there are any - one block each\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n3. the root certificate (optional)\n-----END CERTIFICATE-----\n-----BEGIN PRIVATE KEY-----\n4. its private key (not needed when the request was made here)\n-----END PRIVATE KEY-----\n\nAny order is taken: they are sorted by themselves.",
+   "text": "-----BEGIN CERTIFICATE-----\n1. certifikát pro toto jméno (vlastní certifikát serveru)\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n2. mezilehlé certifikáty, pokud jsou – každý ve vlastním bloku\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n3. kořenový certifikát (nepovinný)\n-----END CERTIFICATE-----\n-----BEGIN PRIVATE KEY-----\n4. jeho privátní klíč (není potřeba, pokud se tu vytvořila žádost)\n-----END PRIVATE KEY-----\n\nPořadí nevadí: certifikáty se seřadí samy."
+  },
+  "s0040": {
+   "source": ". Loud: for finding something out, not for leaving on.",
+   "text": ". Upovídané: na hledání problému, ne na trvalý provoz."
+  },
+  "s0043": {
+   "source": ". Sign in to go on.",
+   "text": ". Pro pokračování se přihlaste."
+  },
+  "s0044": {
+   "source": ". Switch on",
+   "text": ". Zapněte"
+  },
+  "s0046": {
+   "source": "...and may sit untouched (min)",
+   "text": "...a smí ležet nečinné (min)"
+  },
+  "s0047": {
+   "source": "...and the pause (min)",
+   "text": "...a pauza (min)"
+  },
+  "s0051": {
+   "source": "...every API call",
+   "text": "...každé volání API"
+  },
+  "s0058": {
+   "source": "...with an authenticator app",
+   "text": "...aplikací autentikátoru"
+  },
+  "s0073": {
+   "source": "1 year",
+   "text": "1 rok"
+  },
+  "s0075": {
+   "source": "10 years",
+   "text": "10 let"
+  },
+  "s0084": {
+   "source": "2 years",
+   "text": "2 roky"
+  },
+  "s0086": {
+   "source": "27 months",
+   "text": "27 měsíců"
+  },
+  "s0087": {
+   "source": "3 days",
+   "text": "3 dny"
+  },
+  "s0091": {
+   "source": "5 years",
+   "text": "5 let"
+  },
+  "s0092": {
+   "source": "6 hours",
+   "text": "6 hodin"
+  },
+  "s0093": {
+   "source": "6 months",
+   "text": "6 měsíců"
+  },
+  "s0096": {
+   "source": "8 characters at least",
+   "text": "alespoň 8 znaků"
+  },
+  "s0108": {
+   "source": "A TSIG key the DNS server lets update the _acme-challenge records (tsig-keygen), given below with the server and the zone.",
+   "text": "Klíč TSIG, kterým DNS server dovolí měnit záznamy _acme-challenge (tsig-keygen), zadaný níže se serverem a zónou."
+  },
+  "s0118": {
+   "source": "A browser that saw it comes back only over HTTPS for that long. Turn it on once HTTPS is surely staying.",
+   "text": "Prohlížeč, který to viděl, se po tu dobu vrací jen přes HTTPS. Zapněte, až bude jisté, že HTTPS zůstane."
+  },
+  "s0161": {
+   "source": "A first password",
+   "text": "První heslo"
+  },
+  "s0198": {
+   "source": "A new account",
+   "text": "Nový účet"
+  },
+  "s0206": {
+   "source": "A new key",
+   "text": "Nový klíč"
+  },
+  "s0207": {
+   "source": "A new key is made here and stays here; the request (CSR) goes to your certificate authority. Upload what it sends back - the certificate alone is enough.",
+   "text": "Nový klíč se vytvoří tady a tady i zůstane; žádost (CSR) pošlete své certifikační autoritě. Pak nahrajte, co vrátí – stačí samotný certifikát."
+  },
+  "s0213": {
+   "source": "A new password",
+   "text": "Nové heslo"
+  },
+  "s0219": {
+   "source": "A new version",
+   "text": "Nová verze"
+  },
+  "s0223": {
+   "source": "A node being put in right now is finished; the ones not begun stay as they are.",
+   "text": "Uzel, který se právě nasazuje, se dokončí; ty nezačaté zůstanou, jak jsou."
+  },
+  "s0225": {
+   "source": "A node is restarting or the VIP address is moving to the other node - asking again…",
+   "text": "Uzel se restartuje nebo se VIP adresa přesouvá na druhý uzel – ptám se znovu…"
+  },
+  "s0248": {
+   "source": "A request waits here: the certificate the authority sent back is enough, its key is here.",
+   "text": "Tady čeká žádost: stačí certifikát, který autorita vrátila, klíč je tady."
+  },
+  "s0254": {
+   "source": "A second step when signing in to these pages",
+   "text": "Druhý krok při přihlášení do těchto stránek"
+  },
+  "s0260": {
+   "source": "A sign-in lasts (h)",
+   "text": "Přihlášení trvá (h)"
+  },
+  "s0267": {
+   "source": "A token at Cloudflare (My Profile → API Tokens) with Zone - DNS - Edit for the zone, given below.",
+   "text": "Token u Cloudflare (My Profile → API Tokens) s oprávněním Zone - DNS - Edit pro zónu, zadaný níže."
+  },
+  "s0274": {
+   "source": "A token with Zone - DNS - Edit for the zone. Kept sealed.",
+   "text": "Token s právem Zone – DNS – Edit pro zónu. Uložen zapečetěný."
+  },
+  "s0286": {
+   "source": "ACME leaves it alone",
+   "text": "ACME ho nechává být"
+  },
+  "s0287": {
+   "source": "ACME renews it",
+   "text": "obnovuje ho ACME"
+  },
+  "s0288": {
+   "source": "ACME renews this certificate",
+   "text": "Tento certifikát obnovuje ACME"
+  },
+  "s0289": {
+   "source": "ACME renews this one from now on - at the next look (within the hour) if it is not from the CA yet.",
+   "text": "Od teď ho obnovuje ACME – při nejbližší kontrole (do hodiny), pokud ještě není od CA."
+  },
+  "s0290": {
+   "source": "ACME stops renewing this one; the certificate it has stays.",
+   "text": "ACME ho přestane obnovovat; certifikát, který má, zůstane."
+  },
+  "s0292": {
+   "source": "API port (localhost)",
+   "text": "Port API (localhost)"
+  },
+  "s0294": {
+   "source": "About",
+   "text": "O aplikaci"
+  },
+  "s0296": {
+   "source": "Accept",
+   "text": "Povolit"
+  },
+  "s0297": {
+   "source": "Access",
+   "text": "Přístup"
+  },
+  "s0300": {
+   "source": "Account",
+   "text": "Účet"
+  },
+  "s0303": {
+   "source": "Accounts",
+   "text": "Účty"
+  },
+  "s0305": {
+   "source": "Active Directory",
+   "text": "Active Directory"
+  },
+  "s0310": {
+   "source": "Add a domain there: a free one - yourname.dedyn.io - or one of your own whose DNS is at deSEC.",
+   "text": "Přidejte tam doménu: bezplatnou – vasejmeno.dedyn.io – nebo vlastní, jejíž DNS je u deSEC."
+  },
+  "s0321": {
+   "source": "Add an empty column to the left",
+   "text": "Přidat prázdný sloupec vlevo"
+  },
+  "s0322": {
+   "source": "Add an empty column to the right",
+   "text": "Přidat prázdný sloupec vpravo"
+  },
+  "s0326": {
+   "source": "Address",
+   "text": "Adresa"
+  },
+  "s0336": {
+   "source": "Adds the DHE ciphers, for old clients. Wants DH parameters.",
+   "text": "Přidává šifry DHE pro staré klienty. Potřebuje parametry DH."
+  },
+  "s0348": {
+   "source": "After the password these pages ask for a code too - choose how (the account's own, not a VPN token).",
+   "text": "Po hesle chtějí tyto stránky ještě kód – vyberte jak (patří účtu, není to VPN token)."
+  },
+  "s0353": {
+   "source": "Again",
+   "text": "Znovu"
+  },
+  "s0357": {
+   "source": "All",
+   "text": "Vše"
+  },
+  "s0371": {
+   "source": "An account kept here, not in a directory",
+   "text": "Účet vedený zde, ne v adresáři"
+  },
+  "s0384": {
+   "source": "An empty end means up to now.",
+   "text": "Prázdné Do znamená až do teď."
+  },
+  "s0403": {
+   "source": "Any",
+   "text": "Jakýkoli"
+  },
+  "s0406": {
+   "source": "Anything: tokens, settings, accounts, the database.",
+   "text": "Cokoli: tokeny, nastavení, účty, databázi."
+  },
+  "s0407": {
+   "source": "App",
+   "text": "Aplikace"
+  },
+  "s0411": {
+   "source": "As",
+   "text": "Jako"
+  },
+  "s0418": {
+   "source": "As the key was made (tsig-keygen makes hmac-sha256).",
+   "text": "Jak byl klíč vytvořen (tsig-keygen vytváří hmac-sha256)."
+  },
+  "s0424": {
+   "source": "Ask",
+   "text": "Zeptat se"
+  },
+  "s0434": {
+   "source": "Asked",
+   "text": "Dotázán"
+  },
+  "s0443": {
+   "source": "Asking…",
+   "text": "Ptám se…"
+  },
+  "s0444": {
+   "source": "At",
+   "text": "V"
+  },
+  "s0445": {
+   "source": "At every order - renewals too - the TXT record is shown here: put it in your DNS, then say It is in DNS.",
+   "text": "Při každé objednávce – i obnově – se tu ukáže záznam TXT: vložte ho do DNS a pak potvrďte Je v DNS."
+  },
+  "s0448": {
+   "source": "Attribute",
+   "text": "Atribut"
+  },
+  "s0451": {
+   "source": "Automatic certificates",
+   "text": "Automatické certifikáty"
+  },
+  "s0452": {
+   "source": "Back",
+   "text": "Zpět"
+  },
+  "s0453": {
+   "source": "Back in service",
+   "text": "Zpět do provozu"
+  },
+  "s0457": {
+   "source": "Back to the cluster’s value",
+   "text": "Zpět na hodnotu clusteru"
+  },
+  "s0459": {
+   "source": "Back to the one before…",
+   "text": "Zpět k předchozímu…"
+  },
+  "s0464": {
+   "source": "Backups",
+   "text": "Zálohy"
+  },
+  "s0476": {
+   "source": "Base",
+   "text": "Báze"
+  },
+  "s0498": {
+   "source": "Browsers warn about a self-signed certificate until it is trusted by hand. Good for a test, or until the real one comes.",
+   "text": "Prohlížeče na self-signed certifikát upozorňují, dokud mu někdo ručně nedůvěřuje. Hodí se na test, nebo než přijde skutečný."
+  },
+  "s0499": {
+   "source": "By",
+   "text": "Kdo"
+  },
+  "s0502": {
+   "source": "By hand the order waits up to an hour for you; the others renew by themselves.",
+   "text": "Ručně objednávka čeká až hodinu na vás; ostatní způsoby obnovují samy."
+  },
+  "s0505": {
+   "source": "By the calendar",
+   "text": "Podle kalendáře"
+  },
+  "s0509": {
+   "source": "CODE",
+   "text": "KÓD"
+  },
+  "s0512": {
+   "source": "Cancel",
+   "text": "Zrušit"
+  },
+  "s0518": {
+   "source": "Certificate",
+   "text": "Certifikát"
+  },
+  "s0519": {
+   "source": "Certificates",
+   "text": "Certifikáty"
+  },
+  "s0520": {
+   "source": "Certificates and TLS",
+   "text": "Certifikáty a TLS"
+  },
+  "s0521": {
+   "source": "Certificates and the VIP address",
+   "text": "Certifikáty a VIP adresa"
+  },
+  "s0523": {
+   "source": "Certificates from an ACME CA",
+   "text": "Certifikáty od ACME CA"
+  },
+  "s0525": {
+   "source": "Chain",
+   "text": "Řetězec"
+  },
+  "s0527": {
+   "source": "Change it",
+   "text": "Změnit"
+  },
+  "s0533": {
+   "source": "Change the name of the VIP address",
+   "text": "Změnit jméno VIP adresy"
+  },
+  "s0535": {
+   "source": "Change the password",
+   "text": "Změnit heslo"
+  },
+  "s0544": {
+   "source": "Check DNS",
+   "text": "Zkontrolovat DNS"
+  },
+  "s0545": {
+   "source": "Check DNS here, then Order it now. Renewals go by themselves.",
+   "text": "Tady Zkontrolovat DNS, pak Objednat teď. Obnovy proběhnou samy."
+  },
+  "s0555": {
+   "source": "Checked",
+   "text": "Ověření"
+  },
+  "s0557": {
+   "source": "Checked with this machine’s DNS servers - inside your network they may see what the internet does not. Set DNS servers for ACME (below) to public ones, 1.1.1.1, 9.9.9.9, to see what the CA sees.",
+   "text": "Zkontrolováno přes DNS servery tohoto stroje – uvnitř vaší sítě mohou vidět, co internet nevidí. Nastavte DNS servery pro ACME (níže) na veřejné, 1.1.1.1, 9.9.9.9, abyste viděli, co vidí CA."
+  },
+  "s0560": {
+   "source": "Checking…",
+   "text": "Ověřuje se…"
+  },
+  "s0566": {
+   "source": "Choose your own password first",
+   "text": "Nejdřív si zvolte vlastní heslo"
+  },
+  "s0567": {
+   "source": "Chosen",
+   "text": "Vybrané"
+  },
+  "s0568": {
+   "source": "Cipher",
+   "text": "Šifra"
+  },
+  "s0570": {
+   "source": "Ciphers for TLS 1.2 (an OpenSSL list; TLS 1.3 chooses its own)",
+   "text": "Šifry pro TLS 1.2 (seznam OpenSSL; TLS 1.3 si volí vlastní)"
+  },
+  "s0577": {
+   "source": "City",
+   "text": "Město"
+  },
+  "s0579": {
+   "source": "Clear",
+   "text": "Zrušit"
+  },
+  "s0580": {
+   "source": "Clear every lockout?",
+   "text": "Zrušit všechna zablokování?"
+  },
+  "s0590": {
+   "source": "Clear them",
+   "text": "Vymazat"
+  },
+  "s0591": {
+   "source": "Clear them all",
+   "text": "Vymazat vše"
+  },
+  "s0592": {
+   "source": "Clear them all?",
+   "text": "Vymazat všechny?"
+  },
+  "s0594": {
+   "source": "Clear these?",
+   "text": "Vymazat tyto?"
+  },
+  "s0596": {
+   "source": "Click to copy",
+   "text": "Kliknutím zkopírujete"
+  },
+  "s0598": {
+   "source": "Click to pause or resume the live updates",
+   "text": "Kliknutím pozastavíte nebo obnovíte živé aktualizace"
+  },
+  "s0599": {
+   "source": "Client",
+   "text": "Klient"
+  },
+  "s0608": {
+   "source": "Close",
+   "text": "Zavřít"
+  },
+  "s0609": {
+   "source": "Cloudflare, with an API token",
+   "text": "Cloudflare, s API tokenem"
+  },
+  "s0621": {
+   "source": "Columns",
+   "text": "Sloupce"
+  },
+  "s0622": {
+   "source": "Columns are held as they are",
+   "text": "Sloupce zůstávají, jak jsou"
+  },
+  "s0623": {
+   "source": "Columns can be sized and moved now — each change is kept at once",
+   "text": "Sloupce teď lze měnit co do šířky i pořadí – každá změna se hned uloží"
+  },
+  "s0624": {
+   "source": "Columns of the tables",
+   "text": "Sloupce tabulek"
+  },
+  "s0625": {
+   "source": "Columns of this table",
+   "text": "Sloupce této tabulky"
+  },
+  "s0626": {
+   "source": "Command",
+   "text": "Příkaz"
+  },
+  "s0630": {
+   "source": "Confirm",
+   "text": "Potvrdit"
+  },
+  "s0633": {
+   "source": "Connection",
+   "text": "Připojení"
+  },
+  "s0640": {
+   "source": "Copy",
+   "text": "Kopírovat"
+  },
+  "s0645": {
+   "source": "Copy the value",
+   "text": "Zkopírovat hodnotu"
+  },
+  "s0647": {
+   "source": "Counting…",
+   "text": "Počítám…"
+  },
+  "s0648": {
+   "source": "Country",
+   "text": "Země"
+  },
+  "s0651": {
+   "source": "Custom",
+   "text": "Vlastní"
+  },
+  "s0653": {
+   "source": "Czech",
+   "text": "čeština"
+  },
+  "s0657": {
+   "source": "DH parameters",
+   "text": "Parametry DH"
+  },
+  "s0659": {
+   "source": "DNS name",
+   "text": "DNS jméno"
+  },
+  "s0662": {
+   "source": "DNS servers",
+   "text": "DNS servery"
+  },
+  "s0663": {
+   "source": "DNS servers for ACME",
+   "text": "DNS servery pro ACME"
+  },
+  "s0665": {
+   "source": "DNS-01 - a TXT record in DNS (no port open to the internet)",
+   "text": "DNS-01 – záznam TXT v DNS (žádný port otevřený do internetu)"
+  },
+  "s0666": {
+   "source": "DNS-01 by hand: the CA reads a TXT record you put in at every order.",
+   "text": "DNS-01 ručně: CA čte záznam TXT, který vložíte při každé objednávce."
+  },
+  "s0669": {
+   "source": "Data",
+   "text": "Data"
+  },
+  "s0670": {
+   "source": "Database",
+   "text": "Databáze"
+  },
+  "s0672": {
+   "source": "Debug log",
+   "text": "Ladicí log"
+  },
+  "s0694": {
+   "source": "Directory",
+   "text": "Adresář"
+  },
+  "s0695": {
+   "source": "Disk",
+   "text": "Disk"
+  },
+  "s0696": {
+   "source": "Disks and logs",
+   "text": "Disky a logy"
+  },
+  "s0700": {
+   "source": "Done",
+   "text": "Hotovo"
+  },
+  "s0701": {
+   "source": "Download",
+   "text": "Stáhnout"
+  },
+  "s0702": {
+   "source": "Download .csr",
+   "text": "Stáhnout .csr"
+  },
+  "s0714": {
+   "source": "Drop",
+   "text": "Zahodit"
+  },
+  "s0718": {
+   "source": "Drop it",
+   "text": "Zahodit"
+  },
+  "s0721": {
+   "source": "Drop the files here, or press to choose them",
+   "text": "Přetáhněte soubory sem, nebo klikněte a vyberte je"
+  },
+  "s0723": {
+   "source": "Drop the request",
+   "text": "Zahodit žádost"
+  },
+  "s0727": {
+   "source": "E-mail",
+   "text": "E-mail"
+  },
+  "s0730": {
+   "source": "ECDHE with AES-GCM and ChaCha20. Every browser of the last ten years.",
+   "text": "ECDHE s AES-GCM a ChaCha20. Každý prohlížeč posledních deseti let."
+  },
+  "s0731": {
+   "source": "ECDSA P-256",
+   "text": "ECDSA P-256"
+  },
+  "s0757": {
+   "source": "Each record looked up from this node now, through its DNS servers - as the CA will look. A record just put in may take a while to show (its TTL).",
+   "text": "Každý záznam se teď vyhledá z tohoto uzlu přes jeho DNS servery – jak bude hledat CA. Právě vložený záznam se může chvíli neukazovat (jeho TTL)."
+  },
+  "s0772": {
+   "source": "Edit",
+   "text": "Upravit"
+  },
+  "s0773": {
+   "source": "Edit the columns",
+   "text": "Upravit sloupce"
+  },
+  "s0782": {
+   "source": "Empty: the VIP address has no name.",
+   "text": "Prázdné: VIP adresa nemá jméno."
+  },
+  "s0796": {
+   "source": "End it",
+   "text": "Ukončit"
+  },
+  "s0797": {
+   "source": "End this sign-in",
+   "text": "Ukončit toto přihlášení"
+  },
+  "s0799": {
+   "source": "Engine",
+   "text": "Databáze"
+  },
+  "s0802": {
+   "source": "English",
+   "text": "English"
+  },
+  "s0812": {
+   "source": "Events",
+   "text": "Události"
+  },
+  "s0813": {
+   "source": "Every API call the web pages make.",
+   "text": "Každé volání API z webových stránek."
+  },
+  "s0843": {
+   "source": "Every table back as it comes: the widths and the order of the columns you set, on every page. Nobody else's are touched.",
+   "text": "Všechny tabulky zpět do výchozího stavu: šířky a pořadí sloupců, které jste nastavili, na všech stránkách. Ničí jiné se nemění."
+  },
+  "s0844": {
+   "source": "Every table is as it comes.",
+   "text": "Všechny tabulky jsou ve výchozím stavu."
+  },
+  "s0845": {
+   "source": "Every table is back as it comes",
+   "text": "Všechny tabulky jsou zpět ve výchozím stavu"
+  },
+  "s0862": {
+   "source": "Everything",
+   "text": "Vše"
+  },
+  "s0877": {
+   "source": "Exception",
+   "text": "Výjimka"
+  },
+  "s0878": {
+   "source": "Exceptions - not enforced",
+   "text": "Výjimky – nevynucují se"
+  },
+  "s0880": {
+   "source": "Export",
+   "text": "Export"
+  },
+  "s0885": {
+   "source": "Export my settings",
+   "text": "Exportovat moje nastavení"
+  },
+  "s0895": {
+   "source": "Fetched and checked, and left ready below - put in when Upgrade is pressed.",
+   "text": "Stáhne se a ověří a zůstane připravený níže – nainstaluje se po stisknutí Aktualizovat."
+  },
+  "s0896": {
+   "source": "Fields",
+   "text": "Pole"
+  },
+  "s0897": {
+   "source": "Fields - or type a word to find it anywhere",
+   "text": "Pole – nebo napište slovo a najde se kdekoli"
+  },
+  "s0898": {
+   "source": "File",
+   "text": "Soubor"
+  },
+  "s0903": {
+   "source": "Find a setting",
+   "text": "Najít nastavení"
+  },
+  "s0904": {
+   "source": "Find a setting…",
+   "text": "Najít nastavení…"
+  },
+  "s0905": {
+   "source": "Find and pick the groups",
+   "text": "Najít a vybrat skupiny"
+  },
+  "s0906": {
+   "source": "Find the groups",
+   "text": "Najít skupiny"
+  },
+  "s0907": {
+   "source": "Find the groups in the directory and press May enrol beside each one that may: it goes into the box, and pressed again it comes out. Nested groups count - a member of a group inside one of these may enrol as well. Nothing is kept until Save the changes.",
+   "text": "Najděte skupiny v adresáři a u každé, která smí, stiskněte Smí zakládat: přidá se do pole a dalším stisknutím se odebere. Platí i vnořené skupiny – smí i člen skupiny uvnitř některé z nich. Nic se neuloží, dokud nestisknete Uložit změny."
+  },
+  "s0908": {
+   "source": "Fingerprint",
+   "text": "Otisk"
+  },
+  "s0911": {
+   "source": "First",
+   "text": "První"
+  },
+  "s0915": {
+   "source": "For",
+   "text": "Pro"
+  },
+  "s0916": {
+   "source": "For (Settings below) does not take this one in.",
+   "text": "Pro (Nastavení níže) tento nezahrnuje."
+  },
+  "s0935": {
+   "source": "Forget the package",
+   "text": "Zapomenout balíček"
+  },
+  "s0953": {
+   "source": "From",
+   "text": "Od"
+  },
+  "s0956": {
+   "source": "From - to",
+   "text": "Od – do"
+  },
+  "s0961": {
+   "source": "From the registration at acme-dns.",
+   "text": "Z registrace u acme-dns."
+  },
+  "s0962": {
+   "source": "From the registration at acme-dns. Kept sealed.",
+   "text": "Z registrace u acme-dns. Uložen zapečetěný."
+  },
+  "s0964": {
+   "source": "From the web",
+   "text": "Z webu"
+  },
+  "s0976": {
+   "source": "Give its name first (Its name…).",
+   "text": "Nejdřív zadejte jeho jméno (Jeho jméno…)."
+  },
+  "s0978": {
+   "source": "Give the order up",
+   "text": "Vzdát objednávku"
+  },
+  "s0981": {
+   "source": "Give this to your certificate authority. The key waits here; once the certificate comes back, upload it.",
+   "text": "Předejte to své certifikační autoritě. Klíč čeká tady; až certifikát přijde, nahrajte ho."
+  },
+  "s0983": {
+   "source": "Go back",
+   "text": "Vrátit"
+  },
+  "s0984": {
+   "source": "Go back on every node, one at a time",
+   "text": "Vrátit všechny uzly, jeden po druhém"
+  },
+  "s0985": {
+   "source": "Go back on this server",
+   "text": "Vrátit tento server"
+  },
+  "s0986": {
+   "source": "Go on",
+   "text": "Pokračovat"
+  },
+  "s0988": {
+   "source": "Going back to an older version",
+   "text": "Návrat na starší verzi"
+  },
+  "s0993": {
+   "source": "Good until",
+   "text": "Platí do"
+  },
+  "s0996": {
+   "source": "Group",
+   "text": "Skupina"
+  },
+  "s1003": {
+   "source": "Groups",
+   "text": "Skupiny"
+  },
+  "s1009": {
+   "source": "Groups that may enrol",
+   "text": "Skupiny, které smějí zakládat token"
+  },
+  "s1017": {
+   "source": "HSTS",
+   "text": "HSTS"
+  },
+  "s1022": {
+   "source": "HTTP-01 - the CA asks port 80 of the name",
+   "text": "HTTP-01 – CA se zeptá na portu 80 jména"
+  },
+  "s1027": {
+   "source": "Headers",
+   "text": "Hlavičky"
+  },
+  "s1029": {
+   "source": "Heard from",
+   "text": "Ozval se"
+  },
+  "s1031": {
+   "source": "Here",
+   "text": "Tady"
+  },
+  "s1037": {
+   "source": "Hide this",
+   "text": "Skrýt"
+  },
+  "s1038": {
+   "source": "High availability",
+   "text": "Vysoká dostupnost"
+  },
+  "s1040": {
+   "source": "High security",
+   "text": "Vysoká bezpečnost"
+  },
+  "s1041": {
+   "source": "High security cannot be switched on yet",
+   "text": "Vysokou bezpečnost zatím nelze zapnout"
+  },
+  "s1046": {
+   "source": "History",
+   "text": "Historie"
+  },
+  "s1048": {
+   "source": "Holding",
+   "text": "Obsahuje"
+  },
+  "s1052": {
+   "source": "How",
+   "text": "Jak"
+  },
+  "s1059": {
+   "source": "How far",
+   "text": "Průběh"
+  },
+  "s1073": {
+   "source": "How long a sign-in may sit without anything being asked before it has to be done again.",
+   "text": "Jak dlouho smí přihlášení ležet bez jediného dotazu, než se musí zopakovat."
+  },
+  "s1075": {
+   "source": "How long an administrator stays signed in, however busy.",
+   "text": "Jak dlouho zůstane administrátor přihlášen, ať je jakkoli aktivní."
+  },
+  "s1078": {
+   "source": "How long it waits.",
+   "text": "Jak dlouho čeká."
+  },
+  "s1082": {
+   "source": "How long the record is given to reach every DNS server before the CA is asked.",
+   "text": "Jak dlouho má záznam na to, aby se dostal na všechny DNS servery, než se zeptá CA."
+  },
+  "s1086": {
+   "source": "How many",
+   "text": "Kolik"
+  },
+  "s1098": {
+   "source": "How the CA checks the name",
+   "text": "Jak CA ověří jméno"
+  },
+  "s1109": {
+   "source": "How you have set these pages up for yourself, saved as a JSON file.",
+   "text": "Jak jste si tyto stránky nastavili, uloženo jako soubor JSON."
+  },
+  "s1115": {
+   "source": "INPUT",
+   "text": "INPUT"
+  },
+  "s1131": {
+   "source": "Import settings",
+   "text": "Importovat nastavení"
+  },
+  "s1132": {
+   "source": "Import settings…",
+   "text": "Importovat nastavení…"
+  },
+  "s1133": {
+   "source": "Import them",
+   "text": "Importovat je"
+  },
+  "s1134": {
+   "source": "In DNS now",
+   "text": "Teď v DNS"
+  },
+  "s1138": {
+   "source": "In the DNS of your own domain put the CNAME records below - once; they stay for every renewal.",
+   "text": "Do DNS své domény vložte záznamy CNAME níže – jednou; zůstanou pro každou obnovu."
+  },
+  "s1140": {
+   "source": "In the directory",
+   "text": "V adresáři"
+  },
+  "s1141": {
+   "source": "In the directory: who it is, whether the account is switched off, its groups",
+   "text": "V adresáři: kdo to je, zda je účet vypnutý, jeho skupiny"
+  },
+  "s1146": {
+   "source": "In your DNS",
+   "text": "Ve vašem DNS"
+  },
+  "s1147": {
+   "source": "In your DNS put the CNAME records below - once.",
+   "text": "Do svého DNS vložte záznamy CNAME níže – jednou."
+  },
+  "s1151": {
+   "source": "Interface",
+   "text": "Rozhraní"
+  },
+  "s1154": {
+   "source": "Issued by",
+   "text": "Vydal"
+  },
+  "s1155": {
+   "source": "Issuer",
+   "text": "Vydavatel"
+  },
+  "s1159": {
+   "source": "It cannot sign in any more.",
+   "text": "Už se nebude moci přihlásit."
+  },
+  "s1161": {
+   "source": "It did not go",
+   "text": "Neodešlo to"
+  },
+  "s1164": {
+   "source": "It is",
+   "text": "Je to"
+  },
+  "s1165": {
+   "source": "It is in DNS",
+   "text": "Je v DNS"
+  },
+  "s1173": {
+   "source": "It stops answering RADIUS and its /healthz says 503: the VPN and the load balancer go to the other node. Its pages go on working.",
+   "text": "Přestane odpovídat na RADIUS a jeho /healthz vrací 503: VPN i balancer jdou na druhý uzel. Jeho stránky fungují dál."
+  },
+  "s1178": {
+   "source": "Its ACME directory",
+   "text": "Jeho ACME directory"
+  },
+  "s1179": {
+   "source": "Its algorithm",
+   "text": "Jeho algoritmus"
+  },
+  "s1184": {
+   "source": "Its count of wrong attempts is forgotten: it may try again at once.",
+   "text": "Počet chybných pokusů se zapomene: může to hned zkusit znovu."
+  },
+  "s1190": {
+   "source": "Its name",
+   "text": "Její jméno"
+  },
+  "s1192": {
+   "source": "Its name…",
+   "text": "Jeho jméno…"
+  },
+  "s1212": {
+   "source": "Its waiting key goes too; a certificate made for it can then not be used.",
+   "text": "Zmizí i čekající klíč; certifikát vydaný pro tuto žádost pak nepůjde použít."
+  },
+  "s1224": {
+   "source": "Keep it",
+   "text": "Ponechat"
+  },
+  "s1235": {
+   "source": "Keep this menu open",
+   "text": "Nechat toto menu otevřené"
+  },
+  "s1236": {
+   "source": "Kept as it is: Automatic certificates does not replace it (Look after it there gives it to ACME).",
+   "text": "Zůstává, jak je: Automatické certifikáty ho nenahradí (Starat se o něj tam ho předá ACME)."
+  },
+  "s1241": {
+   "source": "Key",
+   "text": "Klíč"
+  },
+  "s1246": {
+   "source": "Kind",
+   "text": "Druh"
+  },
+  "s1251": {
+   "source": "Language",
+   "text": "Jazyk"
+  },
+  "s1257": {
+   "source": "Language of the pages",
+   "text": "Jazyk stránek"
+  },
+  "s1259": {
+   "source": "Last",
+   "text": "Naposledy"
+  },
+  "s1260": {
+   "source": "Last asked",
+   "text": "Naposledy se ptal"
+  },
+  "s1266": {
+   "source": "Last ordered",
+   "text": "Naposledy objednán"
+  },
+  "s1268": {
+   "source": "Last signed in",
+   "text": "Naposledy přihlášen"
+  },
+  "s1274": {
+   "source": "Leave it",
+   "text": "Nechat být"
+  },
+  "s1275": {
+   "source": "Leave it alone",
+   "text": "Nechat být"
+  },
+  "s1277": {
+   "source": "Let go",
+   "text": "Uvolnit"
+  },
+  "s1281": {
+   "source": "Let it sign in again",
+   "text": "Znovu povolit přihlašování"
+  },
+  "s1287": {
+   "source": "Let’s Encrypt",
+   "text": "Let’s Encrypt"
+  },
+  "s1288": {
+   "source": "Let’s Encrypt - staging (to try it)",
+   "text": "Let’s Encrypt – staging (na vyzkoušení)"
+  },
+  "s1289": {
+   "source": "Let’s Encrypt, its staging (certificates browsers do not trust - to try it), or another.",
+   "text": "Let’s Encrypt, jeho staging (certifikáty, kterým prohlížeče nevěří – na vyzkoušení), nebo jiná."
+  },
+  "s1290": {
+   "source": "Let’s Encrypt’s certificates last 90 days; 30 is what it advises.",
+   "text": "Certifikáty Let’s Encrypt platí 90 dní; 30 je jejich doporučení."
+  },
+  "s1298": {
+   "source": "Load it again",
+   "text": "Načíst znovu"
+  },
+  "s1303": {
+   "source": "Locked",
+   "text": "Zamčeno"
+  },
+  "s1304": {
+   "source": "Locked out",
+   "text": "Zablokovaní"
+  },
+  "s1312": {
+   "source": "Log",
+   "text": "Log"
+  },
+  "s1316": {
+   "source": "Look after it",
+   "text": "Starat se o něj"
+  },
+  "s1318": {
+   "source": "Look at every page and look after people’s tokens: make, replace, switch off, take away. No setting and no account.",
+   "text": "Prohlížet všechny stránky a starat se o tokeny lidí: vytvořit, nahradit, vypnout, odebrat. Žádné nastavení ani účty."
+  },
+  "s1319": {
+   "source": "Look at every page. Nothing can be changed from this account; how your own tables are laid out is yours to change.",
+   "text": "Prohlížet všechny stránky. Z tohoto účtu nelze nic změnit; jen rozložení vlastních tabulek."
+  },
+  "s1321": {
+   "source": "Look for a new version every day",
+   "text": "Každý den hledat novou verzi"
+  },
+  "s1325": {
+   "source": "Look in the directory",
+   "text": "Hledat v adresáři"
+  },
+  "s1327": {
+   "source": "Look now",
+   "text": "Zkontrolovat teď"
+  },
+  "s1330": {
+   "source": "Looked",
+   "text": "Zjištěno"
+  },
+  "s1347": {
+   "source": "Mail",
+   "text": "Pošta"
+  },
+  "s1348": {
+   "source": "Mail of the account at the CA",
+   "text": "E-mail účtu u CA"
+  },
+  "s1351": {
+   "source": "Maintenance",
+   "text": "Údržba"
+  },
+  "s1367": {
+   "source": "Make an account",
+   "text": "Založit účet"
+  },
+  "s1368": {
+   "source": "Make it",
+   "text": "Vytvořit"
+  },
+  "s1370": {
+   "source": "Make it and put it in",
+   "text": "Vytvořit a nasadit"
+  },
+  "s1373": {
+   "source": "Make one",
+   "text": "Vytvořit"
+  },
+  "s1381": {
+   "source": "Make the request",
+   "text": "Vytvořit žádost"
+  },
+  "s1385": {
+   "source": "Making it…",
+   "text": "Vytváří se…"
+  },
+  "s1392": {
+   "source": "May enrol",
+   "text": "Smí zakládat"
+  },
+  "s1400": {
+   "source": "Memory",
+   "text": "Paměť"
+  },
+  "s1403": {
+   "source": "Message texts",
+   "text": "Texty zpráv"
+  },
+  "s1407": {
+   "source": "Mode",
+   "text": "Režim"
+  },
+  "s1414": {
+   "source": "More",
+   "text": "Další"
+  },
+  "s1415": {
+   "source": "More names or addresses it is good for, by commas.",
+   "text": "Další jména nebo adresy, pro které platí, oddělené čárkou."
+  },
+  "s1419": {
+   "source": "Move",
+   "text": "Přesunout"
+  },
+  "s1425": {
+   "source": "Move to",
+   "text": "Přesunout na"
+  },
+  "s1427": {
+   "source": "Mozilla intermediate",
+   "text": "Mozilla intermediate"
+  },
+  "s1429": {
+   "source": "Mozilla modern",
+   "text": "Mozilla modern"
+  },
+  "s1432": {
+   "source": "NAME",
+   "text": "JMÉNO"
+  },
+  "s1435": {
+   "source": "NO",
+   "text": "NE"
+  },
+  "s1442": {
+   "source": "NOW",
+   "text": "TEĎ"
+  },
+  "s1444": {
+   "source": "Name",
+   "text": "Název"
+  },
+  "s1447": {
+   "source": "Names",
+   "text": "Jména"
+  },
+  "s1451": {
+   "source": "Names looked up by",
+   "text": "Jména se hledají podle"
+  },
+  "s1462": {
+   "source": "Network",
+   "text": "Síť"
+  },
+  "s1472": {
+   "source": "Newest",
+   "text": "Nejnovější"
+  },
+  "s1473": {
+   "source": "Next",
+   "text": "Další"
+  },
+  "s1490": {
+   "source": "No group yet: nobody may enrol.",
+   "text": "Zatím žádná skupina: token nesmí založit nikdo."
+  },
+  "s1494": {
+   "source": "No place is counted or blocked, and no token is locked.",
+   "text": "Žádné místo se nepočítá ani není zablokované a žádný token není zamčený."
+  },
+  "s1501": {
+   "source": "No version at the address may be gone back to.",
+   "text": "Na žádnou verzi na adrese se nelze vrátit."
+  },
+  "s1502": {
+   "source": "No version older than this one is there.",
+   "text": "Žádná starší verze tam není."
+  },
+  "s1504": {
+   "source": "No words have been written for this one yet.",
+   "text": "K této položce zatím nikdo nic nenapsal."
+  },
+  "s1505": {
+   "source": "No, leave it",
+   "text": "Ne, nechat být"
+  },
+  "s1507": {
+   "source": "Nobody is locked out, and no wrong attempt is being counted.",
+   "text": "Nikdo není zablokovaný a žádný chybný pokus se nepočítá."
+  },
+  "s1508": {
+   "source": "Node",
+   "text": "Uzel"
+  },
+  "s1509": {
+   "source": "Nodes",
+   "text": "Uzly"
+  },
+  "s1511": {
+   "source": "None",
+   "text": "Žádné"
+  },
+  "s1513": {
+   "source": "None of its own: the VIP address answers with the certificate of the node it is on.",
+   "text": "Vlastní nemá: VIP adresa odpovídá certifikátem uzlu, na kterém právě je."
+  },
+  "s1519": {
+   "source": "None.",
+   "text": "Žádné."
+  },
+  "s1535": {
+   "source": "Not known yet.",
+   "text": "Zatím neznámý."
+  },
+  "s1537": {
+   "source": "Not looked at yet - within minutes, or press Look now.",
+   "text": "Zatím nezkontrolováno – během pár minut, nebo stiskněte Zkontrolovat teď."
+  },
+  "s1538": {
+   "source": "Not looked at: looking every day is switched off below. Look now asks once.",
+   "text": "Nekontroluje se: denní kontrola je níže vypnutá. Zkontrolovat teď se zeptá jednou."
+  },
+  "s1545": {
+   "source": "Note",
+   "text": "Poznámka"
+  },
+  "s1550": {
+   "source": "Nothing by that name",
+   "text": "Nic takového jména"
+  },
+  "s1555": {
+   "source": "Nothing here",
+   "text": "Nic tu není"
+  },
+  "s1568": {
+   "source": "Nothing stands against it now. Switch it on again and save: from then on every way of doing something less safely is refused - but the exceptions.",
+   "text": "Teď už tomu nic nebrání. Zapněte ji znovu a uložte: od té chvíle se odmítne každá méně bezpečná varianta – kromě výjimek."
+  },
+  "s1574": {
+   "source": "Now",
+   "text": "Teď"
+  },
+  "s1576": {
+   "source": "OK",
+   "text": "OK"
+  },
+  "s1578": {
+   "source": "OPcache",
+   "text": "OPcache"
+  },
+  "s1585": {
+   "source": "Off",
+   "text": "Vypnuto"
+  },
+  "s1587": {
+   "source": "Off - switch it on below, say which certificates and the CA, and save.",
+   "text": "Vypnuto – níže zapněte, zvolte certifikáty a CA a uložte."
+  },
+  "s1590": {
+   "source": "Off is right for these lists: every cipher in them is strong, and the client knows best which is fast for it.",
+   "text": "Pro tyto seznamy je správně vypnuto: všechny šifry v nich jsou silné a klient nejlíp ví, která je pro něj rychlá."
+  },
+  "s1602": {
+   "source": "Offer going back to an older version",
+   "text": "Nabízet návrat na starší verzi"
+  },
+  "s1606": {
+   "source": "Offset",
+   "text": "Odchylka"
+  },
+  "s1609": {
+   "source": "On",
+   "text": "Zapnuto"
+  },
+  "s1615": {
+   "source": "On the command line",
+   "text": "Z příkazové řádky"
+  },
+  "s1616": {
+   "source": "On the day",
+   "text": "V den"
+  },
+  "s1629": {
+   "source": "On: this rule is an exception - it does not stop high security and is not enforced while it is on. Every change is an event.",
+   "text": "Zapnuto: pravidlo je výjimka – nebrání vysoké bezpečnosti a dokud je zapnutá, nevynucuje se. Každá změna se zapíše do událostí."
+  },
+  "s1647": {
+   "source": "One node at a time: it is taken out of service, upgraded, checked and brought back, and only then the next one. The VPN and the load balancer use the other node meanwhile.",
+   "text": "Jeden uzel po druhém: vyřadí se z provozu, aktualizuje, zkontroluje a vrátí, a teprve pak další. VPN i balancer mezitím používají druhý uzel."
+  },
+  "s1651": {
+   "source": "One-time passwords",
+   "text": "Jednorázová hesla"
+  },
+  "s1656": {
+   "source": "Only fetch it",
+   "text": "Jen stáhnout"
+  },
+  "s1661": {
+   "source": "Only the DHE ciphers use them (Mozilla intermediate, or your own). An RFC 7919 group is ready at once; made here takes from seconds to minutes.",
+   "text": "Používají je jen šifry DHE (Mozilla intermediate nebo vlastní). Skupina RFC 7919 je hned; vygenerování zde trvá od sekund po minuty."
+  },
+  "s1675": {
+   "source": "Open Upgrades",
+   "text": "Otevřít aktualizace"
+  },
+  "s1676": {
+   "source": "Open it",
+   "text": "Otevřít"
+  },
+  "s1677": {
+   "source": "Open it →",
+   "text": "Otevřít →"
+  },
+  "s1681": {
+   "source": "OpenSSL (Python’s)",
+   "text": "OpenSSL (Pythonu)"
+  },
+  "s1682": {
+   "source": "OpenSSL (system)",
+   "text": "OpenSSL (systémové)"
+  },
+  "s1686": {
+   "source": "Or",
+   "text": "Nebo"
+  },
+  "s1690": {
+   "source": "Or paste PEM here",
+   "text": "Nebo sem vložte PEM"
+  },
+  "s1691": {
+   "source": "Order it",
+   "text": "Objednat"
+  },
+  "s1692": {
+   "source": "Order it now",
+   "text": "Objednat teď"
+  },
+  "s1693": {
+   "source": "Order it now. Renewals go by themselves.",
+   "text": "Objednat teď. Obnovy proběhnou samy."
+  },
+  "s1694": {
+   "source": "Ordered by",
+   "text": "Objednává"
+  },
+  "s1695": {
+   "source": "Organisation",
+   "text": "Organizace"
+  },
+  "s1696": {
+   "source": "Other names",
+   "text": "Další jména"
+  },
+  "s1697": {
+   "source": "Others",
+   "text": "Ostatní"
+  },
+  "s1701": {
+   "source": "Overview",
+   "text": "Přehled"
+  },
+  "s1704": {
+   "source": "PEM files - the certificate, its key, the chain, the root, in any order or all in one - or one PFX / PKCS#12 file.",
+   "text": "Soubory PEM – certifikát, klíč, řetězec, kořen, v libovolném pořadí nebo vše v jednom – nebo jeden soubor PFX / PKCS#12."
+  },
+  "s1705": {
+   "source": "PHP (command line)",
+   "text": "PHP (příkazová řádka)"
+  },
+  "s1706": {
+   "source": "PIN",
+   "text": "PIN"
+  },
+  "s1719": {
+   "source": "Password",
+   "text": "Heslo"
+  },
+  "s1723": {
+   "source": "Passwords",
+   "text": "Hesla"
+  },
+  "s1742": {
+   "source": "Points at / value",
+   "text": "Ukazuje na / hodnota"
+  },
+  "s1743": {
+   "source": "Port",
+   "text": "Port"
+  },
+  "s1745": {
+   "source": "Port 80 answers as the CA will ask it",
+   "text": "Port 80 odpovídá, jak se CA zeptá"
+  },
+  "s1776": {
+   "source": "Protocol",
+   "text": "Protokol"
+  },
+  "s1777": {
+   "source": "Protocols",
+   "text": "Protokoly"
+  },
+  "s1778": {
+   "source": "Protocols and ciphers",
+   "text": "Protokoly a šifry"
+  },
+  "s1779": {
+   "source": "Proxy",
+   "text": "Proxy"
+  },
+  "s1783": {
+   "source": "Put back",
+   "text": "Vrátit"
+  },
+  "s1785": {
+   "source": "Put back as it was",
+   "text": "Vrátit, jak to bylo"
+  },
+  "s1793": {
+   "source": "Put in on the nodes once the VIP address is turned on (Settings → High availability).",
+   "text": "Na uzly se nasadí, jakmile se VIP adresa zapne (Nastavení → Vysoká dostupnost)."
+  },
+  "s1797": {
+   "source": "Put it back",
+   "text": "Vrátit"
+  },
+  "s1799": {
+   "source": "Put it in",
+   "text": "Vložit"
+  },
+  "s1803": {
+   "source": "Put my columns back",
+   "text": "Vrátit mé sloupce"
+  },
+  "s1804": {
+   "source": "Put my columns back as they come",
+   "text": "Vrátit mé sloupce do výchozího stavu"
+  },
+  "s1807": {
+   "source": "Put the certificate from before ACME back?",
+   "text": "Vrátit certifikát z doby před ACME?"
+  },
+  "s1811": {
+   "source": "Put them back",
+   "text": "Vrátit je"
+  },
+  "s1813": {
+   "source": "Put this TXT record in DNS",
+   "text": "Vložte tento záznam TXT do DNS"
+  },
+  "s1818": {
+   "source": "Put this table back as it comes",
+   "text": "Vrátit tuto tabulku do výchozího stavu"
+  },
+  "s1823": {
+   "source": "QR code",
+   "text": "QR kód"
+  },
+  "s1825": {
+   "source": "Quick",
+   "text": "Rychlá volba"
+  },
+  "s1826": {
+   "source": "RADIUS",
+   "text": "RADIUS"
+  },
+  "s1844": {
+   "source": "RFC 2136 dynamic update with a TSIG key (BIND, PowerDNS, Knot...)",
+   "text": "dynamická aktualizace RFC 2136 s klíčem TSIG (BIND, PowerDNS, Knot…)"
+  },
+  "s1846": {
+   "source": "RFC 7919 ffdhe2048",
+   "text": "RFC 7919 ffdhe2048"
+  },
+  "s1847": {
+   "source": "RFC 7919 ffdhe3072",
+   "text": "RFC 7919 ffdhe3072"
+  },
+  "s1848": {
+   "source": "RFC 7919 ffdhe4096",
+   "text": "RFC 7919 ffdhe4096"
+  },
+  "s1849": {
+   "source": "RSA 2048",
+   "text": "RSA 2048"
+  },
+  "s1856": {
+   "source": "Read",
+   "text": "Načteno"
+  },
+  "s1862": {
+   "source": "Read from the package at the address - it is checked only when it is chosen.",
+   "text": "Načteno z balíku na adrese – zkontroluje se, až když ho vyberete."
+  },
+  "s1864": {
+   "source": "Read it",
+   "text": "Načíst"
+  },
+  "s1880": {
+   "source": "Really? This cannot be taken back.",
+   "text": "Opravdu? Nelze to vrátit zpět."
+  },
+  "s1881": {
+   "source": "Realm",
+   "text": "Realm"
+  },
+  "s1885": {
+   "source": "Realms",
+   "text": "Realmy"
+  },
+  "s1886": {
+   "source": "Realms - or type part of a name",
+   "text": "Realmy – nebo napište část jména"
+  },
+  "s1893": {
+   "source": "Record",
+   "text": "Záznam"
+  },
+  "s1911": {
+   "source": "Register at the acme-dns server (POST /register) - it gives a user, a key and a subdomain; give them below.",
+   "text": "Zaregistrujte se na serveru acme-dns (POST /register) – dá uživatele, klíč a subdoménu; zadejte je níže."
+  },
+  "s1914": {
+   "source": "Reload",
+   "text": "Načíst znovu"
+  },
+  "s1916": {
+   "source": "Remove",
+   "text": "Odebrat"
+  },
+  "s1917": {
+   "source": "Remove it",
+   "text": "Odebrat"
+  },
+  "s1921": {
+   "source": "Renewed by ACME before it runs out. A certificate put in by hand on Certificates and TLS takes it out of ACME’s care.",
+   "text": "Obnovuje ho ACME, než vyprší. Certifikát vložený ručně v Certifikáty a TLS ho z péče ACME vyjme."
+  },
+  "s1922": {
+   "source": "Renewed when fewer days are left than",
+   "text": "Obnovit, když zbývá méně dní než"
+  },
+  "s1932": {
+   "source": "Request",
+   "text": "Požadavek"
+  },
+  "s1933": {
+   "source": "Request (CSR)",
+   "text": "Žádost (CSR)"
+  },
+  "s1938": {
+   "source": "Reset",
+   "text": "Vrátit"
+  },
+  "s1939": {
+   "source": "Reset it",
+   "text": "Resetovat"
+  },
+  "s1940": {
+   "source": "Restart",
+   "text": "Restart"
+  },
+  "s1944": {
+   "source": "Restart and power off",
+   "text": "Restart a vypnutí"
+  },
+  "s1964": {
+   "source": "Right",
+   "text": "Správně"
+  },
+  "s1965": {
+   "source": "Role",
+   "text": "Role"
+  },
+  "s1969": {
+   "source": "Room",
+   "text": "Místo"
+  },
+  "s1971": {
+   "source": "Root",
+   "text": "Kořen"
+  },
+  "s1977": {
+   "source": "Rows",
+   "text": "Řádků"
+  },
+  "s1980": {
+   "source": "Running for",
+   "text": "Běží"
+  },
+  "s2000": {
+   "source": "SMS",
+   "text": "SMS"
+  },
+  "s2006": {
+   "source": "SQLite (library)",
+   "text": "SQLite (knihovna)"
+  },
+  "s2007": {
+   "source": "SSH",
+   "text": "SSH"
+  },
+  "s2024": {
+   "source": "Said",
+   "text": "Řekl"
+  },
+  "s2026": {
+   "source": "Save",
+   "text": "Uložit"
+  },
+  "s2028": {
+   "source": "Save the changed settings into the database. They take effect the moment they are saved - nothing restarts.",
+   "text": "Uložit změněná nastavení do databáze. Platí okamžikem uložení – nic se nerestartuje."
+  },
+  "s2029": {
+   "source": "Save the changes",
+   "text": "Uložit změny"
+  },
+  "s2037": {
+   "source": "Saved",
+   "text": "Uloženo"
+  },
+  "s2043": {
+   "source": "Scan it with the app (Google or Microsoft Authenticator…) and write the six digits it shows.",
+   "text": "Naskenujte ho aplikací (Google nebo Microsoft Authenticator…) a zadejte šest číslic, které ukáže."
+  },
+  "s2053": {
+   "source": "Second step",
+   "text": "Druhý krok"
+  },
+  "s2056": {
+   "source": "Secret",
+   "text": "Heslo"
+  },
+  "s2060": {
+   "source": "Self-signed",
+   "text": "Podepsaný sám sebou"
+  },
+  "s2062": {
+   "source": "Send",
+   "text": "Odeslat"
+  },
+  "s2063": {
+   "source": "Send a code",
+   "text": "Poslat kód"
+  },
+  "s2072": {
+   "source": "Send another",
+   "text": "Poslat další"
+  },
+  "s2087": {
+   "source": "Send the code",
+   "text": "Poslat kód"
+  },
+  "s2093": {
+   "source": "Sending",
+   "text": "Odesílání"
+  },
+  "s2102": {
+   "source": "Sending…",
+   "text": "Odesílá se…"
+  },
+  "s2110": {
+   "source": "Sent to",
+   "text": "Posílat na"
+  },
+  "s2125": {
+   "source": "Server",
+   "text": "Server"
+  },
+  "s2130": {
+   "source": "Set a new password",
+   "text": "Nastavit nové heslo"
+  },
+  "s2131": {
+   "source": "Set it",
+   "text": "Nastavit"
+  },
+  "s2135": {
+   "source": "Set up the second step",
+   "text": "Nastavení druhého kroku"
+  },
+  "s2136": {
+   "source": "Set:",
+   "text": "Nastavit:"
+  },
+  "s2137": {
+   "source": "Setting",
+   "text": "Nastavení"
+  },
+  "s2138": {
+   "source": "Settings",
+   "text": "Nastavení"
+  },
+  "s2139": {
+   "source": "Settings sections",
+   "text": "Sekce nastavení"
+  },
+  "s2140": {
+   "source": "Settings → Automatic certificates renews it before it runs out. Uploading one here, or making one self-signed, takes it out of ACME’s care - it is kept as it is.",
+   "text": "Nastavení → Automatické certifikáty ho obnoví, než vyprší. Nahrání certifikátu zde nebo vytvoření self-signed ho z péče ACME vyjme – zůstane, jak je."
+  },
+  "s2141": {
+   "source": "Settings → High availability",
+   "text": "Nastavení → Vysoká dostupnost"
+  },
+  "s2145": {
+   "source": "Show",
+   "text": "Zobrazit"
+  },
+  "s2155": {
+   "source": "Show the versions to go back to",
+   "text": "Ukázat verze, na které se lze vrátit"
+  },
+  "s2158": {
+   "source": "Show this window",
+   "text": "Zobrazit toto období"
+  },
+  "s2165": {
+   "source": "Sign in",
+   "text": "Přihlásit"
+  },
+  "s2174": {
+   "source": "Sign out",
+   "text": "Odhlásit"
+  },
+  "s2175": {
+   "source": "Sign up at desec.io (free) and confirm the mail.",
+   "text": "Zaregistrujte se na desec.io (zdarma) a potvrďte e-mail."
+  },
+  "s2176": {
+   "source": "Sign-in protection",
+   "text": "Ochrana přihlášení"
+  },
+  "s2179": {
+   "source": "Signed in",
+   "text": "Přihlášení"
+  },
+  "s2181": {
+   "source": "Signed in now",
+   "text": "Právě přihlášení"
+  },
+  "s2182": {
+   "source": "Signing in",
+   "text": "Přihlašování"
+  },
+  "s2184": {
+   "source": "Signing in…",
+   "text": "Přihlašuji…"
+  },
+  "s2185": {
+   "source": "Signs in",
+   "text": "Přihlášení"
+  },
+  "s2187": {
+   "source": "Since",
+   "text": "Od kdy"
+  },
+  "s2191": {
+   "source": "Size",
+   "text": "Velikost"
+  },
+  "s2204": {
+   "source": "Standard",
+   "text": "Standardní"
+  },
+  "s2207": {
+   "source": "Stands against it",
+   "text": "Brání tomu"
+  },
+  "s2208": {
+   "source": "Start",
+   "text": "Spustit"
+  },
+  "s2215": {
+   "source": "Started",
+   "text": "Spuštěno"
+  },
+  "s2216": {
+   "source": "State",
+   "text": "Stav"
+  },
+  "s2217": {
+   "source": "Status",
+   "text": "Stav"
+  },
+  "s2218": {
+   "source": "Step",
+   "text": "Krok"
+  },
+  "s2227": {
+   "source": "Stop",
+   "text": "Přestat"
+  },
+  "s2228": {
+   "source": "Stop editing the columns",
+   "text": "Ukončit úpravy sloupců"
+  },
+  "s2229": {
+   "source": "Stop it",
+   "text": "Zastavit"
+  },
+  "s2230": {
+   "source": "Stop it signing in",
+   "text": "Zakázat přihlašování"
+  },
+  "s2237": {
+   "source": "Stop the upgrade",
+   "text": "Zastavit aktualizaci"
+  },
+  "s2240": {
+   "source": "Subject",
+   "text": "Předmět"
+  },
+  "s2249": {
+   "source": "Switch it on",
+   "text": "Zapnout"
+  },
+  "s2250": {
+   "source": "Switch it on below first.",
+   "text": "Nejdřív ho níže zapněte."
+  },
+  "s2252": {
+   "source": "Switch on",
+   "text": "Zapnout"
+  },
+  "s2279": {
+   "source": "TLS",
+   "text": "TLS"
+  },
+  "s2281": {
+   "source": "TLS 1.2 + 1.3",
+   "text": "TLS 1.2 + 1.3"
+  },
+  "s2282": {
+   "source": "TLS 1.2 + 1.3, ECDHE",
+   "text": "TLS 1.2 + 1.3, ECDHE"
+  },
+  "s2283": {
+   "source": "TLS 1.3 only",
+   "text": "jen TLS 1.3"
+  },
+  "s2288": {
+   "source": "TLS settings",
+   "text": "Nastavení TLS"
+  },
+  "s2297": {
+   "source": "Table",
+   "text": "Tabulka"
+  },
+  "s2304": {
+   "source": "Take it away",
+   "text": "Odebrat"
+  },
+  "s2308": {
+   "source": "Take it out",
+   "text": "Odebrat"
+  },
+  "s2324": {
+   "source": "Take this empty column away",
+   "text": "Odebrat tento prázdný sloupec"
+  },
+  "s2328": {
+   "source": "Taken off",
+   "text": "Pořízeno z"
+  },
+  "s2329": {
+   "source": "Takes",
+   "text": "Platí"
+  },
+  "s2349": {
+   "source": "The CA",
+   "text": "CA"
+  },
+  "s2353": {
+   "source": "The CA’s own certificate",
+   "text": "Vlastní certifikát CA"
+  },
+  "s2354": {
+   "source": "The CA’s root (PEM), where the system does not trust it already.",
+   "text": "Kořenový certifikát CA (PEM), pokud mu systém už nedůvěřuje."
+  },
+  "s2355": {
+   "source": "The Cloudflare API token",
+   "text": "API token Cloudflare"
+  },
+  "s2356": {
+   "source": "The DNS name of the VIP address - the one people type. It is the VIP address’s own (Settings → High availability) and its certificate is for it.",
+   "text": "DNS jméno VIP adresy – to, které lidé píší. Patří VIP adrese (Nastavení → Vysoká dostupnost) a její certifikát je pro něj."
+  },
+  "s2358": {
+   "source": "The DNS server taking the updates",
+   "text": "DNS server přijímající aktualizace"
+  },
+  "s2377": {
+   "source": "The TSIG secret",
+   "text": "Tajemství TSIG"
+  },
+  "s2378": {
+   "source": "The TXT records go into",
+   "text": "Záznamy TXT jdou do"
+  },
+  "s2381": {
+   "source": "The VIP address",
+   "text": "VIP adresa"
+  },
+  "s2384": {
+   "source": "The VIP address of the cluster",
+   "text": "VIP adresa clusteru"
+  },
+  "s2387": {
+   "source": "The VPN",
+   "text": "VPN"
+  },
+  "s2395": {
+   "source": "The account",
+   "text": "Účet"
+  },
+  "s2396": {
+   "source": "The account at the CA:",
+   "text": "Účet u CA:"
+  },
+  "s2406": {
+   "source": "The account you are signed in as: what it may do, its password, the language of these pages, the columns of the tables and your settings in a file.",
+   "text": "Účet, pod kterým jste přihlášeni: co smí, jeho heslo, jazyk těchto stránek, sloupce tabulek a vaše nastavení v souboru."
+  },
+  "s2409": {
+   "source": "The acme-dns server",
+   "text": "Server acme-dns"
+  },
+  "s2410": {
+   "source": "The address",
+   "text": "Adresa"
+  },
+  "s2416": {
+   "source": "The address the codes go to - a code goes there now to prove it is yours.",
+   "text": "Adresa pro kódy – teď na ni přijde kód, kterým ověříte, že je vaše."
+  },
+  "s2429": {
+   "source": "The answer",
+   "text": "Odpověď"
+  },
+  "s2444": {
+   "source": "The certificate and its chain, as PEM - without the key",
+   "text": "Certifikát s řetězcem jako PEM – bez klíče"
+  },
+  "s2452": {
+   "source": "The certificate put in on Certificates and TLS (uploaded, from a request, self-signed) stays: ACME does not replace it. Look after it, or Order it now, gives it to ACME.",
+   "text": "Certifikát vložený v Certifikáty a TLS (nahraný, z žádosti, self-signed) zůstává: ACME ho nenahradí. Starat se o něj nebo Objednat teď ho předá ACME."
+  },
+  "s2463": {
+   "source": "The ciphers it uses",
+   "text": "Použité šifry"
+  },
+  "s2476": {
+   "source": "The code your authenticator app shows for these pages now.",
+   "text": "Kód, který vaše aplikace autentikátoru pro tyto stránky právě ukazuje."
+  },
+  "s2483": {
+   "source": "The console at login",
+   "text": "Konzole po přihlášení"
+  },
+  "s2485": {
+   "source": "The daemon is not answering. Nobody can sign in until",
+   "text": "Démon neodpovídá. Nikdo se nepřihlásí, dokud neběží"
+  },
+  "s2486": {
+   "source": "The daemon is running, but its database will not open. On the server:",
+   "text": "Démon běží, ale jeho databáze se neotevře. Na serveru:"
+  },
+  "s2487": {
+   "source": "The daemon is running, but this page may not read what it wrote.",
+   "text": "Démon běží, ale tato stránka nesmí číst, co zapsal."
+  },
+  "s2488": {
+   "source": "The daemon's own log",
+   "text": "Vlastní log démona"
+  },
+  "s2489": {
+   "source": "The database",
+   "text": "Databáze"
+  },
+  "s2504": {
+   "source": "The deSEC API token",
+   "text": "API token deSEC"
+  },
+  "s2515": {
+   "source": "The domain at deSEC",
+   "text": "Doména u deSEC"
+  },
+  "s2525": {
+   "source": "The file",
+   "text": "Soubor"
+  },
+  "s2540": {
+   "source": "The full DNS name its certificate is for - it goes into the certificate as its name (CN) and in its alternative names (SAN). The CA gives it only for a name that points at it (HTTP-01) or whose TXT record can be put in (DNS-01).",
+   "text": "Plné DNS jméno, pro které je certifikát – jde do certifikátu jako jeho jméno (CN) i do alternativních jmen (SAN). CA ho vydá jen pro jméno, které na něj ukazuje (HTTP-01), nebo jehož záznam TXT lze vložit (DNS-01)."
+  },
+  "s2547": {
+   "source": "The gateway’s certificate is not checked: anybody between this server and the gateway can stand in for it and read its password and every code sent. Switch the check on and read its certificate from it below.",
+   "text": "Certifikát brány se neověřuje: kdokoli mezi tímto serverem a bránou se za ni může vydávat a přečíst její heslo i každý odeslaný kód. Zapněte ověření a níže si její certifikát načtěte."
+  },
+  "s2564": {
+   "source": "The key",
+   "text": "Klíč"
+  },
+  "s2566": {
+   "source": "The key has to come with it.",
+   "text": "Musí s ním přijít i klíč."
+  },
+  "s2567": {
+   "source": "The key of the certificate",
+   "text": "Klíč certifikátu"
+  },
+  "s2585": {
+   "source": "The language of these pages",
+   "text": "Jazyk těchto stránek"
+  },
+  "s2591": {
+   "source": "The last…",
+   "text": "Posledních…"
+  },
+  "s2600": {
+   "source": "The log",
+   "text": "Log"
+  },
+  "s2612": {
+   "source": "The menu hides itself at the edge of the screen and slides out when you point at it. Press this to keep it open.",
+   "text": "Menu se schová na okraj obrazovky a vysune se, když na něj najedete myší. Stiskem ho necháte otevřené."
+  },
+  "s2613": {
+   "source": "The menu is staying open. Press again to let it hide itself at the edge of the screen.",
+   "text": "Menu zůstává otevřené. Dalším stiskem ho necháte schovávat se u okraje obrazovky."
+  },
+  "s2614": {
+   "source": "The name (CN)",
+   "text": "Jméno (CN)"
+  },
+  "s2620": {
+   "source": "The name of the TSIG key",
+   "text": "Název klíče TSIG"
+  },
+  "s2621": {
+   "source": "The name of the VIP address",
+   "text": "Jméno VIP adresy"
+  },
+  "s2623": {
+   "source": "The name of this certificate is not known yet: give it in Settings below (This node’s DNS name, on that node) - or wait until that node says its own full name.",
+   "text": "Jméno tohoto certifikátu zatím není známé: zadejte ho (Jeho jméno…) – nebo počkejte, až uzel sám řekne své plné jméno."
+  },
+  "s2636": {
+   "source": "The new one (8 characters at least)",
+   "text": "Nové (alespoň 8 znaků)"
+  },
+  "s2637": {
+   "source": "The new one again",
+   "text": "Nové ještě jednou"
+  },
+  "s2640": {
+   "source": "The nodes",
+   "text": "Uzly"
+  },
+  "s2648": {
+   "source": "The node’s DNS name",
+   "text": "DNS jméno uzlu"
+  },
+  "s2653": {
+   "source": "The one you have now",
+   "text": "Současné"
+  },
+  "s2654": {
+   "source": "The one you were given",
+   "text": "To, které jste dostali"
+  },
+  "s2664": {
+   "source": "The order waits for it - up to an hour. Put it in, wait until DNS carries it, then say so. Take it away again once the certificate has come.",
+   "text": "Objednávka na něj čeká – až hodinu. Vložte ho, počkejte, až ho DNS roznese, a pak to potvrďte. Jakmile certifikát přijde, záznam zase odstraňte."
+  },
+  "s2665": {
+   "source": "The other node",
+   "text": "Druhý uzel"
+  },
+  "s2678": {
+   "source": "The package says nothing about this version.",
+   "text": "Balík o této verzi nic neříká."
+  },
+  "s2679": {
+   "source": "The package was not taken",
+   "text": "Balíček nebyl přijat"
+  },
+  "s2681": {
+   "source": "The pages",
+   "text": "Stránky"
+  },
+  "s2684": {
+   "source": "The pages’ PHP (as php-fpm runs it here)",
+   "text": "PHP stránek (jak ho tady spouští php-fpm)"
+  },
+  "s2690": {
+   "source": "The password is",
+   "text": "Heslo je"
+  },
+  "s2691": {
+   "source": "The password is the directory’s: it is changed there",
+   "text": "Heslo patří adresáři: mění se tam"
+  },
+  "s2696": {
+   "source": "The phone",
+   "text": "Telefon"
+  },
+  "s2699": {
+   "source": "The phone number with its country code - a code goes there now to prove it is yours.",
+   "text": "Telefonní číslo s předvolbou – teď na něj přijde kód, kterým ověříte, že je vaše."
+  },
+  "s2709": {
+   "source": "The protocols and an OpenSSL cipher list of your own.",
+   "text": "Vlastní protokoly a seznam šifer OpenSSL."
+  },
+  "s2728": {
+   "source": "The same switch as under your name: on for this sign-in only.",
+   "text": "Stejný přepínač jako pod vaším jménem: zapnutý jen pro toto přihlášení."
+  },
+  "s2730": {
+   "source": "The second step",
+   "text": "Druhý krok"
+  },
+  "s2733": {
+   "source": "The server",
+   "text": "Server"
+  },
+  "s2734": {
+   "source": "The server chooses the cipher",
+   "text": "Šifru volí server"
+  },
+  "s2761": {
+   "source": "The strongest; old systems and some scanners cannot connect.",
+   "text": "Nejsilnější; staré systémy a některé skenery se nepřipojí."
+  },
+  "s2762": {
+   "source": "The system",
+   "text": "Systém"
+  },
+  "s2768": {
+   "source": "The tail of",
+   "text": "Konec souboru"
+  },
+  "s2790": {
+   "source": "The upgrade",
+   "text": "Aktualizace"
+  },
+  "s2791": {
+   "source": "The uploaded package is deleted; upload it again to upgrade.",
+   "text": "Nahraný balíček se smaže; pro aktualizaci ho nahrajte znovu."
+  },
+  "s2793": {
+   "source": "The versions there newer than the one this server runs. The newest is chosen; any of them can be put in instead.",
+   "text": "Verze na adrese, které jsou novější než ta, na které běží tento server. Vybraná je nejnovější; místo ní lze nasadit kteroukoli z nich."
+  },
+  "s2796": {
+   "source": "The waiting request",
+   "text": "Čekající žádost"
+  },
+  "s2811": {
+   "source": "The window after this one",
+   "text": "Následující období"
+  },
+  "s2812": {
+   "source": "The window before this one",
+   "text": "Předchozí období"
+  },
+  "s2814": {
+   "source": "The zone",
+   "text": "Zóna"
+  },
+  "s2817": {
+   "source": "There is no account on this machine yet. Make one on the server:",
+   "text": "Na tomto stroji zatím není žádný účet. Vytvořte jej na serveru:"
+  },
+  "s2825": {
+   "source": "They choose their own at the first sign-in.",
+   "text": "Při prvním přihlášení si zvolí vlastní."
+  },
+  "s2826": {
+   "source": "They choose their own at the next sign-in.",
+   "text": "Při příštím přihlášení si zvolí vlastní."
+  },
+  "s2827": {
+   "source": "They replace yours. Your password and your account are not touched.",
+   "text": "Nahradí ta vaše. Vaše heslo a účet zůstanou nedotčeny."
+  },
+  "s2830": {
+   "source": "This account may not change the settings. A full administrator can change that under",
+   "text": "Tento účet nesmí měnit nastavení. Plný správce to může změnit v"
+  },
+  "s2838": {
+   "source": "This file holds:",
+   "text": "Tento soubor obsahuje:"
+  },
+  "s2841": {
+   "source": "This is the only server: while it is in maintenance nobody can sign in to the VPN. Its pages go on working.",
+   "text": "Toto je jediný server: dokud je v údržbě, nikdo se nepřihlásí do VPN. Jeho stránky fungují dál."
+  },
+  "s2854": {
+   "source": "This node’s DNS name",
+   "text": "DNS jméno tohoto uzlu"
+  },
+  "s2858": {
+   "source": "This server",
+   "text": "Tento server"
+  },
+  "s2860": {
+   "source": "This server is the only one: while it is put in and restarted - a minute or two - nobody can sign in to the VPN, and these pages stop answering for a moment.",
+   "text": "Tento server je jediný: během nasazení a restartu – minutu nebo dvě – se nikdo nepřihlásí do VPN a tyto stránky chvíli neodpovídají."
+  },
+  "s2867": {
+   "source": "Throw away",
+   "text": "Zahodit"
+  },
+  "s2869": {
+   "source": "Throw away the changes",
+   "text": "Zahodit změny"
+  },
+  "s2870": {
+   "source": "Throw away the changes on this page and read the settings back from the daemon as they are.",
+   "text": "Zahodit změny na této stránce a načíst nastavení znovu tak, jak je má démon."
+  },
+  "s2872": {
+   "source": "Throw it away",
+   "text": "Zahodit"
+  },
+  "s2874": {
+   "source": "Throw the package away",
+   "text": "Zahodit balíček"
+  },
+  "s2880": {
+   "source": "Time",
+   "text": "Čas"
+  },
+  "s2883": {
+   "source": "To",
+   "text": "Komu"
+  },
+  "s2894": {
+   "source": "Token management: make a token. Give it below as The deSEC API token, with The domain at deSEC, and save.",
+   "text": "Token management: vytvořte token. Zadejte ho níže jako API token deSEC spolu s doménou u deSEC a uložte."
+  },
+  "s2895": {
+   "source": "Tokens",
+   "text": "Tokeny"
+  },
+  "s2902": {
+   "source": "Tried",
+   "text": "Zkoušeno"
+  },
+  "s2909": {
+   "source": "Try",
+   "text": "Vyzkoušet"
+  },
+  "s2914": {
+   "source": "Try again",
+   "text": "Zkusit znovu"
+  },
+  "s2919": {
+   "source": "Try port 80",
+   "text": "Vyzkoušet port 80"
+  },
+  "s2933": {
+   "source": "Turn it on",
+   "text": "Zapnout"
+  },
+  "s2941": {
+   "source": "Type",
+   "text": "Typ"
+  },
+  "s2951": {
+   "source": "Typed into the app instead of scanning",
+   "text": "Zadá se do aplikace místo naskenování"
+  },
+  "s2960": {
+   "source": "Unit",
+   "text": "Útvar"
+  },
+  "s2975": {
+   "source": "Upgrade",
+   "text": "Aktualizovat"
+  },
+  "s2976": {
+   "source": "Upgrade every node, one at a time",
+   "text": "Aktualizovat všechny uzly, jeden po druhém"
+  },
+  "s2977": {
+   "source": "Upgrade this server",
+   "text": "Aktualizovat tento server"
+  },
+  "s2978": {
+   "source": "Upgrades",
+   "text": "Aktualizace"
+  },
+  "s2980": {
+   "source": "Upload",
+   "text": "Nahrát"
+  },
+  "s2983": {
+   "source": "Upload the certificate…",
+   "text": "Nahrát certifikát…"
+  },
+  "s2990": {
+   "source": "Used",
+   "text": "Použito"
+  },
+  "s2992": {
+   "source": "Used here to open it, and not kept.",
+   "text": "Použije se jen k otevření a neukládá se."
+  },
+  "s2996": {
+   "source": "User",
+   "text": "Uživatel"
+  },
+  "s2999": {
+   "source": "User principal name",
+   "text": "User principal name"
+  },
+  "s3001": {
+   "source": "VIP",
+   "text": "VIP"
+  },
+  "s3002": {
+   "source": "VIP address",
+   "text": "VIP adresa"
+  },
+  "s3011": {
+   "source": "Valid for",
+   "text": "Platnost"
+  },
+  "s3014": {
+   "source": "Valid until",
+   "text": "Platí do"
+  },
+  "s3015": {
+   "source": "Value",
+   "text": "Hodnota"
+  },
+  "s3016": {
+   "source": "Version",
+   "text": "Verze"
+  },
+  "s3023": {
+   "source": "Wait for DNS to carry it (s)",
+   "text": "Počkat, než ho DNS roznese (s)"
+  },
+  "s3036": {
+   "source": "Web server",
+   "text": "Webový server"
+  },
+  "s3038": {
+   "source": "Welcome back.",
+   "text": "Vítejte zpět."
+  },
+  "s3041": {
+   "source": "What",
+   "text": "Co"
+  },
+  "s3046": {
+   "source": "What changed",
+   "text": "Co se změnilo"
+  },
+  "s3049": {
+   "source": "What happened",
+   "text": "Co se stalo"
+  },
+  "s3070": {
+   "source": "What it runs on",
+   "text": "Na čem běží"
+  },
+  "s3076": {
+   "source": "What people type in the browser.",
+   "text": "Co lidé píšou do prohlížeče."
+  },
+  "s3079": {
+   "source": "What root said last",
+   "text": "Co naposledy řekl root"
+  },
+  "s3087": {
+   "source": "What the last order did",
+   "text": "Co udělala poslední objednávka"
+  },
+  "s3095": {
+   "source": "What this daemon has done",
+   "text": "Co tento démon udělal"
+  },
+  "s3099": {
+   "source": "What to call this installation",
+   "text": "Jak nazvat tuto instalaci"
+  },
+  "s3106": {
+   "source": "What you may do",
+   "text": "Co smíte dělat"
+  },
+  "s3107": {
+   "source": "When",
+   "text": "Kdy"
+  },
+  "s3113": {
+   "source": "Where",
+   "text": "Kde"
+  },
+  "s3119": {
+   "source": "Where new versions are looked for",
+   "text": "Kde se hledají nové verze"
+  },
+  "s3123": {
+   "source": "Where the CA writes when a certificate runs out unrenewed. Empty: none.",
+   "text": "Kam CA napíše, když certifikát vyprší neobnovený. Prázdné: nikam."
+  },
+  "s3124": {
+   "source": "Where the DNS of your domain is not at Cloudflare: a zone that is, as The TXT records go into, and the CNAME records below in your DNS.",
+   "text": "Kde DNS vaší domény není u Cloudflare: zóna, která tam je, jako Záznamy TXT jdou do, a záznamy CNAME níže ve vašem DNS."
+  },
+  "s3138": {
+   "source": "Whether",
+   "text": "Zda"
+  },
+  "s3142": {
+   "source": "Which",
+   "text": "Které"
+  },
+  "s3150": {
+   "source": "Who",
+   "text": "Kdo"
+  },
+  "s3160": {
+   "source": "Who may open these pages, what each of them may do, and who is signed in right now.",
+   "text": "Kdo smí otevřít tyto stránky, co který smí a kdo je právě přihlášen."
+  },
+  "s3161": {
+   "source": "Who may open these pages.",
+   "text": "Kdo smí otevřít tyto stránky."
+  },
+  "s3167": {
+   "source": "Who puts the TXT record in DNS",
+   "text": "Kdo vloží záznam TXT do DNS"
+  },
+  "s3177": {
+   "source": "Whose",
+   "text": "Čí"
+  },
+  "s3179": {
+   "source": "Why",
+   "text": "Proč"
+  },
+  "s3183": {
+   "source": "With",
+   "text": "S"
+  },
+  "s3185": {
+   "source": "With The TXT records go into: the CNAME records below in your DNS, and the key allowed in that zone.",
+   "text": "S nastavením Záznamy TXT jdou do: záznamy CNAME níže ve vašem DNS a klíč povolený v té zóně."
+  },
+  "s3196": {
+   "source": "Without HTTPS the gateway’s password and every code sent cross the network as they are: anybody on the way reads them.",
+   "text": "Bez HTTPS jde heslo k bráně i každý odeslaný kód sítí tak, jak jsou: kdokoli po cestě je přečte."
+  },
+  "s3204": {
+   "source": "Write everything into",
+   "text": "Zapisovat vše do"
+  },
+  "s3210": {
+   "source": "Wrong",
+   "text": "Chybných"
+  },
+  "s3219": {
+   "source": "Wrong passwords before a pause",
+   "text": "Chybných hesel před pauzou"
+  },
+  "s3220": {
+   "source": "Wrong passwords from one address before it has to wait.",
+   "text": "Chybných hesel z jedné adresy, než musí čekat."
+  },
+  "s3227": {
+   "source": "Yes",
+   "text": "Ano"
+  },
+  "s3233": {
+   "source": "You may look, but not change",
+   "text": "Smíte se dívat, ne měnit"
+  },
+  "s3235": {
+   "source": "Your account",
+   "text": "Váš účet"
+  },
+  "s3240": {
+   "source": "Your password",
+   "text": "Vaše heslo"
+  },
+  "s3242": {
+   "source": "Your settings in a file",
+   "text": "Vaše nastavení v souboru"
+  },
+  "s3286": {
+   "source": "a field that is a number holds something else",
+   "text": "pole pro číslo obsahuje něco jiného"
+  },
+  "s3291": {
+   "source": "a folder",
+   "text": "složka"
+  },
+  "s3293": {
+   "source": "a layout of the columns is an object of tables",
+   "text": "rozložení sloupců je objekt tabulek"
+  },
+  "s3296": {
+   "source": "a mail",
+   "text": "e-mail"
+  },
+  "s3302": {
+   "source": "a name",
+   "text": "jméno"
+  },
+  "s3304": {
+   "source": "a name has letters, digits, dots, dashes, @ and nothing else",
+   "text": "jméno obsahuje písmena, číslice, tečky, pomlčky, @ a nic jiného"
+  },
+  "s3306": {
+   "source": "a name or an address",
+   "text": "jméno nebo adresa"
+  },
+  "s3321": {
+   "source": "a number is needed, and nothing was given",
+   "text": "je potřeba číslo a nic nebylo zadáno"
+  },
+  "s3329": {
+   "source": "a password",
+   "text": "heslo"
+  },
+  "s3331": {
+   "source": "a password here",
+   "text": "heslo zde"
+  },
+  "s3333": {
+   "source": "a password needs at least eight characters",
+   "text": "heslo musí mít alespoň osm znaků"
+  },
+  "s3335": {
+   "source": "a place (Calling-Station-Id)",
+   "text": "místo (Calling-Station-Id)"
+  },
+  "s3343": {
+   "source": "a request waits for its certificate",
+   "text": "žádost čeká na certifikát"
+  },
+  "s3358": {
+   "source": "a test",
+   "text": "zkouška"
+  },
+  "s3362": {
+   "source": "a token",
+   "text": "token"
+  },
+  "s3368": {
+   "source": "a week",
+   "text": "týden"
+  },
+  "s3370": {
+   "source": "a yes-or-no setting cannot be nothing",
+   "text": "nastavení ano/ne nemůže být prázdné"
+  },
+  "s3371": {
+   "source": "accept",
+   "text": "vpuštěn"
+  },
+  "s3374": {
+   "source": "accounts",
+   "text": "účty"
+  },
+  "s3375": {
+   "source": "acme-dns key",
+   "text": "Klíč acme-dns"
+  },
+  "s3376": {
+   "source": "acme-dns subdomain",
+   "text": "Subdoména acme-dns"
+  },
+  "s3377": {
+   "source": "acme-dns user",
+   "text": "Uživatel acme-dns"
+  },
+  "s3378": {
+   "source": "active",
+   "text": "aktivní"
+  },
+  "s3383": {
+   "source": "admin",
+   "text": "admin"
+  },
+  "s3384": {
+   "source": "administration",
+   "text": "administrace"
+  },
+  "s3387": {
+   "source": "after",
+   "text": "potom"
+  },
+  "s3394": {
+   "source": "against the directory",
+   "text": "vůči adresáři"
+  },
+  "s3395": {
+   "source": "alert",
+   "text": "upozornění"
+  },
+  "s3397": {
+   "source": "all",
+   "text": "vše"
+  },
+  "s3399": {
+   "source": "all time",
+   "text": "celá historie"
+  },
+  "s3401": {
+   "source": "always",
+   "text": "vždy"
+  },
+  "s3405": {
+   "source": "an acme-dns server",
+   "text": "server acme-dns"
+  },
+  "s3406": {
+   "source": "an address",
+   "text": "adresa"
+  },
+  "s3412": {
+   "source": "an app",
+   "text": "aplikace"
+  },
+  "s3414": {
+   "source": "an exception now",
+   "text": "teď výjimka"
+  },
+  "s3419": {
+   "source": "an upgrade is going on already",
+   "text": "aktualizace už probíhá"
+  },
+  "s3420": {
+   "source": "an upgrade is going on with it",
+   "text": "probíhá s ním aktualizace"
+  },
+  "s3421": {
+   "source": "an upgrade is going on: wait for it, or stop it first",
+   "text": "probíhá aktualizace: počkejte na ni, nebo ji nejdřív zastavte"
+  },
+  "s3423": {
+   "source": "and",
+   "text": "a"
+  },
+  "s3424": {
+   "source": "another ACME CA (step-ca, an internal CA...)",
+   "text": "jiná ACME CA (step-ca, interní CA…)"
+  },
+  "s3425": {
+   "source": "answering",
+   "text": "odpovídá"
+  },
+  "s3428": {
+   "source": "any of them",
+   "text": "kterékoli z nich"
+  },
+  "s3432": {
+   "source": "anything",
+   "text": "cokoli"
+  },
+  "s3433": {
+   "source": "anything in an event…",
+   "text": "cokoli v události…"
+  },
+  "s3434": {
+   "source": "anywhere",
+   "text": "odkudkoli"
+  },
+  "s3436": {
+   "source": "as install.sh made it",
+   "text": "jak ho vytvořil install.sh"
+  },
+  "s3438": {
+   "source": "as it comes",
+   "text": "výchozí"
+  },
+  "s3440": {
+   "source": "as set",
+   "text": "nastaveno"
+  },
+  "s3442": {
+   "source": "as the default realm",
+   "text": "jako výchozí realm"
+  },
+  "s3445": {
+   "source": "as the setting",
+   "text": "podle nastavení"
+  },
+  "s3448": {
+   "source": "as they come",
+   "text": "výchozí"
+  },
+  "s3451": {
+   "source": "asked",
+   "text": "zadáno"
+  },
+  "s3453": {
+   "source": "asked again",
+   "text": "dotázáno znovu"
+  },
+  "s3458": {
+   "source": "asking nginx, and reloading it",
+   "text": "kontrola konfigurace nginx a reload"
+  },
+  "s3459": {
+   "source": "asking the directory…",
+   "text": "ptám se adresáře…"
+  },
+  "s3460": {
+   "source": "asking…",
+   "text": "ptám se…"
+  },
+  "s3463": {
+   "source": "at once",
+   "text": "hned"
+  },
+  "s3469": {
+   "source": "backups",
+   "text": "zálohy"
+  },
+  "s3470": {
+   "source": "becomes",
+   "text": "se stane"
+  },
+  "s3472": {
+   "source": "being put in",
+   "text": "nasazuje se"
+  },
+  "s3475": {
+   "source": "being switched…",
+   "text": "přepíná se…"
+  },
+  "s3478": {
+   "source": "blocked",
+   "text": "zablokováno"
+  },
+  "s3484": {
+   "source": "by hand",
+   "text": "ručně"
+  },
+  "s3485": {
+   "source": "by hand - the record is shown here, you put it in",
+   "text": "ručně – záznam se ukáže zde, vložíte ho sami"
+  },
+  "s3487": {
+   "source": "by hand, at every order",
+   "text": "ručně, při každé objednávce"
+  },
+  "s3488": {
+   "source": "by itself",
+   "text": "sám"
+  },
+  "s3492": {
+   "source": "can be put back",
+   "text": "lze obnovit"
+  },
+  "s3496": {
+   "source": "certificate",
+   "text": "certifikát"
+  },
+  "s3503": {
+   "source": "change the password first",
+   "text": "nejdřív si změňte heslo"
+  },
+  "s3504": {
+   "source": "changed",
+   "text": "změněno"
+  },
+  "s3505": {
+   "source": "changes not saved yet",
+   "text": "změny ještě nejsou uložené"
+  },
+  "s3506": {
+   "source": "changing a password",
+   "text": "změna hesla"
+  },
+  "s3509": {
+   "source": "checked",
+   "text": "zkontrolováno"
+  },
+  "s3512": {
+   "source": "checking",
+   "text": "kontroluje se"
+  },
+  "s3517": {
+   "source": "choose a way first",
+   "text": "nejdřív vyberte způsob"
+  },
+  "s3521": {
+   "source": "choose the files first, or paste the PEM",
+   "text": "nejdřív vyberte soubory nebo vložte PEM"
+  },
+  "s3522": {
+   "source": "chosen here",
+   "text": "volí se zde"
+  },
+  "s3525": {
+   "source": "cleared",
+   "text": "zrušeno"
+  },
+  "s3528": {
+   "source": "clients",
+   "text": "klienti"
+  },
+  "s3529": {
+   "source": "code",
+   "text": "kód"
+  },
+  "s3530": {
+   "source": "code by SMS",
+   "text": "kód přes SMS"
+  },
+  "s3541": {
+   "source": "command line",
+   "text": "příkazová řádka"
+  },
+  "s3542": {
+   "source": "config.json",
+   "text": "config.json"
+  },
+  "s3547": {
+   "source": "contains",
+   "text": "obsahuje"
+  },
+  "s3548": {
+   "source": "copied",
+   "text": "zkopírováno"
+  },
+  "s3551": {
+   "source": "counting",
+   "text": "počítá se"
+  },
+  "s3552": {
+   "source": "custom",
+   "text": "vlastní"
+  },
+  "s3553": {
+   "source": "daily",
+   "text": "denně"
+  },
+  "s3555": {
+   "source": "days",
+   "text": "dní"
+  },
+  "s3556": {
+   "source": "days left",
+   "text": "dní zbývá"
+  },
+  "s3557": {
+   "source": "deSEC.io (free), with an API token - a CNAME in your DNS",
+   "text": "deSEC.io (zdarma), s API tokenem – CNAME ve vašem DNS"
+  },
+  "s3558": {
+   "source": "debug",
+   "text": "ladění"
+  },
+  "s3561": {
+   "source": "deleted",
+   "text": "smazáno"
+  },
+  "s3562": {
+   "source": "details",
+   "text": "podrobnosti"
+  },
+  "s3563": {
+   "source": "did not answer in a minute - is it running?",
+   "text": "do minuty neodpověděl – běží?"
+  },
+  "s3566": {
+   "source": "directories",
+   "text": "adresáře"
+  },
+  "s3568": {
+   "source": "disabled",
+   "text": "vypnuto"
+  },
+  "s3569": {
+   "source": "disks",
+   "text": "disky"
+  },
+  "s3572": {
+   "source": "done",
+   "text": "hotovo"
+  },
+  "s3574": {
+   "source": "down",
+   "text": "nefunguje"
+  },
+  "s3584": {
+   "source": "e-mail",
+   "text": "e-mail"
+  },
+  "s3592": {
+   "source": "either",
+   "text": "nebo"
+  },
+  "s3593": {
+   "source": "empty column",
+   "text": "prázdný sloupec"
+  },
+  "s3596": {
+   "source": "ended",
+   "text": "ukončeno"
+  },
+  "s3597": {
+   "source": "enforced again",
+   "text": "opět vynucováno"
+  },
+  "s3599": {
+   "source": "enrolment",
+   "text": "registrace"
+  },
+  "s3600": {
+   "source": "enrolment pages",
+   "text": "stránky registrace"
+  },
+  "s3601": {
+   "source": "events",
+   "text": "události"
+  },
+  "s3603": {
+   "source": "every address",
+   "text": "všechny adresy"
+  },
+  "s3607": {
+   "source": "every day",
+   "text": "každý den"
+  },
+  "s3609": {
+   "source": "every kind",
+   "text": "všechny druhy"
+  },
+  "s3611": {
+   "source": "every name",
+   "text": "každé jméno"
+  },
+  "s3613": {
+   "source": "every node",
+   "text": "všechny uzly"
+  },
+  "s3622": {
+   "source": "every step",
+   "text": "každý krok"
+  },
+  "s3623": {
+   "source": "every table as it comes",
+   "text": "všechny tabulky ve výchozím stavu"
+  },
+  "s3628": {
+   "source": "everybody",
+   "text": "všichni"
+  },
+  "s3629": {
+   "source": "everything",
+   "text": "vše"
+  },
+  "s3631": {
+   "source": "example.cz",
+   "text": "example.cz"
+  },
+  "s3632": {
+   "source": "exists and is not readable by",
+   "text": "existuje a nemůže ho číst"
+  },
+  "s3635": {
+   "source": "failed",
+   "text": "selhalo"
+  },
+  "s3639": {
+   "source": "fewer",
+   "text": "méně"
+  },
+  "s3644": {
+   "source": "followed",
+   "text": "sledovaný"
+  },
+  "s3648": {
+   "source": "forgotten",
+   "text": "zapomenuto"
+  },
+  "s3649": {
+   "source": "free",
+   "text": "volno"
+  },
+  "s3651": {
+   "source": "from",
+   "text": "z"
+  },
+  "s3653": {
+   "source": "from config.json",
+   "text": "z config.json"
+  },
+  "s3656": {
+   "source": "from the CA",
+   "text": "od CA"
+  },
+  "s3657": {
+   "source": "from the directory",
+   "text": "z adresáře"
+  },
+  "s3658": {
+   "source": "from:",
+   "text": "z adres:"
+  },
+  "s3659": {
+   "source": "full admin",
+   "text": "plný admin"
+  },
+  "s3663": {
+   "source": "give the start",
+   "text": "zadejte začátek"
+  },
+  "s3664": {
+   "source": "given up",
+   "text": "vzdáno"
+  },
+  "s3666": {
+   "source": "going back to an older version is switched off (Settings → Upgrades)",
+   "text": "návrat ke starší verzi je vypnutý (Nastavení → Aktualizace)"
+  },
+  "s3668": {
+   "source": "going on",
+   "text": "probíhá"
+  },
+  "s3670": {
+   "source": "gone",
+   "text": "nedostupný"
+  },
+  "s3676": {
+   "source": "has a token",
+   "text": "má token"
+  },
+  "s3677": {
+   "source": "has one",
+   "text": "už má"
+  },
+  "s3678": {
+   "source": "hide",
+   "text": "skrýt"
+  },
+  "s3680": {
+   "source": "holds it",
+   "text": "drží ji"
+  },
+  "s3684": {
+   "source": "hours",
+   "text": "hodin"
+  },
+  "s3693": {
+   "source": "import",
+   "text": "import"
+  },
+  "s3694": {
+   "source": "imported",
+   "text": "importováno"
+  },
+  "s3697": {
+   "source": "in maintenance",
+   "text": "v údržbě"
+  },
+  "s3700": {
+   "source": "in place",
+   "text": "nasazeno"
+  },
+  "s3701": {
+   "source": "in service",
+   "text": "v provozu"
+  },
+  "s3702": {
+   "source": "in use",
+   "text": "používá se"
+  },
+  "s3708": {
+   "source": "is running:",
+   "text": ":"
+  },
+  "s3711": {
+   "source": "isemon",
+   "text": "isemon"
+  },
+  "s3737": {
+   "source": "it could not be copied",
+   "text": "nepodařilo se zkopírovat"
+  },
+  "s3743": {
+   "source": "it goes",
+   "text": "jde to"
+  },
+  "s3760": {
+   "source": "its certificate",
+   "text": "jeho certifikát"
+  },
+  "s3763": {
+   "source": "its certificate not checked",
+   "text": "jeho certifikát se neověřuje"
+  },
+  "s3767": {
+   "source": "its modems",
+   "text": "její modemy"
+  },
+  "s3768": {
+   "source": "its name is not known yet",
+   "text": "jeho jméno zatím není známé"
+  },
+  "s3769": {
+   "source": "its own",
+   "text": "vlastní"
+  },
+  "s3772": {
+   "source": "its own certificate is kept",
+   "text": "vlastní certifikát zůstává"
+  },
+  "s3779": {
+   "source": "its zone at deSEC",
+   "text": "její zóna u deSEC"
+  },
+  "s3794": {
+   "source": "kept",
+   "text": "ponecháno"
+  },
+  "s3797": {
+   "source": "kernel",
+   "text": "jádro"
+  },
+  "s3801": {
+   "source": "last 15 minutes",
+   "text": "posledních 15 minut"
+  },
+  "s3802": {
+   "source": "last 24 hours",
+   "text": "posledních 24 hodin"
+  },
+  "s3803": {
+   "source": "last 3 days",
+   "text": "poslední 3 dny"
+  },
+  "s3804": {
+   "source": "last 3 months",
+   "text": "poslední 3 měsíce"
+  },
+  "s3805": {
+   "source": "last 6 hours",
+   "text": "posledních 6 hodin"
+  },
+  "s3806": {
+   "source": "last hour",
+   "text": "poslední hodina"
+  },
+  "s3807": {
+   "source": "last month",
+   "text": "poslední měsíc"
+  },
+  "s3808": {
+   "source": "last month (calendar)",
+   "text": "minulý měsíc (kalendářní)"
+  },
+  "s3809": {
+   "source": "last week",
+   "text": "poslední týden"
+  },
+  "s3810": {
+   "source": "last week (Mon-Sun)",
+   "text": "minulý týden (po–ne)"
+  },
+  "s3811": {
+   "source": "last year",
+   "text": "poslední rok"
+  },
+  "s3813": {
+   "source": "left out",
+   "text": "vynechán"
+  },
+  "s3824": {
+   "source": "live",
+   "text": "živě"
+  },
+  "s3825": {
+   "source": "local account",
+   "text": "místní účet"
+  },
+  "s3826": {
+   "source": "locked out",
+   "text": "zablokováno"
+  },
+  "s3838": {
+   "source": "made here",
+   "text": "vytvořený zde"
+  },
+  "s3839": {
+   "source": "made here, 2048 bits",
+   "text": "vygenerovat zde, 2048 bitů"
+  },
+  "s3840": {
+   "source": "made here, 3072 bits (a minute or so)",
+   "text": "vygenerovat zde, 3072 bitů (asi minuta)"
+  },
+  "s3841": {
+   "source": "made here, 4096 bits (several minutes)",
+   "text": "vygenerovat zde, 4096 bitů (několik minut)"
+  },
+  "s3848": {
+   "source": "maintenance",
+   "text": "údržba"
+  },
+  "s3854": {
+   "source": "may change everything;",
+   "text": "smí měnit vše;"
+  },
+  "s3855": {
+   "source": "may look and change nothing.",
+   "text": "smí se dívat a nic neměnit."
+  },
+  "s3860": {
+   "source": "minutes",
+   "text": "minut"
+  },
+  "s3862": {
+   "source": "more",
+   "text": "další"
+  },
+  "s3865": {
+   "source": "more than one private key was sent",
+   "text": "přišel víc než jeden privátní klíč"
+  },
+  "s3866": {
+   "source": "ms",
+   "text": "ms"
+  },
+  "s3868": {
+   "source": "name",
+   "text": "jméno"
+  },
+  "s3870": {
+   "source": "names:",
+   "text": "jména:"
+  },
+  "s3879": {
+   "source": "never",
+   "text": "nikdy"
+  },
+  "s3881": {
+   "source": "new",
+   "text": "nový"
+  },
+  "s3887": {
+   "source": "no",
+   "text": "ne"
+  },
+  "s3895": {
+   "source": "no address to look at (Settings → Upgrades)",
+   "text": "není kde hledat (Nastavení → Aktualizace)"
+  },
+  "s3900": {
+   "source": "no certificate",
+   "text": "bez certifikátu"
+  },
+  "s3901": {
+   "source": "no certificate was found in what was sent (PEM, or a PFX / PKCS#12 file)",
+   "text": "v poslaném nebyl nalezen žádný certifikát (PEM nebo soubor PFX / PKCS#12)"
+  },
+  "s3908": {
+   "source": "no file arrived",
+   "text": "nepřišel žádný soubor"
+  },
+  "s3912": {
+   "source": "no order waits for a TXT record now",
+   "text": "žádná objednávka teď nečeká na záznam TXT"
+  },
+  "s3914": {
+   "source": "no package has been sent yet",
+   "text": "zatím nebyl poslán žádný balíček"
+  },
+  "s3916": {
+   "source": "no private key came with it: send the key too (or the PFX), or make the request here first so the key is waiting",
+   "text": "nepřišel s ním privátní klíč: pošlete i klíč (nebo PFX), nebo tu nejdřív vytvořte žádost, ať klíč čeká tady"
+  },
+  "s3926": {
+   "source": "no such language here",
+   "text": "takový jazyk tu není"
+  },
+  "s3930": {
+   "source": "no such thing to do",
+   "text": "taková akce neexistuje"
+  },
+  "s3933": {
+   "source": "no such thing to do to an account",
+   "text": "taková akce s účtem neexistuje"
+  },
+  "s3940": {
+   "source": "no upgrade is going on",
+   "text": "žádná aktualizace neprobíhá"
+  },
+  "s3942": {
+   "source": "nobody",
+   "text": "nikdo"
+  },
+  "s3945": {
+   "source": "node",
+   "text": "uzel"
+  },
+  "s3946": {
+   "source": "none",
+   "text": "žádný"
+  },
+  "s3947": {
+   "source": "none (ECDHE only needs none)",
+   "text": "žádné (ECDHE je nepotřebuje)"
+  },
+  "s3948": {
+   "source": "none - a name has to be written whole",
+   "text": "žádný – jméno se musí psát celé"
+  },
+  "s3949": {
+   "source": "none - only the accounts made here",
+   "text": "žádný – jen účty založené zde"
+  },
+  "s3954": {
+   "source": "none of its own: the name of its certificate, else its full host name",
+   "text": "vlastní žádné: jméno jeho certifikátu, jinak plné jméno stroje"
+  },
+  "s3955": {
+   "source": "none of the certificates is the one of this key",
+   "text": "žádný z certifikátů nepatří k tomuto klíči"
+  },
+  "s3957": {
+   "source": "not",
+   "text": "ne"
+  },
+  "s3960": {
+   "source": "not answering",
+   "text": "neodpovídá"
+  },
+  "s3961": {
+   "source": "not asked",
+   "text": "nevyžadován"
+  },
+  "s3962": {
+   "source": "not asked for",
+   "text": "nežádá se"
+  },
+  "s3965": {
+   "source": "not checked yet",
+   "text": "zatím nezkontrolováno"
+  },
+  "s3968": {
+   "source": "not from the CA",
+   "text": "ne od CA"
+  },
+  "s3969": {
+   "source": "not given",
+   "text": "nezadán"
+  },
+  "s3970": {
+   "source": "not heard from",
+   "text": "neozývá se"
+  },
+  "s3971": {
+   "source": "not installed",
+   "text": "nenainstalováno"
+  },
+  "s3979": {
+   "source": "not reached",
+   "text": "nedosaženo"
+  },
+  "s3981": {
+   "source": "not running",
+   "text": "neběží"
+  },
+  "s3983": {
+   "source": "not said",
+   "text": "neuvedeno"
+  },
+  "s3984": {
+   "source": "not said yet - the node says within a minute",
+   "text": "zatím neohlášeno – uzel se ozve do minuty"
+  },
+  "s3988": {
+   "source": "not set",
+   "text": "nenastaveno"
+  },
+  "s3990": {
+   "source": "not signed in, or the sign-in has run out",
+   "text": "nejste přihlášeni, nebo přihlášení vypršelo"
+  },
+  "s3992": {
+   "source": "not taken",
+   "text": "nepřijato"
+  },
+  "s3993": {
+   "source": "not the same on every node",
+   "text": "není na všech uzlech stejné"
+  },
+  "s3994": {
+   "source": "not there",
+   "text": "není tam"
+  },
+  "s3995": {
+   "source": "not there yet",
+   "text": "zatím tam není"
+  },
+  "s3997": {
+   "source": "not under high security",
+   "text": "ne při vysoké bezpečnosti"
+  },
+  "s4001": {
+   "source": "not yet",
+   "text": "zatím ne"
+  },
+  "s4003": {
+   "source": "nothing",
+   "text": "nic"
+  },
+  "s4007": {
+   "source": "nothing has changed",
+   "text": "nic se nezměnilo"
+  },
+  "s4015": {
+   "source": "nothing to do",
+   "text": "není co dělat"
+  },
+  "s4022": {
+   "source": "nothing was given",
+   "text": "nic nebylo zadáno"
+  },
+  "s4027": {
+   "source": "now",
+   "text": "teď"
+  },
+  "s4029": {
+   "source": "number",
+   "text": "číslo"
+  },
+  "s4031": {
+   "source": "off",
+   "text": "vypnuto"
+  },
+  "s4037": {
+   "source": "on",
+   "text": "zapnuto"
+  },
+  "s4038": {
+   "source": "on is true or false",
+   "text": "on je true nebo false"
+  },
+  "s4039": {
+   "source": "on it",
+   "text": "nahraný"
+  },
+  "s4042": {
+   "source": "on the command line this one is",
+   "text": "na příkazové řádce je to"
+  },
+  "s4050": {
+   "source": "once, by hand, in your DNS",
+   "text": "jednou, ručně, ve vašem DNS"
+  },
+  "s4051": {
+   "source": "one PFX / PKCS#12 file at a time",
+   "text": "jen jeden soubor PFX / PKCS#12 najednou"
+  },
+  "s4056": {
+   "source": "one server",
+   "text": "jeden server"
+  },
+  "s4059": {
+   "source": "only a full administrator may send a new version",
+   "text": "novou verzi smí poslat jen plný administrátor"
+  },
+  "s4062": {
+   "source": "only for a PFX or a key with a passphrase",
+   "text": "jen pro PFX nebo klíč chráněný heslem"
+  },
+  "s4071": {
+   "source": "or",
+   "text": "nebo"
+  },
+  "s4072": {
+   "source": "or the public address in front of it",
+   "text": "nebo veřejná adresa před ním"
+  },
+  "s4073": {
+   "source": "other",
+   "text": "jiné"
+  },
+  "s4074": {
+   "source": "otp",
+   "text": "otp"
+  },
+  "s4101": {
+   "source": "out of service",
+   "text": "mimo provoz"
+  },
+  "s4106": {
+   "source": "pages",
+   "text": "stránky"
+  },
+  "s4114": {
+   "source": "password",
+   "text": "heslo"
+  },
+  "s4116": {
+   "source": "paused",
+   "text": "pozastaveno"
+  },
+  "s4118": {
+   "source": "pending",
+   "text": "čeká"
+  },
+  "s4129": {
+   "source": "plain text",
+   "text": "prostý text"
+  },
+  "s4137": {
+   "source": "put back",
+   "text": "obnoveno"
+  },
+  "s4138": {
+   "source": "put back as it comes",
+   "text": "vráceno na výchozí"
+  },
+  "s4139": {
+   "source": "put back as the daemon has them",
+   "text": "vráceno, jak je má démon"
+  },
+  "s4146": {
+   "source": "radius",
+   "text": "radius"
+  },
+  "s4147": {
+   "source": "ran out",
+   "text": "vypršel"
+  },
+  "s4149": {
+   "source": "reached",
+   "text": "dosaženo"
+  },
+  "s4150": {
+   "source": "read",
+   "text": "načteno"
+  },
+  "s4151": {
+   "source": "read only",
+   "text": "jen pro čtení"
+  },
+  "s4154": {
+   "source": "realms",
+   "text": "realmy"
+  },
+  "s4158": {
+   "source": "recommended",
+   "text": "doporučeno"
+  },
+  "s4159": {
+   "source": "recovery code",
+   "text": "záložní kód"
+  },
+  "s4163": {
+   "source": "refused",
+   "text": "odmítnut"
+  },
+  "s4166": {
+   "source": "renewed by ACME",
+   "text": "obnovuje ACME"
+  },
+  "s4168": {
+   "source": "replace it",
+   "text": "nahradit"
+  },
+  "s4170": {
+   "source": "replaced it",
+   "text": "nahradil ho"
+  },
+  "s4181": {
+   "source": "report",
+   "text": "report"
+  },
+  "s4184": {
+   "source": "required",
+   "text": "povinný"
+  },
+  "s4188": {
+   "source": "restarting",
+   "text": "restartuje se"
+  },
+  "s4189": {
+   "source": "right",
+   "text": "správně"
+  },
+  "s4195": {
+   "source": "running",
+   "text": "běží"
+  },
+  "s4196": {
+   "source": "running now",
+   "text": "teď běží"
+  },
+  "s4203": {
+   "source": "saved",
+   "text": "uloženo"
+  },
+  "s4216": {
+   "source": "sending",
+   "text": "odesílá se"
+  },
+  "s4222": {
+   "source": "sent",
+   "text": "odesláno"
+  },
+  "s4225": {
+   "source": "sent by SMS",
+   "text": "posláno přes SMS"
+  },
+  "s4227": {
+   "source": "sent by e-mail",
+   "text": "posláno e-mailem"
+  },
+  "s4229": {
+   "source": "server",
+   "text": "server"
+  },
+  "s4230": {
+   "source": "set - leave as it is to keep it",
+   "text": "nastaveno – nechte, jak je, pro ponechání"
+  },
+  "s4232": {
+   "source": "set the second step up first",
+   "text": "nejdřív nastavte druhý krok"
+  },
+  "s4233": {
+   "source": "set up at the next sign-in",
+   "text": "nastaví se při příštím přihlášení"
+  },
+  "s4234": {
+   "source": "settings",
+   "text": "nastavení"
+  },
+  "s4236": {
+   "source": "show",
+   "text": "zobrazit"
+  },
+  "s4241": {
+   "source": "shown",
+   "text": "zobrazeno"
+  },
+  "s4242": {
+   "source": "shown here at every order",
+   "text": "ukáže se tu při každé objednávce"
+  },
+  "s4245": {
+   "source": "sign in",
+   "text": "přihlásit se"
+  },
+  "s4246": {
+   "source": "sign-in failed",
+   "text": "přihlášení selhalo"
+  },
+  "s4247": {
+   "source": "sign-ins",
+   "text": "přihlášení"
+  },
+  "s4249": {
+   "source": "signed in",
+   "text": "přihlášeno"
+  },
+  "s4251": {
+   "source": "signed out - the changes not saved are lost; reload the page to sign in again",
+   "text": "odhlášeno – neuložené změny jsou ztracené; pro nové přihlášení načtěte stránku znovu"
+  },
+  "s4253": {
+   "source": "signing in",
+   "text": "přihlášení"
+  },
+  "s4257": {
+   "source": "signing in to these pages",
+   "text": "přihlášení do administrace"
+  },
+  "s4264": {
+   "source": "spinning disk",
+   "text": "rotační disk"
+  },
+  "s4265": {
+   "source": "sqlite",
+   "text": "sqlite"
+  },
+  "s4278": {
+   "source": "standby",
+   "text": "záloha"
+  },
+  "s4281": {
+   "source": "starting",
+   "text": "startuje"
+  },
+  "s4282": {
+   "source": "starting and stopping",
+   "text": "spouštění a zastavování"
+  },
+  "s4284": {
+   "source": "stopped",
+   "text": "zastaveno"
+  },
+  "s4288": {
+   "source": "straight",
+   "text": "přímo"
+  },
+  "s4295": {
+   "source": "switch on \"Edit the columns\" under your name first: the columns are not being edited from this sign-in",
+   "text": "nejprve zapněte „Upravit sloupce“ pod svým jménem: v tomto přihlášení se sloupce neupravují"
+  },
+  "s4297": {
+   "source": "switched off",
+   "text": "vypnuto"
+  },
+  "s4298": {
+   "source": "switched off in the directory",
+   "text": "vypnutý v adresáři"
+  },
+  "s4299": {
+   "source": "switched on",
+   "text": "zapnuto"
+  },
+  "s4306": {
+   "source": "system",
+   "text": "systém"
+  },
+  "s4309": {
+   "source": "taken",
+   "text": "přijato"
+  },
+  "s4310": {
+   "source": "taken away",
+   "text": "odebráno"
+  },
+  "s4311": {
+   "source": "taken away again",
+   "text": "zase smazán"
+  },
+  "s4314": {
+   "source": "taken out of service",
+   "text": "vyřazen z provozu"
+  },
+  "s4318": {
+   "source": "test",
+   "text": "test"
+  },
+  "s4320": {
+   "source": "text",
+   "text": "text"
+  },
+  "s4323": {
+   "source": "that account may no longer sign in",
+   "text": "tento účet se již nesmí přihlásit"
+  },
+  "s4327": {
+   "source": "that code is not right",
+   "text": "tento kód nesedí"
+  },
+  "s4328": {
+   "source": "that code is not right - the one the app shows now",
+   "text": "tento kód nesedí – zadejte ten, který aplikace ukazuje teď"
+  },
+  "s4331": {
+   "source": "that code was used already - wait for the next one",
+   "text": "tento kód už byl použit – počkejte na další"
+  },
+  "s4334": {
+   "source": "that file could not be read",
+   "text": "ten soubor nelze přečíst"
+  },
+  "s4335": {
+   "source": "that file is bigger than this takes",
+   "text": "soubor je větší, než se sem vejde"
+  },
+  "s4338": {
+   "source": "that is more than the server takes",
+   "text": "to je víc, než server přijme"
+  },
+  "s4339": {
+   "source": "that is more than this takes",
+   "text": "to je víc, než se sem vejde"
+  },
+  "s4341": {
+   "source": "that is not a base32 key (A-Z and 2-7)",
+   "text": "to není klíč base32 (A–Z a 2–7)"
+  },
+  "s4346": {
+   "source": "that is not a file of settings: there is no \"settings\" in it",
+   "text": "to není soubor s nastavením: není v něm „settings“"
+  },
+  "s4353": {
+   "source": "that is not a settings file",
+   "text": "to není soubor s nastavením"
+  },
+  "s4354": {
+   "source": "that is not a settings file: it is not JSON",
+   "text": "to není soubor s nastavením: není to JSON"
+  },
+  "s4355": {
+   "source": "that is not counted any more",
+   "text": "to se už nepočítá"
+  },
+  "s4360": {
+   "source": "that is the last full administrator who can sign in",
+   "text": "to je poslední úplný administrátor, který se může přihlásit"
+  },
+  "s4363": {
+   "source": "that is too long for a QR code",
+   "text": "to je na QR kód příliš dlouhé"
+  },
+  "s4372": {
+   "source": "that sign-in has ended already",
+   "text": "toto přihlášení už skončilo"
+  },
+  "s4374": {
+   "source": "that way is not offered here",
+   "text": "tento způsob se tu nenabízí"
+  },
+  "s4378": {
+   "source": "the PFX / PKCS#12 file did not arrive whole",
+   "text": "soubor PFX / PKCS#12 nedorazil celý"
+  },
+  "s4385": {
+   "source": "the TLS settings are standard, intermediate, modern or custom",
+   "text": "nastavení TLS je standard, intermediate, modern nebo custom"
+  },
+  "s4390": {
+   "source": "the VIP address",
+   "text": "VIP adresa"
+  },
+  "s4403": {
+   "source": "the account",
+   "text": "účet"
+  },
+  "s4408": {
+   "source": "the address",
+   "text": "adresa"
+  },
+  "s4417": {
+   "source": "the answer",
+   "text": "odpověď"
+  },
+  "s4421": {
+   "source": "the app",
+   "text": "aplikace"
+  },
+  "s4435": {
+   "source": "the body is not JSON",
+   "text": "tělo požadavku není JSON"
+  },
+  "s4436": {
+   "source": "the body is not an object",
+   "text": "tělo požadavku není objekt"
+  },
+  "s4437": {
+   "source": "the built-in default",
+   "text": "vestavěná výchozí hodnota"
+  },
+  "s4438": {
+   "source": "the built-in default is",
+   "text": "vestavěná výchozí hodnota je"
+  },
+  "s4445": {
+   "source": "the certificate of the VIP - the address is set on Settings → High availability",
+   "text": "certifikát pro VIP – adresa se nastavuje v Nastavení → Vysoká dostupnost"
+  },
+  "s4453": {
+   "source": "the chain leads to the root",
+   "text": "řetězec vede ke kořeni"
+  },
+  "s4455": {
+   "source": "the choices are an object",
+   "text": "volby jsou objekt"
+  },
+  "s4458": {
+   "source": "the cluster",
+   "text": "cluster"
+  },
+  "s4464": {
+   "source": "the cluster’s",
+   "text": "clusteru"
+  },
+  "s4465": {
+   "source": "the code",
+   "text": "kód"
+  },
+  "s4467": {
+   "source": "the code comes from the app - nothing is sent",
+   "text": "kód je z aplikace – nic se neposílá"
+  },
+  "s4477": {
+   "source": "the common name is a host name",
+   "text": "jméno (CN) musí být název hostitele"
+  },
+  "s4479": {
+   "source": "the config file",
+   "text": "konfiguračním souboru"
+  },
+  "s4480": {
+   "source": "the config file is not an object",
+   "text": "konfigurační soubor není objekt"
+  },
+  "s4486": {
+   "source": "the country is two letters (CZ)",
+   "text": "země jsou dvě písmena (CZ)"
+  },
+  "s4489": {
+   "source": "the database",
+   "text": "databáze"
+  },
+  "s4499": {
+   "source": "the default",
+   "text": "výchozí"
+  },
+  "s4515": {
+   "source": "the end is before the start",
+   "text": "konec je před začátkem"
+  },
+  "s4520": {
+   "source": "the enrolment pages",
+   "text": "stránky registrace"
+  },
+  "s4523": {
+   "source": "the file did not arrive whole",
+   "text": "soubor nepřišel celý"
+  },
+  "s4538": {
+   "source": "the first node by name",
+   "text": "první uzel podle jména"
+  },
+  "s4557": {
+   "source": "the language of the page",
+   "text": "jazyk stránky"
+  },
+  "s4559": {
+   "source": "the last order failed",
+   "text": "poslední objednávka selhala"
+  },
+  "s4560": {
+   "source": "the last try failed",
+   "text": "poslední pokus selhal"
+  },
+  "s4568": {
+   "source": "the machine’s own name",
+   "text": "vlastní jméno stroje"
+  },
+  "s4578": {
+   "source": "the name of its certificate, else its full host name",
+   "text": "jméno jeho certifikátu, jinak jeho plné jméno stroje"
+  },
+  "s4580": {
+   "source": "the name or the password is not right",
+   "text": "jméno nebo heslo není správné"
+  },
+  "s4585": {
+   "source": "the node",
+   "text": "uzel"
+  },
+  "s4589": {
+   "source": "the nodes are upgraded one at a time - each in maintenance while it is, so the service never stops.",
+   "text": "uzly se aktualizují jeden po druhém – každý je mezitím v údržbě, takže služba se nezastaví."
+  },
+  "s4610": {
+   "source": "the package is forgotten",
+   "text": "balíček je zapomenut"
+  },
+  "s4612": {
+   "source": "the package was refused",
+   "text": "balíček byl odmítnut"
+  },
+  "s4614": {
+   "source": "the page got something that is not an answer",
+   "text": "stránka dostala něco, co není odpověď"
+  },
+  "s4624": {
+   "source": "the password is changed",
+   "text": "heslo je změněno"
+  },
+  "s4626": {
+   "source": "the password is not right",
+   "text": "heslo není správné"
+  },
+  "s4627": {
+   "source": "the password is set",
+   "text": "heslo je nastaveno"
+  },
+  "s4631": {
+   "source": "the password you have now is not right",
+   "text": "současné heslo není správné"
+  },
+  "s4632": {
+   "source": "the person",
+   "text": "člověk"
+  },
+  "s4640": {
+   "source": "the protocols are TLSv1.2 and/or TLSv1.3",
+   "text": "protokoly jsou TLSv1.2 a/nebo TLSv1.3"
+  },
+  "s4657": {
+   "source": "the request and its waiting key are gone",
+   "text": "žádost i čekající klíč jsou pryč"
+  },
+  "s4659": {
+   "source": "the request is made: give it to your certificate authority, then upload what it sends back - the key waits here",
+   "text": "žádost je vytvořená: předejte ji certifikační autoritě a pak nahrajte, co vrátí – klíč čeká tady"
+  },
+  "s4660": {
+   "source": "the request is not in the shape this takes (a field of the wrong kind)",
+   "text": "požadavek nemá očekávaný tvar (pole nesprávného typu)"
+  },
+  "s4661": {
+   "source": "the request was copied",
+   "text": "žádost je zkopírovaná do schránky"
+  },
+  "s4667": {
+   "source": "the second step is set up",
+   "text": "druhý krok je nastaven"
+  },
+  "s4668": {
+   "source": "the second step of signing in is not done yet",
+   "text": "druhý krok přihlášení ještě není hotový"
+  },
+  "s4672": {
+   "source": "the server could not be reached",
+   "text": "server není dostupný"
+  },
+  "s4677": {
+   "source": "the server is not answering just now - try again in a moment",
+   "text": "server teď neodpovídá – zkuste to za chvíli"
+  },
+  "s4698": {
+   "source": "the two are not the same",
+   "text": "hesla se neshodují"
+  },
+  "s4699": {
+   "source": "the two new ones are not the same",
+   "text": "obě nová hesla nejsou stejná"
+  },
+  "s4702": {
+   "source": "the upgrade has begun",
+   "text": "aktualizace začala"
+  },
+  "s4703": {
+   "source": "the upgrade is going on",
+   "text": "aktualizace právě probíhá"
+  },
+  "s4704": {
+   "source": "the upgrade is stopped",
+   "text": "aktualizace je zastavena"
+  },
+  "s4725": {
+   "source": "there",
+   "text": "je tam"
+  },
+  "s4729": {
+   "source": "there is no directory to look in: Settings → Active Directory",
+   "text": "není v jakém adresáři hledat: Nastavení → Active Directory"
+  },
+  "s4742": {
+   "source": "these pages",
+   "text": "tyto stránky"
+  },
+  "s4743": {
+   "source": "this account has its second step set up already",
+   "text": "tento účet už druhý krok nastavený má"
+  },
+  "s4747": {
+   "source": "this column",
+   "text": "tento sloupec"
+  },
+  "s4752": {
+   "source": "this month",
+   "text": "tento měsíc"
+  },
+  "s4753": {
+   "source": "this node",
+   "text": "tento uzel"
+  },
+  "s4774": {
+   "source": "this one",
+   "text": "tento"
+  },
+  "s4775": {
+   "source": "this page",
+   "text": "tato stránka"
+  },
+  "s4778": {
+   "source": "this sign-in has no second step to give",
+   "text": "toto přihlášení nemá žádný druhý krok"
+  },
+  "s4782": {
+   "source": "this week",
+   "text": "tento týden"
+  },
+  "s4791": {
+   "source": "today",
+   "text": "dnes"
+  },
+  "s4792": {
+   "source": "token admin",
+   "text": "správce tokenů"
+  },
+  "s4795": {
+   "source": "tokens",
+   "text": "tokeny"
+  },
+  "s4797": {
+   "source": "too many attempts - wait a minute and try again",
+   "text": "příliš mnoho pokusů – počkejte minutu a zkuste to znovu"
+  },
+  "s4800": {
+   "source": "trouble",
+   "text": "potíže"
+  },
+  "s4801": {
+   "source": "trusted",
+   "text": "důvěryhodný"
+  },
+  "s4807": {
+   "source": "unreachable",
+   "text": "nedostupné"
+  },
+  "s4808": {
+   "source": "up again",
+   "text": "znovu běží"
+  },
+  "s4810": {
+   "source": "up to date",
+   "text": "aktuální"
+  },
+  "s4811": {
+   "source": "updated",
+   "text": "aktualizováno"
+  },
+  "s4816": {
+   "source": "used",
+   "text": "použitý"
+  },
+  "s4817": {
+   "source": "valid",
+   "text": "platný"
+  },
+  "s4822": {
+   "source": "waiting",
+   "text": "čeká"
+  },
+  "s4831": {
+   "source": "warning",
+   "text": "varování"
+  },
+  "s4834": {
+   "source": "weekly",
+   "text": "týdně"
+  },
+  "s4835": {
+   "source": "weeks",
+   "text": "týdnů"
+  },
+  "s4840": {
+   "source": "what install.sh said",
+   "text": "co řekl install.sh"
+  },
+  "s4844": {
+   "source": "what it says",
+   "text": "co říká"
+  },
+  "s4852": {
+   "source": "where",
+   "text": "kde"
+  },
+  "s4858": {
+   "source": "which account?",
+   "text": "který účet?"
+  },
+  "s4864": {
+   "source": "who did it",
+   "text": "kdo to udělal"
+  },
+  "s4871": {
+   "source": "why - for the events",
+   "text": "proč – pro události"
+  },
+  "s4880": {
+   "source": "working",
+   "text": "pracuje se"
+  },
+  "s4884": {
+   "source": "wrong",
+   "text": "chybně"
+  },
+  "s4885": {
+   "source": "wrong code",
+   "text": "chybný kód"
+  },
+  "s4886": {
+   "source": "wrong codes",
+   "text": "špatných kódů"
+  },
+  "s4889": {
+   "source": "yes",
+   "text": "ano"
+  },
+  "s4891": {
+   "source": "yesterday",
+   "text": "včera"
+  },
+  "s4899": {
+   "source": "↑ ↓ and Tab or Enter take one · Esc closes",
+   "text": "↑ ↓ a Tab nebo Enter vybere · Esc zavře"
+  },
+  "xs0001": {
+   "source": "The certificate nginx answers with is also handed to Plex Media Server as its custom certificate (a PKCS#12 file in /var/lib/plexmediaserver/plexmon, named in its Preferences.xml) - so the Plex apps that connect straight to port 32400 by your own name see it too. Every new certificate - uploaded, self-signed or renewed by ACME - goes there as well.",
+   "text": "Nastavení Plex serveru na"
+  },
+  "xs0002": {
+   "source": "Writing",
+   "text": "Zapisuje"
+  },
+  "xs0003": {
+   "source": "Reading",
+   "text": "Čte"
+  },
+  "xs0004": {
+   "source": "Spinning up",
+   "text": "Roztáčí se"
+  },
+  "xs0005": {
+   "source": "Sleeping",
+   "text": "Spí"
+  },
+  "xs0006": {
+   "source": "Active",
+   "text": "Aktivní"
+  },
+  "xs0007": {
+   "source": "itself (self-signed)",
+   "text": "sám sebou (self-signed)"
+  },
+  "xs0008": {
+   "source": "Gaps are periods a disk was asleep — it is never woken just to read a temperature.",
+   "text": "Mezery jsou doby, kdy disk spal — kvůli čtení teploty se nikdy nebudí."
+  },
+  "xs0009": {
+   "source": "A new version, put in from here - from the web or as a file.",
+   "text": "Nová verze nasazená odsud - z webu nebo ze souboru."
+  },
+  "xs0010": {
+   "source": "Version, what is running, the language, the console at login, the debug log.",
+   "text": "Verze, co běží, jazyk, konzole po přihlášení, ladicí log."
+  },
+  "xs0011": {
+   "source": "Accounts, certificates and TLS, automatic certificates, upgrades - signing in is needed",
+   "text": "Účty, certifikáty a TLS, automatické certifikáty, aktualizace - je třeba se přihlásit"
+  },
+  "xs0012": {
+   "source": "Every sign-in, every account made or changed, every change of a setting, every certificate put in or renewed, every upgrade. Kept in the database, so it survives a restart.",
+   "text": "Každé přihlášení, každý založený či změněný účet, každá změna nastavení, každý nasazený či obnovený certifikát, každá aktualizace. Uloženo v databázi, takže přežije restart."
+  },
+  "xs0013": {
+   "source": "in Settings → About to have it say every step.",
+   "text": "v Nastavení → O aplikaci, aby vypisoval každý krok."
+  },
+  "xs0014": {
+   "source": "Plex Media Server",
+   "text": "Plex Media Server"
+  },
+  "xs0015": {
+   "source": "Plex Media Server answers on port 32400 with a certificate of its own (*.plex.direct). Switched on below, it is given this certificate too - as its custom certificate - so the Plex apps that reach it straight by your own name see the same one. Plex reads it only when it starts.",
+   "text": "Plex Media Server odpovídá na portu 32400 vlastním certifikátem (*.plex.direct). Zapnete-li to níže, dostane i tento certifikát - jako svůj vlastní (custom) certifikát - takže aplikace Plexu, které se k němu připojují přímo pod vaším jménem, uvidí tentýž. Plex ho načte jen při startu."
+  },
+  "xs0016": {
+   "source": "How the Plex address speaks HTTPS - nginx in front of Plex Media Server, the dashboard and these pages: the certificate with its chain, the protocols, the ciphers. And, where asked, the same certificate in Plex Media Server itself.",
+   "text": "Jak adresa Plexu mluví HTTPS - nginx před Plex Media Serverem, dashboardem a těmito stránkami: certifikát s řetězem, protokoly, šifry. A kde je to žádáno, tentýž certifikát i v samotném Plex Media Serveru."
+  },
+  "xs0017": {
+   "source": "The certificate of this server's name. A certificate is sent as PEM files (the certificate, its key, the chain, the root - in any order, or all in one file) or as a PFX / PKCS#12 file, with its password or without; or the request is made here and only what the authority sends back is uploaded. It goes into the files the Plex vhost of nginx names, nginx is asked before it is reloaded, and everything is put back as it was when nginx says no.",
+   "text": "Certifikát jména tohoto serveru. Posílá se jako soubory PEM (certifikát, jeho klíč, řetěz, kořen - v libovolném pořadí, nebo vše v jednom souboru) nebo jako soubor PFX / PKCS#12, s heslem či bez; nebo se tady udělá žádost a nahraje se jen to, co certifikační autorita vrátí. Zapíše se do souborů, které jmenuje Plex vhost nginxu, nginx se před reloadem zeptá na konfiguraci, a když řekne ne, vše se vrátí, jak bylo."
+  },
+  "xs0018": {
+   "source": "The certificate of this Plex server ordered from Let's Encrypt or another ACME CA and renewed by itself well before it runs out. The CA checks the name by asking it on port 80 (HTTP-01) - nginx answers it from a folder of plexmon's - or by a record in DNS (DNS-01), for a server the CA cannot see from the internet.",
+   "text": "Certifikát tohoto Plex serveru objednaný od Let's Encrypt nebo jiné ACME CA a obnovený sám dlouho před vypršením. CA ověří jméno dotazem na port 80 (HTTP-01) - nginx odpoví ze složky plexmonu - nebo záznamem v DNS (DNS-01), pro server, který CA z internetu nevidí."
+  },
+  "xs0019": {
+   "source": "A new version put in from here: from the web with one click, or as a package sent by hand - its signature checked, then root runs its install.sh --upgrade, and plexmon comes back as the new version. The command line (install.sh --upgrade) works as it always has.",
+   "text": "Nová verze nasazená odsud: z webu jedním kliknutím, nebo jako balíček poslaný ručně - ověří se jeho podpis, root spustí jeho install.sh --upgrade a plexmon se vrátí jako nová verze. Příkazová řádka (install.sh --upgrade) funguje jako vždy."
+  },
+  "xs0020": {
+   "source": "Where new versions are published - the address below - is looked at once a day. A newer plexmon found there is offered here, and put in with one click: fetched, its signature checked like a package sent by hand, then put in. Nothing is put in by itself.",
+   "text": "Místo, kde vycházejí nové verze - adresa níže - se kontroluje jednou denně. Novější plexmon, který se tam najde, se tu nabídne a nasadí jedním kliknutím: stáhne se, ověří se jeho podpis jako u balíčku poslaného ručně a nasadí se. Nic se nenasadí samo."
+  },
+  "xs0021": {
+   "source": "The .tar.gz of a new plexmon, as it was released. It is checked before anything else: it must be signed by a release key this server trusts, every file in it must be the one signed, and it must not be older than what runs here. Root checks it all again before it is put in.",
+   "text": ".tar.gz nového plexmonu, tak jak byl vydán. Nejprve se zkontroluje: musí být podepsán klíčem vydání, kterému tento server věří, každý soubor v něm musí být ten podepsaný a nesmí být starší než to, co tu běží. Root to vše před nasazením zkontroluje znovu."
+  },
+  "xs0022": {
+   "source": "Drop the plexmon-X.Y.Z.tar.gz here, or press to choose it",
+   "text": "Přetáhněte sem plexmon-X.Y.Z.tar.gz, nebo klikněte a vyberte ho"
+  },
+  "xs0023": {
+   "source": "Only to a version that is safe: one that reads what the newer versions wrote into the database the same - each version says how far back it may go, and the highest of what ran on this database and was installed on this machine counts. The database is not put back nor changed: the older version runs on it as it is.",
+   "text": "Jen na verzi, která je bezpečná: takovou, která čte to, co novější verze zapsaly do databáze, stejně - každá verze říká, jak daleko zpět smí, a platí nejvyšší z toho, co běželo na této databázi a bylo nainstalováno na tomto stroji. Databáze se nevrací ani nemění: starší verze na ní běží tak, jak je."
+  },
+  "xs0024": {
+   "source": "The output of install.sh, the last time this server was upgraded from these pages.",
+   "text": "Výstup install.sh při poslední aktualizaci tohoto serveru z těchto stránek."
+  },
+  "xs0025": {
+   "source": "The same, by hand, as root:",
+   "text": "Totéž ručně, jako root:"
+  },
+  "xs0026": {
+   "source": "Who may open these pages. full admin may change everything; read only may look and change nothing. The dashboard itself asks nobody.",
+   "text": "Kdo smí otevřít tyto stránky. Plný správce smí měnit vše; jen čtení smí dívat se a nic neměnit. Samotný dashboard se nikoho neptá."
+  },
+  "xs0027": {
+   "source": "Addresses and names with wrong attempts still counted - at the limit they are locked out until the time runs out. Clear one, or all of them, and they may try again at once.",
+   "text": "Adresy a jména, kterým se ještě počítají chybné pokusy - na limitu jsou zamčené, dokud čas nevyprší. Uvolněte jeden, nebo všechny, a mohou to hned zkusit znovu."
+  },
+  "xs0028": {
+   "source": "Two Python files (/usr/local/lib/plexmon/plexmon.py - the dashboard's daemon - and plexmon_admin.py - Settings), the standard library, and these PHP pages that ask it. On the server: plexmon --help, plexmon --console.",
+   "text": "Dva soubory Pythonu (/usr/local/lib/plexmon/plexmon.py - démon dashboardu - a plexmon_admin.py - Nastavení), standardní knihovna a tyto stránky PHP, které se ho ptají. Na serveru: plexmon --help, plexmon --console."
+  },
+  "xs0029": {
+   "source": "On: root signing in at the machine's console or over SSH lands in the plexmon console (plexmon --console); q leaves it for the shell. Off: the ordinary shell, and plexmon --console opens it. Commands run over SSH, scp and sftp never get it. On the server: plexmon --console-at-login on|off.",
+   "text": "Zapnuto: root přihlášený na konzoli stroje nebo přes SSH skončí v konzoli plexmonu (plexmon --console); q ji opustí do shellu. Vypnuto: běžný shell a plexmon --console ji otevře. Příkazy spouštěné přes SSH, scp a sftp ji nikdy nedostanou. Na serveru: plexmon --console-at-login on|off."
+  },
+  "xs0030": {
+   "source": "The dashboard",
+   "text": "Dashboard"
+  },
+  "xs0031": {
+   "source": "the dashboard has not said yet",
+   "text": "dashboard zatím nic neřekl"
+  },
+  "xs0032": {
+   "source": "not said yet",
+   "text": "zatím neřečeno"
+  },
+  "xs0033": {
+   "source": "Plex server: critical",
+   "text": "Plex server: kritický stav"
+  },
+  "xs0034": {
+   "source": "Plex server: warning",
+   "text": "Plex server: varování"
+  },
+  "xs0035": {
+   "source": "running, with trouble",
+   "text": "běží, s potížemi"
+  },
+  "xs0036": {
+   "source": "all is well",
+   "text": "vše v pořádku"
+  },
+  "xs0037": {
+   "source": "a warning",
+   "text": "varování"
+  },
+  "xs0038": {
+   "source": "critical",
+   "text": "kritický stav"
+  },
+  "xs0039": {
+   "source": "Plex Media Server uses this certificate too",
+   "text": "Plex Media Server používá tento certifikát také"
+  },
+  "xs0040": {
+   "source": "Plex’s custom certificate domain",
+   "text": "Doména vlastního certifikátu Plexu"
+  },
+  "xs0041": {
+   "source": "Restart Plex Media Server to take a new one",
+   "text": "Restartovat Plex Media Server, aby převzal nový"
+  },
+  "xs0042": {
+   "source": "Events kept for (days)",
+   "text": "Události se drží (dní)"
+  },
+  "xs0043": {
+   "source": "How long the events (sign-ins, changes, certificates) are kept. 0: for ever.",
+   "text": "Jak dlouho se drží události (přihlášení, změny, certifikáty). 0: navždy."
+  },
+  "xs0044": {
+   "source": "The certificate of this server ordered from the CA and renewed by itself - by HTTP-01 (port 80 of the name must reach this machine) or DNS-01. Off until switched on.",
+   "text": "Certifikát tohoto serveru objednaný od CA a obnovovaný sám - přes HTTP-01 (port 80 jména musí vést na tento stroj) nebo DNS-01. Vypnuto, dokud se nezapne."
+  },
+  "xs0045": {
+   "source": "A code from an app (Google or Microsoft Authenticator…) - the way the second step is given here.",
+   "text": "Kód z aplikace (Google nebo Microsoft Authenticator…) - způsob, jak se tu dává druhý krok."
+  },
+  "xs0046": {
+   "source": "After the password, every account gives a code too - from an authenticator app (Google or Microsoft Authenticator…). The first time, the account sets it up. Accounts → Reset the second step, or plexmon --reset-2fa NAME, makes it set it up again. Sign-ins already open end, but the one saving it.",
+   "text": "Po hesle zadá každý účet ještě kód - z ověřovací aplikace (Google nebo Microsoft Authenticator…). Napoprvé si ho účet nastaví. Účty → Resetovat druhý krok, nebo plexmon --reset-2fa JMÉNO, ho nechá nastavit znovu. Již otevřená přihlášení skončí, kromě toho, které to ukládá."
+  },
+  "xs0047": {
+   "source": "ECDSA is smaller and quicker; RSA for old clients (old Plex apps, old televisions).",
+   "text": "ECDSA je menší a rychlejší; RSA pro staré klienty (staré aplikace Plexu, staré televize)."
+  },
+  "xs0048": {
+   "source": "HTTP-01 needs port 80 of the name reachable from the internet (or from the CA, for a CA of your own). DNS-01 needs nothing open: the CA reads a TXT record - the way for a Plex server only the LAN reaches.",
+   "text": "HTTP-01 potřebuje port 80 jména dostupný z internetu (nebo z CA, u vlastní CA). DNS-01 nepotřebuje nic otevřeného: CA přečte TXT záznam - cesta pro Plex server, na který se dostane jen LAN."
+  },
+  "xs0049": {
+   "source": "The key’s secret (base64). Kept sealed; written to a file only plexmon reads for the moment nsupdate runs.",
+   "text": "Tajemství klíče (base64). Uloženo zapečetěné; zapíše se do souboru, který čte jen plexmon, na dobu běhu nsupdate."
+  },
+  "xs0050": {
+   "source": "A token from deSEC (Token management) - one that may change this domain’s records. Kept sealed.",
+   "text": "Token z deSEC (Token management) - takový, který smí měnit záznamy této domény. Uloženo zapečetěné."
+  },
+  "xs0051": {
+   "source": "The name at the top of Settings. Empty: the machine’s own name.",
+   "text": "Jméno nahoře v Nastavení. Prázdné: vlastní jméno stroje."
+  },
+  "xs0052": {
+   "source": "The language every page opens in - the dashboard too - until somebody chooses another for themselves.",
+   "text": "Jazyk, ve kterém se otevře každá stránka - i dashboard -, dokud si někdo nezvolí jiný."
+  },
+  "xs0053": {
+   "source": "Once a day (and when Look now is pressed) the address below is asked for plexmon-X.Y.Z.tar.gz packages; a newer one than runs here is offered on this page - put in with one click, after its signature has been checked like any package sent by hand. Nothing is put in by itself.",
+   "text": "Jednou denně (a po stisku Podívat se teď) se adresa níže zeptá na balíčky plexmon-X.Y.Z.tar.gz; novější, než tu běží, se nabídne na této stránce - nasadí se jedním kliknutím, po ověření podpisu jako u každého balíčku poslaného ručně. Nic se nenasadí samo."
+  },
+  "xs0054": {
+   "source": "Try port 80 on the card, then Order it now.",
+   "text": "Vyzkoušejte port 80 na kartě, pak Objednat teď."
+  },
+  "xs0055": {
+   "source": "The name points at the address that reaches port 80 of this server - from the internet (the router forwarding port 80 here), or from your own CA.",
+   "text": "Jméno ukazuje na adresu, přes kterou se dá dostat na port 80 tohoto serveru - z internetu (router přesměrovává port 80 sem), nebo z vaší vlastní CA."
+  },
+  "xs0056": {
+   "source": "Port 80 is open to it - the router and the firewall in front of the server, and firewalld here (the http service).",
+   "text": "Port 80 je pro ni otevřený - router a firewall před serverem i firewalld tady (služba http)."
+  },
+  "xs0057": {
+   "source": "HTTP-01: the CA asks port 80 of the name - so the name points at this server, and port 80 is open to the CA.",
+   "text": "HTTP-01: CA se ptá na port 80 jména - takže jméno ukazuje na tento server a port 80 je pro CA otevřený."
+  },
+  "xs0058": {
+   "source": "This server cannot put a version in by itself yet: plexmon-upgrade.path is not installed. Upgrade it once on the command line (install.sh --upgrade), which puts it in.",
+   "text": "Tento server zatím nedokáže nasadit verzi sám: plexmon-upgrade.path není nainstalován. Aktualizujte jednou z příkazové řádky (install.sh --upgrade), což ho nainstaluje."
+  },
+  "xs0059": {
+   "source": "Hand it to Plex now",
+   "text": "Předat Plexu hned"
+  },
+  "xs0060": {
+   "source": "Plex back to its own",
+   "text": "Plex zpět na vlastní"
+  },
+  "xs0061": {
+   "source": "Takes this certificate",
+   "text": "Bere tento certifikát"
+  },
+  "xs0062": {
+   "source": "Its custom certificate now",
+   "text": "Jeho vlastní certifikát teď"
+  },
+  "xs0063": {
+   "source": "For the domain",
+   "text": "Pro doménu"
+  },
+  "xs0064": {
+   "source": "Handed over",
+   "text": "Předáno"
+  },
+  "xs0065": {
+   "source": "none - its own (*.plex.direct)",
+   "text": "žádný - jeho vlastní (*.plex.direct)"
+  },
+  "xs0066": {
+   "source": "Hand the certificate to Plex Media Server?",
+   "text": "Předat certifikát Plex Media Serveru?"
+  },
+  "xs0067": {
+   "source": "Plex Media Server is restarted to take it: what is playing stops for a moment.",
+   "text": "Plex Media Server se kvůli tomu restartuje: co se právě přehrává, se na chvíli zastaví."
+  },
+  "xs0068": {
+   "source": "Hand it over",
+   "text": "Předat"
+  },
+  "xs0069": {
+   "source": "Plex Media Server back to its own certificate?",
+   "text": "Plex Media Server zpět na vlastní certifikát?"
+  },
+  "xs0070": {
+   "source": "Plex Media Server is restarted: what is playing stops for a moment.",
+   "text": "Plex Media Server se restartuje: co se právě přehrává, se na chvíli zastaví."
+  },
+  "xs0071": {
+   "source": "The certificate kept here written for Plex Media Server and named in its Preferences.xml now - Plex is restarted for it when Restart Plex Media Server is on. Without waiting for the next certificate.",
+   "text": "Certifikát uložený tady se teď zapíše pro Plex Media Server a uvede v jeho Preferences.xml - Plex se kvůli tomu restartuje, je-li zapnuto Restartovat Plex Media Server. Bez čekání na další certifikát."
+  },
+  "xs0072": {
+   "source": "The names taken out of Preferences.xml: Plex answers with its own *.plex.direct certificate again, after a restart.",
+   "text": "Jména se odeberou z Preferences.xml: Plex po restartu znovu odpovídá vlastním certifikátem *.plex.direct."
+  },
+  "xs0073": {
+   "source": "plexmon stops looking after it (nginx keeps what it has)",
+   "text": "plexmon se o něj přestane starat (nginx si nechá, co má)"
+  },
+  "xs0074": {
+   "source": "nginx keeps the files it has now; plexmon no longer changes them.",
+   "text": "nginx si nechá soubory, které má; plexmon je už nemění."
+  },
+  "xs0075": {
+   "source": "Read a file saved by Export my settings - here or on another machine running plexmon.",
+   "text": "Načíst soubor uložený přes Exportovat má nastavení - zde nebo na jiném stroji s plexmonem."
+  },
+  "xs0076": {
+   "source": "Every table you have laid out goes back as it comes: the widths and the order of the columns, on every page. Nobody else’s change.",
+   "text": "Každá tabulka, kterou jste si upravili, se vrátí do výchozí podoby: šířky a pořadí sloupců, na všech stránkách. Nikomu jinému se nic nezmění."
+  },
+  "xs0077": {
+   "source": "How you have set these pages up for yourself — the columns of the tables and the language — saved as a JSON file, and read back here or on another machine running plexmon. Never your password, your role or anything else about the account.",
+   "text": "Jak jste si tyto stránky nastavili — sloupce tabulek a jazyk — uloženo jako soubor JSON a načtené zpět tady nebo na jiném stroji s plexmonem. Nikdy vaše heslo, vaše role ani nic jiného o účtu."
+  },
+  "xs0078": {
+   "source": "Plex Media Server reads its certificate only when it starts: on, it is restarted when a new one is put in (playing streams stop for a moment); off, it takes the new one at its next start.",
+   "text": "Plex Media Server čte svůj certifikát jen při startu: zapnuto - restartuje se, když se nasadí nový (přehrávání se na chvíli zastaví); vypnuto - nový převezme při příštím startu."
+  },
+  "xs0079": {
+   "source": "nothing happened",
+   "text": "nic se nestalo"
+  },
+  "xs0080": {
+   "source": "Plex — server status",
+   "text": "Plex — stav serveru"
+  },
+  "xs0081": {
+   "source": "Plex server",
+   "text": "Plex server"
+  },
+  "xs0082": {
+   "source": "Trends",
+   "text": "Trendy"
+  },
+  "xs0083": {
+   "source": "Trends (no data yet)",
+   "text": "Trendy (zatím bez dat)"
+  },
+  "xs0084": {
+   "source": "Why this status",
+   "text": "Proč tento stav"
+  },
+  "xs0085": {
+   "source": "All checks passed — no warnings.",
+   "text": "Všechny kontroly prošly — žádná varování."
+  },
+  "xs0086": {
+   "source": "No details recorded — run the collector again.",
+   "text": "Žádné podrobnosti — spusťte kolektor znovu."
+  },
+  "xs0087": {
+   "source": "All healthy",
+   "text": "Vše v pořádku"
+  },
+  "xs0088": {
+   "source": "Running",
+   "text": "Běží"
+  },
+  "xs0089": {
+   "source": "Stopped",
+   "text": "Zastaven"
+  },
+  "xs0090": {
+   "source": "Active streams",
+   "text": "Aktivní streamy"
+  },
+  "xs0091": {
+   "source": "Load",
+   "text": "Zátěž"
+  },
+  "xs0092": {
+   "source": "System",
+   "text": "Systém"
+  },
+  "xs0093": {
+   "source": "Kernel",
+   "text": "Jádro"
+  },
+  "xs0094": {
+   "source": "uptime",
+   "text": "běží"
+  },
+  "xs0095": {
+   "source": "API response",
+   "text": "Odezva API"
+  },
+  "xs0096": {
+   "source": "Reverse proxy",
+   "text": "Reverzní proxy"
+  },
+  "xs0097": {
+   "source": "Plex backups",
+   "text": "Zálohy Plexu"
+  },
+  "xs0098": {
+   "source": "Now playing",
+   "text": "Právě hraje"
+  },
+  "xs0099": {
+   "source": "Nothing is playing right now.",
+   "text": "Právě nic nehraje."
+  },
+  "xs0100": {
+   "source": "Activity",
+   "text": "Aktivita"
+  },
+  "xs0101": {
+   "source": "No transcoding, analysis or library scan running.",
+   "text": "Neběží žádné překódování, analýza ani skenování knihovny."
+  },
+  "xs0102": {
+   "source": "Disks",
+   "text": "Disky"
+  },
+  "xs0103": {
+   "source": "Wake all disks",
+   "text": "Probudit všechny disky"
+  },
+  "xs0104": {
+   "source": "Performance",
+   "text": "Výkon"
+  },
+  "xs0105": {
+   "source": "Usage",
+   "text": "Využití"
+  },
+  "xs0106": {
+   "source": "full free",
+   "text": "plno"
+  },
+  "xs0107": {
+   "source": "not mounted",
+   "text": "nepřipojeno"
+  },
+  "xs0108": {
+   "source": "cached",
+   "text": "z mezipaměti"
+  },
+  "xs0109": {
+   "source": "Idle",
+   "text": "Nečinný"
+  },
+  "xs0110": {
+   "source": "Standby",
+   "text": "Uspaný"
+  },
+  "xs0111": {
+   "source": "Spun down to save power.",
+   "text": "Uspaný kvůli úspoře energie."
+  },
+  "xs0112": {
+   "source": "Power-on",
+   "text": "Zapnuto"
+  },
+  "xs0113": {
+   "source": "Spin-ups",
+   "text": "Roztočení"
+  },
+  "xs0114": {
+   "source": "Head parks",
+   "text": "Parkování hlav"
+  },
+  "xs0115": {
+   "source": "Reallocated",
+   "text": "Přealokované"
+  },
+  "xs0116": {
+   "source": "Pending",
+   "text": "Čekající"
+  },
+  "xs0117": {
+   "source": "Uncorrectable",
+   "text": "Neopravitelné"
+  },
+  "xs0118": {
+   "source": "Reported uncorrectable",
+   "text": "Hlášené neopravitelné"
+  },
+  "xs0119": {
+   "source": "SMART values shown here are from the last time the disk was awake — it is never woken just to draw this page.",
+   "text": "Hodnoty SMART zde jsou z doby, kdy byl disk naposledy vzhůru — kvůli vykreslení této stránky se nikdy nebudí."
+  },
+  "xs0120": {
+   "source": "History is still being collected — charts appear once the collector has run at least twice.",
+   "text": "Historie se teprve sbírá — grafy se objeví, až kolektor proběhne alespoň dvakrát."
+  },
+  "xs0121": {
+   "source": "All SMART values",
+   "text": "Všechny hodnoty SMART"
+  },
+  "xs0122": {
+   "source": "Burned in",
+   "text": "Zaběhnutý"
+  },
+  "xs0123": {
+   "source": "CPU temp",
+   "text": "Teplota CPU"
+  },
+  "xs0124": {
+   "source": "Closest to threshold",
+   "text": "Nejblíž prahu"
+  },
+  "xs0125": {
+   "source": "Command timeouts",
+   "text": "Vypršení příkazů"
+  },
+  "xs0126": {
+   "source": "Data read",
+   "text": "Přečteno dat"
+  },
+  "xs0127": {
+   "source": "Data written",
+   "text": "Zapsáno dat"
+  },
+  "xs0128": {
+   "source": "Emergency head retracts",
+   "text": "Nouzová stažení hlav"
+  },
+  "xs0129": {
+   "source": "Endurance used",
+   "text": "Využitá výdrž"
+  },
+  "xs0130": {
+   "source": "Error log entries",
+   "text": "Záznamy v logu chyb"
+  },
+  "xs0131": {
+   "source": "Free pages",
+   "text": "Volné stránky"
+  },
+  "xs0132": {
+   "source": "High — check upstream keepalive in nginx.",
+   "text": "Vysoká — zkontrolujte upstream keepalive v nginx."
+  },
+  "xs0133": {
+   "source": "Interface CRC errors",
+   "text": "Chyby CRC rozhraní"
+  },
+  "xs0134": {
+   "source": "Last self-test",
+   "text": "Poslední autotest"
+  },
+  "xs0135": {
+   "source": "Lifetime temp",
+   "text": "Teplota za život"
+  },
+  "xs0136": {
+   "source": "Media errors",
+   "text": "Chyby média"
+  },
+  "xs0137": {
+   "source": "Negligible — the proxy is not a bottleneck, so anything slow is Plex-side.",
+   "text": "Zanedbatelná — proxy není úzké hrdlo, takže pomalost je na straně Plexu."
+  },
+  "xs0138": {
+   "source": "No data in this range.",
+   "text": "V tomto rozsahu nejsou data."
+  },
+  "xs0139": {
+   "source": "No data yet.",
+   "text": "Zatím žádná data."
+  },
+  "xs0140": {
+   "source": "No measurable growth yet — projections appear once a trend forms.",
+   "text": "Zatím žádný měřitelný růst — odhady se objeví, až se vytvoří trend."
+  },
+  "xs0141": {
+   "source": "Not enough history yet.",
+   "text": "Zatím nedostatek historie."
+  },
+  "xs0142": {
+   "source": "Nothing recorded in this range.",
+   "text": "V tomto rozsahu nic zaznamenáno."
+  },
+  "xs0143": {
+   "source": "Noticeable but minor.",
+   "text": "Znatelná, ale malá."
+  },
+  "xs0144": {
+   "source": "Pair",
+   "text": "Spárovat"
+  },
+  "xs0145": {
+   "source": "Pair this TV",
+   "text": "Spárovat tuto TV"
+  },
+  "xs0146": {
+   "source": "Pair with",
+   "text": "Spárovat s"
+  },
+  "xs0147": {
+   "source": "Plex answers locally, so the fault is in nginx / TLS / DNS rather than in Plex.",
+   "text": "Plex odpovídá lokálně, takže chyba je spíš v nginx / TLS / DNS než v Plexu."
+  },
+  "xs0148": {
+   "source": "Power cycles",
+   "text": "Zapnutí"
+  },
+  "xs0149": {
+   "source": "Reading from",
+   "text": "Čte z"
+  },
+  "xs0150": {
+   "source": "Run the collector:",
+   "text": "Spusťte kolektor:"
+  },
+  "xs0151": {
+   "source": "SMART FAILED",
+   "text": "SMART SELHAL"
+  },
+  "xs0152": {
+   "source": "SMART OK",
+   "text": "SMART OK"
+  },
+  "xs0153": {
+   "source": "Spare left",
+   "text": "Zbývá rezervy"
+  },
+  "xs0154": {
+   "source": "Spin retries",
+   "text": "Opakovaná roztočení"
+  },
+  "xs0155": {
+   "source": "Stream copy",
+   "text": "Kopie streamu"
+  },
+  "xs0156": {
+   "source": "Direct Play",
+   "text": "Přímé přehrávání"
+  },
+  "xs0157": {
+   "source": "This browser cannot send the request.",
+   "text": "Tento prohlížeč nedokáže poslat požadavek."
+  },
+  "xs0158": {
+   "source": "Type the four-digit code shown on the television.",
+   "text": "Zadejte čtyřmístný kód zobrazený na televizi."
+  },
+  "xs0159": {
+   "source": "Unsafe shutdowns",
+   "text": "Nebezpečná vypnutí"
+  },
+  "xs0160": {
+   "source": "accept the prompt on the TV…",
+   "text": "potvrďte dotaz na TV…"
+  },
+  "xs0161": {
+   "source": "added per request vs. reaching Plex directly",
+   "text": "přidáno na požadavek oproti přímému přístupu k Plexu"
+  },
+  "xs0162": {
+   "source": "and check that",
+   "text": "a zkontrolujte, že"
+  },
+  "xs0163": {
+   "source": "was created.",
+   "text": "byl vytvořen."
+  },
+  "xs0164": {
+   "source": "bridge exposes health only",
+   "text": "most poskytuje jen zdraví"
+  },
+  "xs0165": {
+   "source": "check failed",
+   "text": "kontrola selhala"
+  },
+  "xs0166": {
+   "source": "disks awake — SMART refreshes on the next collector pass",
+   "text": "disky vzhůru — SMART se obnoví při dalším průchodu kolektoru"
+  },
+  "xs0167": {
+   "source": "forget the credentials stored for this TV",
+   "text": "zapomenout přihlašovací údaje uložené pro tuto TV"
+  },
+  "xs0168": {
+   "source": "head parks/year",
+   "text": "parkování hlav/rok"
+  },
+  "xs0169": {
+   "source": "home screen — the heavy one",
+   "text": "domovská obrazovka — ta náročná"
+  },
+  "xs0170": {
+   "source": "last 24 h",
+   "text": "posledních 24 h"
+  },
+  "xs0171": {
+   "source": "median over one reused connection",
+   "text": "medián přes jedno znovupoužité spojení"
+  },
+  "xs0172": {
+   "source": "pairing failed",
+   "text": "párování selhalo"
+  },
+  "xs0173": {
+   "source": "per day",
+   "text": "za den"
+  },
+  "xs0174": {
+   "source": "request refused",
+   "text": "požadavek odmítnut"
+  },
+  "xs0175": {
+   "source": "spin-ups/year",
+   "text": "roztočení/rok"
+  },
+  "xs0176": {
+   "source": "spinning up…",
+   "text": "roztáčí se…"
+  },
+  "xs0177": {
+   "source": "the TV",
+   "text": "TV"
+  },
+  "xs0178": {
+   "source": "timed out — the disks did not answer",
+   "text": "vypršel čas — disky neodpověděly"
+  },
+  "xs0179": {
+   "source": "unpair",
+   "text": "zrušit spárování"
+  },
+  "xs0180": {
+   "source": "web",
+   "text": "web"
+  },
+  "xs0181": {
+   "source": "Čeština",
+   "text": "Čeština"
+  },
+  "xs0182": {
+   "source": "No error-counter change in",
+   "text": "Žádná změna čítačů chyb za"
+  },
+  "xs0183": {
+   "source": "of monitoring.",
+   "text": "monitorování."
+  },
+  "xs0184": {
+   "source": "CPU",
+   "text": "CPU"
+  }
+ },
+ "patterns": {
+  "p0004": {
+   "source": ", from {0}",
+   "text": ", z {0}"
+  },
+  "p0005": {
+   "source": ", last {0}",
+   "text": ", naposledy {0}"
+  },
+  "p0006": {
+   "source": ", newest {0}",
+   "text": ", nejnovější {0}"
+  },
+  "p0007": {
+   "source": ", newest {0}{1}",
+   "text": ", nejnovější {0}{1}"
+  },
+  "p0008": {
+   "source": "1 day {0} h",
+   "text": "1 den {0} h"
+  },
+  "p0013": {
+   "source": "A certificate for {0}",
+   "text": "Certifikát pro {0}"
+  },
+  "p0014": {
+   "source": "A certificate request for {0}",
+   "text": "Žádost o certifikát pro {0}"
+  },
+  "p0015": {
+   "source": "A code is sent by SMS to {0}.",
+   "text": "Kód přijde přes SMS na {0}."
+  },
+  "p0016": {
+   "source": "A code is sent by e-mail to {0}.",
+   "text": "Kód přijde e-mailem na {0}."
+  },
+  "p0027": {
+   "source": "A new password for {0}",
+   "text": "Nové heslo pro {0}"
+  },
+  "p0028": {
+   "source": "A self-signed certificate for {0}",
+   "text": "Certifikát podepsaný sám sebou pro {0}"
+  },
+  "p0035": {
+   "source": "Asked {0}",
+   "text": "Zjištěno {0}"
+  },
+  "p0037": {
+   "source": "Asking {0} about {1}…",
+   "text": "Dotaz na {0} ohledně {1}…"
+  },
+  "p0039": {
+   "source": "At {0} - this server runs {1}; it may go back to {2} or newer.",
+   "text": "Na {0} – tento server běží na {1}; smí se vrátit na {2} nebo novější."
+  },
+  "p0041": {
+   "source": "Back to the first page of this list.{0}",
+   "text": "Zpět na první stránku tohoto seznamu.{0}"
+  },
+  "p0049": {
+   "source": "Change it for {0}",
+   "text": "Změnit pro {0}"
+  },
+  "p0052": {
+   "source": "Checking {0}",
+   "text": "Kontroluje se {0}"
+  },
+  "p0053": {
+   "source": "Clear these ({0})",
+   "text": "Vymazat tyto ({0})"
+  },
+  "p0054": {
+   "source": "Column {0} (no heading)",
+   "text": "Sloupec {0} (bez záhlaví)"
+  },
+  "p0065": {
+   "source": "Download {0}",
+   "text": "Stáhnout {0}"
+  },
+  "p0069": {
+   "source": "Empty: its full host name, as {0} says it.",
+   "text": "Prázdné: jeho plné jméno stroje, jak ho {0} říká."
+  },
+  "p0078": {
+   "source": "Every count of wrong attempts is forgotten{0} - the locked out may try again at once. Events keeps a line saying who did it.",
+   "text": "Všechny počty chybných pokusů se zapomenou{0} – zablokovaní to mohou hned zkusit znovu. V Událostech zůstane záznam, kdo to udělal."
+  },
+  "p0085": {
+   "source": "For {0} only",
+   "text": "Jen pro {0}"
+  },
+  "p0087": {
+   "source": "GitHub did not answer: {0}",
+   "text": "GitHub neodpověděl: {0}"
+  },
+  "p0089": {
+   "source": "Go back to {0}",
+   "text": "Vrátit na {0}"
+  },
+  "p0090": {
+   "source": "Going back to {0} · started by {1} · {2} · {3}",
+   "text": "Návrat na {0} · spustil {1} · {2} · {3}"
+  },
+  "p0091": {
+   "source": "Groups ({0})",
+   "text": "Skupiny ({0})"
+  },
+  "p0092": {
+   "source": "HSTS {0} days",
+   "text": "HSTS {0} {0:den|dny|dní}"
+  },
+  "p0093": {
+   "source": "HTTP {0}",
+   "text": "HTTP {0}"
+  },
+  "p0095": {
+   "source": "Hide “{0}”",
+   "text": "Skrýt „{0}“"
+  },
+  "p0096": {
+   "source": "High security: {0} - not allowed.",
+   "text": "Vysoká bezpečnost: {0} – nepovoleno."
+  },
+  "p0098": {
+   "source": "How {0} speaks TLS",
+   "text": "Jak {0} mluví TLS"
+  },
+  "p0099": {
+   "source": "Import {0}",
+   "text": "Import {0}"
+  },
+  "p0101": {
+   "source": "It has one put in on Certificates and TLS ({0}). The one from the CA takes its place once it comes, and ACME renews it from then on. Its TLS settings stay as they are.",
+   "text": "Má certifikát vložený v Certifikáty a TLS ({0}). Ten od CA ho nahradí, jakmile přijde, a ACME ho pak obnovuje. Jeho nastavení TLS zůstane."
+  },
+  "p0103": {
+   "source": "It is fetched from {0}, its signature checked, and {1}",
+   "text": "Stáhne se z {0}, ověří se podpis a {1}"
+  },
+  "p0110": {
+   "source": "Its extensions ({0}):",
+   "text": "Jeho rozšíření ({0}):"
+  },
+  "p0121": {
+   "source": "Looked {0}: {1}",
+   "text": "Zkontrolováno {0}: {1}"
+  },
+  "p0151": {
+   "source": "Not in use until {0} is filled in.",
+   "text": "Nepoužívá se, dokud není vyplněno {0}."
+  },
+  "p0152": {
+   "source": "Not in use while {0} is off.",
+   "text": "Nepoužívá se, dokud je {0} vypnuto."
+  },
+  "p0153": {
+   "source": "Not in use while {0} is “{1}”.",
+   "text": "Nepoužívá se, dokud je {0} „{1}“."
+  },
+  "p0154": {
+   "source": "Not in use while {0}.",
+   "text": "Nepoužívá se, dokud {0}."
+  },
+  "p0163": {
+   "source": "Nothing counted for \"{0}\".",
+   "text": "Pro „{0}“ se nic nepočítá."
+  },
+  "p0166": {
+   "source": "Nothing newer: the newest there is {0} and this server runs {1} (looked {2})",
+   "text": "Nic novějšího: nejnovější tam je {0} a tento server běží na {1} (zkontrolováno {2})"
+  },
+  "p0171": {
+   "source": "One put in here by hand takes {0} out of ACME’s care: it is kept as it is, not replaced at the next renewal. Settings → Automatic certificates → Look after it gives it back.",
+   "text": "Certifikát vložený zde ručně vyjme {0} z péče ACME: zůstane, jak je, a při další obnově se nenahradí. Nastavení → Automatické certifikáty → Starat se o něj ho vrátí."
+  },
+  "p0172": {
+   "source": "Only {0} to {1}.",
+   "text": "Jen {0} až {1}."
+  },
+  "p0173": {
+   "source": "Only {0} to {1}. ",
+   "text": "Jen {0} až {1}. "
+  },
+  "p0176": {
+   "source": "Ordered from the CA now - from this node for any of them: the CA’s question and the certificate are kept in the database, and {0} puts it in. ACME renews it from then on.",
+   "text": "Objedná se u CA hned – z tohoto uzlu pro kterýkoli z nich: dotaz CA i certifikát jsou v databázi a {0} ho nainstaluje. ACME ho pak obnovuje."
+  },
+  "p0200": {
+   "source": "Read: {0} file(s). More can be added.",
+   "text": "Načteno: {0} {0:soubor|soubory|souborů}. Můžete přidat další."
+  },
+  "p0204": {
+   "source": "Remove the account {0}",
+   "text": "Odebrat účet {0}"
+  },
+  "p0205": {
+   "source": "Replace the certificate of {0}?",
+   "text": "Nahradit certifikát {0}?"
+  },
+  "p0209": {
+   "source": "Request {0}",
+   "text": "Požadavek {0}"
+  },
+  "p0211": {
+   "source": "Reset the second step of {0}?",
+   "text": "Resetovat druhý krok účtu {0}?"
+  },
+  "p0212": {
+   "source": "Reset the second step: {0} sets it up again at the next sign-in. Their sign-ins are ended.",
+   "text": "Resetovat druhý krok: {0} si ho při příštím přihlášení nastaví znovu. Jeho přihlášení se ukončí."
+  },
+  "p0213": {
+   "source": "Restart {0}",
+   "text": "Restartovat {0}"
+  },
+  "p0214": {
+   "source": "Restart {0}?",
+   "text": "Restartovat {0}?"
+  },
+  "p0223": {
+   "source": "SQLite {0}",
+   "text": "SQLite {0}"
+  },
+  "p0235": {
+   "source": "Sent to {0} - write the code from it below.",
+   "text": "Odesláno na {0} – kód z něj zadejte níže."
+  },
+  "p0236": {
+   "source": "Sent to {0}.",
+   "text": "Odesláno na {0}."
+  },
+  "p0247": {
+   "source": "Started by {0} · {1} · done",
+   "text": "Spustil(a) {0} · {1} · hotovo"
+  },
+  "p0248": {
+   "source": "Started by {0} · {1} · failed",
+   "text": "Spustil(a) {0} · {1} · selhalo"
+  },
+  "p0249": {
+   "source": "Started by {0} · {1} · going on",
+   "text": "Spustil(a) {0} · {1} · probíhá"
+  },
+  "p0250": {
+   "source": "Started by {0} · {1} · stopped",
+   "text": "Spustil(a) {0} · {1} · zastaveno"
+  },
+  "p0253": {
+   "source": "Stop looking after the TLS of {0}",
+   "text": "Přestat spravovat TLS pro {0}"
+  },
+  "p0274": {
+   "source": "Take {0} out of service",
+   "text": "Vyřadit {0} z provozu"
+  },
+  "p0276": {
+   "source": "The DNS name the certificate of {0} is for. Empty: the full host name of {0}.",
+   "text": "DNS jméno, pro které je certifikát {0}. Prázdné: plné jméno stroje {0}."
+  },
+  "p0286": {
+   "source": "The certificate it had before ACME replaced it - from {0}, good until {1}. Put back as it was; ACME no longer renews this one. The TLS settings stay.",
+   "text": "Certifikát, který měl, než ho ACME nahradilo – od {0}, platný do {1}. Vrátí se, jak byl; ACME ho už neobnovuje. Nastavení TLS zůstane."
+  },
+  "p0287": {
+   "source": "The certificate of {0} ran out",
+   "text": "Certifikát {0} vypršel"
+  },
+  "p0288": {
+   "source": "The certificate of {0} runs out soon",
+   "text": "Certifikát {0} brzy vyprší"
+  },
+  "p0295": {
+   "source": "The columns of {0}",
+   "text": "Sloupce uživatele {0}"
+  },
+  "p0296": {
+   "source": "The columns of {0} are back as they come; they see it at their next page load",
+   "text": "Sloupce uživatele {0} jsou zpět ve výchozím stavu; projeví se mu při příštím načtení stránky"
+  },
+  "p0298": {
+   "source": "The daemon is not answering: {0}",
+   "text": "Démon neodpovídá: {0}"
+  },
+  "p0299": {
+   "source": "The directory {0}",
+   "text": "Adresář {0}"
+  },
+  "p0300": {
+   "source": "The directory {0} cannot be reached",
+   "text": "Active Directory {0} je nedostupná"
+  },
+  "p0319": {
+   "source": "The last page of this list.{0}",
+   "text": "Poslední stránka tohoto seznamu.{0}"
+  },
+  "p0329": {
+   "source": "The name of {0}",
+   "text": "Jméno {0}"
+  },
+  "p0334": {
+   "source": "The next page of this list.{0}",
+   "text": "Další stránka tohoto seznamu.{0}"
+  },
+  "p0336": {
+   "source": "The one from the CA is taken out and the one it had before - {0} - put back, on every node that serves it. ACME no longer renews this one (Look after it gives it back).",
+   "text": "Certifikát od CA se odebere a vrátí se předchozí – {0} – na každém uzlu, který ho používá. ACME ho už neobnovuje (Starat se o něj ho vrátí)."
+  },
+  "p0338": {
+   "source": "The page before this one.{0}",
+   "text": "Předchozí stránka.{0}"
+  },
+  "p0340": {
+   "source": "The protocols, the ciphers, the DH parameters and HSTS of {0} - kept as they are whichever way the certificate came, ACME and its renewals too.",
+   "text": "Protokoly, šifry, parametry DH a HSTS pro {0} – zůstanou, ať certifikát přišel jakkoli, i od ACME a při jeho obnovách."
+  },
+  "p0341": {
+   "source": "The realm {0}",
+   "text": "Realm {0}"
+  },
+  "p0342": {
+   "source": "The request for {0}",
+   "text": "Žádost pro {0}"
+  },
+  "p0350": {
+   "source": "The way {0} gives the second step is taken away, and their sign-ins are ended. At the next sign-in they choose and set it up again - with the password alone, so do it only when you know it is them (a lost phone, a new one).",
+   "text": "Způsob, jakým {0} zadává druhý krok, se odebere a jeho přihlášení se ukončí. Při příštím přihlášení si ho vybere a nastaví znovu – jen s heslem, takže to udělejte, jen když víte, že jde opravdu o něj (ztracený nebo nový telefon)."
+  },
+  "p0360": {
+   "source": "This page is still the one of {0}.",
+   "text": "Tato stránka je ještě z verze {0}."
+  },
+  "p0375": {
+   "source": "Upgrade every node to {0}",
+   "text": "Aktualizovat všechny uzly na {0}"
+  },
+  "p0376": {
+   "source": "Upgrade this server to {0}",
+   "text": "Aktualizovat tento server na {0}"
+  },
+  "p0378": {
+   "source": "Upgrade to {0} now",
+   "text": "Aktualizovat na {0} teď"
+  },
+  "p0382": {
+   "source": "What changed in {0}",
+   "text": "Co se změnilo ve {0}"
+  },
+  "p0383": {
+   "source": "What going back gives up: {0} newer version(s), up to {1}",
+   "text": "Co návratem přijdete: {0} novějších verzí, až po {1}"
+  },
+  "p0386": {
+   "source": "What {0} holds, most first",
+   "text": "Co obsahuje {0}, nejčastější první"
+  },
+  "p0390": {
+   "source": "You are on page {0}{1} of {2}.",
+   "text": "Jste na stránce {0}{1} z {2}."
+  },
+  "p0391": {
+   "source": "You have laid out {0} table(s).",
+   "text": "Uspořádali jste {0} {0:tabulku|tabulky|tabulek}."
+  },
+  "p0401": {
+   "source": "a member of {0}",
+   "text": "člen {0}"
+  },
+  "p0420": {
+   "source": "a wrong password for {0} from {1}",
+   "text": "chybné heslo pro {0} z {1}"
+  },
+  "p0423": {
+   "source": "acme_resolvers: {0} is not the address of a DNS server",
+   "text": "acme_resolvers: {0} není adresa DNS serveru"
+  },
+  "p0428": {
+   "source": "and in {0}",
+   "text": "a v {0}"
+  },
+  "p0429": {
+   "source": "and {0} more",
+   "text": "a dalších {0}"
+  },
+  "p0430": {
+   "source": "answered on {0}/udp",
+   "text": "odpovídá na {0}/udp"
+  },
+  "p0433": {
+   "source": "asked for {0}",
+   "text": "dotaz na {0}"
+  },
+  "p0436": {
+   "source": "at least {0} line(s)",
+   "text": "alespoň {0} řádků"
+  },
+  "p0438": {
+   "source": "before putting {0} back, by {1}",
+   "text": "před vrácením {0}, provedl {1}"
+  },
+  "p0440": {
+   "source": "being put in on {0}…",
+   "text": "nasazuje se na {0}…"
+  },
+  "p0441": {
+   "source": "below {0}",
+   "text": "pod {0}"
+  },
+  "p0445": {
+   "source": "certificate: {0}",
+   "text": "certifikát: {0}"
+  },
+  "p0446": {
+   "source": "changed: {0}",
+   "text": "změněno: {0}"
+  },
+  "p0447": {
+   "source": "checked against {0}",
+   "text": "ověřováno proti {0}"
+  },
+  "p0450": {
+   "source": "checking {0} ({1})…",
+   "text": "kontroluji {0} ({1})…"
+  },
+  "p0452": {
+   "source": "cleared: {0}",
+   "text": "vymazáno: {0}"
+  },
+  "p0459": {
+   "source": "could not be looked up: {0}",
+   "text": "nešlo vyhledat: {0}"
+  },
+  "p0463": {
+   "source": "done: {0} → {1}",
+   "text": "hotovo: {0} → {1}"
+  },
+  "p0469": {
+   "source": "ends {0}",
+   "text": "končí {0}"
+  },
+  "p0474": {
+   "source": "expires {0}",
+   "text": "vyprší {0}"
+  },
+  "p0475": {
+   "source": "exported: {0}",
+   "text": "exportováno: {0}"
+  },
+  "p0476": {
+   "source": "failed: {0}",
+   "text": "selhalo: {0}"
+  },
+  "p0477": {
+   "source": "fetched from {0}",
+   "text": "staženo z {0}"
+  },
+  "p0478": {
+   "source": "filled {0}",
+   "text": "naplněno {0}"
+  },
+  "p0484": {
+   "source": "forgotten in {0}",
+   "text": "zapomene se za {0}"
+  },
+  "p0486": {
+   "source": "found {0}",
+   "text": "nalezen {0}"
+  },
+  "p0488": {
+   "source": "going back to an older version is not offered on these pages: switch it on in Settings → Upgrades",
+   "text": "návrat na starší verzi se na těchto stránkách nenabízí: zapněte ho v Nastavení → Aktualizace"
+  },
+  "p0497": {
+   "source": "imported: the columns of {0} table(s)",
+   "text": "importováno: sloupce {0} {0:tabulky|tabulek|tabulek}"
+  },
+  "p0498": {
+   "source": "imported: the columns of {0} table(s); left alone: {1}",
+   "text": "importováno: sloupce {0} {0:tabulky|tabulek|tabulek}; ponecháno beze změny: {1}"
+  },
+  "p0499": {
+   "source": "imported: {0}",
+   "text": "importováno: {0}"
+  },
+  "p0500": {
+   "source": "in place on {0}",
+   "text": "nasazeno na {0}"
+  },
+  "p0505": {
+   "source": "install.sh ended with {0}",
+   "text": "install.sh skončil s kódem {0}"
+  },
+  "p0510": {
+   "source": "isemon_targets: {0} is not a port",
+   "text": "isemon_targets: {0} není port"
+  },
+  "p0516": {
+   "source": "it goes ({0} ms)",
+   "text": "jde to ({0} ms)"
+  },
+  "p0517": {
+   "source": "it goes ({0} ms, {1})",
+   "text": "jde to ({0} ms, {1})"
+  },
+  "p0518": {
+   "source": "it has not come back as {0} in {1} min",
+   "text": "nevrátil se jako {0} do {1} min"
+  },
+  "p0521": {
+   "source": "it is served by {0}, not deSEC",
+   "text": "obsluhuje ji {0}, ne deSEC"
+  },
+  "p0523": {
+   "source": "it points at {0}",
+   "text": "ukazuje na {0}"
+  },
+  "p0524": {
+   "source": "it points elsewhere: {0}",
+   "text": "ukazuje jinam: {0}"
+  },
+  "p0541": {
+   "source": "last {0}",
+   "text": "naposledy {0}"
+  },
+  "p0542": {
+   "source": "last {0} ago",
+   "text": "naposledy před {0}"
+  },
+  "p0543": {
+   "source": "last {0} days",
+   "text": "posledních {0} dní"
+  },
+  "p0544": {
+   "source": "last {0} hours",
+   "text": "posledních {0} hodin"
+  },
+  "p0545": {
+   "source": "last {0} minutes",
+   "text": "posledních {0} minut"
+  },
+  "p0546": {
+   "source": "last {0} weeks",
+   "text": "posledních {0} týdnů"
+  },
+  "p0550": {
+   "source": "look up {0}",
+   "text": "vyhledat {0}"
+  },
+  "p0551": {
+   "source": "look {0} up in {1}",
+   "text": "vyhledat {0} v {1}"
+  },
+  "p0552": {
+   "source": "looked up {0}",
+   "text": "vyhledán {0}"
+  },
+  "p0555": {
+   "source": "made {0}",
+   "text": "vytvořeno {0}"
+  },
+  "p0556": {
+   "source": "made {0} ({1}): {2}",
+   "text": "vytvořeno: {0} ({1}): {2}"
+  },
+  "p0557": {
+   "source": "made {0} on {1}",
+   "text": "vytvořeno {0} na uzlu {1}"
+  },
+  "p0558": {
+   "source": "made {0} on {1} by {2}",
+   "text": "vytvořeno {0} na uzlu {1}, vytvořil {2}"
+  },
+  "p0559": {
+   "source": "made: {0}",
+   "text": "vytvořeno: {0}"
+  },
+  "p0562": {
+   "source": "mail_dns: {0} is not the address of a DNS server",
+   "text": "mail_dns: {0} není adresa DNS serveru"
+  },
+  "p0567": {
+   "source": "more than {0}",
+   "text": "více než {0}"
+  },
+  "p0568": {
+   "source": "more than {0} lines",
+   "text": "více než {0} řádků"
+  },
+  "p0569": {
+   "source": "more than {0} matching",
+   "text": "více než {0} odpovídá"
+  },
+  "p0582": {
+   "source": "no certificate is kept for {0}",
+   "text": "pro {0} není uložený žádný certifikát"
+  },
+  "p0585": {
+   "source": "no key {0} is there",
+   "text": "klíč {0} tam není"
+  },
+  "p0589": {
+   "source": "no such language here: {0}",
+   "text": "takový jazyk tu není: {0}"
+  },
+  "p0594": {
+   "source": "none",
+   "text": "žádný"
+  },
+  "p0596": {
+   "source": "not delegated: the internet does not know {0}",
+   "text": "není delegovaná: internet {0} nezná"
+  },
+  "p0607": {
+   "source": "nothing newer than {0}",
+   "text": "nic novějšího než {0}"
+  },
+  "p0608": {
+   "source": "nothing to do: {0}",
+   "text": "nic k provedení: {0}"
+  },
+  "p0613": {
+   "source": "on {0} - step {1} of {2}",
+   "text": "na {0} – krok {1} z {2}"
+  },
+  "p0614": {
+   "source": "on {0} - {1} so far, usually about {2} min",
+   "text": "na {0} – zatím {1}, obvykle asi {2} min"
+  },
+  "p0616": {
+   "source": "once, in the zone above it: {0} at deSEC",
+   "text": "jednou, v nadřazené zóně: {0} u deSEC"
+  },
+  "p0624": {
+   "source": "otp {0} - older: ready to go back to",
+   "text": "otp {0} – starší: připravená k návratu"
+  },
+  "p0628": {
+   "source": "otp {0} is checked and ready",
+   "text": "otp {0} je zkontrolován a připraven"
+  },
+  "p0629": {
+   "source": "otp {0} is fetched, checked and ready",
+   "text": "otp {0} je stažené, ověřené a připravené"
+  },
+  "p0631": {
+   "source": "otp {0} is not at {1} any more",
+   "text": "otp {0} už na {1} není"
+  },
+  "p0632": {
+   "source": "otp {0} is out ({1}) - Settings → Upgrades",
+   "text": "vyšlo otp {0} ({1}) – Nastavení → Aktualizace"
+  },
+  "p0635": {
+   "source": "otp {0} is there - newer than {1}",
+   "text": "je k dispozici otp {0} – novější než {1}"
+  },
+  "p0636": {
+   "source": "otp {0} is there - this server runs {1} (looked {2})",
+   "text": "Je k dispozici otp {0} – tento server běží na {1} (zkontrolováno {2})"
+  },
+  "p0637": {
+   "source": "otp {0} started on {1}, RADIUS on {2}",
+   "text": "otp {0} spuštěn na {1}, RADIUS na {2}"
+  },
+  "p0639": {
+   "source": "page {0} of {1}",
+   "text": "stránka {0} z {1}"
+  },
+  "p0640": {
+   "source": "page {0}{1} of more than {2} · more than {3} row(s)",
+   "text": "stránka {0}{1} z více než {2} · více než {3} řádků"
+  },
+  "p0641": {
+   "source": "page {0}{1} of {2} · {3} row(s)",
+   "text": "stránka {0}{1} z {2} · {3} {3:řádek|řádky|řádků}"
+  },
+  "p0648": {
+   "source": "put back: {0}",
+   "text": "vráceno: {0}"
+  },
+  "p0655": {
+   "source": "reach {0}",
+   "text": "spojit se s {0}"
+  },
+  "p0657": {
+   "source": "reached {0}",
+   "text": "spojeno s {0}"
+  },
+  "p0663": {
+   "source": "refused{0}",
+   "text": "odmítnuto{0}"
+  },
+  "p0665": {
+   "source": "restarted as {0}",
+   "text": "restartován jako {0}"
+  },
+  "p0667": {
+   "source": "restarting {0}, one at a time",
+   "text": "restartuje se {0}, jeden po druhém"
+  },
+  "p0671": {
+   "source": "right: {0}",
+   "text": "správně: {0}"
+  },
+  "p0672": {
+   "source": "root could not put it in: {0}",
+   "text": "root ho nedokázal nasadit: {0}"
+  },
+  "p0675": {
+   "source": "sending {0}…",
+   "text": "posílám {0}…"
+  },
+  "p0676": {
+   "source": "sent by {0}",
+   "text": "poslal {0}"
+  },
+  "p0687": {
+   "source": "signed by {0}",
+   "text": "podepsal {0}"
+  },
+  "p0688": {
+   "source": "signed in as {0}",
+   "text": "přihlášen jako {0}"
+  },
+  "p0689": {
+   "source": "signed in from {0}",
+   "text": "přihlášen přes {0}"
+  },
+  "p0691": {
+   "source": "signing in {0} s",
+   "text": "přihlášení {0} s"
+  },
+  "p0694": {
+   "source": "since {0}",
+   "text": "od {0}"
+  },
+  "p0698": {
+   "source": "started - {0}",
+   "text": "zahájeno – {0}"
+  },
+  "p0699": {
+   "source": "started by {0}",
+   "text": "spustil {0}"
+  },
+  "p0705": {
+   "source": "that file is far bigger than any settings file ({0})",
+   "text": "ten soubor je mnohem větší než jakýkoli soubor s nastavením ({0})"
+  },
+  "p0712": {
+   "source": "that layout of the columns is too big to keep (more than {0} characters)",
+   "text": "toto rozvržení sloupců je příliš velké na uložení (více než {0} znaků)"
+  },
+  "p0714": {
+   "source": "the PFX / PKCS#12 file: {0} - is the password right?",
+   "text": "soubor PFX / PKCS#12: {0} – je heslo správně?"
+  },
+  "p0720": {
+   "source": "the TLS of {0} takes {1} ciphers",
+   "text": "TLS pro {0} používá šifry {1}"
+  },
+  "p0721": {
+   "source": "the TLS settings of {0} are kept",
+   "text": "nastavení TLS pro {0} je uložené"
+  },
+  "p0736": {
+   "source": "the VIP address ({0}): {1}",
+   "text": "VIP adresa ({0}): {1}"
+  },
+  "p0742": {
+   "source": "the account {0} is gone",
+   "text": "účet {0} je odebrán"
+  },
+  "p0743": {
+   "source": "the account {0} is made",
+   "text": "účet {0} je vytvořen"
+  },
+  "p0745": {
+   "source": "the address could not be read: {0}",
+   "text": "adresu se nepodařilo přečíst: {0}"
+  },
+  "p0758": {
+   "source": "the built-in default is {0}",
+   "text": "vestavěná výchozí hodnota je {0}"
+  },
+  "p0759": {
+   "source": "the certificate answered on the VIP {0}, whichever node holds it",
+   "text": "certifikát, kterým odpovídá VIP {0} – ať ji drží kterýkoli uzel"
+  },
+  "p0760": {
+   "source": "the certificate answered on {0}'s own name and address",
+   "text": "certifikát, kterým odpovídá vlastní jméno a adresa uzlu {0}"
+  },
+  "p0761": {
+   "source": "the certificate answered on {0}'s own name and address ({1})",
+   "text": "certifikát, kterým odpovídá vlastní jméno a adresa uzlu {0} ({1})"
+  },
+  "p0769": {
+   "source": "the certificate of {0} is being ordered",
+   "text": "certifikát {0} se objednává"
+  },
+  "p0773": {
+   "source": "the certificate of {0}'s database ends {1}: renewed",
+   "text": "certifikát databáze {0} končí {1}: obnoven"
+  },
+  "p0777": {
+   "source": "the client {0} is saved",
+   "text": "klient {0} je uložen"
+  },
+  "p0794": {
+   "source": "the columns of {0} are back as they come; they see it at their next page load",
+   "text": "sloupce uživatele {0} jsou zpět ve výchozím stavu; projeví se mu při příštím načtení stránky"
+  },
+  "p0795": {
+   "source": "the columns of {0} table(s)",
+   "text": "sloupce {0} {0:tabulky|tabulek|tabulek}"
+  },
+  "p0815": {
+   "source": "the directory {0}",
+   "text": "adresář {0}"
+  },
+  "p0816": {
+   "source": "the directory {0} is not set up",
+   "text": "adresář {0} není nastavený"
+  },
+  "p0818": {
+   "source": "the directory {0} is saved",
+   "text": "adresář {0} je uložen"
+  },
+  "p0821": {
+   "source": "the domain {0} does not exist",
+   "text": "doména {0} neexistuje"
+  },
+  "p0839": {
+   "source": "the key goes onto {0} within a few seconds",
+   "text": "klíč se během pár sekund nahraje na {0}"
+  },
+  "p0845": {
+   "source": "the last {0} hours",
+   "text": "posledních {0} hodin"
+  },
+  "p0846": {
+   "source": "the last {0} h{1}{2}",
+   "text": "posledních {0} h{1}{2}"
+  },
+  "p0859": {
+   "source": "the name points at an address that reaches port 80 of {0}",
+   "text": "jméno ukazuje na adresu, přes kterou se dá dostat na port 80 {0}"
+  },
+  "p0878": {
+   "source": "the package could not be handed over: {0}",
+   "text": "balíček nešlo předat: {0}"
+  },
+  "p0879": {
+   "source": "the package from {0} was refused: {1}",
+   "text": "balíček z {0} byl odmítnut: {1}"
+  },
+  "p0893": {
+   "source": "the realm {0} is saved",
+   "text": "realm {0} je uložen"
+  },
+  "p0896": {
+   "source": "the realm {0} takes @{1} already",
+   "text": "realm {0} už přijímá @{1}"
+  },
+  "p0898": {
+   "source": "the realm {0} takes {1} already",
+   "text": "realm {0} už bere {1}"
+  },
+  "p0903": {
+   "source": "the role is one of {0}",
+   "text": "role je jedna z {0}"
+  },
+  "p0905": {
+   "source": "the second step of {0} is reset: they set it up again at the next sign-in; their sign-ins are ended",
+   "text": "druhý krok účtu {0} je resetován: nastaví si ho při příštím přihlášení; jeho přihlášení jsou ukončena"
+  },
+  "p0906": {
+   "source": "the server did not answer in {0} s",
+   "text": "server neodpověděl do {0} s"
+  },
+  "p0907": {
+   "source": "the server did not answer with anything readable (HTTP {0})",
+   "text": "server neodpověděl ničím čitelným (HTTP {0})"
+  },
+  "p0909": {
+   "source": "the server said {0}",
+   "text": "server řekl {0}"
+  },
+  "p0931": {
+   "source": "the token of {0} was switched {1} on the command line",
+   "text": "token uživatele {0} byl z příkazové řádky přepnut: {1}"
+  },
+  "p0936": {
+   "source": "the upgrade of {0} to {1} failed: {2}",
+   "text": "aktualizace {0} na {1} selhala: {2}"
+  },
+  "p0952": {
+   "source": "there is an account called {0} already",
+   "text": "účet {0} už existuje"
+  },
+  "p0953": {
+   "source": "there is no account called {0}",
+   "text": "účet {0} neexistuje"
+  },
+  "p0958": {
+   "source": "there is no node called {0}",
+   "text": "žádný uzel {0} neexistuje"
+  },
+  "p0960": {
+   "source": "there is no node {0}",
+   "text": "uzel {0} neexistuje"
+  },
+  "p0967": {
+   "source": "this certificate ran out on {0}",
+   "text": "platnost tohoto certifikátu skončila {0}"
+  },
+  "p0978": {
+   "source": "this page is answered by {0}",
+   "text": "tuto stránku obsluhuje {0}"
+  },
+  "p0979": {
+   "source": "this page is answered by {0} now, not {1} (the VIP address moved): the settings are drawn again from {2}",
+   "text": "tuto stránku teď obsluhuje {0}, ne {1} (VIP adresa se přesunula): nastavení se znovu načetla z {2}"
+  },
+  "p0980": {
+   "source": "this page is answered by {0} now, not {1} (the VIP address moved): the settings are drawn again from {2}; {3} change(s) not saved were put aside",
+   "text": "tuto stránku teď obsluhuje {0}, ne {1} (VIP adresa se přesunula): nastavení se znovu načetla z {2}; {3} neuložených změn bylo zahozeno"
+  },
+  "p0989": {
+   "source": "token: {0}",
+   "text": "token: {0}"
+  },
+  "p1002": {
+   "source": "until {0}",
+   "text": "do {0}"
+  },
+  "p1005": {
+   "source": "upgrade to {0}",
+   "text": "aktualizace na {0}"
+  },
+  "p1006": {
+   "source": "used {0}",
+   "text": "použit {0}"
+  },
+  "p1007": {
+   "source": "used {0} · {1}",
+   "text": "použit {0} · {1}"
+  },
+  "p1010": {
+   "source": "waiting for deSEC's name servers to have the record - {0} so far, {1} s",
+   "text": "čekám, až záznam budou mít jmenné servery deSEC – zatím {0}, {1} s"
+  },
+  "p1016": {
+   "source": "waiting for {0} to start",
+   "text": "čekám, až začne {0}"
+  },
+  "p1017": {
+   "source": "waiting {0} s for DNS to carry it",
+   "text": "čekám {0} s, než se záznam v DNS rozšíří"
+  },
+  "p1022": {
+   "source": "written {0}",
+   "text": "zapsáno {0}"
+  },
+  "p1024": {
+   "source": "your columns could not be kept: {0}",
+   "text": "vaše sloupce nelze uložit: {0}"
+  },
+  "p1026": {
+   "source": "your settings were saved to {0} ({1} table layout(s))",
+   "text": "vaše nastavení bylo uloženo do {0} ({1} {1:rozvržení|rozvržení|rozvržení} tabulek)"
+  },
+  "p1028": {
+   "source": "{0} % · {1} of {2} node(s) done",
+   "text": "{0} % · hotovo {1} z {2} uzlů"
+  },
+  "p1029": {
+   "source": "{0} (+{1} step)",
+   "text": "{0} (+{1} krok)"
+  },
+  "p1036": {
+   "source": "{0} (the newest)",
+   "text": "{0} (nejnovější)"
+  },
+  "p1038": {
+   "source": "{0} ({1} step)",
+   "text": "{0} ({1} krok)"
+  },
+  "p1049": {
+   "source": "{0} - {1} clears it within a few seconds",
+   "text": "{0} – {1} to zruší během několika sekund"
+  },
+  "p1050": {
+   "source": "{0} / {1} names",
+   "text": "{0} / {1} jmen"
+  },
+  "p1052": {
+   "source": "{0} TXT is not seen yet by {1} - the CA is asked anyway",
+   "text": "{0} TXT zatím nevidí {1} – CA se zeptá i tak"
+  },
+  "p1053": {
+   "source": "{0} TXT is on {1} after {2} s; {3} s more for deSEC's other places",
+   "text": "{0} TXT je na {1} po {2} s; ještě {3} s pro ostatní místa deSEC"
+  },
+  "p1054": {
+   "source": "{0} TXT is on {1}; {2} s more for deSEC's other places",
+   "text": "{0} TXT je na {1}; ještě {2} s pro ostatní místa deSEC"
+  },
+  "p1055": {
+   "source": "{0} TXT is seen by {1}",
+   "text": "{0} TXT vidí {1}"
+  },
+  "p1056": {
+   "source": "{0} The filters above stay as they are.",
+   "text": "{0} Filtry nahoře zůstávají, jak jsou."
+  },
+  "p1057": {
+   "source": "{0} a page",
+   "text": "{0} na stránku"
+  },
+  "p1058": {
+   "source": "{0} accounts",
+   "text": "{0} {0:účet|účty|účtů}"
+  },
+  "p1063": {
+   "source": "{0} addresses",
+   "text": "{0} {0:adresa|adresy|adres}"
+  },
+  "p1078": {
+   "source": "{0} at {1} is ready",
+   "text": "{0} na {1} je připravena"
+  },
+  "p1083": {
+   "source": "{0} between it and the root",
+   "text": "{0} mezi ním a kořenem"
+  },
+  "p1090": {
+   "source": "{0} change(s) not saved yet",
+   "text": "{0} {0:změna|změny|změn} zatím {0:neuložena|neuloženy|neuloženo}"
+  },
+  "p1094": {
+   "source": "{0} changed their own password",
+   "text": "{0} si změnil heslo"
+  },
+  "p1108": {
+   "source": "{0} could not be read",
+   "text": "{0} nejde přečíst"
+  },
+  "p1109": {
+   "source": "{0} could not be read: {1}",
+   "text": "{0} nešlo přečíst: {1}"
+  },
+  "p1112": {
+   "source": "{0} days ago",
+   "text": "před {0} dny"
+  },
+  "p1113": {
+   "source": "{0} days left",
+   "text": "zbývá {0} {0:den|dny|dní}"
+  },
+  "p1114": {
+   "source": "{0} days {1} h",
+   "text": "{0} dní {1} h"
+  },
+  "p1117": {
+   "source": "{0} deleted {1}",
+   "text": "{0} smazal {1}"
+  },
+  "p1123": {
+   "source": "{0} digits, {1} s, {2}",
+   "text": "{0} číslic, {1} s, {2}"
+  },
+  "p1136": {
+   "source": "{0} emptied {1} at {2}",
+   "text": "{0} vyprázdnil {1} na {2}"
+  },
+  "p1138": {
+   "source": "{0} ended the sign-in of {1}",
+   "text": "{0} ukončil přihlášení {1}"
+  },
+  "p1139": {
+   "source": "{0} ended the sign-in of {1} from {2}",
+   "text": "{0} ukončil přihlášení {1} z {2}"
+  },
+  "p1148": {
+   "source": "{0} failed (SERVFAIL)",
+   "text": "{0} selhal (SERVFAIL)"
+  },
+  "p1149": {
+   "source": "{0} failed: {1}",
+   "text": "{0} selhalo: {1}"
+  },
+  "p1150": {
+   "source": "{0} fetched otp {1} from {2} (signed by {3}), ready to be put in",
+   "text": "{0} stáhl(a) otp {1} z {2} (podepsal {3}), připraveno k instalaci"
+  },
+  "p1157": {
+   "source": "{0} from {1} is signed out at once.",
+   "text": "{0} z {1} bude okamžitě odhlášen."
+  },
+  "p1159": {
+   "source": "{0} gave the second step ({1}) from {2}",
+   "text": "{0} zadal(a) druhý krok ({1}) z {2}"
+  },
+  "p1163": {
+   "source": "{0} gone",
+   "text": "{0} {0:chybí|chybí|chybí}"
+  },
+  "p1169": {
+   "source": "{0} h ago",
+   "text": "před {0} h"
+  },
+  "p1170": {
+   "source": "{0} had no second step set up",
+   "text": "{0} neměl druhý krok nastavený"
+  },
+  "p1171": {
+   "source": "{0} has every table as it comes: nothing to put back.",
+   "text": "{0} má všechny tabulky ve výchozím stavu: není co vracet."
+  },
+  "p1172": {
+   "source": "{0} has laid out {1} table(s) by hand. Put every one of them back as it comes: the widths, the order and the hidden columns. Nothing else of theirs changes.",
+   "text": "{0} si ručně upravil {1} {1:tabulku|tabulky|tabulek}. Vrátit všechny do výchozího stavu: šířky, pořadí i skryté sloupce. Nic jiného se nezmění."
+  },
+  "p1173": {
+   "source": "{0} has no second step set up: nothing to reset.",
+   "text": "{0} nemá druhý krok nastavený: není co resetovat."
+  },
+  "p1179": {
+   "source": "{0} has nobody by that name.",
+   "text": "{0} nikoho takového jména nemá."
+  },
+  "p1184": {
+   "source": "{0} here already",
+   "text": "{0} už tu je"
+  },
+  "p1193": {
+   "source": "{0} in maintenance",
+   "text": "{0} v údržbě"
+  },
+  "p1194": {
+   "source": "{0} in that file: {1}",
+   "text": "{0} v tom souboru: {1}"
+  },
+  "p1195": {
+   "source": "{0} in the directory",
+   "text": "{0} v adresáři"
+  },
+  "p1197": {
+   "source": "{0} in use",
+   "text": "{0} se používá"
+  },
+  "p1201": {
+   "source": "{0} is a piece of text",
+   "text": "{0} je text"
+  },
+  "p1202": {
+   "source": "{0} is a piece of text here",
+   "text": "{0} je zde text"
+  },
+  "p1205": {
+   "source": "{0} is at {1}",
+   "text": "{0} je na {1}"
+  },
+  "p1209": {
+   "source": "{0} is deleted",
+   "text": "{0} je smazán"
+  },
+  "p1210": {
+   "source": "{0} is far bigger than any certificate file",
+   "text": "{0} je mnohem větší než jakýkoli soubor s certifikátem"
+  },
+  "p1211": {
+   "source": "{0} is going on already",
+   "text": "{0} už probíhá"
+  },
+  "p1222": {
+   "source": "{0} is not a name or an address",
+   "text": "{0} není jméno ani adresa"
+  },
+  "p1223": {
+   "source": "{0} is not a number",
+   "text": "{0} není číslo"
+  },
+  "p1225": {
+   "source": "{0} is not a setting this version knows",
+   "text": "{0} není nastavení, které tato verze zná"
+  },
+  "p1230": {
+   "source": "{0} is not answering.",
+   "text": "{0} neodpovídá."
+  },
+  "p1235": {
+   "source": "{0} is not on this machine",
+   "text": "{0} na tomto stroji není"
+  },
+  "p1238": {
+   "source": "{0} is not something this setting can hold",
+   "text": "{0} toto nastavení nemůže obsahovat"
+  },
+  "p1240": {
+   "source": "{0} is not there",
+   "text": "{0} chybí"
+  },
+  "p1241": {
+   "source": "{0} is not yes or no",
+   "text": "{0} není ano ani ne"
+  },
+  "p1242": {
+   "source": "{0} is off",
+   "text": "{0} je vypnuto"
+  },
+  "p1247": {
+   "source": "{0} is signed out at once.",
+   "text": "{0} bude okamžitě odhlášen."
+  },
+  "p1256": {
+   "source": "{0} is upgraded to {1}",
+   "text": "{0} je aktualizován na {1}"
+  },
+  "p1259": {
+   "source": "{0} keeps",
+   "text": "{0} drží"
+  },
+  "p1260": {
+   "source": "{0} keeps {1} certificate(s)",
+   "text": "{0} má {1} {1:certifikát|certifikáty|certifikátů}"
+  },
+  "p1262": {
+   "source": "{0} left",
+   "text": "zbývá {0}"
+  },
+  "p1265": {
+   "source": "{0} let {1} try again at once",
+   "text": "{0} dovolil(a) {1} hned zkusit znovu"
+  },
+  "p1266": {
+   "source": "{0} line(s)",
+   "text": "{0} {0:řádek|řádky|řádků}"
+  },
+  "p1268": {
+   "source": "{0} locked out",
+   "text": "zablokováno: {0}"
+  },
+  "p1275": {
+   "source": "{0} looked up",
+   "text": "{0} vyhledáno"
+  },
+  "p1283": {
+   "source": "{0} made the account {1} ({2})",
+   "text": "{0} vytvořil účet {1} ({2})"
+  },
+  "p1291": {
+   "source": "{0} min ago",
+   "text": "před {0} min"
+  },
+  "p1293": {
+   "source": "{0} more",
+   "text": "a {0} dalších"
+  },
+  "p1297": {
+   "source": "{0} must be between {1} and {2}",
+   "text": "{0} musí být mezi {1} a {2}"
+  },
+  "p1306": {
+   "source": "{0} now.",
+   "text": "teď {0}."
+  },
+  "p1310": {
+   "source": "{0} of {1} picked",
+   "text": "vybráno {0} z {1}"
+  },
+  "p1311": {
+   "source": "{0} of {1} switched on",
+   "text": "{0} z {1} zapnuto"
+  },
+  "p1312": {
+   "source": "{0} of {1} tried",
+   "text": "{0} z {1} vyzkoušeno"
+  },
+  "p1315": {
+   "source": "{0} older version(s) it may not go back to",
+   "text": "{0} starších verzí, na které se nelze vrátit"
+  },
+  "p1317": {
+   "source": "{0} only",
+   "text": "jen {0}"
+  },
+  "p1318": {
+   "source": "{0} or later,",
+   "text": "{0} nebo novější,"
+  },
+  "p1320": {
+   "source": "{0} out of service",
+   "text": "{0} mimo provoz"
+  },
+  "p1323": {
+   "source": "{0} put the columns of every table back as they come",
+   "text": "{0} vrátil sloupce všech tabulek do výchozího stavu"
+  },
+  "p1324": {
+   "source": "{0} put the columns of every table back as they come for {1}",
+   "text": "{0} vrátil sloupce všech tabulek do výchozího stavu uživateli {1}"
+  },
+  "p1331": {
+   "source": "{0} read their own settings back from a file ({1})",
+   "text": "{0} načetl svá nastavení ze souboru ({1})"
+  },
+  "p1334": {
+   "source": "{0} refused",
+   "text": "{0} odmítnuto"
+  },
+  "p1335": {
+   "source": "{0} refused to answer",
+   "text": "{0} odmítl odpovědět"
+  },
+  "p1336": {
+   "source": "{0} removed the account {1}",
+   "text": "{0} odebral účet {1}"
+  },
+  "p1342": {
+   "source": "{0} reset the second step of signing in of {1}{2}",
+   "text": "{0} resetoval(a) druhý krok přihlášení účtu {1}{2}"
+  },
+  "p1345": {
+   "source": "{0} row(s)",
+   "text": "{0} {0:řádek|řádky|řádků}"
+  },
+  "p1347": {
+   "source": "{0} runs {1}, newer than {2}",
+   "text": "{0} běží na {1}, novější než {2}"
+  },
+  "p1348": {
+   "source": "{0} s ago",
+   "text": "před {0} s"
+  },
+  "p1349": {
+   "source": "{0} s more for deSEC's other places of the world, then the CA is asked",
+   "text": "ještě {0} s pro ostatní místa deSEC ve světě, pak se zeptá CA"
+  },
+  "p1358": {
+   "source": "{0} sent",
+   "text": "odesláno {0}"
+  },
+  "p1359": {
+   "source": "{0} sent a package that was refused: {1}",
+   "text": "{0} poslal balíček, který byl odmítnut: {1}"
+  },
+  "p1368": {
+   "source": "{0} sent otp {1} (signed by {2}), ready to be put in",
+   "text": "{0} poslal otp {1} (podepsal {2}), připraveno k nasazení"
+  },
+  "p1378": {
+   "source": "{0} set a new password for {1}",
+   "text": "{0} nastavil nové heslo pro {1}"
+  },
+  "p1379": {
+   "source": "{0} set a new password for {1}; their sign-ins are ended",
+   "text": "{0} nastavil nové heslo pro {1}; jeho přihlášení jsou ukončena"
+  },
+  "p1385": {
+   "source": "{0} set up the second step of signing in: {1}",
+   "text": "{0} si nastavil(a) druhý krok přihlášení: {1}"
+  },
+  "p1388": {
+   "source": "{0} set up {1} at {2}",
+   "text": "{0} nastavil {1} na {2}"
+  },
+  "p1389": {
+   "source": "{0} shown",
+   "text": "{0} zobrazeno"
+  },
+  "p1390": {
+   "source": "{0} signed in",
+   "text": "{0} přihlášeno"
+  },
+  "p1392": {
+   "source": "{0} signed in from {1}",
+   "text": "{0} se přihlásil z {1}"
+  },
+  "p1393": {
+   "source": "{0} signed in from {1} - the second step to give",
+   "text": "{0} se přihlásil(a) z {1} – zbývá druhý krok"
+  },
+  "p1394": {
+   "source": "{0} signed in from {1} - the second step to set up",
+   "text": "{0} se přihlásil(a) z {1} – zbývá nastavit druhý krok"
+  },
+  "p1400": {
+   "source": "{0} steps",
+   "text": "{0} kroků"
+  },
+  "p1410": {
+   "source": "{0} switched {1} off",
+   "text": "{0} vypnul {1}"
+  },
+  "p1411": {
+   "source": "{0} switched {1} on",
+   "text": "{0} zapnul {1}"
+  },
+  "p1412": {
+   "source": "{0} table(s) laid out",
+   "text": "{0} {0:tabulka uspořádána|tabulky uspořádány|tabulek uspořádáno}"
+  },
+  "p1413": {
+   "source": "{0} table(s) laid out by you",
+   "text": "{0} {0:tabulka|tabulky|tabulek} s vaším rozvržením"
+  },
+  "p1414": {
+   "source": "{0} tables, {1} tokens, {2} accounts",
+   "text": "{0} tabulek, {1} tokenů, {2} účtů"
+  },
+  "p1424": {
+   "source": "{0} thing(s) stand against it. Set them as said, or make one an exception with its switch - then switch it on again.",
+   "text": "Brání tomu {0} věc(í). Nastavte je podle popisu, nebo z některé udělejte výjimku jejím přepínačem – pak ji zapněte znovu."
+  },
+  "p1428": {
+   "source": "{0} to go",
+   "text": "zbývá {0}"
+  },
+  "p1460": {
+   "source": "{0} tries again within a few seconds",
+   "text": "{0} to během několika sekund zkusí znovu"
+  },
+  "p1462": {
+   "source": "{0} versions there are newer than this one - choose which to go to; the newest is chosen.",
+   "text": "Na adrese je {0} verzí novějších než tato – vyberte, na kterou přejít; vybraná je nejnovější."
+  },
+  "p1463": {
+   "source": "{0} waiting",
+   "text": "{0} čeká"
+  },
+  "p1467": {
+   "source": "{0} was made ({1}): {2}",
+   "text": "vznikl(a) {0} ({1}): {2}"
+  },
+  "p1480": {
+   "source": "{0} — not kept by this version, left alone",
+   "text": "{0} — tato verze neukládá, ponecháno beze změny"
+  },
+  "p1485": {
+   "source": "{0}, switched off, tried to sign in from {1}",
+   "text": "{0}, vypnutý účet, se pokusil přihlásit z {1}"
+  },
+  "p1489": {
+   "source": "{0}: at most {1} characters",
+   "text": "{0}: nejvýš {1} znaků"
+  },
+  "p1498": {
+   "source": "{0}: no line breaks or other control characters",
+   "text": "{0}: bez zalomení řádků a jiných řídicích znaků"
+  },
+  "p1511": {
+   "source": "{0}: {1} characters at most",
+   "text": "{0}: nejvýš {1} znaků"
+  },
+  "p1512": {
+   "source": "{0}: {1} is not one of {2}",
+   "text": "{0}: {1} není jedno z {2}"
+  },
+  "p1517": {
+   "source": "{0}:{1} left",
+   "text": "zbývá {0}:{1}"
+  },
+  "p1518": {
+   "source": "{0}{1} right now.",
+   "text": "{0}{1} právě teď."
+  },
+  "p1519": {
+   "source": "· running: {0}",
+   "text": "· běží: {0}"
+  },
+  "p1520": {
+   "source": "· {0} not read",
+   "text": "· {0} nenačteno"
+  },
+  "p1521": {
+   "source": "· {0} refused",
+   "text": "· {0} odmítnuto"
+  },
+  "p1522": {
+   "source": "· {0}s later",
+   "text": "· o {0} s později"
+  },
+  "xp0001": {
+   "source": "{0} free",
+   "text": "{0} volno"
+  },
+  "xp0002": {
+   "source": "updated {0} ago",
+   "text": "aktualizováno před {0}"
+  },
+  "xp0003": {
+   "source": "web {0} · server {1}",
+   "text": "web {0} · server {1}"
+  },
+  "xp0004": {
+   "source": "data.json age {0}s · collector runs as root via systemd timer · disks are never woken to draw this page · auto-refresh 60s",
+   "text": "stáří data.json {0} s · kolektor běží jako root · disky se kvůli vykreslení stránky nikdy nebudí · obnova každých 60 s"
+  },
+  "xp0005": {
+   "source": "This USB bridge does not report power state, so it is worked out from disk activity (idle for {0}).",
+   "text": "Tento USB most nehlásí stav napájení, proto se odvozuje z aktivity disku (nečinný {0})."
+  },
+  "xp0006": {
+   "source": "{0} disks awake",
+   "text": "{0} disků vzhůru"
+  },
+  "xp0007": {
+   "source": "{0} process(es) · {1} % CPU total. Background jobs are triggered by your \"asap\" settings whenever new media is added.",
+   "text": "{0} {0:proces|procesy|procesů} · celkem {1} % CPU. Úlohy na pozadí spouští vaše nastavení „asap“ při každém přidání nových médií."
+  },
+  "xp0008": {
+   "source": "{0} h of history so far",
+   "text": "zatím {0} h historie"
+  },
+  "xp0009": {
+   "source": "{0} min of history so far",
+   "text": "zatím {0} min historie"
+  },
+  "xp0010": {
+   "source": "{0} samples loaded",
+   "text": "načteno {0} vzorků"
+  },
+  "xp0011": {
+   "source": "plexmon {0} started on {1}",
+   "text": "plexmon {0} spuštěn na {1}"
+  },
+  "xp0012": {
+   "source": "the dashboard",
+   "text": "dashboard"
+  }
+ },
+ "rich": {
+  "r0017": {
+   "source": "<code>https://auth.acme-dns.example.cz</code>; _acme-challenge.NAME is a CNAME to the subdomain below.",
+   "text": "<code>https://auth.acme-dns.example.cz</code>; _acme-challenge.JMÉNO je CNAME na subdoménu níže."
+  },
+  "r0019": {
+   "source": "A GitHub folder (<code>https://github.com/OWNER/REPO/tree/BRANCH/FOLDER</code>), a web page or folder listing that links to the packages, or one package's own address. HTTPS only; a proxy is taken from https_proxy in the service's environment.",
+   "text": "Složka na GitHubu (<code>https://github.com/OWNER/REPO/tree/BRANCH/FOLDER</code>), webová stránka nebo výpis složky s odkazy na balíčky, nebo adresa jednoho balíčku. Jen HTTPS; proxy se bere z https_proxy v prostředí služby."
+  },
+  "r0032": {
+   "source": "A token from deSEC (Token management) - one that may change this domain’s records. Kept sealed.",
+   "text": "Token od deSEC (Token management) – takový, který smí měnit záznamy této domény. Uložen zapečetěný."
+  },
+  "r0034": {
+   "source": "A zone the records go into instead of the name’s own (<code>acme.example.net</code>), each name with a CNAME to it in your DNS - <i>In your DNS</i> above says which. Empty: _acme-challenge.NAME itself.",
+   "text": "Zóna, do které jdou záznamy místo vlastní zóny jména (<code>acme.example.net</code>), každé jméno s CNAME na ni ve vaší DNS - <i>Ve vaší DNS</i> výše říká které. Prázdné: přímo _acme-challenge.JMÉNO."
+  },
+  "r0049": {
+   "source": "Every table on these pages can be laid out the way you read it. Press your name at the top right and switch on <b>Edit the columns</b>; then drag the edge of a column's heading to make it wider or narrower, and drag the heading itself to move the column. The right button on a heading hides a column, brings a hidden one back or adds an empty one for room. Twice on an edge puts that table's widths back. Each change is kept with your account the moment you let go, not in this browser, and comes back wherever you sign in; nobody else's tables change. The switch is for this sign-in only: signing out, the sign-in running out or the service restarting turn it off again, and the columns stay as you left them.",
+   "text": "Každou tabulku na těchto stránkách si můžete uspořádat podle sebe. Klikněte na své jméno vpravo nahoře a zapněte <b>Upravit sloupce</b>; pak tažením okraje záhlaví sloupec rozšíříte nebo zúžíte a tažením samotného záhlaví ho přesunete. Pravé tlačítko na záhlaví sloupec skryje, vrátí skrytý nebo přidá prázdný pro místo. Dvojklik na okraj vrátí šířky té tabulky. Každá změna se uloží k vašemu účtu v okamžiku, kdy pustíte – ne v tomto prohlížeči – a vrátí se, ať se přihlásíte kdekoli; tabulky nikoho jiného se nezmění. Přepínač platí jen pro toto přihlášení: odhlášení, vypršení přihlášení nebo restart služby ho vypnou a sloupce zůstanou, jak jste je nechali."
+  },
+  "r0091": {
+   "source": "The DNS servers asked for everything on this page: the address of the CA and of the DNS API, <i>Check DNS</i>, <i>Try port 80</i>, and whether the TXT record can be seen before the CA is asked - <code>1.1.1.1, 9.9.9.9</code> to see what the internet sees. Empty: the machine’s own (/etc/resolv.conf).",
+   "text": "DNS servery, kterých se ptá vše na této stránce: adresa CA a DNS API, <i>Zkontrolovat DNS</i>, <i>Vyzkoušet port 80</i> a zda je TXT záznam vidět, než se zeptá CA - <code>1.1.1.1, 9.9.9.9</code>, abyste viděli, co vidí internet. Prázdné: vlastní DNS stroje (/etc/resolv.conf)."
+  },
+  "r0099": {
+   "source": "The directory of another ACME CA, <code>https://ca.example.cz/acme/acme/directory</code>.",
+   "text": "Directory jiné ACME CA, <code>https://ca.example.cz/acme/acme/directory</code>."
+  },
+  "r0112": {
+   "source": "The primary DNS server of the zone, <code>ns1.example.cz</code> or with a port <code>10.0.0.53:53</code>.",
+   "text": "Primární DNS server zóny, <code>ns1.example.cz</code> nebo s portem <code>10.0.0.53:53</code>."
+  },
+  "r0118": {
+   "source": "This account may not change the settings. A full administrator can change that under <i>Accounts</i>.",
+   "text": "Tento účet nesmí měnit nastavení. Plný administrátor to může změnit v sekci <i>Účty</i>."
+  },
+  "r0130": {
+   "source": "Where the record goes, <code>example.cz</code>. Empty: as the server finds it.",
+   "text": "Kam záznam patří, <code>example.cz</code>. Prázdné: jak to server najde."
+  },
+  "r0139": {
+   "source": "Your domain at deSEC, <code>example.dedyn.io</code> (free) or one of your own whose DNS is there. The records go into it; your DNS has a CNAME to it for each name - <i>In your DNS</i> above says which.",
+   "text": "Vaše doména u deSEC, <code>example.dedyn.io</code> (zdarma) nebo vlastní, jejíž DNS tam je. Záznamy jdou do ní; vaše DNS má na ni CNAME pro každé jméno - <i>Ve vaší DNS</i> výše říká které."
+  },
+  "r0141": {
+   "source": "this node’s own - every node of the cluster has one of its own; the others’ are under the box, and all of them in Settings → High availability",
+   "text": "vlastní nastavení tohoto uzlu – každý uzel clusteru má své; ostatních jsou pod polem a všechny v Nastavení → Vysoká dostupnost"
+  },
+  "xr0001": {
+   "source": "Write everything into <code>/var/log/plexmon/plexmon.log</code>. Loud: for finding something out, not for leaving on.",
+   "text": "Zapisovat vše do <code>/var/log/plexmon/plexmon.log</code>. Hlučné: na zjištění něčeho, ne na trvalé zapnutí."
+  },
+  "xr0002": {
+   "source": "The name Plex announces for its custom certificate, <code>plex.example.cz</code>. Empty: the certificate’s own name (CN).",
+   "text": "Jméno, které Plex ohlašuje pro svůj vlastní certifikát, <code>plex.example.cz</code>. Prázdné: vlastní jméno certifikátu (CN)."
+  },
+  "xr0003": {
+   "source": "The name the certificate is for - the one people type to reach Plex, <code>plex.example.cz</code>. Empty: the name of the certificate it has now, else its full host name.",
+   "text": "Jméno, pro které certifikát je - to, které lidé píší, aby se dostali k Plexu, <code>plex.example.cz</code>. Prázdné: jméno certifikátu, který má teď, jinak jeho plné jméno hostitele."
+  },
+  "xr0004": {
+   "source": "The port on 127.0.0.1 the Settings pages ask this daemon on. The pages read it from <code>/run/plexmon/api-port</code>, written when the daemon starts.",
+   "text": "Port na 127.0.0.1, na kterém se stránky Nastavení ptají tohoto démona. Stránky ho čtou z <code>/run/plexmon/api-port</code>, který démon zapíše při startu."
+  },
+  "xr0005": {
+   "source": "As the DNS server knows it, <code>plexmon-acme.</code>; allowed to update _acme-challenge records only.",
+   "text": "Jak ho zná DNS server, <code>plexmon-acme.</code>; smí aktualizovat jen záznamy _acme-challenge."
+  },
+  "xr0006": {
+   "source": "Off: nothing on these pages offers going back to an older version. On: Settings → Upgrades shows <i>Going back to an older version</i> - only the versions it is safe to go back to, each with what changed in it. On the server, root can always: plexmon --downgrade.",
+   "text": "Vypnuto: nic na těchto stránkách nenabízí návrat ke starší verzi. Zapnuto: Nastavení → Aktualizace ukazuje <i>Návrat ke starší verzi</i> - jen verze, na které je bezpečné se vrátit, každou s tím, co se v ní změnilo. Na serveru root může vždy: plexmon --downgrade."
+  }
+ }
+}

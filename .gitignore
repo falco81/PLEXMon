@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+# what the daemon writes beside the dashboard - never part of the package
+web/data.json
+web/sessions.json
+web/history-full.json
+web/art-*.jpg
+# the private release key never goes into the repository
+*.key

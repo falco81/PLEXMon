@@ -1,0 +1,40 @@
+# /etc/systemd/system/plexmon.service - written by plexmon's install.sh
+#
+# The Plex server's monitoring daemon (SMART, temperatures, now playing,
+# history - the dashboard at /smart/) and plexmon's Settings (accounts,
+# certificates and TLS, ACME, upgrades - /smart/settings/), one process.
+# It replaces plex-status.service; that name still works (Alias=).
+#
+# Runs as root: reading SMART needs it, spinning a disk up on request too,
+# and so does putting a certificate into nginx and Plex Media Server. Both
+# APIs are bound to 127.0.0.1 and need the token only the web server's group
+# may read. Your own limits (systemctl edit plexmon) go into
+# /etc/systemd/system/plexmon.service.d/ - install.sh carries the ones of
+# plex-status.service.d/ over.
+[Unit]
+Description=plexmon - Plex server monitoring and Settings (dashboard, certificates, ACME)
+After=network-online.target plexmediaserver.service nginx.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=@PYTHON@ /usr/local/lib/plexmon/plexmon.py
+Restart=on-failure
+RestartSec=5
+
+CPUQuota=60%
+MemoryMax=400M
+Nice=5
+IOSchedulingClass=idle
+
+ProtectSystem=full
+ReadWritePaths=/var/www/html/smart /var/lib/plex-status /run/plex-status
+ReadWritePaths=/var/lib/plexmon /var/log/plexmon /etc/plexmon /etc/nginx /var/www/plexmon-acme
+ReadWritePaths=-/var/lib/plexmediaserver /etc/profile.d
+RuntimeDirectory=plex-status plexmon
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=no
+
+[Install]
+WantedBy=multi-user.target
+Alias=plex-status.service
