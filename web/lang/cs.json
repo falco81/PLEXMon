@@ -8391,6 +8391,14 @@
   "xs0846": {
    "source": "Refresh all metadata",
    "text": "Obnovit všechna metadata"
+  },
+  "xs0847": {
+   "source": "plexmon is starting again after the upgrade - the page waits for it.",
+   "text": "plexmon se po aktualizaci spouští znovu - stránka na něj čeká."
+  },
+  "xs0848": {
+   "source": "The server is restarting - the page waits for it.",
+   "text": "Server se restartuje - stránka na něj čeká."
   }
  },
  "patterns": {
@@ -10641,6 +10649,10 @@
   "xp0179": {
    "source": "F9 - Plex downloads the metadata, posters and backgrounds of every item of {0} again (asked first).",
    "text": "F9 - Plex znovu stáhne metadata, plakáty a pozadí každé položky knihovny {0} (nejdřív se zeptá)."
+  },
+  "xp0180": {
+   "source": "plexmon is starting again after the upgrade to {0} - the page waits for it.",
+   "text": "plexmon se po aktualizaci na {0} spouští znovu - stránka na něj čeká."
   }
  },
  "rich": {

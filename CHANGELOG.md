@@ -4,6 +4,17 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.4.5 - 2026-10-31
+
+- **No red error during an upgrade.** An upgrade restarts the daemon, and for
+  those seconds the page's ask for the status found nobody and showed *The
+  daemon is not answering* in red, though all went well. plexmon is one
+  server, so this is expected: during an upgrade (or a restart asked on these
+  pages) the page says calmly, in blue, *plexmon is starting again after the
+  upgrade to X - the page waits for it*, and goes on once it answers.
+  Outside of them the red error comes only after two misses in a row, not
+  after one blip.
+
 ## 2.4.4 - 2026-10-31
 
 - **Plex library: plex_tools' F5 and F9 over the whole library**, named and in

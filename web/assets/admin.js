@@ -114,6 +114,7 @@ function tick() {
   if (!LIVE || document.hidden) return;
   api('status').then(function (s) {
     $('offline').hidden = true;
+    $('offline').className = 'offline';
     var moved = s.serial !== SERIAL || REDRAW_OWED;
     SERIAL = s.serial;
     paintHeader(s);
@@ -125,12 +126,35 @@ function tick() {
     } else if (moved && TAB === 'events') {
       REDRAW_OWED = true;
     }
+    TICK_MISSES = 0;
   }).catch(function (e) {
+    /* One server (2.4.5): an upgrade, or a restart asked on these pages,
+       restarts the daemon - for those seconds the page says so calmly and
+       waits; otherwise only two misses in a row are an error, not one blip. */
+    TICK_MISSES += 1;
     var o = $('offline');
+    var st = STATUS || {};
+    var m = st.maintenance || {};
+    var up = (typeof UP !== 'undefined' && UP.last && UP.last.plan) || null;
+    var upgrading = (m.on && m.by === 'upgrade') || !!(up && up.state === 'running');
+    var restarting = !!(typeof PW !== 'undefined' && PW && PW.d && PW.d.busy);
+    if (upgrading || restarting) {
+      o.className = 'offline calm';
+      o.hidden = false;
+      var ver = (/the upgrade to (\S+)/.exec(m.why || '') || [])[1] || (up && up.state === 'running' && up.version) || '';
+      o.textContent = upgrading
+        ? (ver ? 'plexmon is starting again after the upgrade to ' + ver + ' - the page waits for it.'
+               : 'plexmon is starting again after the upgrade - the page waits for it.')
+        : 'The server is restarting - the page waits for it.';
+      return;
+    }
+    if (TICK_MISSES < 2) return;
+    o.className = 'offline';
     o.hidden = false;
     o.textContent = 'The daemon is not answering: ' + (e.message || e);
   });
 }
+var TICK_MISSES = 0;
 $('updated').onclick = function () {
   LIVE = !LIVE;
   $('updated').classList.toggle('paused', !LIVE);

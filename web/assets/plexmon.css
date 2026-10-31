@@ -3381,3 +3381,6 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .pem-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 2px}
 .pem-bar .pem-said{margin-left:4px}
 .pem-said.good{color:var(--ok)} .pem-said.bad{color:var(--crit)}
+
+/* The daemon starting again after an upgrade or a restart (2.4.5): expected, said calmly. */
+.offline.calm{background:var(--info-bg, rgba(56,139,253,.12));border-color:rgba(56,139,253,.4);color:var(--info)}
