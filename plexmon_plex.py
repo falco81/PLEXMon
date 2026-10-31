@@ -2004,7 +2004,7 @@ class _OMDbRT(object):
 
 class _TVmaze(object):
     name = 'tvmaze'
-    BASE = 'https://api.tvmaze.com'
+    BASE = os.environ.get('PLEXMON_TVMAZE_URL') or 'https://api.tvmaze.com'
 
     def __init__(self):
         self.pace, self.cache = _Pace(15, 10.0), {}
@@ -2126,10 +2126,31 @@ def _pick(found, order):
     return None, None
 
 
-def ratings_preview(store, lib, rks, overwrite, by):
-    """What the ratings of the items picked would become - a show is the show,
-    its seasons and every episode. Nothing is written."""
-    s = section(lib)
+def badge_source(image, audience=False):
+    """Which database a badge of Plex stands for: imdb://image.rating -> imdb,
+    themoviedb://... -> tmdb, rottentomatoes://... -> rottentomatoes."""
+    im = str(image or '').lower()
+    if im.startswith('imdb'):
+        return 'imdb'
+    if im.startswith('themoviedb') or im.startswith('tmdb'):
+        return 'tmdb'
+    if im.startswith('rottentomatoes'):
+        # The audience score of Rotten Tomatoes is not in OMDb: only the
+        # Tomatometer (a critic score) can be put behind a tomato.
+        return None if audience else 'rottentomatoes'
+    return None
+
+
+def _order(first, order):
+    return ([first] if first else []) + [n for n in order if n != first]
+
+
+def ratings_preview(store, lib, rks, overwrite, by, expand=True):
+    """What the ratings of the items picked would become - a movie; a show is
+    the show, its seasons and every episode; a season its episodes; an
+    episode itself. Each number goes where the badge Plex shows for that
+    field already stands for the same database (an IMDb badge gets IMDb's).
+    Nothing is written."""
     provs = providers()
     if not provs:
         raise ValueError('no source of ratings: give a TMDB or OMDb key (or switch TVmaze on)')
@@ -2137,38 +2158,49 @@ def ratings_preview(store, lib, rks, overwrite, by):
     if not rks:
         raise ValueError('nothing picked')
 
+    def row(m, label=None):
+        t = m.get('type')
+        r = {'rk': str(m.get('ratingKey')), 'tn': SECTION_TYPE_NUM.get(t, 1), 'md': m,
+             'thumb': m.get('thumb') or m.get('parentThumb') or '', 'season': None,
+             'number': None, 'gk': str(m.get('ratingKey')),
+             'lib': str(m.get('librarySectionID') or lib or '')}
+        if t == 'season':
+            r.update(gk=str(m.get('parentRatingKey')), season=m.get('index'),
+                     label=label or '%s · Season %s' % (m.get('parentTitle') or '', m.get('index')))
+        elif t == 'episode':
+            r.update(gk=str(m.get('grandparentRatingKey')), season=m.get('parentIndex'),
+                     number=m.get('index'),
+                     label=label or '%s · %s' % (m.get('grandparentTitle') or '', ep_label(m)))
+        else:
+            r['label'] = label or (m.get('title') or '') + (' (%s)' % m['year'] if m.get('year')
+                                                            else '')
+        return r
+
     def work():
         step(0, 0, 'what is picked is read')
-        rows = []
         md_map = metadata_many(rks)
+        rows, seen = [], set()
         for k in rks:
             m = md_map.get(k)
-            if not m:
+            if not m or k in seen:
                 continue
-            rows.append({'rk': k, 'tn': SECTION_TYPE_NUM.get(m.get('type'), 1), 'md': m,
-                         'label': m.get('title') + (' (%s)' % m['year'] if m.get('year') else ''),
-                         'gk': k, 'season': None, 'number': None, 'thumb': m.get('thumb')})
-        if s['type'] == 'show':
-            shows = set(rks)
-            extra = []
-            for show in rks:
-                for sea in children(show):
-                    extra.append({'rk': str(sea.get('ratingKey')), 'tn': 3, 'gk': show,
-                                  'season': sea.get('index'), 'number': None,
-                                  'label': '%s · Season %s' % (sea.get('parentTitle') or '',
-                                                                sea.get('index')),
-                                  'thumb': sea.get('thumb')})
-                for ep in all_leaves(show):
-                    extra.append({'rk': str(ep.get('ratingKey')), 'tn': 4, 'gk': show,
-                                  'season': ep.get('parentIndex'), 'number': ep.get('index'),
-                                  'label': '%s · %s' % (ep.get('grandparentTitle') or '',
-                                                        ep_label(ep)),
-                                  'thumb': ep.get('thumb')})
-            more = metadata_many([e['rk'] for e in extra], stop=stopped)
-            for e in extra:
-                e['md'] = more.get(e['rk']) or {}
-            rows += extra
-            del shows
+            seen.add(k)
+            rows.append(row(m))
+            if not expand or m.get('type') not in ('show', 'season'):
+                continue
+            under = []
+            if m.get('type') == 'show':
+                under += [str(c.get('ratingKey')) for c in children(k)]
+            under += [str(e.get('ratingKey')) for e in all_leaves(k)]
+            more = metadata_many([u for u in under if u not in seen], stop=stopped)
+            for u in under:
+                if u in more and u not in seen:
+                    seen.add(u)
+                    rows.append(row(more[u]))
+        # The ids another database knows live on the movie or the show.
+        need = sorted({r['gk'] for r in rows if r['gk'] and r['gk'] not in md_map})
+        if need:
+            md_map.update(metadata_many(need))
         ids_by = {k: ext_ids(m) for k, m in md_map.items()}
         plan = []
         step(0, len(rows), 'the sources are asked')
@@ -2178,18 +2210,48 @@ def ratings_preview(store, lib, rks, overwrite, by):
             m = r.get('md') or {}
             cur, aud = current_rating(m, 'critic'), current_rating(m, 'audience')
             ids = ids_by.get(r['gk']) or ext_ids(m)
-            e = {'rk': r['rk'], 'label': r['label'], 'tn': r['tn'], 'cur': cur, 'aud': aud,
-                 'thumb': r.get('thumb') or '', 'status': 'no match' if not ids else 'kept'}
+            show_md = md_map.get(r['gk']) or {}
+            c_badge = badge_source(m.get('ratingImage') or show_md.get('ratingImage'))
+            a_badge = badge_source(m.get('audienceRatingImage') or
+                                   show_md.get('audienceRatingImage'), audience=True)
+            e = {'rk': r['rk'], 'lib': r['lib'], 'label': r['label'], 'tn': r['tn'],
+                 'cur': cur, 'aud': aud, 'thumb': r.get('thumb') or '',
+                 'cur_src': c_badge, 'aud_src': a_badge, 'badges': rating_bits(m),
+                 'status': 'no match' if not ids else 'kept'}
             if ids:
                 found = _gather(provs, r['tn'], ids, r['season'], r['number'])
-                nr, sr = _pick(found, RATING_ORDER)
-                na, sa = _pick(found, AUDIENCE_ORDER)
+                # A field whose badge says a database takes that database's
+                # number or nothing - TVmaze's 8.7 under an IMDb badge would
+                # be a lie. A field without a badge takes the best there is.
+                has_c = bool(m.get('ratingImage') or show_md.get('ratingImage'))
+                has_a = bool(m.get('audienceRatingImage') or show_md.get('audienceRatingImage'))
+                if c_badge:
+                    nr, sr = (found[c_badge], c_badge) if found.get(c_badge) else (None, None)
+                elif has_c and cur is not None:
+                    nr, sr = None, None
+                else:
+                    nr, sr = _pick(found, RATING_ORDER)
+                if a_badge:
+                    na, sa = (found[a_badge], a_badge) if found.get(a_badge) else (None, None)
+                elif has_a and aud is not None:
+                    na, sa = None, None
+                else:
+                    na, sa = _pick(found, AUDIENCE_ORDER)
+                if sr and sr == sa and not a_badge:
+                    # One database in both fields says nothing twice: the
+                    # audience field takes the next one.
+                    na, sa = _pick({k: v for k, v in found.items() if k != sr},
+                                   _order(a_badge, AUDIENCE_ORDER))
                 e['found'] = found
                 if overwrite or (cur is None and aud is None):
-                    if nr is not None or na is not None:
+                    same = (nr is None or (cur is not None and abs(cur - nr) < 0.05)) and \
+                        (na is None or (aud is not None and abs(aud - na) < 0.05))
+                    if (nr is not None or na is not None) and not same:
                         e.update(new=nr, new_src=sr, new_aud=na, new_aud_src=sa,
                                  status='update' if (cur is not None or aud is not None)
                                  else 'add')
+                    elif same and (nr is not None or na is not None):
+                        e['status'] = 'same'
             plan.append(e)
             step(i, None, r['label'])
         ident = os.urandom(6).hex()
@@ -2227,13 +2289,13 @@ def ratings_apply(store, plan_id, lock, only, by):
                 params['audienceRating.value'] = '%.1f' % float(e['new_aud'])
                 params['audienceRating.locked'] = '1' if lock else '0'
             try:
-                put('/library/sections/%s/all' % lib, params)
+                put('/library/sections/%s/all' % (e.get('lib') or lib), params)
                 ok += 1
             except PlexError as ex:
                 fail += 1
                 step(line='✗ %s: %s' % (e['label'], ex))
             step(i)
-        forget(lib)
+        forget()
         event(store, '%s wrote %d rating(s)%s%s' % (by, ok, ' (locked)' if lock else '',
                                                    ', %d failed' % fail if fail else ''), by)
         return {'ok': ok, 'failed': fail}

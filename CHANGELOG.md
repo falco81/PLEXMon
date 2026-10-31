@@ -4,6 +4,24 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.1.3 - 2026-10-31
+
+- **Ratings on every title**: a *Ratings* button on the card of a movie, a show
+  (the show, its seasons and every episode) and an episode, and *Ratings of
+  the season*. Either Plex is asked for its own ratings again (a refresh: its
+  IMDb / Rotten Tomatoes / TMDB badges anew), or the numbers of the databases
+  are looked up, shown and written - each into the field whose badge is that
+  database: an IMDb badge gets IMDb's number or is left alone, never another
+  database's under it. Each row shows the badges now, what is written (critics
+  / audience, with its source's badge) and everything found.
+- Ratings of seasons and episodes take the ids of their show (TMDB, IMDb,
+  TVmaze episode by its number).
+- **Labels**: a label's posters stay inside its card.
+- **Download the certificate**: compact, fits the page without scrolling; one
+  password of the file (shown with the eye, no second box) and your plexmon
+  password, now said plainly to only confirm it is you - it never goes into
+  the file.
+
 ## 2.1.2 - 2026-10-31
 
 - **PHP goes onto the 8.2 branch** (AlmaLinux 9 AppStream, at least 8.2.35 -

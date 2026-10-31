@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.1.2'
+__version__ = '2.1.3'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -5510,7 +5510,8 @@ def _plex_do(h):
         dks = [str(x) for x in b.get('dks') or []][:500]
         return _plex(PX.watchlist_do, st, act.split('-')[1], dks, by)
     if act == 'ratings-preview':
-        return {'job': _plex(PX.ratings_preview, st, lib, _rks(b), bool(b.get('overwrite')), by)}
+        return {'job': _plex(PX.ratings_preview, st, lib, _rks(b), bool(b.get('overwrite')), by,
+                             expand=b.get('expand', True) is not False)}
     if act == 'ratings-apply':
         return {'job': _plex(PX.ratings_apply, st, str(b.get('plan') or ''),
                              bool(b.get('lock')), _rks(b, 'only'), by)}

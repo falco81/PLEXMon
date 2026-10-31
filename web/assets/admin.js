@@ -1678,19 +1678,19 @@ $('us-add').onclick = function () {
 /* ---- the certificate taken away, in the format wanted (2.1.1) -------------- */
 var CX_FORMATS = [
   {k: 'crt', head: 'Certificate', ext: '.crt', icon: 'lock', key: false,
-   words: 'The certificate alone, PEM - for a browser, a client that has to trust it, or to look at.'},
-  {k: 'fullchain', head: 'Certificate and chain', ext: '.pem', icon: 'list', key: false,
-   words: 'The certificate with its intermediate certificates, PEM - what nginx, Apache, HAProxy and most servers want.'},
-  {k: 'der', head: 'Certificate, DER', ext: '.cer', icon: 'lock', key: false,
-   words: 'The certificate alone, binary - what Windows opens with a double click.'},
+   words: 'PEM - a browser, a client that has to trust it'},
+  {k: 'fullchain', head: 'With the chain', ext: '.pem', icon: 'list', key: false,
+   words: 'PEM - nginx, Apache, HAProxy'},
+  {k: 'der', head: 'DER', ext: '.cer', icon: 'lock', key: false,
+   words: 'binary - Windows, a double click'},
   {k: 'p7b', head: 'PKCS#7', ext: '.p7b', icon: 'archive', key: false,
-   words: 'The certificate and its chain in one binary file - Windows, Java keystores.'},
+   words: 'with the chain - Windows, Java'},
   {k: 'pfx', head: 'PFX / PKCS#12', ext: '.pfx', icon: 'key', key: true,
-   words: 'Certificate, chain and private key in one file locked with a password - Windows (IIS), macOS, Plex, Java, Synology, routers.'},
+   words: 'all in one, locked - Windows, macOS, Plex, Synology'},
   {k: 'pem', head: 'PEM with the key', ext: '.pem', icon: 'key', key: true,
-   words: 'Certificate, chain and private key in one PEM file - HAProxy, Home Assistant, Proxmox.'},
+   words: 'all in one PEM - HAProxy, Home Assistant'},
   {k: 'key', head: 'Private key', ext: '.key', icon: 'key', key: true,
-   words: 'The private key alone, PEM - beside the certificate, for nginx or Apache on another machine.'}
+   words: 'the key alone - nginx, Apache'}
 ];
 function certExport(target, prof) {
   var st = {fmt: 'fullchain', legacy: false};
@@ -1699,7 +1699,7 @@ function certExport(target, prof) {
     clear(body);
     var head = el('div', 'cx-head');
     var ic = el('div', 'cx-ic');
-    ic.innerHTML = iconMarkup('lock', 22);
+    ic.innerHTML = iconMarkup('lock', 20);
     head.appendChild(ic);
     var hw = el('div');
     hw.appendChild(noI18n(el('b', '', info.cn || webTargetWords(target))));
@@ -1711,12 +1711,12 @@ function certExport(target, prof) {
     body.appendChild(head);
     var group = function (words, withKey) {
       body.appendChild(el('div', 'cx-group', words));
-      var g = el('div', 'cx-grid');
+      var g = el('div', 'cx-grid' + (withKey ? ' three' : ''));
       CX_FORMATS.filter(function (f) { return f.key === withKey; }).forEach(function (f) {
         var c = el('button', 'cx-fmt' + (st.fmt === f.k ? ' on' : '') + (f.key ? ' withkey' : ''));
         c.type = 'button';
         var top = el('div', 'cx-top');
-        var i2 = el('span', 'cx-fi'); i2.innerHTML = iconMarkup(f.icon, 17); top.appendChild(i2);
+        var i2 = el('span', 'cx-fi'); i2.innerHTML = iconMarkup(f.icon, 15); top.appendChild(i2);
         top.appendChild(el('b', '', f.head));
         top.appendChild(noI18n(el('span', 'cx-ext', f.ext)));
         c.appendChild(top);
@@ -1732,57 +1732,46 @@ function certExport(target, prof) {
     if (f.key) {
       var box = el('div', 'cx-keybox');
       var warn = el('div', 'cx-warn');
-      warn.innerHTML = iconMarkup('shield', 18);
-      warn.appendChild(el('span', '', 'The private key leaves the server. Keep the file where nobody else can read it, and send it only over a channel you trust; the export is written into the events.'));
+      warn.innerHTML = iconMarkup('shield', 16);
+      warn.appendChild(el('span', '', 'The private key leaves the server - keep the file safe. The export is written into the events.'));
       box.appendChild(warn);
       var grid = el('div', 'cx-pw');
-      var pwField = function (id, label, help, auto) {
+      var field = function (id, label, help, auto, eye) {
         var w = el('div', 'cx-field');
         var l = el('label', '', label);
         l.htmlFor = id;
         w.appendChild(l);
         var row = el('div', 'cx-inrow');
         var inp = el('input');
-        inp.type = 'password'; inp.id = id; inp.autocomplete = auto || 'new-password';
+        inp.type = 'password'; inp.id = id; inp.autocomplete = auto;
         inp.value = st[id] || '';
-        inp.oninput = function () { st[id] = inp.value; check(); };
+        inp.oninput = function () { st[id] = inp.value; var sd = $('cx-said'); if (sd) { sd.textContent = ''; sd.className = 'cx-said'; } check(); };
         noI18n(inp);
-        var eye = iconButton('eye', 'Show it');
-        eye.onclick = function () { inp.type = inp.type === 'password' ? 'text' : 'password'; };
-        row.appendChild(inp); row.appendChild(eye);
+        row.appendChild(inp);
+        if (eye) {
+          var e = iconButton('eye', 'Show it');
+          e.onclick = function () { inp.type = inp.type === 'password' ? 'text' : 'password'; };
+          row.appendChild(e);
+        }
         w.appendChild(row);
-        if (help) w.appendChild(el('small', 'muted', help));
+        if (id === 'cx-pw1') { var meter = el('div', 'cx-meter'); meter.appendChild(el('span')); w.appendChild(meter); }
+        w.appendChild(el('small', 'muted', help));
         grid.appendChild(w);
-        return inp;
       };
       var need = st.fmt === 'pfx';
-      pwField('cx-pw1', need ? 'Password of the file' : 'Lock the key with a password (optional)',
-              need ? 'Asked when the file is opened or imported - 4 characters at least.' : 'Empty: the key is written unlocked (as nginx reads it).');
-      pwField('cx-pw2', 'The same password again', '');
-      var meter = el('div', 'cx-meter'); meter.appendChild(el('span'));
-      grid.appendChild(meter);
+      field('cx-pw1', need ? 'Password of the file' : 'Password of the file (optional)',
+            need ? 'Locks the file: whoever imports it (Windows, Plex, a router) types it. 4 characters at least.'
+                 : 'Locks the key in the file. Empty: unlocked, as nginx reads it.', 'new-password', true);
+      field('cx-mine', 'Your plexmon password', 'Only confirms it is you - it does not go into the file.', 'current-password', false);
       box.appendChild(grid);
       if (st.fmt === 'pfx') {
         var lg = el('label', 'check small cx-legacy');
         var cb = el('input'); cb.type = 'checkbox'; cb.checked = st.legacy;
         cb.onchange = function () { st.legacy = cb.checked; };
         lg.appendChild(cb);
-        lg.appendChild(el('span', '', 'For older systems (3DES, SHA-1): Windows Server 2016 and older, macOS before 10.15, old Java and Android. Otherwise AES-256.'));
+        lg.appendChild(el('span', '', 'For older systems (3DES): Windows Server 2016, macOS before 10.15, old Java'));
         box.appendChild(lg);
       }
-      var mineW = el('div', 'cx-pw cx-mine');
-      var mf = el('div', 'cx-field');
-      var ml = el('label', '', 'Your own password');
-      ml.htmlFor = 'cx-mine';
-      mf.appendChild(ml);
-      var mi = el('input'); mi.type = 'password'; mi.id = 'cx-mine'; mi.autocomplete = 'current-password';
-      mi.value = st.mine || '';
-      mi.oninput = function () { st.mine = mi.value; check(); };
-      noI18n(mi);
-      mf.appendChild(mi);
-      mf.appendChild(el('small', 'muted', 'The password you signed in with - the private key is handed out only with it.'));
-      mineW.appendChild(mf);
-      box.appendChild(mineW);
       body.appendChild(box);
       var said = el('div', 'cx-said');
       said.id = 'cx-said';
@@ -1795,10 +1784,9 @@ function certExport(target, prof) {
     var f = CX_FORMATS.filter(function (x) { return x.k === st.fmt; })[0];
     var bad = '';
     if (f.key) {
-      var p1 = st['cx-pw1'] || '', p2 = st['cx-pw2'] || '';
+      var p1 = st['cx-pw1'] || '';
       if (st.fmt === 'pfx' && p1.length < 4) bad = 'A PFX needs a password of 4 characters at least.';
-      else if (p1 && p1 !== p2) bad = 'The two passwords are not the same.';
-      else if (!st.mine) bad = 'Your own password is needed for the private key.';
+      else if (!st['cx-mine']) bad = 'Your own password is needed for the private key.';
       var meter = document.querySelector('.cx-meter span');
       if (meter) {
         var sc = Math.min(4, (p1.length >= 8) + (p1.length >= 12) + (/[A-Z]/.test(p1) && /[a-z]/.test(p1)) + (/[^A-Za-z0-9]/.test(p1) || /\d/.test(p1)));
@@ -1806,10 +1794,11 @@ function certExport(target, prof) {
         meter.className = sc >= 3 ? 'good' : (sc >= 2 ? 'mid' : 'weak');
       }
       var said = $('cx-said');
-      if (said) { said.textContent = bad; said.className = 'cx-said' + (bad && (st['cx-pw1'] || st.mine) ? ' bad' : ''); }
+      if (said && !said.classList.contains('err')) { said.textContent = ''; }
     }
     if (go) {
       go.disabled = !!bad;
+      go.title = bad;
       setButtonIcon(go, 'download', 'Download ' + f.ext);
     }
   };
@@ -1817,8 +1806,10 @@ function certExport(target, prof) {
     {words: 'Close', close: true},
     {words: 'Download', cls: 'primary', icon: 'download', go: function (b) {
       busy(b, true);
+      var said = $('cx-said');
+      if (said) { said.textContent = ''; said.className = 'cx-said'; }
       api('web', {action: 'tls_export', target: target, format: st.fmt, password: st['cx-pw1'] || '',
-                  password2: st['cx-pw2'] || '', mine: st.mine || '', legacy: !!st.legacy}).then(function (x) {
+                  password2: st['cx-pw1'] || '', mine: st['cx-mine'] || '', legacy: !!st.legacy}).then(function (x) {
         var bin = atob(x.b64), arr = new Uint8Array(bin.length);
         for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
         var a = el('a');
@@ -1830,8 +1821,8 @@ function certExport(target, prof) {
         closeModal();
         toast(x.name + ' downloaded', x.with_key ? 'warn' : 'good');
       }).catch(function (e) {
-        var said = $('cx-said');
-        if (said) { said.textContent = String(e.message || e); said.className = 'cx-said bad'; } else oops(e);
+        var s2 = $('cx-said');
+        if (s2) { s2.textContent = String(e.message || e); s2.className = 'cx-said bad err'; } else oops(e);
       }).then(function () { busy(b, false); check(); });
     }}
   ], 'cx-wide');

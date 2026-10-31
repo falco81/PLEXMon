@@ -812,6 +812,11 @@ function drawDetail(it, seasonRk) {
       tr.onclick = function () { tracksDialog([it.rk], it.title, function () { detail(it.rk); }); };
       acts.appendChild(tr);
     }
+    if (it.type !== 'season') {
+      var rt = cmdButton('Ratings', 'star', '');
+      rt.onclick = function () { ratingsDialog([it.rk], it.title, it.type === 'show' ? 'the show, its seasons and every episode' : '', function () { detail(it.rk); }); };
+      acts.appendChild(rt);
+    }
     if (it.dk) {
       var wl = cmdButton('Watchlist', 'bookmark', 'wl');
       acts.appendChild(wl);
@@ -1024,6 +1029,9 @@ function seasonsBlock(host, it, seasonRk) {
       b2.onclick = function () { watched([sea.rk], false, function () { detail(it.rk, sea.rk); }); };
       var b3 = cmdButton('Audio & subtitles of the season', 'subs', 'small');
       b3.onclick = function () { tracksDialog([sea.rk], it.title + ' · ' + sea.title, function () { detail(it.rk, sea.rk); }); };
+      var b5 = cmdButton('Ratings of the season', 'star', 'small');
+      b5.onclick = function () { ratingsDialog([sea.rk], it.title + ' · ' + sea.title, 'the season and its episodes', function () { detail(it.rk, sea.rk); }); };
+      bar.appendChild(b5);
       var b4 = cmdButton('… of the episodes ticked', 'subs', 'small');
       b4.disabled = true;
       b4.onclick = function () { tracksDialog(Object.keys(pick), it.title + ' · ' + Object.keys(pick).length + ' episodes', function () { detail(it.rk, sea.rk); }); };
@@ -1263,6 +1271,144 @@ function tracksDialog(rks, what, after) {
     }).catch(oops);
   };
   step1();
+}
+
+
+/* ---- ratings of one title (2.1.3) ----------------------------------------------
+   The badges Plex shows (IMDb, Rotten Tomatoes, TMDB) are its agent's: Plex
+   lets a client write two numbers - the critic rating and the audience
+   rating - and draws each with the badge of its source. So: either Plex is
+   asked for its own again (a refresh), or the numbers of the other databases
+   are written, each into the field whose badge is that database. */
+var SRC_BADGE = {imdb: ['imdb', 'IMDb', 'ten'], rottentomatoes: ['rt', 'RT', 'pct'], tmdb: ['tmdb', 'TMDB', 'pct'],
+                 tvmaze: ['tvmaze', 'TVmaze', 'ten'], trakt: ['trakt', 'Trakt', 'ten']};
+function srcBadge(src, v) {
+  var b = SRC_BADGE[src] || ['plex', '★', 'ten'];
+  return scoreBadge({src: b[0], label: b[1], value: b[2] === 'pct' ? Math.round(v * 10) + '%' : (+v).toFixed(1)});
+}
+function ratingsRows(host, r, pick) {
+  var list = el('div', 'px-rows');
+  (r.rows || []).slice(0, 1500).forEach(function (e) {
+    var can = e.status === 'add' || e.status === 'update';
+    var row = el('label', 'px-row' + (pick[e.rk] ? ' pick' : ''));
+    var ck = el('input'); ck.type = 'checkbox'; ck.checked = !!pick[e.rk]; ck.disabled = !can;
+    ck.onchange = function () { if (ck.checked) pick[e.rk] = 1; else delete pick[e.rk]; row.classList.toggle('pick', ck.checked); if (host._count) host._count(); };
+    row.appendChild(ck);
+    var th = el('div', 'th'); th.appendChild(picture(e.thumb, 88, 132, '')); row.appendChild(th);
+    var mm = el('div', 'main');
+    mm.appendChild(txt('b', '', e.label));
+    var line = el('div', 'px-rline');
+    if ((e.badges || []).length) e.badges.forEach(function (bd) { line.appendChild(scoreBadge(bd)); });
+    else line.appendChild(el('span', 'muted small', 'no rating now'));
+    if (can) {
+      line.appendChild(el('span', 'px-arrow', '→'));
+      if (e.new !== undefined && e.new !== null) { line.appendChild(el('span', 'muted small', 'critics')); line.appendChild(srcBadge(e.new_src, e.new)); }
+      if (e.new_aud !== undefined && e.new_aud !== null) { line.appendChild(el('span', 'muted small', 'audience')); line.appendChild(srcBadge(e.new_aud_src, e.new_aud)); }
+    }
+    mm.appendChild(line);
+    var f = Object.keys(e.found || {});
+    if (f.length) {
+      var all = el('div', 'px-found');
+      all.appendChild(el('span', 'muted small', 'found:'));
+      f.forEach(function (k) { all.appendChild(srcBadge(k, e.found[k])); });
+      mm.appendChild(all);
+    }
+    row.appendChild(mm);
+    var side = el('div', 'side');
+    side.appendChild(el('span', 'tag ' + (e.status === 'add' ? 'ok' : (e.status === 'update' ? 'warn' : '')), e.status === 'same' ? 'as it is' : e.status));
+    row.appendChild(side);
+    list.appendChild(row);
+  });
+  host.appendChild(list);
+}
+function ratingsDialog(rks, what, scope, after) {
+  var S = PX.st.sources || {};
+  var opt = {overwrite: true, lock: false};
+  wideModal('Ratings · ' + what, function (body) {
+    noI18n($('modal-title').lastChild || $('modal-title'));
+    body.appendChild(note('', '<span>The badges in Plex (IMDb, Rotten Tomatoes, TMDB) come from its own agent; Plex lets a client write only <b>two numbers</b> - the critic rating and the audience rating - and draws each with the badge of its source.</span> <span>So either ask Plex for its own again, or write the numbers of the other databases: each goes into the field whose badge is that database.</span>'));
+    var w = el('div');
+    w.style.marginTop = '14px';
+    body.appendChild(w);
+    var start = function () {
+      clear(w);
+      var cards = el('div', 'cx-grid');
+      var a = el('button', 'cx-fmt');
+      a.type = 'button';
+      var at = el('div', 'cx-top'); var ai = el('span', 'cx-fi'); ai.innerHTML = iconMarkup('refresh', 17); at.appendChild(ai); at.appendChild(el('b', '', 'Plex’s own ratings again'));
+      a.appendChild(at);
+      a.appendChild(el('p', '', 'Plex refreshes the metadata and fetches its badges anew - IMDb, Rotten Tomatoes, TMDB as its agent has them. The same match: watched state and tracks stay.'));
+      a.onclick = function () {
+        follow(api('plex', {action: 'refresh', rks: rks}), w).then(function (x) {
+          clear(w); w.appendChild(note('safe', '<span>Plex is fetching them - the badges change within a minute.</span>'));
+          toast((x.ok || 0) + ' refreshed', 'good'); if (after) setTimeout(after, 4000);
+        }).catch(oops);
+      };
+      cards.appendChild(a);
+      var bE = el('button', 'cx-fmt on');
+      bE.type = 'button';
+      var bt = el('div', 'cx-top'); var bi = el('span', 'cx-fi'); bi.innerHTML = iconMarkup('star', 17); bt.appendChild(bi); bt.appendChild(el('b', '', 'From the databases'));
+      bE.appendChild(bt);
+      var src = el('div', 'px-src');
+      src.style.marginTop = '8px';
+      [['imdb', 'IMDb'], ['rottentomatoes', 'Rotten Tomatoes'], ['tmdb', 'TMDB'], ['tvmaze', 'TVmaze'], ['trakt', 'Trakt']].forEach(function (x) {
+        var sp = el('span', S[x[0]] ? 'on' : ''); sp.textContent = x[1]; noI18n(sp); src.appendChild(sp);
+      });
+      bE.appendChild(src);
+      bE.appendChild(el('p', '', 'Looked up and shown first' + (scope ? ' - ' + scope : '') + '; written when you say so.'));
+      cards.appendChild(bE);
+      w.appendChild(cards);
+      var opts = el('div', 'btnrow');
+      opts.style.marginTop = '14px';
+      var o1 = el('label', 'check small'); var c1 = el('input'); c1.type = 'checkbox'; c1.checked = opt.overwrite;
+      c1.onchange = function () { opt.overwrite = c1.checked; }; o1.appendChild(c1); o1.appendChild(el('span', '', 'also where there is a rating already'));
+      var o2 = el('label', 'check small'); var c2 = el('input'); c2.type = 'checkbox'; c2.checked = opt.lock;
+      c2.onchange = function () { opt.lock = c2.checked; }; o2.appendChild(c2); o2.appendChild(el('span', '', 'lock them (a refresh by Plex keeps them)'));
+      opts.appendChild(o1); opts.appendChild(o2);
+      opts.appendChild(el('span', 'spacer'));
+      var cfg = cmdButton('The sources…', 'gear', 'small');
+      cfg.onclick = function () { closeModal(); closeSheet(); PANE = 'plex'; showTab('settings'); if (typeof showPane === 'function') showPane('plex'); };
+      opts.appendChild(cfg);
+      var look = cmdButton('Look them up', 'search', 'primary');
+      look.disabled = !Object.keys(S).some(function (k) { return S[k]; });
+      look.onclick = function () { lookup(); };
+      opts.appendChild(look);
+      w.appendChild(opts);
+    };
+    var lookup = function () {
+      follow(api('plex', {action: 'ratings-preview', lib: '', rks: rks, overwrite: opt.overwrite}), w).then(function (r) {
+        clear(w);
+        var pick = {};
+        r.rows.forEach(function (e) { if (e.status === 'add' || e.status === 'update') pick[e.rk] = 1; });
+        var c = r.counts || {};
+        var sum = el('div', 'px-sum');
+        var met = function (v, k, cls) { var m = el('div', 'metric ' + (cls || '')); m.innerHTML = '<div class="label"></div><div class="value"></div>'; m.firstChild.textContent = k; m.lastChild.textContent = v; return m; };
+        sum.appendChild(met(c.add || 0, 'added', 'ok'));
+        sum.appendChild(met(c.update || 0, 'updated', 'warn'));
+        sum.appendChild(met((c.same || 0) + (c.kept || 0), 'kept'));
+        sum.appendChild(met(c['no match'] || 0, 'no match'));
+        w.appendChild(sum);
+        ratingsRows(w, r, pick);
+        var row = el('div', 'btnrow');
+        row.style.marginTop = '14px';
+        var back = cmdButton('Back', 'prev', '');
+        back.onclick = start;
+        var goB = cmdButton('Write', 'check', 'primary');
+        w._count = function () { var n = Object.keys(pick).length; setButtonIcon(goB, 'check', 'Write ' + n + ' ratings'); goB.disabled = !n; };
+        goB.onclick = function () {
+          var h2 = el('div'); w.appendChild(h2); row.hidden = true;
+          follow(api('plex', {action: 'ratings-apply', plan: r.plan_id, lock: !!opt.lock, only: Object.keys(pick)}), h2).then(function (x) {
+            toast(x.ok + ' ratings written' + (x.failed ? ', ' + x.failed + ' failed' : ''), x.failed ? 'bad' : 'good');
+            closeModal(); afterChange(); if (after) after();
+          }).catch(function (e) { row.hidden = false; toast(String(e.message || e), 'bad'); });
+        };
+        row.appendChild(back); row.appendChild(el('span', 'spacer')); row.appendChild(goB);
+        w.appendChild(row);
+        w._count();
+      }).catch(function (e) { toast(String(e.message || e), 'bad'); start(); });
+    };
+    start();
+  }, [{words: 'Close', close: true}]);
 }
 
 /* ---- labels of a few ------------------------------------------------------------ */
@@ -1873,43 +2019,14 @@ function ratingsPreview(host, bar, d) {
     var met = function (v, k, cls) { var mm = el('div', 'metric ' + (cls || '')); mm.innerHTML = '<div class="label"></div><div class="value"></div>'; mm.firstChild.textContent = k; mm.lastChild.textContent = v; return mm; };
     sum.appendChild(met(c.add || 0, 'added', 'ok'));
     sum.appendChild(met(c.update || 0, 'updated', 'warn'));
-    sum.appendChild(met(c.kept || 0, 'kept'));
+    sum.appendChild(met((c.kept || 0) + (c.same || 0), 'kept'));
     sum.appendChild(met(c['no match'] || 0, 'no match'));
     host.appendChild(sum);
     var pick = {};
-    var list = el('div', 'px-rows');
-    var ch = r.rows.filter(function (e) { return e.status === 'add' || e.status === 'update'; });
-    ch.forEach(function (e) { pick[e.rk] = 1; });
-    r.rows.slice(0, 1500).forEach(function (e) {
-      var row = el('label', 'px-row' + (pick[e.rk] ? ' pick' : ''));
-      var ck = el('input'); ck.type = 'checkbox';
-      ck.checked = !!pick[e.rk]; ck.disabled = !(e.status === 'add' || e.status === 'update');
-      ck.onchange = function () { if (ck.checked) pick[e.rk] = 1; else delete pick[e.rk]; row.classList.toggle('pick', ck.checked); cnt(); };
-      row.appendChild(ck);
-      var th = el('div', 'th'); th.appendChild(picture(e.thumb, 88, 132, '')); row.appendChild(th);
-      var mm = el('div', 'main');
-      mm.appendChild(txt('b', '', e.label));
-      var line = el('small');
-      var part = function (label, cur, nv, srcN) {
-        if (nv === undefined || nv === null) return;
-        var s = el('span');
-        s.appendChild(el('span', '', label + ' '));
-        if (cur !== null && cur !== undefined) { s.appendChild(txt('span', 'px-old', (+cur).toFixed(1))); s.appendChild(el('span', 'px-arrow', '→')); }
-        s.appendChild(txt('span', 'px-new', (+nv).toFixed(1)));
-        s.appendChild(txt('span', 'muted', ' (' + srcN + ')  '));
-        line.appendChild(s);
-      };
-      part('rating', e.cur, e.new, e.new_src);
-      part('audience', e.aud, e.new_aud, e.new_aud_src);
-      if (!line.childNodes.length) line.appendChild(el('span', '', e.status === 'no match' ? 'no id another database knows' : 'kept as it is'));
-      mm.appendChild(line);
-      row.appendChild(mm);
-      var side = el('div', 'side');
-      side.appendChild(el('span', 'tag ' + (e.status === 'add' ? 'ok' : (e.status === 'update' ? 'warn' : '')), e.status));
-      row.appendChild(side);
-      list.appendChild(row);
-    });
-    host.appendChild(list);
+    r.rows.forEach(function (e) { if (e.status === 'add' || e.status === 'update') pick[e.rk] = 1; });
+    var holder = el('div');
+    ratingsRows(holder, r, pick);
+    host.appendChild(holder);
     var row2 = el('div', 'btnrow');
     var lk = el('label', 'check small');
     var lkc = el('input'); lkc.type = 'checkbox'; lkc.checked = !!T.lock;
@@ -1919,6 +2036,7 @@ function ratingsPreview(host, bar, d) {
     back.onclick = function () { ratingsList(bar, host, d); };
     var goB = cmdButton('Write', 'check', 'primary');
     var cnt = function () { var n = Object.keys(pick).length; setButtonIcon(goB, 'check', 'Write ' + n + ' ratings'); goB.disabled = !n; };
+    holder._count = cnt;
     goB.onclick = function () {
       var w2 = el('div');
       host.appendChild(w2);

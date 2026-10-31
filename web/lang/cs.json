@@ -6211,6 +6211,130 @@
   "rs00184": {
    "source": "CPU",
    "text": "CPU"
+  },
+  "xs0302": {
+   "source": "With the chain",
+   "text": "S řetězcem"
+  },
+  "xs0303": {
+   "source": "DER",
+   "text": "DER"
+  },
+  "xs0304": {
+   "source": "PEM - a browser, a client that has to trust it",
+   "text": "PEM - prohlížeč, klient, který mu má věřit"
+  },
+  "xs0305": {
+   "source": "PEM - nginx, Apache, HAProxy",
+   "text": "PEM - nginx, Apache, HAProxy"
+  },
+  "xs0306": {
+   "source": "binary - Windows, a double click",
+   "text": "binárně - Windows, dvojklik"
+  },
+  "xs0307": {
+   "source": "with the chain - Windows, Java",
+   "text": "s řetězcem - Windows, Java"
+  },
+  "xs0308": {
+   "source": "all in one, locked - Windows, macOS, Plex, Synology",
+   "text": "vše v jednom, zamčené - Windows, macOS, Plex, Synology"
+  },
+  "xs0309": {
+   "source": "all in one PEM - HAProxy, Home Assistant",
+   "text": "vše v jednom PEM - HAProxy, Home Assistant"
+  },
+  "xs0310": {
+   "source": "the key alone - nginx, Apache",
+   "text": "jen klíč - nginx, Apache"
+  },
+  "xs0311": {
+   "source": "The private key leaves the server - keep the file safe. The export is written into the events.",
+   "text": "Privátní klíč opouští server - soubor dobře uložte. Export se zapíše do událostí."
+  },
+  "xs0312": {
+   "source": "Password of the file (optional)",
+   "text": "Heslo souboru (nepovinné)"
+  },
+  "xs0313": {
+   "source": "Locks the file: whoever imports it (Windows, Plex, a router) types it. 4 characters at least.",
+   "text": "Zamyká soubor: kdo ho importuje (Windows, Plex, router), ho zadá. Aspoň 4 znaky."
+  },
+  "xs0314": {
+   "source": "Locks the key in the file. Empty: unlocked, as nginx reads it.",
+   "text": "Zamkne klíč v souboru. Prázdné: nezamčený, jak ho čte nginx."
+  },
+  "xs0315": {
+   "source": "Your plexmon password",
+   "text": "Vaše heslo do plexmonu"
+  },
+  "xs0316": {
+   "source": "Only confirms it is you - it does not go into the file.",
+   "text": "Jen potvrdí, že jste to vy - do souboru se nedostane."
+  },
+  "xs0317": {
+   "source": "For older systems (3DES): Windows Server 2016, macOS before 10.15, old Java",
+   "text": "Pro starší systémy (3DES): Windows Server 2016, macOS před 10.15, stará Java"
+  },
+  "xs0318": {
+   "source": "Ratings of the season",
+   "text": "Hodnocení série"
+  },
+  "xs0319": {
+   "source": "The badges in Plex (IMDb, Rotten Tomatoes, TMDB) come from its own agent; Plex lets a client write only <b>two numbers</b> - the critic rating and the audience rating - and draws each with the badge of its source.",
+   "text": "Odznaky v Plexu (IMDb, Rotten Tomatoes, TMDB) pocházejí z jeho vlastního agenta; Plex dovolí zapsat jen <b>dvě čísla</b> - hodnocení kritiků a hodnocení publika - a každé vykreslí s odznakem jeho zdroje."
+  },
+  "xs0320": {
+   "source": "So either ask Plex for its own again, or write the numbers of the other databases: each goes into the field whose badge is that database.",
+   "text": "Buď tedy požádejte Plex o jeho vlastní znovu, nebo zapište čísla jiných databází: každé jde do pole, jehož odznak je ta databáze."
+  },
+  "xs0321": {
+   "source": "Plex’s own ratings again",
+   "text": "Vlastní hodnocení Plexu znovu"
+  },
+  "xs0322": {
+   "source": "Plex refreshes the metadata and fetches its badges anew - IMDb, Rotten Tomatoes, TMDB as its agent has them. The same match: watched state and tracks stay.",
+   "text": "Plex obnoví metadata a znovu stáhne své odznaky - IMDb, Rotten Tomatoes, TMDB, jak je má jeho agent. Stejné spárování: zhlédnutí i stopy zůstanou."
+  },
+  "xs0323": {
+   "source": "From the databases",
+   "text": "Z databází"
+  },
+  "xs0324": {
+   "source": "also where there is a rating already",
+   "text": "i tam, kde už hodnocení je"
+  },
+  "xs0325": {
+   "source": "lock them (a refresh by Plex keeps them)",
+   "text": "zamknout je (obnovení Plexem je ponechá)"
+  },
+  "xs0326": {
+   "source": "Look them up",
+   "text": "Vyhledat"
+  },
+  "xs0327": {
+   "source": "no rating now",
+   "text": "zatím bez hodnocení"
+  },
+  "xs0328": {
+   "source": "found:",
+   "text": "nalezeno:"
+  },
+  "xs0329": {
+   "source": "critics",
+   "text": "kritici"
+  },
+  "xs0330": {
+   "source": "Plex is fetching them - the badges change within a minute.",
+   "text": "Plex je stahuje - odznaky se změní do minuty."
+  },
+  "xs0331": {
+   "source": "the show, its seasons and every episode",
+   "text": "seriál, jeho série a každá epizoda"
+  },
+  "xs0332": {
+   "source": "the season and its episodes",
+   "text": "série a její epizody"
   }
  },
  "patterns": {
@@ -8081,6 +8205,18 @@
   "xp0084": {
    "source": "{0} asked Plex to scan the files of {1}",
    "text": "{0} požádal Plex o prohledání souborů knihovny {1}"
+  },
+  "xp0085": {
+   "source": "Ratings · {0}",
+   "text": "Hodnocení · {0}"
+  },
+  "xp0086": {
+   "source": "Looked up and shown first - {0}; written when you say so.",
+   "text": "Nejdřív se vyhledají a ukážou - {0}; zapíšou se, až řeknete."
+  },
+  "xp0087": {
+   "source": "Looked up and shown first; written when you say so.",
+   "text": "Nejdřív se vyhledají a ukážou; zapíšou se, až řeknete."
   }
  },
  "rich": {
