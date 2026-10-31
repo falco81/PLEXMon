@@ -82,6 +82,15 @@ class PlexError(Exception):
     pass
 
 
+def _web(req, timeout):
+    """What is asked of the internet - images, Plex Discover, the rating
+    databases - through Settings → Proxy where it says so (2.4.0); Plex Media
+    Server itself never."""
+    if A is not None and hasattr(A, 'url_open'):
+        return A.url_open(req, timeout=timeout, purpose='plex')
+    return urllib.request.urlopen(req, timeout=timeout)
+
+
 def bind(admin):
     global A
     A = admin
@@ -534,7 +543,7 @@ def image(u, w, h):
     else:
         req = urllib.request.Request(u, headers={'User-Agent': 'plexmon'})
         with _SEM:
-            with urllib.request.urlopen(req, timeout=30) as r:
+            with _web(req, 30) as r:
                 data = r.read(8 << 20)
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -1743,7 +1752,7 @@ def _discover(method, path, params=None):
     url = DISCOVER_URL + path + ('?' + urllib.parse.urlencode(params) if params else '')
     req = urllib.request.Request(url, method=method, headers=_headers())
     try:
-        with urllib.request.urlopen(req, timeout=30) as r:
+        with _web(req, 30) as r:
             body = r.read().decode('utf-8', 'replace')
             return r.status, body
     except urllib.error.HTTPError as e:
@@ -1870,7 +1879,7 @@ def _ext_json(url, headers=None, timeout=20):
     h = {'User-Agent': 'plexmon/ratings', 'Accept': 'application/json'}
     h.update(headers or {})
     try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers=h), timeout=timeout) as r:
+        with _web(urllib.request.Request(url, headers=h), timeout) as r:
             return json.loads(r.read().decode('utf-8', 'replace'))
     except (OSError, ValueError, urllib.error.HTTPError):
         return None

@@ -126,17 +126,63 @@ def under_systemd():
         not os.environ.get('PLEXMON_TEST')
 
 
-def host_run(argv, timeout=600, transient=False, name='job', memory='2G'):
+def proxy_env_file():
+    """Settings → Proxy for dnf (2.4.0, as otp hands it to its helper): a file
+    only root reads, named to systemd-run - never on a command line. None
+    where dnf goes straight."""
+    url = A.proxy_full('os') if hasattr(A, 'proxy_full') else ''
+    path = Path(str(getattr(A, 'RUN_DIR', '/run/plexmon'))) / 'osup-proxy.env'
+    if not url:
+        try:
+            path.unlink()
+        except OSError:
+            pass
+        return None
+    no = ','.join(A.proxy_no_list())
+    text = ''.join('%s=%s\n' % (k, url) for k in ('http_proxy', 'https_proxy', 'HTTP_PROXY',
+                                                  'HTTPS_PROXY'))
+    if no:
+        text += 'no_proxy=%s\nNO_PROXY=%s\n' % (no, no)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(str(path) + '.part', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, 'w') as f:
+        f.write(text)
+    os.replace(str(path) + '.part', str(path))
+    return path
+
+
+def proxy_env():
+    """The same, as an environment for a command run here (not under systemd)."""
+    env = dict(os.environ)
+    url = A.proxy_full('os') if hasattr(A, 'proxy_full') else ''
+    if url:
+        for k in ('http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY'):
+            env[k] = url
+        no = ','.join(A.proxy_no_list())
+        if no:
+            env['no_proxy'] = env['NO_PROXY'] = no
+    return env
+
+
+def host_run(argv, timeout=600, transient=False, name='job', memory='2G', proxy=False):
     """(exit code, output) of a command. `transient`: as a unit of its own
     (systemd-run --wait --pipe) - outside plexmon's sandbox and memory limit,
-    for what writes /usr (dnf)."""
+    for what writes /usr (dnf). `proxy`: through Settings → Proxy (dnf)."""
+    env = None
     if transient and under_systemd():
+        extra = []
+        if proxy:
+            pf = proxy_env_file()
+            if pf:
+                extra = ['-p', 'EnvironmentFile=%s' % pf]
         argv = ['systemd-run', '--quiet', '--wait', '--pipe', '--collect',
                 '--unit', 'plexmon-%s-%s' % (name, secrets.token_hex(3)),
-                '-p', 'MemoryMax=%s' % memory, '--'] + list(argv)
+                '-p', 'MemoryMax=%s' % memory] + extra + ['--'] + list(argv)
+    elif proxy:
+        env = proxy_env()
     try:
         got = subprocess.run(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT, timeout=timeout)
+                             stderr=subprocess.STDOUT, timeout=timeout, env=env)
     except FileNotFoundError:
         return 127, '%s is not installed' % argv[0]
     except subprocess.TimeoutExpired:
@@ -622,7 +668,7 @@ def osup_check(store, by):
                 raise ValueError('updates are looked for with dnf (AlmaLinux, Rocky, RHEL) - '
                                  'none here')
             rc, out = host_run(['dnf', '-q', 'check-update', '--refresh'] + _exclude(), 900,
-                               transient=True, name='osup-check')
+                               transient=True, name='osup-check', proxy=True)
             if rc not in (0, 100):
                 raise ValueError(out.strip()[-400:] or 'dnf check-update said %s' % rc)
             pk = []
@@ -633,7 +679,7 @@ def osup_check(store, by):
                 if ln.startswith('Obsoleting'):
                     break
             rc2, sec = host_run(['dnf', '-q', 'updateinfo', 'list', '--security', '--available']
-                                + _exclude(), 600, transient=True, name='osup-security')
+                                + _exclude(), 600, transient=True, name='osup-security', proxy=True)
             security = len({ln.split()[-1] for ln in sec.splitlines() if ln.strip() and
                              len(ln.split()) >= 3}) if rc2 == 0 else None
             names = {p.split('.')[0] for p in (x.split()[0] for x in pk)}
@@ -674,13 +720,18 @@ def osup_start(store, reboot, by, security=False):
     def go():
         argv = ['dnf', '-y', 'upgrade', '--refresh'] + _exclude() + (['--security'] if security
                                                                     else [])
+        env = None
         if under_systemd():
+            pf = proxy_env_file()                       # Settings → Proxy (2.4.0)
             argv = ['systemd-run', '--quiet', '--wait', '--pipe', '--collect', '--unit',
-                    'plexmon-osup-%s' % plan['id'], '-p', 'MemoryMax=3G', '--'] + argv
+                    'plexmon-osup-%s' % plan['id'], '-p', 'MemoryMax=3G'] + \
+                (['-p', 'EnvironmentFile=%s' % pf] if pf else []) + ['--'] + argv
+        else:
+            env = proxy_env()
         last_put = 0.0
         try:
             p = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT)
+                                 stderr=subprocess.STDOUT, env=env)
             OSUP_WORK['proc'] = p
             for raw in iter(p.stdout.readline, b''):
                 ln = raw.decode('utf-8', 'replace').rstrip()

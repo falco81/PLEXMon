@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.3.0'
+__version__ = '2.4.0'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -123,6 +123,14 @@ DEFAULTS = {
     'acme_node_name': '',
     'acme_days': 30,
     'acme_key': 'dual',
+    # Settings → Proxy (2.4.0, as otp's)
+    'proxy': 0,
+    'proxy_url': '',
+    'proxy_user': '',
+    'proxy_password': '',
+    'proxy_no': 'localhost, 127.0.0.1, ::1',
+    'proxy_os': 1,
+    'proxy_plex': 1,
     'acme_account_key': 'ec',
     'acme_challenge': 'http-01',
     'acme_dns': 'manual',
@@ -200,13 +208,15 @@ DEFAULTS = {
 
 FILE_ONLY_KEYS = ()
 SECRET_KEYS = ('acme_dns_tsig_secret', 'acme_dns_token', 'acme_dns_key', 'acme_desec_token',
-               'plex_tmdb_key', 'plex_omdb_key', 'plex_trakt_id', 'rbackup_password')
+               'plex_tmdb_key', 'plex_omdb_key', 'plex_trakt_id', 'rbackup_password',
+               'proxy_password')
 SEALED_KEYS = SECRET_KEYS
 
 TUNABLE = {
     'session_hours': (1, 168), 'session_idle_min': (5, 1440),
     'login_tries': (1, 100), 'login_wait_min': (1, 1440),
     'admin_2fa': (0, 1), 'admin_2fa_app': (0, 1),
+    'proxy': (0, 1), 'proxy_os': (0, 1), 'proxy_plex': (0, 1),
     'plex_cert': (0, 1), 'plex_cert_restart': (0, 1),
     'upgrade_check': (0, 1), 'upgrade_downgrade': (0, 1),
     'acme': (0, 1), 'acme_ca': ('letsencrypt', 'letsencrypt-staging', 'custom'),
@@ -300,6 +310,13 @@ NAMES = {
     'acme_node_name': 'The node’s DNS name',
     'acme_days': 'Renewed when fewer days are left than',
     'acme_key': 'The key of the certificate',
+    'proxy': 'Go out through a proxy',
+    'proxy_url': 'The proxy',
+    'proxy_user': 'User name at the proxy',
+    'proxy_password': 'Password at the proxy',
+    'proxy_no': 'Straight, not through the proxy',
+    'proxy_os': 'The system updates through it too',
+    'proxy_plex': 'Plex Discover and the ratings through it too',
     'acme_account_key': 'The key of the ACME account',
     'acme_challenge': 'How the CA checks the name',
     'acme_dns': 'Who puts the TXT record in DNS',
@@ -354,6 +371,17 @@ NAMES = {
 }
 
 SAYS = {
+    'proxy': 'An HTTP proxy for what plexmon asks of the web: the new versions, the certificates '
+             'from the ACME CA, Plex Discover and the rating databases, the system updates. Plex '
+             'Media Server itself, the televisions, mail and the backups never use it.',
+    'proxy_url': '<code>http://proxy.example.cz:3128</code>',
+    'proxy_user': 'Where the proxy asks for one. Empty: none.',
+    'proxy_password': 'Kept sealed, like the other passwords.',
+    'proxy_no': 'Names and addresses reached without it, separated by commas: '
+                '<code>.example.cz</code> is every name under it, <code>10.0.0.0/8</code> a net.',
+    'proxy_os': 'dnf fetches the updates of System updates through it.',
+    'proxy_plex': 'Plex Discover (the watchlist) and the rating databases (TMDB, OMDb, Trakt, '
+                  'TVmaze) asked through it.',
     'session_hours': 'How long an administrator stays signed in, however busy.',
     'session_idle_min': 'How long a sign-in may sit without anything being asked before it '
                         'has to be done again.',
@@ -518,6 +546,8 @@ SAYS_SHORT = {}
 
 # Which settings sit on which page of Settings, in order.
 PANES = {
+    'proxy': ['proxy', 'proxy_url', 'proxy_user', 'proxy_password', 'proxy_no', 'proxy_os',
+              'proxy_plex'],
     'people': ['session_hours', 'session_idle_min', 'login_tries', 'login_wait_min',
                'admin_2fa', 'admin_2fa_app'],
     'web': ['plex_cert', 'plex_cert_domain', 'plex_cert_restart'],
@@ -542,6 +572,8 @@ PANES = {
 }
 
 ONLY_WHEN = {
+    'proxy_url': ['proxy', '1'], 'proxy_user': ['proxy', '1'], 'proxy_password': ['proxy', '1'],
+    'proxy_no': ['proxy', '1'], 'proxy_os': ['proxy', '1'], 'proxy_plex': ['proxy', '1'],
     'backup_keep': ['backup_daily', '1'], 'backup_at': ['backup_daily', '1'],
     'plex_db_every': ['plex_db_daily', '1'], 'plex_db_day': ['plex_db_every', 'weekly'],
     'plex_db_at': ['plex_db_daily', '1'],
@@ -621,6 +653,17 @@ def check_setting(key, value):
     if key not in DEFAULTS:
         raise BadSetting('%s is not a setting this version knows' % key)
     got = _coerce(DEFAULTS[key], value)
+    if key == 'proxy_url' and str(got).strip() and \
+            not re.match(r'^https?://[A-Za-z0-9.\-]+(?::\d{1,5})?/?\Z|^https?://\[[0-9a-fA-F:]+\]'
+                         r'(?::\d{1,5})?/?\Z', str(got).strip()):
+        raise BadSetting('proxy_url: http://host:port - the user name and the password go '
+                         'in the fields below, not in the address')
+    if key == 'proxy_user' and re.search(r'[\s:@/]', str(got)):
+        raise BadSetting('proxy_user: no spaces, no : @ or /')
+    if key == 'proxy_no' and str(got).strip() and \
+            not re.match(r'^[A-Za-z0-9.*:/\[\]_-]+([\s,;]+[A-Za-z0-9.*:/\[\]_-]+)*[\s,;]*\Z',
+                         str(got).strip()):
+        raise BadSetting('proxy_no: names, .domains and addresses, separated by commas')
     shape = TUNABLE.get(key)
     if isinstance(shape, tuple) and shape and isinstance(shape[0], str):
         if str(got) not in shape:
@@ -2917,15 +2960,234 @@ def plex_view(store):
 
 
 # ---- the web, asked by this daemon (new versions, the CA, the DNS APIs) ----------------
+# ---- going out through a proxy (2.4.0, otp's 1.0.166) -----------------------------------
+# Settings → Proxy: what plexmon asks of the web itself - the new versions, the
+# ACME CA, Plex Discover and the rating databases - and dnf fetching the system
+# updates (handed over in a file only root reads, never on a command line). Plex
+# Media Server, the televisions, mail and the backups never go through it.
+def proxy_on(purpose='web'):
+    if not CONFIG.get('proxy') or not str(CONFIG.get('proxy_url') or '').strip():
+        return False
+    if purpose == 'plex':
+        return bool(CONFIG.get('proxy_plex', 1))
+    if purpose == 'os':
+        return bool(CONFIG.get('proxy_os', 1))
+    return True
+
+
+def proxy_full(purpose='web'):
+    """The proxy's address with its user and password in it, for urllib, dnf
+    and apt - '' where none is to be used. Never logged, never shown."""
+    if not proxy_on(purpose):
+        return ''
+    url = str(CONFIG.get('proxy_url') or '').strip().rstrip('/')
+    user = str(CONFIG.get('proxy_user') or '').strip()
+    if not user:
+        return url
+    pw = unseal_secret(CONFIG.get('proxy_password') or '') or ''
+    scheme, _, rest = url.partition('://')
+    return '%s://%s:%s@%s' % (scheme, urllib.parse.quote(user, safe=''),
+                              urllib.parse.quote(pw, safe=''), rest)
+
+
+def proxy_no_list():
+    return [w.strip().lower() for w in re.split(r'[\s,;]+', str(CONFIG.get('proxy_no') or ''))
+            if w.strip()]
+
+
+def proxy_skips(host):
+    """Whether this host is reached straight, as proxy_no says."""
+    host = str(host or '').strip('[]').lower()
+    if not host:
+        return True
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        ip = None
+    for one in proxy_no_list():
+        if one == '*':
+            return True
+        if ip is not None and ('/' in one or re.match(r'^[0-9a-f.:]+\Z', one)):
+            try:
+                if ip in ipaddress.ip_network(one.strip('[]'), strict=False):
+                    return True
+            except ValueError:
+                pass
+            continue
+        one = one.lstrip('*')
+        if one.startswith('.'):
+            if host.endswith(one) or host == one[1:]:
+                return True
+        elif host == one:
+            return True
+    return False
+
+
+class _ProxyOnly(urllib.request.ProxyHandler):
+    """ProxyHandler without its look at no_proxy in the environment: only
+    proxy_no says what goes straight."""
+    def proxy_open(self, req, proxy, type):
+        proxy_type, user, password, hostport = urllib.request._parse_proxy(proxy)
+        if user and password:
+            creds = base64.b64encode(('%s:%s' % (urllib.parse.unquote(user),
+                                                 urllib.parse.unquote(password))).encode())
+            req.add_header('Proxy-authorization', 'Basic ' + creds.decode('ascii'))
+        req.set_proxy(urllib.parse.unquote(hostport), proxy_type or req.type)
+        return None
+
+
 def url_open(req, timeout=30, context=None, purpose='web'):
-    """urllib.request.urlopen, through https_proxy when the service's
-    environment names one (systemctl edit plexmon: Environment=https_proxy=…)."""
+    """urllib.request.urlopen, through the proxy where one is set and the host
+    is not one reached straight; never through what the environment says."""
     if not isinstance(req, urllib.request.Request):
         req = urllib.request.Request(req)
-    handlers = [urllib.request.ProxyHandler()]
+    proxy = proxy_full(purpose)
+    host = urllib.parse.urlsplit(req.full_url).hostname or ''
+    if not CONFIG.get('proxy'):
+        # No proxy set here: the service's environment, as before 2.4.0
+        # (systemctl edit plexmon: Environment=https_proxy=…).
+        handlers = [urllib.request.ProxyHandler()]
+    else:
+        handlers = [_ProxyOnly(
+            {'http': proxy, 'https': proxy} if proxy and not proxy_skips(host) else {})]
     if context is not None:
         handlers.append(urllib.request.HTTPSHandler(context=context))
     return urllib.request.build_opener(*handlers).open(req, timeout=timeout)
+
+
+def proxy_try(url=''):
+    """Settings → Proxy → Try it (1.0.169): an address asked the way plexmon asks
+    the web - through the proxy where one is set and the address is not one
+    reached straight, else straight - one step at a time: the name looked up,
+    the connection, the tunnel through the proxy, TLS and the certificate,
+    the answer. Always tried; each step with how long it took."""
+    url = str(url or '').strip() or online_url() or 'https://github.com/'
+    if not re.match(r'^https?://[^\s/]+[^\s]*\Z', url):
+        raise ValueError('an address starting https:// (or http://)')
+    u = urllib.parse.urlsplit(url)
+    host = u.hostname or ''
+    tls_on = u.scheme == 'https'
+    port = u.port or (443 if tls_on else 80)
+    via, why = '', ''
+    if not proxy_on():
+        why = 'no proxy is set' if not CONFIG.get('proxy') else 'the proxy has no address'
+    elif proxy_skips(host):
+        why = '%s is in the list reached straight' % host
+    else:
+        via = proxy_full()
+    px = urllib.parse.urlsplit(via) if via else None
+    out = {'url': url, 'host': host, 'port': port, 'mode': 'proxy' if via else 'direct',
+           'why_direct': why, 'node': node_name(), 'steps': [], 'ok': False,
+           'proxy': '%s:%d' % (px.hostname, px.port or 3128) if px else '',
+           'proxy_auth': bool(px and px.username)}
+    began = time.time()
+    sock = [None]
+
+    def step(what, fn):
+        t0 = time.time()
+        try:
+            said = fn() or ''
+        except Exception as e:                          # noqa: BLE001
+            out['steps'].append({'what': what, 'ok': False, 'ms': int((time.time() - t0) * 1000),
+                                 'said': str(getattr(e, 'reason', '') or e)[:300]})
+            raise
+        out['steps'].append({'what': what, 'ok': True, 'ms': int((time.time() - t0) * 1000),
+                             'said': said})
+
+    def resolve(name, p):
+        got = socket.getaddrinfo(name, p, 0, socket.SOCK_STREAM)
+        addrs = []
+        for g in got:
+            if g[4][0] not in addrs:
+                addrs.append(g[4][0])
+        out.setdefault('addrs', {})[name] = addrs
+        return ', '.join(addrs[:4])
+
+    def connect(name, p):
+        sock[0] = socket.create_connection((name, p), timeout=10)
+        sock[0].settimeout(15)
+        peer = sock[0].getpeername()
+        return '%s port %d' % (peer[0], peer[1])
+
+    def read_head():
+        data = b''
+        while b'\r\n\r\n' not in data and len(data) < 65536:
+            chunk = sock[0].recv(4096)
+            if not chunk:
+                break
+            data += chunk
+        line = data.split(b'\r\n', 1)[0].decode('latin-1', 'replace')
+        m = re.match(r'^HTTP/\d(?:\.\d)?\s+(\d{3})\s*(.*)$', line)
+        if not m:
+            raise ValueError('no HTTP answer: %r' % line[:80])
+        return int(m.group(1)), m.group(2).strip(), data
+
+    def auth_header():
+        if not (px and px.username):
+            return ''
+        creds = '%s:%s' % (urllib.parse.unquote(px.username), urllib.parse.unquote(px.password or ''))
+        return 'Proxy-Authorization: Basic %s\r\n' % base64.b64encode(creds.encode()).decode()
+
+    try:
+        if via:
+            step('the proxy looked up (%s)' % px.hostname, lambda: resolve(px.hostname, px.port or 3128))
+            step('connected to the proxy', lambda: connect(px.hostname, px.port or 3128))
+            if tls_on:
+                def tunnel():
+                    sock[0].sendall(('CONNECT %s:%d HTTP/1.1\r\nHost: %s:%d\r\n%s'
+                                     'User-Agent: plexmon/%s (+proxy check)\r\n\r\n' % (
+                                         host, port, host, port, auth_header(), __version__)).encode())
+                    code, words, _ = read_head()
+                    if code == 407:
+                        raise ValueError('the proxy asks for a user name and a password (407) - '
+                                         'they are %s' % ('wrong' if px.username else 'missing'))
+                    if code != 200:
+                        raise ValueError('the proxy said %d %s' % (code, words))
+                    return '%d %s%s' % (code, words, ' - with the user name and password'
+                                        if px.username else '')
+                step('a tunnel through the proxy to %s:%d' % (host, port), tunnel)
+        else:
+            step('%s looked up' % host, lambda: resolve(host, port))
+            step('connected to %s' % host, lambda: connect(host, port))
+        if tls_on:
+            def handshake():
+                ctx = ssl.create_default_context()
+                sock[0] = ctx.wrap_socket(sock[0], server_hostname=host)
+                c = sock[0].getpeercert() or {}
+                subj = dict(x[0] for x in c.get('subject', ()) if x)
+                iss = dict(x[0] for x in c.get('issuer', ()) if x)
+                out['tls'] = {'version': sock[0].version(), 'cipher': (sock[0].cipher() or [''])[0],
+                              'subject': subj.get('commonName', ''),
+                              'issuer': iss.get('organizationName') or iss.get('commonName', ''),
+                              'until': c.get('notAfter', '')}
+                return '%s, %s - %s, by %s' % (out['tls']['version'], out['tls']['cipher'],
+                                               out['tls']['subject'], out['tls']['issuer'])
+            step('TLS, the certificate of %s checked' % host, handshake)
+
+        def ask():
+            path = (u.path or '/') + ('?' + u.query if u.query else '')
+            target = url if (via and not tls_on) else path
+            sock[0].sendall(('HEAD %s HTTP/1.1\r\nHost: %s\r\n%sUser-Agent: plexmon/%s (+proxy check)'
+                             '\r\nConnection: close\r\n\r\n' % (
+                                 target, u.netloc.split('@')[-1],
+                                 auth_header() if (via and not tls_on) else '', __version__)).encode())
+            code, words, _ = read_head()
+            out['status'] = code
+            if code == 407:
+                raise ValueError('the proxy asks for a user name and a password (407)')
+            return '%d %s' % (code, words)
+        step('asked for %s' % (u.path or '/'), ask)
+        out['ok'] = True
+    except Exception:                                   # noqa: BLE001
+        pass
+    finally:
+        try:
+            if sock[0]:
+                sock[0].close()
+        except OSError:
+            pass
+    out['ms'] = int((time.time() - began) * 1000)
+    return out
 
 
 # ---- a DNS client of its own, without a library (otp's, from its mail) ------------------
@@ -6141,6 +6403,39 @@ def _rb_next():
     return 0
 
 
+PROXY_TRIES = {}
+
+
+@route('POST', '/api/proxy')
+def _proxy_do(h):
+    """Settings → Proxy → Try it (as otp's): started in a thread, its result
+    asked for until it is there - one server, so one node's card."""
+    h.me('fulladmin')
+    b = h.body()
+    act = str(b.get('action') or '')
+    try:
+        if act == 'try':
+            url = str(b.get('url') or '').strip()
+            if url and not re.match(r'^https?://[^\s/]+[^\s]*\Z', url):
+                raise ValueError('an address starting https:// (or http://)')
+            ident = secrets.token_hex(6)
+            PROXY_TRIES.clear()
+            PROXY_TRIES[ident] = None
+
+            def go():
+                try:
+                    PROXY_TRIES[ident] = proxy_try(url)
+                except Exception as e:                  # noqa: BLE001
+                    PROXY_TRIES[ident] = {'ok': False, 'error': str(e)[:300]}
+            threading.Thread(target=go, name='plexmon-proxy-try', daemon=True).start()
+            return {'id': ident, 'nodes': [node_name()]}
+        if act == 'result':
+            return {'nodes': {node_name(): PROXY_TRIES.get(str(b.get('id') or ''))}}
+    except ValueError as e:
+        raise ApiError(400, str(e))
+    raise ApiError(400, 'no such thing to do')
+
+
 @route('GET', '/api/rbackup')
 def _rbackup(h):
     h.me('fulladmin')
@@ -7890,6 +8185,8 @@ def build_parser():
                    'service: plexmon does nothing by itself (backups, copies, updates, renewals, '
                    'SMART reads) - or back in service')
     g.add_argument('--why', metavar='TEXT', help='with --maintenance on: why, for the events')
+    g.add_argument('--proxy-test', metavar='URL', nargs='?', const='', help='the way out through '
+                   'the proxy tried (an address of your own, or the upgrades\' one)')
     g = p.add_argument_group('THE MACHINE AND THE DATA (as Settings: Time, Restart and power off, '
                              'System updates, The database, Backups)')
     g.add_argument('--time', action='store_true', help='the clock: chrony, the time servers, '
@@ -9081,6 +9378,21 @@ def cli_main(argv=None, mon=None):
     got = cli_host(args, store, pal)
     if got is not None:
         return got
+    if args.proxy_test is not None:
+        got = proxy_try(args.proxy_test)
+        if args.json:
+            out_json(got)
+            return 0 if got.get('ok') else 1
+        print(pal.head('%s - %s' % (got['url'], 'through the proxy %s' % got['proxy']
+                                    if got['mode'] == 'proxy' else 'straight' + (
+                                        ' (%s)' % got['why_direct'] if got.get('why_direct') else ''))))
+        for st in got['steps']:
+            print((pal.ok_line if st['ok'] else pal.bad_line)('%s%s  %s' % (
+                st['what'], (': ' + st['said']) if st.get('said') else '', pal.dim('%d ms' % st['ms']))))
+        print((pal.ok_line if got['ok'] else pal.bad_line)(
+            ('reached - HTTP %s, %d ms' % (got.get('status'), got['ms'])) if got['ok']
+            else 'not reached'))
+        return 0 if got.get('ok') else 1
     if args.maintenance:
         name = node_name()
         if args.maintenance == 'status':

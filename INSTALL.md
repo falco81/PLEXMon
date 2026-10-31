@@ -136,6 +136,13 @@ plexmon --maintenance off
 plexmon --maintenance status
 ```
 
+## Proxy (od 2.4.0)
+
+Nastavení → Proxy: když server smí na web jen přes HTTP proxy. Přes ni jdou
+nové verze, certifikáty od ACME CA, Plex Discover a hodnocení a (volitelně)
+dnf. „Vyzkoušet“ ukáže každý krok cesty. Na příkazové řádce:
+`plexmon --proxy-test https://github.com/`.
+
 ## Soubory
 
 | | |

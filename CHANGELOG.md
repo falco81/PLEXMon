@@ -4,6 +4,26 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.4.0 - 2026-10-31
+
+- **Settings → Proxy**, as otp has it: where the server may reach the web only
+  through an HTTP proxy. *Go out through a proxy*, its address, a user name
+  and a password (kept sealed), what goes straight (names, `.domains`,
+  addresses and nets), and whether *the system updates* and *Plex Discover
+  and the ratings* go through it too. Through it: the new versions, the
+  certificates from the ACME CA (and the DNS APIs), Plex Discover and the
+  rating databases (TMDB, OMDb, Trakt, TVmaze), dnf. Never: Plex Media Server
+  itself, the televisions, mail, the backups.
+  - **Try it**: an address asked the way plexmon asks the web, each step
+    shown with its time - the proxy looked up, connected, the tunnel, TLS and
+    the certificate, the answer - and the way drawn: this server, the proxy,
+    the address.
+  - dnf gets the proxy in a file only root reads (`/run/plexmon/osup-proxy.env`,
+    named to systemd-run), never on a command line.
+  - With no proxy set here, the service's own environment
+    (`Environment=https_proxy=…`) is used as before.
+  - `plexmon --proxy-test [URL]`.
+
 ## 2.3.0 - 2026-10-31
 
 - **Settings → Upgrades and maintenance**, as otp 1.0.197 has it (without its

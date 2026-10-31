@@ -240,7 +240,7 @@ if (isset($_GET['api'])) {
         'console-login' => '/api/console-login', 'mfa' => '/api/auth/mfa', 'acme' => '/api/acme',
         'plex' => '/api/plex',
         'power' => '/api/power', 'ntp' => '/api/ntp', 'osup' => '/api/osup', 'db' => '/api/db',
-        'rbackup' => '/api/rbackup',
+        'rbackup' => '/api/rbackup', 'proxy' => '/api/proxy',
     ];
     if ($post) {
         if (!isset($writes[$what])) {
@@ -470,6 +470,7 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
     <button type="button" data-pane="web" data-icon="lock" title="The certificate the Plex address answers with, and how TLS is spoken - and Plex Media Server's own.">Certificates and TLS</button>
     <button type="button" class="fulladmin-only" data-pane="acme" data-icon="lock" title="The certificate ordered from Let's Encrypt (or another ACME CA) and renewed by itself.">Automatic certificates</button>
     <div class="ctl-group">The machine</div>
+    <button type="button" class="fulladmin-only" data-pane="proxy" data-icon="globe" title="An HTTP proxy for what plexmon asks of the web - new versions, certificates, Plex Discover and the ratings, the system updates.">Proxy</button>
     <button type="button" class="fulladmin-only" data-pane="time" data-icon="clock" title="The clock of this server: chrony, its time servers, how far off it is, the time zone.">Time</button>
     <button type="button" class="fulladmin-only" data-pane="power" data-icon="power" title="Restart or switch off this server - now, or a restart on a schedule.">Restart and power off</button>
     <button type="button" class="fulladmin-only" data-pane="osup" data-icon="download" title="The operating system's packages updated by dnf; a restart offered when one is needed.">System updates</button>
@@ -644,6 +645,14 @@ plexmon --upgrade-status                   # an upgrade started on these pages</
     </div>
   </div>
 
+  <div class="ctl-pane" id="pane-proxy" hidden>
+    <div class="ctl-head"><h2 class="ctl-title">Proxy</h2>
+      <p class="ctl-lede">Where the server may reach the web only through an HTTP proxy: the new versions,
+        the certificates from the ACME CA, Plex Discover and the rating databases, and the system updates
+        (dnf) go through it. Plex Media Server itself, the televisions, mail and the backups never do.</p></div>
+    <div class="card full"><h2>Settings</h2><div id="sect-proxy"></div></div>
+    <div id="px-host"></div>
+  </div>
   <div class="ctl-pane" id="pane-time" hidden>
     <div class="ctl-head"><h2 class="ctl-title">Time</h2>
       <p class="ctl-lede">The clock of this server, kept with chrony: how far off it is, which servers it

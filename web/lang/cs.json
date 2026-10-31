@@ -8187,6 +8187,118 @@
   "xs0795": {
    "source": "This is the only server: while it is in maintenance plexmon does nothing by itself - no backups, copies of the databases, system updates or restarts on a schedule, no renewal of the certificate, no routine SMART read of the disks. Its pages and the dashboard go on working.",
    "text": "Toto je jediný server: dokud je v údržbě, plexmon nic nedělá sám - žádné zálohy, kopie databází, aktualizace systému ani restarty podle plánu, žádné obnovení certifikátu, žádné pravidelné čtení SMART z disků. Jeho stránky i dashboard fungují dál."
+  },
+  "xs0796": {
+   "source": "Go out through a proxy",
+   "text": "Ven přes proxy"
+  },
+  "xs0797": {
+   "source": "Password at the proxy",
+   "text": "Heslo pro proxy"
+  },
+  "xs0798": {
+   "source": "Reached through the proxy",
+   "text": "Dosaženo přes proxy"
+  },
+  "xs0799": {
+   "source": "Straight, not through the proxy",
+   "text": "Přímo, ne přes proxy"
+  },
+  "xs0800": {
+   "source": "The proxy",
+   "text": "Proxy"
+  },
+  "xs0801": {
+   "source": "The system updates through it too",
+   "text": "Přes ni i aktualizace systému"
+  },
+  "xs0802": {
+   "source": "User name at the proxy",
+   "text": "Uživatelské jméno pro proxy"
+  },
+  "xs0803": {
+   "source": "being tried",
+   "text": "zkouší se"
+  },
+  "xs0804": {
+   "source": "connected",
+   "text": "spojeno"
+  },
+  "xs0805": {
+   "source": "not tried - the step before stopped it",
+   "text": "nezkoušeno – zastavil to předchozí krok"
+  },
+  "xs0806": {
+   "source": "through the proxy",
+   "text": "přes proxy"
+  },
+  "xs0807": {
+   "source": "An address asked from this node the way plexmon asks the web: through the proxy as it is saved, or straight where none is set or the address is in the list. Each step is shown. Empty: where the new versions are looked for.",
+   "text": "Adresa dotázaná z tohoto serveru tak, jak se plexmon ptá webu: přes proxy, jak je uložená, nebo přímo, kde žádná nastavená není nebo je adresa v seznamu. Ukáže se každý krok. Prázdné: kde se hledají nové verze."
+  },
+  "xs0808": {
+   "source": "Plex Discover and the ratings through it too",
+   "text": "Přes ni i Plex Discover a hodnocení"
+  },
+  "xs0809": {
+   "source": "Reached straight",
+   "text": "Dostupné přímo"
+  },
+  "xs0810": {
+   "source": "This server did not answer in a minute - is plexmon running?",
+   "text": "Server do minuty neodpověděl - běží plexmon?"
+  },
+  "xs0811": {
+   "source": "stopped here",
+   "text": "tady to skončilo"
+  },
+  "xs0812": {
+   "source": "the proxy",
+   "text": "proxy"
+  },
+  "xs0813": {
+   "source": "the proxy · with a password",
+   "text": "proxy · s heslem"
+  },
+  "xs0814": {
+   "source": "trying…",
+   "text": "zkouší se…"
+  },
+  "xs0815": {
+   "source": "connected to the proxy",
+   "text": "spojeno s proxy"
+  },
+  "xs0816": {
+   "source": "Where the server may reach the web only through an HTTP proxy: the new versions, the certificates from the ACME CA, Plex Discover and the rating databases, and the system updates (dnf) go through it. Plex Media Server itself, the televisions, mail and the backups never do.",
+   "text": "Kde server smí na web jen přes HTTP proxy: přes ni jdou nové verze, certifikáty od ACME CA, Plex Discover a databáze hodnocení a aktualizace systému (dnf). Samotný Plex Media Server, televize, e-mail a zálohy nikdy."
+  },
+  "xs0817": {
+   "source": "An HTTP proxy for what plexmon asks of the web: the new versions, the certificates from the ACME CA, Plex Discover and the rating databases, the system updates. Plex Media Server itself, the televisions, mail and the backups never use it.",
+   "text": "HTTP proxy pro to, na co se plexmon ptá webu: nové verze, certifikáty od ACME CA, Plex Discover a databáze hodnocení, aktualizace systému. Samotný Plex Media Server, televize, e-mail a zálohy ji nikdy nepoužívají."
+  },
+  "xs0818": {
+   "source": "dnf fetches the updates of System updates through it.",
+   "text": "dnf přes ni stahuje aktualizace z Aktualizací systému."
+  },
+  "xs0819": {
+   "source": "Plex Discover (the watchlist) and the rating databases (TMDB, OMDb, Trakt, TVmaze) asked through it.",
+   "text": "Plex Discover (seznam ke zhlédnutí) a databáze hodnocení (TMDB, OMDb, Trakt, TVmaze) se ptají přes ni."
+  },
+  "xs0820": {
+   "source": "An HTTP proxy for what plexmon asks of the web - new versions, certificates, Plex Discover and the ratings, the system updates.",
+   "text": "HTTP proxy pro to, na co se plexmon ptá webu - nové verze, certifikáty, Plex Discover a hodnocení, aktualizace systému."
+  },
+  "xs0821": {
+   "source": "Kept sealed, like the other passwords.",
+   "text": "Uloženo zapečetěné, jako ostatní hesla."
+  },
+  "xs0822": {
+   "source": "the way out through the proxy tried (an address of your own, or the upgrades' one)",
+   "text": "vyzkoušet cestu ven přes proxy (vlastní adresa, nebo ta pro aktualizace)"
+  },
+  "xs0823": {
+   "source": "Where the proxy asks for one. Empty: none.",
+   "text": "Kde o ně proxy žádá. Prázdné: žádné."
   }
  },
  "patterns": {
@@ -10381,6 +10493,46 @@
   "xp0165": {
    "source": "the upgrade to {0}",
    "text": "aktualizace na {0}"
+  },
+  "xp0166": {
+   "source": "Not reached: {0}",
+   "text": "Nedosaženo: {0}"
+  },
+  "xp0167": {
+   "source": "Reached straight - HTTP {0}, {1} ms",
+   "text": "Dosaženo přímo – HTTP {0}, {1} ms"
+  },
+  "xp0168": {
+   "source": "Reached through the proxy - HTTP {0}, {1} ms",
+   "text": "Dosaženo přes proxy – HTTP {0}, {1} ms"
+  },
+  "xp0169": {
+   "source": "TLS, the certificate of {0} checked",
+   "text": "TLS, certifikát {0} ověřen"
+  },
+  "xp0170": {
+   "source": "a tunnel through the proxy to {0}",
+   "text": "tunel přes proxy na {0}"
+  },
+  "xp0171": {
+   "source": "connected to {0}",
+   "text": "připojeno k {0}"
+  },
+  "xp0172": {
+   "source": "straight because {0}",
+   "text": "přímo, protože {0}"
+  },
+  "xp0173": {
+   "source": "the proxy looked up ({0})",
+   "text": "proxy vyhledána ({0})"
+  },
+  "xp0174": {
+   "source": "{0} is in the list reached straight",
+   "text": "{0} je v seznamu dostupných přímo"
+  },
+  "xp0175": {
+   "source": "the proxy said {0} {1}",
+   "text": "proxy odpověděla {0} {1}"
   }
  },
  "rich": {
@@ -10551,6 +10703,14 @@
   "xr0024": {
    "source": "When, as <code>HH:MM</code> - a quiet hour: the copy reads the whole database.",
    "text": "Kdy, jako <code>HH:MM</code> - v klidnou hodinu: kopie čte celou databázi."
+  },
+  "xr0025": {
+   "source": "Names and addresses reached without it, separated by commas: <code>.example.cz</code> is every name under it, <code>10.0.0.0/8</code> a net.",
+   "text": "Názvy a adresy dostupné bez ní, oddělené čárkami: <code>.example.cz</code> je každý název pod ní, <code>10.0.0.0/8</code> síť."
+  },
+  "xr0026": {
+   "source": "<code>http://proxy.example.cz:3128</code>",
+   "text": "<code>http://proxy.example.cz:3128</code>"
   }
  }
 }
