@@ -156,6 +156,17 @@ before). Plex Media Server, the dashboard, the televisions and the backups never
 "Try it" shows each step of the way through the proxy. On the command line:
 `plexmon --proxy-test https://github.com/`.
 
+## The machine's console (since 2.5.4)
+
+`install.sh` sets the kernel's console log level to errors only:
+`/etc/sysctl.d/80-plexmon-console.conf` with `kernel.printk = 4 4 1 7` (RHEL's own
+default). Without it, a kernel with a higher level prints systemd's harmless
+"/etc/rc.d/rc.local is not marked executable, skipping" over the console - and over
+`plexmon --console` - at every `systemctl daemon-reload` (each system update runs
+several). Every message is still in `journalctl -k`. A `kernel.printk` set by hand in
+another file under `/etc/sysctl.d` (or `/etc/sysctl.conf`) is left alone;
+`install.sh --uninstall` takes the file away.
+
 ## Files
 
 | | |

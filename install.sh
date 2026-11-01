@@ -87,7 +87,7 @@ if [ "$MODE" = uninstall ]; then
     systemctl disable --now plexmon.service plexmon-upgrade.path 2>/dev/null
     rm -f "$UNITS/plexmon.service" "$UNITS/plexmon-upgrade.path" "$UNITS/plexmon-upgrade.service" \
           "$UNITS/plex-status.service" /etc/profile.d/zz-plexmon-console.sh "$BIN" \
-          /etc/logrotate.d/plexmon
+          /etc/logrotate.d/plexmon /etc/sysctl.d/80-plexmon-console.conf
     rm -rf "$LIB"
     rm -rf "$WEB/settings" "$WEB/assets" "$WEB/lang" "$WEB/plexmon-page.php" "$WEB/plexmon-admin-api.php"
     systemctl daemon-reload
@@ -543,6 +543,31 @@ systemctl daemon-reload
 systemctl enable plexmon.service plexmon-upgrade.path >/dev/null 2>&1
 systemctl start plexmon-upgrade.path
 ok "plexmon.service, plexmon-upgrade.path"
+
+# Only errors on the machine's console (2.5.4, as otp 1.0.210). Every
+# `systemctl daemon-reload` - each RPM's scriptlets in a system update, an
+# upgrade - makes systemd's rc-local generator say "/etc/rc.d/rc.local is not
+# marked executable, skipping" into the kernel's log; with a console log level
+# above 4 the kernel prints it over the console, plexmon --console included.
+# The level goes to RHEL's own 4 (errors and worse); the journal keeps every
+# message (journalctl -k). An administrator's own kernel.printk is left alone.
+console_quiet() {
+    local file=/etc/sysctl.d/80-plexmon-console.conf own
+    own=$(grep -ls '^[[:space:]]*kernel\.printk' /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null \
+          | grep -v "^$file\$" | tr '\n' ' ' || true)
+    own=${own% }
+    if [ -n "$own" ]; then
+        say "kernel.printk is set by hand ($own): left as it is"
+        return 0
+    fi
+    printf '%s\n' '# Written by plexmon (install.sh): only errors on the console;' \
+        '# every message is still in journalctl -k. Taken away by install.sh --uninstall.' \
+        'kernel.printk = 4 4 1 7' > "$file"
+    chmod 0644 "$file"
+    sysctl -q -p "$file" >/dev/null 2>&1 || true
+    ok "the console: only errors (kernel.printk 4 4 1 7, $file)"
+}
+console_quiet
 
 step "nginx: the Plex vhost"
 if [ -f "$NGINX_SITE" ]; then

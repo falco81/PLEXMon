@@ -4,6 +4,21 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.5.4 - 2026-11-01
+
+- **The console is no longer flooded with
+  `systemd-rc-local-generator: /etc/rc.d/rc.local is not marked executable,
+  skipping`** (found in otp 1.0.210). systemd says it at every
+  `systemctl daemon-reload` - several in each system update - into the kernel's
+  log, and a kernel whose console log level is above 4 prints it over the
+  machine's console, `plexmon --console` included. `install.sh` now sets the
+  level to errors only (`kernel.printk = 4 4 1 7`, RHEL's own default) in
+  `/etc/sysctl.d/80-plexmon-console.conf` and applies it; the journal keeps
+  every message (`journalctl -k`). A `kernel.printk` set by hand elsewhere is
+  left alone; the file is the same on every run and goes with
+  `install.sh --uninstall`. Nothing else is touched: not `/etc/rc.d/rc.local`'s
+  mode, not the generator.
+
 ## 2.5.3 - 2026-10-31
 
 - **Plex library: F5 and F9 do nothing on the page** - they are the
