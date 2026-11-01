@@ -4,6 +4,19 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.6.2 - 2026-11-01
+
+- **Certificates from acme looks exactly as in ai** (1.0.60): the state in the
+  card's title (on - paired / on - not paired yet / off), the two switches side
+  by side with their words under them, the address for acme, this server's id
+  and its sealing key as tiles - a click copies what is in one - the pairing
+  code large in its popup (a click copies it), *Or paste acme's key…* with a
+  name for the key, the paired acmes and what acme sees here as the pages'
+  usual tables, and the last push under them.
+  - The switches and *Forget it* still wait for **Save the changes** at the
+    bottom; a key pasted is taken by its popup's *Take this key*, as in ai.
+  - The last push says what was done ("put in for node:… / already there").
+
 ## 2.6.1 - 2026-11-01
 
 - **Certificates from acme: the changes wait for Save the changes** at the

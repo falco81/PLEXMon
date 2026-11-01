@@ -596,12 +596,12 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
       <div id="web-certs" class="cert-grid"></div>
     </div>
     <div class="card full" id="web-push-card">
-      <h2>Certificates from acme</h2>
-      <p class="note">acme - the certificate manager - puts its certificates in here and renews
-        them by itself (acme push): paired once, by a code shown here or its key pasted, it signs
-        every request, and the private key comes sealed to this installation's own key. What it
-        sends is kept exactly as an upload above is, and Automatic certificates leave it alone.
-        Off until it is switched on.</p>
+      <h2>Certificates from acme <span class="right" id="web-push-state"></span></h2>
+      <p class="note">acme, the certificate manager, can give this server its certificate and renew it
+        by itself (acme push). Paired once with a code shown here, acme signs every request with its key and
+        sends the certificate's private key sealed for this server alone; the certificate is kept exactly where
+        an upload above keeps it, and the Automatic certificates leave it alone from then on. Off until switched
+        on; acme's address must be among those that may reach these pages.</p>
       <div id="web-push"></div>
     </div>
     <div class="card full" id="plex-card">

@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.6.1'
+__version__ = '2.6.2'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -8871,7 +8871,7 @@ def push_install(store, key, body, app_id, priv):
         'key_id': key['id'], 'installed': out, 'names': have,
         'not_after': main['info'].get('not_after'), 'issuer': main['info'].get('issuer'),
         'alt': _push_key_type(alt['info']) if alt else '',
-        'key_type': _push_key_type(main['info'])}))
+        'key_type': _push_key_type(main['info']), 'said': '; '.join(said)}))
     return {'ok': True, 'installed': out, 'said': '; '.join(said)}
 
 
@@ -9009,7 +9009,8 @@ def _push_card_do(h):
         except ValueError as e:
             raise ApiError(400, str(e))
         push_box(store, make=True)
-        kid = push_key_add(store, pub, comment, comment, 'pasted', who)
+        label = str(b.get('label') or '').strip()[:160]
+        kid = push_key_add(store, pub, comment, label or comment, 'pasted', who)
         store.add_event('settings', '%s pasted an acme key (%s, %s): it may put certificates in '
                         'here now' % (who, comment or 'no comment', kid), 'warn', who=who)
         said = 'acme\'s key is taken (%s)' % kid

@@ -3385,16 +3385,12 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 /* The daemon starting again after an upgrade or a restart (2.4.5): expected, said calmly. */
 .offline.calm{background:var(--info-bg, rgba(56,139,253,.12));border-color:rgba(56,139,253,.4);color:var(--info)}
 
-/* Certificates from acme (2.6.0) */
-#web-push .push-switch{display:flex;align-items:center;justify-content:flex-start;gap:12px;flex-wrap:wrap;margin:6px 0 10px;text-align:left}
-#web-push .push-switch>label:not(.sw){font-weight:600;cursor:pointer}
-#web-push .push-switch>.note{flex-basis:100%;margin:0;text-align:left}
-#web-push .push-h{font-size:13px;margin:16px 0 6px;color:var(--tx-mut);text-transform:uppercase;letter-spacing:.04em}
-#web-push .push-copy{display:inline-flex;align-items:center;gap:6px;word-break:break-all}
-#web-push .push-slots td,#web-push .push-keys td{vertical-align:middle}
-#web-push .btnrow{align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
-.push-code{font:600 22px/1.3 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em;padding:8px 14px;border-radius:8px;background:var(--bg-2,rgba(127,127,127,.12))}
-.push-paste{width:100%;min-height:80px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical;padding:10px 12px}
-#web-push .push-switch.changed>label:not(.sw){color:var(--info)}
-#web-push tr.changed td{color:var(--info)}
-#web-push tr.push-gone td:first-child,#web-push tr.push-gone td:nth-child(2){text-decoration:line-through;opacity:.7}
+/* Certificates from acme (2.6.0) - as ai's (2.6.2) */
+.push-code{font-size:30px;letter-spacing:.12em;text-align:center;padding:18px 10px;margin:12px 0;border:1px dashed var(--line);border-radius:10px;background:var(--panel2);user-select:all;overflow-wrap:anywhere}
+#web-push .facts{margin:12px 0}
+#web-push h4{margin:16px 0 8px}
+#web-push tr.push-gone td:not(.rowtools){text-decoration:line-through;opacity:.55}
+#web-push .rowtools .muted{margin-right:8px}
+/* the tiles of Certificates from acme copy what is in them */
+.fact.copyable:hover,.push-code.copyable:hover{border-color:var(--info);box-shadow:0 0 0 1px var(--info) inset}
+.push-code.copyable{user-select:all;-webkit-user-select:all}

@@ -1810,7 +1810,7 @@
   },
   "s2187": {
    "source": "Since",
-   "text": "Od kdy"
+   "text": "Od"
   },
   "s2191": {
    "source": "Size",
@@ -3498,7 +3498,7 @@
   },
   "s4031": {
    "source": "off",
-   "text": "vypnuto"
+   "text": "vypnutý"
   },
   "s4037": {
    "source": "on",
@@ -8614,7 +8614,7 @@
   },
   "xs0902": {
    "source": "Its sealing key (X25519)",
-   "text": "Její pečetící klíč (X25519)"
+   "text": "Jeho klíč pro pečetění (X25519)"
   },
   "xs0903": {
    "source": "Cryptography",
@@ -8658,7 +8658,7 @@
   },
   "xs0913": {
    "source": "Take certificates of other names",
-   "text": "Brát certifikáty jiných jmen"
+   "text": "Brát certifikáty i na jiná jména"
   },
   "xs0914": {
    "source": "Off: only a certificate that holds the name of these pages is put in. On: acme may also put one in that does not, when it says so (check_names off).",
@@ -8795,6 +8795,82 @@
   "xs0947": {
    "source": "taken once the changes are saved",
    "text": "přijme se po uložení změn"
+  },
+  "xs0948": {
+   "source": "the pairing code is copied",
+   "text": "párovací kód je zkopírovaný"
+  },
+  "xs0949": {
+   "source": "forgotten when saved",
+   "text": "zapomene se po uložení"
+  },
+  "xs0950": {
+   "source": "Off: hello says only that it is off, and nothing is taken.",
+   "text": "Vypnuto: acme se dozví jen to, že je to vypnuté, a nic se nepřevezme."
+  },
+  "xs0951": {
+   "source": "Certificates from acme: saved",
+   "text": "Certifikáty z acme: uloženo"
+  },
+  "xs0952": {
+   "source": "Or paste acme’s key…",
+   "text": "Nebo vložit klíč acme…"
+  },
+  "xs0953": {
+   "source": "This server’s id",
+   "text": "Id tohoto serveru"
+  },
+  "xs0954": {
+   "source": "acme’s key",
+   "text": "Klíč acme"
+  },
+  "xs0955": {
+   "source": "Looked after by",
+   "text": "Spravuje"
+  },
+  "xs0956": {
+   "source": "Paste acme’s key",
+   "text": "Vložit klíč acme"
+  },
+  "xs0957": {
+   "source": "on - not paired yet",
+   "text": "zapnuto – zatím nespárováno"
+  },
+  "xs0958": {
+   "source": "on - paired",
+   "text": "zapnuto – spárováno"
+  },
+  "xs0959": {
+   "source": "Nothing more is taken from it once saved; the certificate it put in stays until another one replaces it.",
+   "text": "Po uložení se od něj už nic nepřevezme; certifikát, který vložilo, zůstane, dokud ho nenahradí jiný."
+  },
+  "xs0960": {
+   "source": "acme, the certificate manager, can give this server its certificate and renew it by itself (acme push). Paired once with a code shown here, acme signs every request with its key and sends the certificate's private key sealed for this server alone; the certificate is kept exactly where an upload above keeps it, and the Automatic certificates leave it alone from then on. Off until switched on; acme's address must be among those that may reach these pages.",
+   "text": "acme, správce certifikátů, může tomuto serveru dávat certifikát a sám ho obnovovat (acme push). Po jednorázovém spárování kódem z této karty acme podepisuje každý požadavek svým klíčem a soukromý klíč certifikátu posílá zapečetěný jen pro tento server; certifikát se uloží přesně tam, kam ho ukládá ruční nahrání výše, a Automatické certifikáty ho od té doby nechají být. Vypnuté, dokud to nezapnete; adresa acme musí patřit mezi ty, které na tyto stránky smějí."
+  },
+  "xs0961": {
+   "source": "A name for it",
+   "text": "Jméno pro něj"
+  },
+  "xs0962": {
+   "source": "A click on the code or the address copies it.",
+   "text": "Kliknutím na kód nebo adresu se zkopírují."
+  },
+  "xs0963": {
+   "source": "In acme: Targets → add An application of ours (acme push), its address below, and this code in Pairing code - then Try. The code is shown this once, works once, for 15 minutes; five wrong tries end it.",
+   "text": "V acme: Cíle → přidat Naše aplikace (acme push), její adresu níže a tento kód do Párovací kód – pak Vyzkoušet. Kód se ukáže jen teď, platí jednou a 15 minut; pět chybných pokusů ho zruší."
+  },
+  "xs0964": {
+   "source": "acme’s own Certificates from acme card shows This acme’s own key: acme-push-ed25519 AAAA… acme then pins this server when it first sees it - keep Check the application’s certificate on there.",
+   "text": "Vlastní karta Certifikáty z acme v acme ukazuje Vlastní klíč tohoto acme: acme-push-ed25519 AAAA… acme si pak tento server připne, když ho poprvé uvidí – nechte tam zapnuté Kontrolovat certifikát aplikace."
+  },
+  "xs0965": {
+   "source": "nobody (none)",
+   "text": "nikdo (žádný)"
+  },
+  "xs0966": {
+   "source": "pasted",
+   "text": "vložen"
   }
  },
  "patterns": {
@@ -11157,6 +11233,26 @@
   "xp0207": {
    "source": "it takes the certificate of these pages by itself: push to {0}",
    "text": "bere si certifikát těchto stránek sám: posílejte do {0}"
+  },
+  "xp0208": {
+   "source": "A code waits until {0} ({1} wrong so far).",
+   "text": "Kód čeká do {0} (zatím {1} chybných)."
+  },
+  "xp0209": {
+   "source": "copied: {0}",
+   "text": "zkopírováno: {0}"
+  },
+  "xp0210": {
+   "source": "Off: a certificate must hold the name of this server ({0}). On: acme may say not to check it.",
+   "text": "Vypnuto: certifikát musí obsahovat jméno tohoto serveru ({0}). Zapnuto: acme smí říct, ať se nekontroluje."
+  },
+  "xp0211": {
+   "source": "The last push: {0} · {1} · {2}",
+   "text": "Poslední push: {0} · {1} · {2}"
+  },
+  "xp0212": {
+   "source": "follows:{0}",
+   "text": "řídí se {0}"
   }
  },
  "rich": {
