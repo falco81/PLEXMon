@@ -4,6 +4,33 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.6.0 - 2026-11-01
+
+- **Certificates from acme (acme push)** - a new card on Settings →
+  Certificates and TLS, **off by default**: switched on, *acme* - the
+  certificate manager - puts its certificates in here and renews them by
+  itself (acme push protocol 1, plexmon as the receiver;
+  [docs/acme-push.md](docs/acme-push.md)).
+  - **Pair with an acme** shows a one-time code (15 minutes, 5 tries), or
+    **Or paste acme's key**; the acmes paired are listed with **Forget it**.
+  - Every request is signed (Ed25519, time within 300 s, nonces kept in the
+    database); the certificate's private key arrives sealed to this
+    installation's own X25519 key (HKDF-SHA256 + AES-256-GCM) - with the
+    `cryptography` package where it is installed, in plain Python otherwise,
+    both checked against the protocol's test vectors
+    (`tools/test-acme-push.py`).
+  - What acme sees here: the slot of these pages (dual RSA + ECDSA) and, with
+    Plex Media Server's own certificate on, a `plex` slot that follows it.
+  - A pushed certificate is checked (fingerprint, key, validity, the names of
+    these pages unless **Take certificates of other names** is on) and kept
+    exactly as an upload is - nginx and Plex take it as after an upload,
+    Automatic certificates leave it alone; the same one again is "already
+    there". The card shows the last push and the last refusal.
+  - **Nothing existing changes**: upload, request, self-signed, the TLS
+    settings, Automatic certificates, Plex's certificate, backups and the
+    command line work exactly as before, with push off and on; no existing
+    function is changed, the receiver only calls them.
+
 ## 2.5.5 - 2026-11-01
 
 - **Saved passwords: a full administrator sees the last two characters, all

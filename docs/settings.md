@@ -34,6 +34,14 @@ The certificate is written to the files the Plex vhost names
 `/etc/nginx/plexmon/tls.conf`; nginx is asked (`nginx -t`) and reloaded; if it
 refuses, everything is put back.
 
+### Certificates from acme (acme push)
+
+A card of its own, **off by default**: switched on, an *acme* - the
+certificate manager - may put its certificates in here and renew them by
+itself. It is one more way for a certificate to arrive and replaces nothing:
+upload, request, self-signed, the TLS settings and Automatic certificates work
+as before. The details are in [acme-push.md](acme-push.md).
+
 ### Plex Media Server uses this certificate too
 
 Plex Media Server (port 32400) has its own certificate `*.plex.direct`. With

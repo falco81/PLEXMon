@@ -22,6 +22,58 @@ $base = rtrim(dirname(PM_COOKIE_PATH), '/') . '/';
 if (isset($_GET['api'])) {
     $what = (string) $_GET['api'];
     $post = $_SERVER['REQUEST_METHOD'] === 'POST';
+    /* acme push (2.6.0): an acme - the certificate manager - asks these four
+       of the daemon, signed with its key; no session and no CSRF check, as
+       nothing a browser can be made to send carries a valid signature. The
+       page decides nothing and keeps nothing: the raw body, byte for byte,
+       and the five X-Acme-Push-* headers go to the daemon as they came. */
+    if (preg_match('/^acme-push-(hello|pair|inventory|install)$/', $what, $pm_push)) {
+        $op = $pm_push[1];
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        if (($op === 'hello') === $post) {
+            http_response_code(405);
+            echo json_encode(['ok' => false, 'code' => 'bad_request',
+                              'error' => $op === 'hello' ? 'hello is a GET' : $op . ' is a POST']);
+            exit;
+        }
+        $raw = '';
+        if ($post) {
+            $len = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
+            if ($len > 1048576) {
+                http_response_code(413);
+                echo json_encode(['ok' => false, 'code' => 'too_big', 'error' => 'the request is over 1 MiB']);
+                exit;
+            }
+            $raw = (string) file_get_contents('php://input', false, null, 0, 1048577);
+            if (strlen($raw) > 1048576) {
+                http_response_code(413);
+                echo json_encode(['ok' => false, 'code' => 'too_big', 'error' => 'the request is over 1 MiB']);
+                exit;
+            }
+        }
+        $hdr = [];
+        foreach (['Version', 'Key', 'Time', 'Nonce', 'Signature'] as $h) {
+            $v = (string) ($_SERVER['HTTP_X_ACME_PUSH_' . strtoupper($h)] ?? '');
+            $hdr[$h] = substr($v, 0, 300);
+        }
+        if (pm_token() === null) {
+            http_response_code(503);
+            echo json_encode(['ok' => false, 'code' => 'down', 'error' => 'the daemon is not answering']);
+            exit;
+        }
+        [$status, $body] = $post
+            ? pm_call('/api/acme-push/' . $op, 'POST', ['body' => base64_encode($raw), 'headers' => $hdr], 60.0)
+            : pm_call('/api/acme-push/hello', 'GET', null, 20.0);
+        if ($status === 0 || !is_array(json_decode((string) $body, true))) {
+            http_response_code(503);
+            echo json_encode(['ok' => false, 'code' => 'down', 'error' => 'the daemon is not answering']);
+            exit;
+        }
+        http_response_code($status);
+        echo $body;
+        exit;
+    }
     if ($what === 'lang' && !$post) {
         pm_serve_lang();
     }
@@ -230,7 +282,7 @@ if (isset($_GET['api'])) {
         'plex-matches' => '/api/plex/matches', 'plex-watchlist' => '/api/plex/watchlist',
         'plex-person' => '/api/plex/person', 'plex-discover' => '/api/plex/discover',
         'power' => '/api/power', 'ntp' => '/api/ntp', 'osup' => '/api/osup', 'db' => '/api/db',
-        'rbackup' => '/api/rbackup',
+        'rbackup' => '/api/rbackup', 'acme-push' => '/api/acme-push',
     ];
     $writes = [
         'settings' => '/api/settings', 'users' => '/api/users', 'sessions' => '/api/sessions',
@@ -240,7 +292,7 @@ if (isset($_GET['api'])) {
         'console-login' => '/api/console-login', 'mfa' => '/api/auth/mfa', 'acme' => '/api/acme',
         'plex' => '/api/plex',
         'power' => '/api/power', 'ntp' => '/api/ntp', 'osup' => '/api/osup', 'db' => '/api/db',
-        'rbackup' => '/api/rbackup', 'proxy' => '/api/proxy',
+        'rbackup' => '/api/rbackup', 'proxy' => '/api/proxy', 'acme-push' => '/api/acme-push',
     ];
     if ($post) {
         if (!isset($writes[$what])) {
@@ -542,6 +594,15 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
         nginx names, nginx is asked before it is reloaded, and everything is put back as it was
         when nginx says no.</p>
       <div id="web-certs" class="cert-grid"></div>
+    </div>
+    <div class="card full" id="web-push-card">
+      <h2>Certificates from acme</h2>
+      <p class="note">acme - the certificate manager - puts its certificates in here and renews
+        them by itself (acme push): paired once, by a code shown here or its key pasted, it signs
+        every request, and the private key comes sealed to this installation's own key. What it
+        sends is kept exactly as an upload above is, and Automatic certificates leave it alone.
+        Off until it is switched on.</p>
+      <div id="web-push"></div>
     </div>
     <div class="card full" id="plex-card">
       <h2>Plex Media Server</h2>

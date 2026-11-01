@@ -8579,6 +8579,206 @@
   "xs0893": {
    "source": "Kept with its passphrase, sealed: ",
    "text": "Uložen s heslem, zapečetěný: "
+  },
+  "xs0894": {
+   "source": "Certificates from acme",
+   "text": "Certifikáty z acme"
+  },
+  "xs0895": {
+   "source": "acme - the certificate manager - puts its certificates in here and renews them by itself (acme push): paired once, by a code shown here or its key pasted, it signs every request, and the private key comes sealed to this installation's own key. What it sends is kept exactly as an upload above is, and Automatic certificates leave it alone. Off until it is switched on.",
+   "text": "acme - správce certifikátů - sem dává své certifikáty a sám je obnovuje (acme push): jednou se spáruje kódem ukázaným zde nebo vloženým klíčem, každý požadavek podepisuje a soukromý klíč přichází zapečetěný pro vlastní klíč této instalace. Co pošle, se uloží přesně jako nahrání výše a Automatické certifikáty ho nechají být. Vypnuto, dokud se nezapne."
+  },
+  "xs0896": {
+   "source": "Take certificates from acme",
+   "text": "Brát certifikáty z acme"
+  },
+  "xs0897": {
+   "source": "Take no more certificates from acme?",
+   "text": "Už nebrat certifikáty z acme?"
+  },
+  "xs0898": {
+   "source": "acme can no longer put a certificate in here; the one that is in stays. Its keys are kept: switched on again, it goes on.",
+   "text": "acme sem už nebude moci vložit certifikát; ten, který tu je, zůstane. Jeho klíče se ponechají: po opětovném zapnutí se pokračuje."
+  },
+  "xs0899": {
+   "source": "Switched off: these pages answer acme only that they take nothing.",
+   "text": "Vypnuto: tyto stránky acme odpoví jen, že nic neberou."
+  },
+  "xs0900": {
+   "source": "The address for acme",
+   "text": "Adresa pro acme"
+  },
+  "xs0901": {
+   "source": "This installation's id",
+   "text": "Id této instalace"
+  },
+  "xs0902": {
+   "source": "Its sealing key (X25519)",
+   "text": "Její pečetící klíč (X25519)"
+  },
+  "xs0903": {
+   "source": "Cryptography",
+   "text": "Kryptografie"
+  },
+  "xs0904": {
+   "source": "a pairing code waits",
+   "text": "čeká párovací kód"
+  },
+  "xs0905": {
+   "source": "A new code",
+   "text": "Nový kód"
+  },
+  "xs0906": {
+   "source": "Pair with an acme",
+   "text": "Spárovat s acme"
+  },
+  "xs0907": {
+   "source": "Take it back",
+   "text": "Vzít zpět"
+  },
+  "xs0908": {
+   "source": "Or paste acme's key",
+   "text": "Nebo vložit klíč acme"
+  },
+  "xs0909": {
+   "source": "Paired with",
+   "text": "Spárováno s"
+  },
+  "xs0910": {
+   "source": "No acme yet: Pair with an acme, or paste its key.",
+   "text": "Zatím žádné acme: Spárovat s acme, nebo vložit jeho klíč."
+  },
+  "xs0911": {
+   "source": "Forget this acme?",
+   "text": "Zapomenout toto acme?"
+  },
+  "xs0912": {
+   "source": "Nothing more is taken from it; the certificate it put in stays. To take its certificates again, pair once more.",
+   "text": "Nic dalšího se od něj nevezme; certifikát, který vložilo, zůstane. Aby se jeho certifikáty braly znovu, spárujte ho ještě jednou."
+  },
+  "xs0913": {
+   "source": "Take certificates of other names",
+   "text": "Brát certifikáty jiných jmen"
+  },
+  "xs0914": {
+   "source": "Off: only a certificate that holds the name of these pages is put in. On: acme may also put one in that does not, when it says so (check_names off).",
+   "text": "Vypnuto: vloží se jen certifikát, který obsahuje jméno těchto stránek. Zapnuto: acme smí vložit i takový, který ho neobsahuje, když to řekne (check_names vypnuto)."
+  },
+  "xs0915": {
+   "source": "What acme sees here",
+   "text": "Co tu acme vidí"
+  },
+  "xs0916": {
+   "source": "Slot",
+   "text": "Slot"
+  },
+  "xs0917": {
+   "source": "Kept by",
+   "text": "Spravuje"
+  },
+  "xs0918": {
+   "source": "its own Automatic certificates",
+   "text": "vlastní Automatické certifikáty"
+  },
+  "xs0919": {
+   "source": "acme push",
+   "text": "acme push"
+  },
+  "xs0920": {
+   "source": "follows",
+   "text": "řídí se"
+  },
+  "xs0921": {
+   "source": "The last push",
+   "text": "Poslední push"
+  },
+  "xs0922": {
+   "source": "Until",
+   "text": "Do"
+  },
+  "xs0923": {
+   "source": "Slots",
+   "text": "Sloty"
+  },
+  "xs0924": {
+   "source": "The last request refused: ",
+   "text": "Poslední odmítnutý požadavek: "
+  },
+  "xs0925": {
+   "source": "its key pasted",
+   "text": "vložen jeho klíč"
+  },
+  "xs0926": {
+   "source": "paired with a code",
+   "text": "spárováno kódem"
+  },
+  "xs0927": {
+   "source": "In acme: Targets → An application of ours (acme push) - the address of these pages, and this code in Pairing code; then Try. The code is shown only now; it lasts 15 minutes and is gone after 5 wrong tries.",
+   "text": "V acme: Cíle → Naše aplikace (acme push) - adresa těchto stránek a tento kód do Párovací kód; pak Vyzkoušet. Kód se ukáže jen teď; platí 15 minut a po 5 chybných pokusech zmizí."
+  },
+  "xs0928": {
+   "source": "acme's own key, from its card Certificates from acme (This acme's own key). acme then learns this installation's keys at its next Try - with Check the application's certificate on in acme, that is as safe as the certificate of these pages.",
+   "text": "Vlastní klíč acme z jeho karty Certifikáty z acme (Vlastní klíč tohoto acme). acme se klíče této instalace dozví při příštím Vyzkoušet - se zapnutým Kontrolovat certifikát aplikace v acme je to stejně bezpečné jako certifikát těchto stránek."
+  },
+  "xs0929": {
+   "source": "Take this key",
+   "text": "Vzít tento klíč"
+  },
+  "xs0930": {
+   "source": "certificates from acme are taken now",
+   "text": "certifikáty z acme se teď berou"
+  },
+  "xs0931": {
+   "source": "certificates from acme are no longer taken",
+   "text": "certifikáty z acme se už neberou"
+  },
+  "xs0932": {
+   "source": "certificates of other names are taken",
+   "text": "berou se i certifikáty jiných jmen"
+  },
+  "xs0933": {
+   "source": "only certificates holding the names of these pages are taken",
+   "text": "berou se jen certifikáty se jmény těchto stránek"
+  },
+  "xs0934": {
+   "source": "the pairing code is made: give it to acme within 15 minutes",
+   "text": "párovací kód je vytvořen: zadejte ho do acme do 15 minut"
+  },
+  "xs0935": {
+   "source": "the pairing code is taken back",
+   "text": "párovací kód je vzat zpět"
+  },
+  "xs0936": {
+   "source": "that acme is forgotten: nothing more is taken from it",
+   "text": "toto acme je zapomenuto: nic dalšího se od něj nevezme"
+  },
+  "xs0937": {
+   "source": "switch Take certificates from acme on first",
+   "text": "nejdřív zapněte Brát certifikáty z acme"
+  },
+  "xs0938": {
+   "source": "no such acme key here",
+   "text": "takový klíč acme tu není"
+  },
+  "xs0939": {
+   "source": "that is not an acme key (it starts with acme-push-ed25519)",
+   "text": "to není klíč acme (začíná acme-push-ed25519)"
+  },
+  "xs0940": {
+   "source": "the key in it is not an Ed25519 public key",
+   "text": "klíč v něm není veřejný klíč Ed25519"
+  },
+  "xs0941": {
+   "source": "put in",
+   "text": "vložen"
+  },
+  "xs0942": {
+   "source": "already there",
+   "text": "už tam je"
+  },
+  "xs0943": {
+   "source": "the name of these pages is not known",
+   "text": "jméno těchto stránek není známo"
   }
  },
  "patterns": {
@@ -10917,6 +11117,30 @@
   "xp0201": {
    "source": "Plex downloads the metadata, posters and backgrounds of every item of {0} again (asked first).",
    "text": "Plex znovu stáhne metadata, plakáty a pozadí každé položky knihovny {0} (nejdřív se zeptá)."
+  },
+  "xp0202": {
+   "source": "until {0} · {1} tries left",
+   "text": "do {0} · zbývá pokusů: {1}"
+  },
+  "xp0203": {
+   "source": " · until {0}",
+   "text": " · do {0}"
+  },
+  "xp0204": {
+   "source": "acme's key is taken ({0})",
+   "text": "klíč acme je přijat ({0})"
+  },
+  "xp0205": {
+   "source": "{0}: already there",
+   "text": "{0}: už tam je"
+  },
+  "xp0206": {
+   "source": "{0}: put in",
+   "text": "{0}: vložen"
+  },
+  "xp0207": {
+   "source": "it takes the certificate of these pages by itself: push to {0}",
+   "text": "bere si certifikát těchto stránek sám: posílejte do {0}"
   }
  },
  "rich": {
