@@ -8575,6 +8575,10 @@
   "xs0892": {
    "source": "Plex asks its agents again for each ticked one - its own badges (IMDb, Rotten Tomatoes, TMDB) come again.",
    "text": "Plex se znovu zeptá svých agentů na každý zaškrtnutý titul - jeho vlastní odznaky (IMDb, Rotten Tomatoes, TMDB) přijdou znovu."
+  },
+  "xs0893": {
+   "source": "Kept with its passphrase, sealed: ",
+   "text": "Uložen s heslem, zapečetěný: "
   }
  },
  "patterns": {

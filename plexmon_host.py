@@ -1412,6 +1412,10 @@ def rb_view(t):
     out['kind_words'] = RB_KIND_WORDS.get(t.get('kind'), t.get('kind'))
     if t.get('password'):
         out['password'] = secret_shown(rb_secret(t, 'password'), last=True)
+    # The passphrase of an own ssh key too (2.5.5): dots and its last two - the
+    # page is a full administrator's alone.
+    if t.get('key_pass'):
+        out['key_pass'] = secret_shown(rb_secret(t, 'key_pass'), last=True)
     if t.get('hostkey'):
         out['hostkey_fp'] = ssh_fingerprints(t['hostkey'])
     if t.get('client_cert'):

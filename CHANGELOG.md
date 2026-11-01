@@ -4,6 +4,20 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.5.5 - 2026-11-01
+
+- **Saved passwords: a full administrator sees the last two characters, all
+  over the pages** - checked everywhere one is kept:
+  - Settings (the proxy's password, the backups' password, the DNS API tokens
+    and keys, the TSIG secret, the TMDB / OMDb / Trakt keys) and a backup
+    destination's password already showed dots and the last two to a full
+    administrator, and nothing to anybody else;
+  - **new**: the passphrase of an ssh key given for a backup destination, shown
+    beside the key the same way (before, only that one was kept).
+  - Typed, a password shows dots only, everywhere. Private keys (TLS, ssh,
+    the ACME account), the second step's secrets and the accounts' passwords
+    are never shown back.
+
 ## 2.5.4 - 2026-11-01
 
 - **The console is no longer flooded with

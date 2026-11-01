@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.5.4'
+__version__ = '2.5.5'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -6550,7 +6550,7 @@ def _rbackup_do(h):
         HX.rb_set_fields(st, t['id'], by, 'an ssh key of their own given',
                          key=seal_secret(private, bind=HX.RB_BIND), pub=public,
                          key_pass=seal_secret(pp, bind=HX.RB_BIND) if pp else None)
-        return {'message': 'taken', 'pub': public}
+        return {'message': 'taken', 'pub': public, 'key_pass': secret_shown(pp) if pp else ''}
     if act == 'key_download':
         t = _rb_target_for(h, b)
         private = HX.rb_secret(t, 'key')
