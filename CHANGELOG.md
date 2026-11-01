@@ -4,6 +4,19 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.6.1 - 2026-11-01
+
+- **Certificates from acme: the changes wait for Save the changes** at the
+  bottom, as every other setting does - nothing on the card is done the moment
+  it is clicked any more:
+  - *Take certificates from acme* and *Take certificates of other names*,
+    switched, are shown as changed until saved;
+  - a key pasted (*Or paste acme's key*) is listed as "taken once the changes
+    are saved" (*Leave it* drops it), an acme to forget is struck through
+    (*Keep it* keeps it);
+  - *Put them back* throws the changes away. *Pair with an acme* still shows
+    its code at once - the code is what is given to acme.
+
 ## 2.6.0 - 2026-11-01
 
 - **Certificates from acme (acme push)** - a new card on Settings →

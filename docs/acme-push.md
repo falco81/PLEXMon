@@ -33,7 +33,10 @@ acme push is one more way for a certificate to arrive. Nothing else changes:
 ## Setting it up
 
 1. Settings → **Certificates and TLS** → **Certificates from acme**:
-   **Take certificates from acme** on (a full administrator).
+   **Take certificates from acme** on (a full administrator), then **Save the
+   changes** at the bottom. Every change on the card - the two switches, a key
+   pasted, an acme forgotten - waits for that button, as every other setting
+   does; *Put them back* throws them away.
 2. **Pair with an acme**: a code `XXXX-XXXX-XXXX-XXXX` is shown once; it lasts
    15 minutes and is gone after 5 wrong tries (*Take it back* drops it).
 3. In acme: Targets → *An application of ours (acme push)*; the address is the
@@ -44,8 +47,8 @@ acme push is one more way for a certificate to arrive. Nothing else changes:
    deployment there.
 
 Instead of the code, acme's key (`acme-push-ed25519 AAAA… comment`) can be
-pasted: **Or paste acme's key**. At most 8 acme keys are kept; **Forget it**
-ends one.
+pasted: **Or paste acme's key** (taken on Save). At most 8 acme keys are
+kept; **Forget it** ends one (on Save).
 
 ## The address and the requests
 

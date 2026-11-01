@@ -3750,6 +3750,26 @@ function pushDo(body, button, after) {
     return x;
   }).catch(oops).then(function (x) { busy(button, false); return x; });
 }
+/* The card's changes wait for the save bar at the bottom (2.6.1), as every
+   other setting does: switched, pasted or forgotten here, done on Save. */
+function pushSave(body) {
+  return api('acme-push', body).then(function (x) {
+    if (x.message) toast(x.message, 'good');
+    setTimeout(loadPush, 300);
+    return true;
+  });
+}
+function pushPend(key, what) {
+  what.pane = 'web';
+  what.reset = what.reset || function () { setTimeout(loadPush, 0); };
+  pendingSet(key, what);
+  if (PUSHC.last) drawPush(PUSHC.last);
+}
+function pushUnpend(key) {
+  delete PENDING[key];
+  markDirtyCount();
+  if (PUSHC.last) drawPush(PUSHC.last);
+}
 function pushCode(code, until) {
   modal('Pair with an acme', function (body) {
     body.appendChild(el('p', 'note', 'In acme: Targets → An application of ours (acme push) - the address of these pages, and this code in Pairing code; then Try. The code is shown only now; it lasts 15 minutes and is gone after 5 wrong tries.'));
@@ -3774,7 +3794,12 @@ function pushPaste(button) {
     body.appendChild(box);
   }, [{words: 'No, leave it', close: true},
       {words: 'Take this key', cls: 'primary', close: true, go: function () {
-        pushDo({action: 'paste', note: box.value.trim()}, button);
+        var text = box.value.trim().replace(/\s+/g, ' ');
+        var m = /^acme-push-ed25519 ([A-Za-z0-9+\/]{43}=)(?: (.*))?$/.exec(text);
+        if (!m) { toast('that is not an acme key (it starts with acme-push-ed25519)', 'bad'); return; }
+        pushPend('push:paste:' + m[1], {text: text, comment: m[2] || '', save: function () {
+          return pushSave({action: 'paste', note: text});
+        }});
       }}]);
   setTimeout(function () { box.focus(); }, 50);
 }
@@ -3803,17 +3828,20 @@ function drawPush(p) {
   lab.setAttribute('for', 'push-on-sw');
   row.appendChild(sw);
   row.appendChild(lab);
+  if (PENDING['push:on']) { sw._input.checked = PENDING['push:on'].on; row.classList.add('changed'); }
   sw._input.addEventListener('change', function () {
     var on = sw._input.checked;
-    sw._input.checked = !on;
-    if (on) { pushDo({action: 'on'}, sw._input); return; }
-    confirmThen('Take no more certificates from acme?', 'acme can no longer put a certificate in here; the one that is in stays. Its keys are kept: switched on again, it goes on.', 'Switch it off', function () {
-      pushDo({action: 'off'}, sw._input);
-    });
+    if (on === !!p.on) { pushUnpend('push:on'); return; }
+    pushPend('push:on', {on: on, save: function () { return pushSave({action: on ? 'on' : 'off'}); }});
   });
   host.appendChild(row);
+  if (PENDING['push:on']) {
+    host.appendChild(el('p', 'note warn', PENDING['push:on'].on
+      ? 'Switched on once the changes are saved (the save bar at the bottom); then acme can be paired here.'
+      : 'Switched off once the changes are saved: acme can no longer put a certificate in here; the one that is in stays, and so do its keys.'));
+  }
   if (!p.on) {
-    host.appendChild(el('p', 'note', 'Switched off: these pages answer acme only that they take nothing.'));
+    if (!PENDING['push:on']) host.appendChild(el('p', 'note', 'Switched off: these pages answer acme only that they take nothing.'));
     return;
   }
   var copyable = function (text) {
@@ -3856,26 +3884,41 @@ function drawPush(p) {
   host.appendChild(pr);
   /* The acmes paired. */
   host.appendChild(el('h3', 'push-h', 'Paired with'));
-  if (!p.keys.length) {
+  var pasted = Object.keys(PENDING).filter(function (k) { return k.indexOf('push:paste:') === 0; });
+  if (!p.keys.length && !pasted.length) {
     host.appendChild(el('p', 'note', 'No acme yet: Pair with an acme, or paste its key.'));
   } else {
     var t = el('table', 'plain tight push-keys');
     var tb = el('tbody');
     p.keys.forEach(function (k) {
-      var tr = el('tr');
+      var fk = 'push:forget:' + k.id;
+      var gone = !!PENDING[fk];
+      var tr = el('tr', gone ? 'push-gone changed' : '');
       tr.appendChild(noI18n(el('td', '', k.name || k.comment || '–')));
       tr.appendChild(noI18n(el('td', 'mono small', k.id)));
-      tr.appendChild(el('td', 'small muted', (k.how === 'pasted' ? 'its key pasted' : 'paired with a code') + ' · ' + stamp(k.at)));
+      tr.appendChild(el('td', 'small muted', gone ? 'forgotten once the changes are saved' : (k.how === 'pasted' ? 'its key pasted' : 'paired with a code') + ' · ' + stamp(k.at)));
       var td = el('td', 'right');
       if (ADMIN) {
-        var f = cmdButton('Forget it', 'trash', 'small danger');
+        var f = gone ? cmdButton('Keep it', 'undo', 'small') : cmdButton('Forget it', 'trash', 'small danger');
         f.onclick = function () {
-          confirmThen('Forget this acme?', 'Nothing more is taken from it; the certificate it put in stays. To take its certificates again, pair once more.', 'Forget it', function () {
-            pushDo({action: 'forget', name: k.id}, f);
-          });
+          if (gone) { pushUnpend(fk); return; }
+          pushPend(fk, {save: function () { return pushSave({action: 'forget', name: k.id}); }});
         };
         td.appendChild(f);
       }
+      tr.appendChild(td);
+      tb.appendChild(tr);
+    });
+    pasted.forEach(function (key) {
+      var pk = PENDING[key];
+      var tr = el('tr', 'changed');
+      tr.appendChild(noI18n(el('td', '', pk.comment || '–')));
+      tr.appendChild(noI18n(el('td', 'mono small', key.slice(11, 27) + '…')));
+      tr.appendChild(el('td', 'small muted', 'taken once the changes are saved'));
+      var td = el('td', 'right');
+      var u = cmdButton('Leave it', 'undo', 'small');
+      u.onclick = function () { pushUnpend(key); };
+      td.appendChild(u);
       tr.appendChild(td);
       tb.appendChild(tr);
     });
@@ -3892,8 +3935,11 @@ function drawPush(p) {
   on.appendChild(sw2);
   on.appendChild(l2);
   on.appendChild(el('p', 'note', 'Off: only a certificate that holds the name of these pages is put in. On: acme may also put one in that does not, when it says so (check_names off).'));
+  if (PENDING['push:names']) { sw2._input.checked = PENDING['push:names'].on; on.classList.add('changed'); }
   sw2._input.addEventListener('change', function () {
-    pushDo({action: 'other_names', mode: sw2._input.checked ? 'on' : 'off'}, sw2._input);
+    var v = sw2._input.checked;
+    if (v === !!p.other_names) { pushUnpend('push:names'); return; }
+    pushPend('push:names', {on: v, save: function () { return pushSave({action: 'other_names', mode: v ? 'on' : 'off'}); }});
   });
   host.appendChild(on);
   /* What acme sees here. */

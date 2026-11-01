@@ -3395,3 +3395,6 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 #web-push .btnrow{align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
 .push-code{font:600 22px/1.3 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em;padding:8px 14px;border-radius:8px;background:var(--bg-2,rgba(127,127,127,.12))}
 .push-paste{width:100%;min-height:80px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical;padding:10px 12px}
+#web-push .push-switch.changed>label:not(.sw){color:var(--info)}
+#web-push tr.changed td{color:var(--info)}
+#web-push tr.push-gone td:first-child,#web-push tr.push-gone td:nth-child(2){text-decoration:line-through;opacity:.7}

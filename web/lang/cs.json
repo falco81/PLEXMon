@@ -8779,6 +8779,22 @@
   "xs0943": {
    "source": "the name of these pages is not known",
    "text": "jméno těchto stránek není známo"
+  },
+  "xs0944": {
+   "source": "Switched on once the changes are saved (the save bar at the bottom); then acme can be paired here.",
+   "text": "Zapne se po uložení změn (lišta dole); pak se tu dá acme spárovat."
+  },
+  "xs0945": {
+   "source": "Switched off once the changes are saved: acme can no longer put a certificate in here; the one that is in stays, and so do its keys.",
+   "text": "Vypne se po uložení změn: acme sem pak už nebude moci vložit certifikát; ten, který tu je, zůstane, stejně jako jeho klíče."
+  },
+  "xs0946": {
+   "source": "forgotten once the changes are saved",
+   "text": "zapomene se po uložení změn"
+  },
+  "xs0947": {
+   "source": "taken once the changes are saved",
+   "text": "přijme se po uložení změn"
   }
  },
  "patterns": {
