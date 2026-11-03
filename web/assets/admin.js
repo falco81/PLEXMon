@@ -2895,7 +2895,10 @@ function readCertFiles(files) {
         } else {
           var bin = '';
           for (var i = 0; i < bytesArr.length; i++) bin += String.fromCharCode(bytesArr[i]);
-          ok({name: f.name, pfx: btoa(bin)});
+          /* A ZIP (2.6.4) - as Download gives both of a dual one: opened by
+             the daemon, its PEM and PFX files taken as if chosen here. */
+          if (bin.slice(0, 4) === 'PK\x03\x04') ok({name: f.name, zip: btoa(bin)});
+          else ok({name: f.name, pfx: btoa(bin)});
         }
       };
       r.onerror = function () { bad(new Error(f.name + ' could not be read')); };
@@ -2926,11 +2929,11 @@ function certUpload(target, prof) {
       (prof && prof.pending ? 'A request waits here: the certificate the authority sent back is enough, its key is here.' : 'The key has to come with it.')));
     note.appendChild(document.createTextNode(' '));
     /* A dual one (2.6.3): a sentence of its own, translated by itself. */
-    note.appendChild(el('span', '', 'A dual certificate (RSA and ECDSA for the same names) comes the same way, as both pairs in PEM or as two PFX files - RSA is the main one, ECDSA goes beside it.'));
+    note.appendChild(el('span', '', 'A dual certificate (RSA and ECDSA for the same names) comes the same way, as both pairs in PEM, as two PFX files or as the ZIP Download gives - RSA is the main one, ECDSA goes beside it.'));
     body.appendChild(note);
     var drop = el('div', 'drop');
     var inp = el('input'); inp.type = 'file'; inp.multiple = true; inp.hidden = true;
-    inp.accept = '.pem,.crt,.cer,.key,.pfx,.p12,.chain,.ca,.txt';
+    inp.accept = '.pem,.crt,.cer,.key,.pfx,.p12,.chain,.ca,.txt,.zip';
     var says = el('span', '', 'Drop the files here, or press to choose them');
     drop.appendChild(inp); drop.appendChild(says);
     var list = el('div', 'cert-files');
@@ -2938,7 +2941,7 @@ function certUpload(target, prof) {
       readCertFiles(files).then(function (r) {
         got = got.concat(r);
         clear(list);
-        got.forEach(function (x) { list.appendChild(noI18n(el('span', 'cchip', x.name + (x.pfx ? ' (PFX)' : ' (PEM)')))); });
+        got.forEach(function (x) { list.appendChild(noI18n(el('span', 'cchip', x.name + (x.zip ? ' (ZIP)' : (x.pfx ? ' (PFX)' : ' (PEM)'))))); });
         says.textContent = 'Read: ' + got.length + ' file(s). More can be added.';
       }).catch(oops);
     }
@@ -2964,11 +2967,12 @@ function certUpload(target, prof) {
       {words: 'Put it in', cls: 'primary', icon: 'save', go: function (b) {
         var pem = got.filter(function (x) { return x.pem; }).map(function (x) { return x.pem; }).join('\n') + '\n' + ($('cu-paste').value || '');
         var pfx = got.filter(function (x) { return x.pfx; });
+        var zips = got.filter(function (x) { return x.zip; }).map(function (x) { return x.zip; });
         if (pfx.length > 2) { toast('two PFX / PKCS#12 files at most (RSA and ECDSA)', 'bad'); return; }
-        if (!pfx.length && !/-----BEGIN /.test(pem)) { toast('choose the files first, or paste the PEM', 'bad'); return; }
+        if (!pfx.length && !zips.length && !/-----BEGIN /.test(pem)) { toast('choose the files first, or paste the PEM', 'bad'); return; }
         busy(b, true);
         api('web', {action: 'tls_upload', target: target, cert: pem, pfx: pfx.length ? pfx[0].pfx : '',
-                    pfx2: pfx.length > 1 ? pfx[1].pfx : '',
+                    pfx2: pfx.length > 1 ? pfx[1].pfx : '', zips: zips,
                     password: ($('cu-pw') || {}).value || ''}).then(function (x) {
           toast(x.message, 'good'); closeModal(); loadWeb();
         }).catch(function (e) { $('cu-said').className = 'said bad'; $('cu-said').textContent = e.message; }).then(function () { busy(b, false); });

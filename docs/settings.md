@@ -22,7 +22,7 @@ the root, the state in nginx. The buttons:
 
 | | |
 |---|---|
-| Upload | PEM (certificate, key, chain, root - in any order) or PFX / PKCS#12 with its password; a **dual** certificate (RSA + ECDSA of the same names) as both pairs in PEM or two PFX files - RSA is the main one, ECDSA goes beside it, each with its own chain |
+| Upload | PEM (certificate, key, chain, root - in any order) or PFX / PKCS#12 with its password; a **dual** certificate (RSA + ECDSA of the same names) as both pairs in PEM, two PFX files, or the ZIP *Download → Both certificates* gives - RSA is the main one, ECDSA goes beside it, each with its own chain |
 | Request (CSR) | the key is made here and stays here; the request goes to your CA, you upload only the certificate |
 | Self-signed | for a try, or until the real one comes |
 | TLS settings | Standard (TLS 1.2 + 1.3, ECDHE), Mozilla intermediate / modern, custom; DH parameters; the server picks the cipher; HSTS |

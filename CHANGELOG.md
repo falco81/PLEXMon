@@ -4,6 +4,18 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.6.4 - 2026-11-03
+
+- **Upload takes a ZIP** - the one *Download → Both certificates* gives, or
+  any ZIP of certificate files: its PEM files and its `.pfx` / `.p12` files
+  are taken as if they had been chosen one by one, so a dual certificate
+  downloaded from one server goes into another as it is (the PFX files'
+  password in *Password*). Also `plexmon --cert-import both.zip`.
+  - Opened in memory by the daemon, nothing written to the disk; at most 20
+    files in it, 200 kB each, 1 MiB in all; a ZIP locked with a password, one
+    with no certificate in it, or one that cannot be read is refused, said.
+  - Two PFX files at most in all (RSA and ECDSA), with or without a ZIP.
+
 ## 2.6.3 - 2026-11-03
 
 - **A dual certificate (RSA + ECDSA) can be downloaded and uploaded whole.**

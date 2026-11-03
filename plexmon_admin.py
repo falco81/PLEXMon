@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.6.3'
+__version__ = '2.6.4'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -2199,6 +2199,41 @@ def _pfx_text(pfx, password=''):
     if got is None:
         raise ValueError('%s - is the password right?' % last)
     return got.decode('utf-8', 'replace')
+
+
+def cert_zip_parts(raw):
+    """The certificate files inside a ZIP (2.6.4) - as Download gives both of a
+    dual one: ([PEM texts], [PFX files]). Read in memory with limits, nothing
+    is written to the disk; folders and other files in it are passed over."""
+    import io
+    import zipfile
+    try:
+        z = zipfile.ZipFile(io.BytesIO(raw))
+    except (zipfile.BadZipFile, ValueError, OSError):
+        raise ValueError('the ZIP file cannot be read')
+    pems, pfxs, total = [], [], 0
+    entries = [i for i in z.infolist() if not i.is_dir()]
+    if len(entries) > 20:
+        raise ValueError('the ZIP holds %d files - a certificate is a few' % len(entries))
+    for i in entries:
+        if i.file_size > 200000:
+            raise ValueError('%s in the ZIP is far bigger than any certificate file' % i.filename)
+        total += i.file_size
+        if total > 1 << 20:
+            raise ValueError('the ZIP is far bigger than certificates are')
+        if i.flag_bits & 0x1:
+            raise ValueError('the ZIP is locked with a password - lock the PFX files instead')
+        try:
+            data = z.read(i)
+        except (zipfile.BadZipFile, RuntimeError, OSError, ValueError):
+            raise ValueError('%s in the ZIP cannot be read' % i.filename)
+        if b'-----BEGIN ' in data:
+            pems.append(data.decode('utf-8', 'replace'))
+        elif re.search(r'\.(pfx|p12)\Z', i.filename, re.I):
+            pfxs.append(data)
+    if not pems and not pfxs:
+        raise ValueError('there is no certificate in the ZIP (PEM, .pfx or .p12 files)')
+    return pems, pfxs
 
 
 def _key_kind(info):
@@ -7217,13 +7252,32 @@ def _web_do(h):
                     raise ApiError(400, 'that is far bigger than any certificate file')
             pending = unseal_secret(prof['pending_key'], 'web:tls') if prof.get('pending_key') \
                 else ''
-            dual = cert_bundle_dual([b.get('cert'), b.get('key'), b.get('chain')], [pfx, pfx2],
-                                    b.get('root'), str(b.get('password') or ''))
+            # ZIP files (2.6.4): what Download gives - their PEM and PFX
+            # files taken as if they had been chosen one by one.
+            zips = b.get('zips') or []
+            if not isinstance(zips, list) or len(zips) > 4:
+                raise ApiError(400, 'four ZIP files at most')
+            texts, pfxs = [b.get('cert'), b.get('key'), b.get('chain')], [x for x in (pfx, pfx2)
+                                                                           if x]
+            for zb in zips:
+                try:
+                    zraw = base64.b64decode(str(zb), validate=True)
+                except (ValueError, binascii.Error):
+                    raise ApiError(400, 'a ZIP file did not arrive whole')
+                if len(zraw) > 1 << 20:
+                    raise ApiError(400, 'that ZIP is far bigger than certificates are')
+                zp, zx = cert_zip_parts(zraw)
+                texts += zp
+                pfxs += zx
+            if len(pfxs) > 2:
+                raise ApiError(400, 'two PFX / PKCS#12 files at most (RSA and ECDSA)')
+            dual = cert_bundle_dual(texts, pfxs, b.get('root'), str(b.get('password') or ''))
             if dual:
                 got, ec = dual
             else:
-                got = cert_bundle(b.get('cert'), b.get('key'), b.get('chain'), b.get('root'),
-                                  pfx or pfx2, str(b.get('password') or ''), pending)
+                got = cert_bundle('\n'.join(str(t or '') for t in texts), '', '', b.get('root'),
+                                  pfxs[0] if pfxs else b'', str(b.get('password') or ''),
+                                  pending)
             how = 'uploaded'
         else:
             names = [x.strip() for x in re.split(r'[\s,;]+', str(b.get('names') or '')) if x.strip()]
@@ -9259,7 +9313,7 @@ def build_parser():
     g.add_argument('--cert-import', nargs='+', metavar='FILE',
                    help='put a certificate in: PEM files (certificate, key, chain - any order) '
                         'or one .pfx/.p12 (its password from PLEXMON_PFX_PASSWORD); a dual '
-                        'one (RSA + ECDSA): both pairs, or two .pfx/.p12')
+                        'one (RSA + ECDSA): both pairs, or two .pfx/.p12, or the .zip Download gives')
     g.add_argument('--cert-selfsigned', metavar='NAME', help='a self-signed certificate for NAME')
     g.add_argument('--tls-preset', choices=sorted(TLS_PRESETS), help='how TLS is spoken')
     g.add_argument('--tls-dh', choices=sorted(DH_WORDS), help='the DH parameters')
@@ -10487,6 +10541,13 @@ def cli_main(argv=None, mon=None):
             raw = Path(f).read_bytes()
             if b'-----BEGIN' in raw:
                 pems.append(raw.decode('utf-8', 'replace'))
+            elif raw[:4] == b'PK\x03\x04':
+                try:
+                    zp, zx = cert_zip_parts(raw)
+                except ValueError as e:
+                    raise SystemExit('plexmon: %s: %s' % (f, e))
+                pems += zp
+                pfxs += zx
             else:
                 pfxs.append(raw)
         if len(pfxs) > 2:

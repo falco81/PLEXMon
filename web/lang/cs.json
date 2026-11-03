@@ -8919,6 +8919,38 @@
   "xs0978": {
    "source": "A dual certificate (RSA and ECDSA for the same names) comes the same way, as both pairs in PEM or as two PFX files - RSA is the main one, ECDSA goes beside it.",
    "text": "Duální certifikát (RSA i ECDSA pro stejná jména) se nahraje stejně, jako oba páry v PEM nebo jako dva soubory PFX – RSA je hlavní, ECDSA jde vedle něj."
+  },
+  "xs0979": {
+   "source": "A dual certificate (RSA and ECDSA for the same names) comes the same way, as both pairs in PEM, as two PFX files or as the ZIP Download gives - RSA is the main one, ECDSA goes beside it.",
+   "text": "Duální certifikát (RSA i ECDSA pro stejná jména) se nahraje stejně, jako oba páry v PEM, jako dva soubory PFX nebo jako ZIP ze Stáhnout – RSA je hlavní, ECDSA jde vedle něj."
+  },
+  "xs0980": {
+   "source": "four ZIP files at most",
+   "text": "nejvýš čtyři soubory ZIP"
+  },
+  "xs0981": {
+   "source": "a ZIP file did not arrive whole",
+   "text": "soubor ZIP nedorazil celý"
+  },
+  "xs0982": {
+   "source": "that ZIP is far bigger than certificates are",
+   "text": "ten ZIP je mnohem větší než certifikáty"
+  },
+  "xs0983": {
+   "source": "the ZIP file cannot be read",
+   "text": "soubor ZIP nejde přečíst"
+  },
+  "xs0984": {
+   "source": "the ZIP is far bigger than certificates are",
+   "text": "ZIP je mnohem větší než certifikáty"
+  },
+  "xs0985": {
+   "source": "the ZIP is locked with a password - lock the PFX files instead",
+   "text": "ZIP je zamčený heslem – zamkněte místo toho soubory PFX"
+  },
+  "xs0986": {
+   "source": "there is no certificate in the ZIP (PEM, .pfx or .p12 files)",
+   "text": "v ZIPu není žádný certifikát (soubory PEM, .pfx nebo .p12)"
   }
  },
  "patterns": {
@@ -11317,6 +11349,18 @@
   "xp0216": {
    "source": "the ECDSA certificate ran out on {0}",
    "text": "certifikát ECDSA vypršel {0}"
+  },
+  "xp0217": {
+   "source": "the ZIP holds {0} files - a certificate is a few",
+   "text": "ZIP obsahuje {0} souborů – certifikát jich má jen pár"
+  },
+  "xp0218": {
+   "source": "{0} in the ZIP is far bigger than any certificate file",
+   "text": "{0} v ZIPu je mnohem větší než jakýkoli soubor certifikátu"
+  },
+  "xp0219": {
+   "source": "{0} in the ZIP cannot be read",
+   "text": "{0} v ZIPu nejde přečíst"
   }
  },
  "rich": {
