@@ -1784,8 +1784,9 @@ var CX_FORMATS = [
    words: 'the key alone - nginx, Apache'}
 ];
 function certExport(target, prof) {
-  var st = {fmt: 'fullchain', legacy: false};
+  var st = {fmt: 'fullchain', legacy: false, both: false};
   var info = (prof && prof.info) || {};
+  var ecInfo = prof && prof.ec && prof.ec.info;
   var draw = function (body) {
     clear(body);
     var head = el('div', 'cx-head');
@@ -1817,6 +1818,18 @@ function certExport(target, prof) {
       });
       body.appendChild(g);
     };
+    /* A dual certificate (2.6.3): both of it - RSA and ECDSA, each with its own
+       key where the format has one - in one ZIP. */
+    if (ecInfo) {
+      var bl = el('label', 'check small cx-both');
+      var bc = el('input'); bc.type = 'checkbox'; bc.checked = st.both;
+      bc.onchange = function () { st.both = bc.checked; check(); };
+      bl.appendChild(bc);
+      bl.appendChild(el('span', '', 'Both certificates - RSA and ECDSA, each with its own chain (and its own private key) - in one ZIP'));
+      bl.appendChild(document.createTextNode(' '));
+      bl.appendChild(noI18n(el('span', 'muted', '(' + (info.key || 'RSA') + ' + ' + (ecInfo.key || 'EC') + ')')));
+      body.appendChild(bl);
+    }
     group('Without the private key - safe to hand to anybody', false);
     if (ADMIN) group('With the private key - whoever has it can be this server', true);
     var f = CX_FORMATS.filter(function (x) { return x.k === st.fmt; })[0];
@@ -1890,7 +1903,7 @@ function certExport(target, prof) {
     if (go) {
       go.disabled = !!bad;
       go.title = bad;
-      setButtonIcon(go, 'download', 'Download ' + f.ext);
+      setButtonIcon(go, 'download', 'Download ' + (st.both && ecInfo ? '.zip' : f.ext));
     }
   };
   modal('Download the certificate', draw, [
@@ -1900,7 +1913,8 @@ function certExport(target, prof) {
       var said = $('cx-said');
       if (said) { said.textContent = ''; said.className = 'cx-said'; }
       api('web', {action: 'tls_export', target: target, format: st.fmt, password: st['cx-pw1'] || '',
-                  password2: st['cx-pw1'] || '', mine: st['cx-mine'] || '', legacy: !!st.legacy}).then(function (x) {
+                  password2: st['cx-pw1'] || '', mine: st['cx-mine'] || '', legacy: !!st.legacy,
+                  both: !!(st.both && ecInfo)}).then(function (x) {
         var bin = atob(x.b64), arr = new Uint8Array(bin.length);
         for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
         var a = el('a');
@@ -2902,12 +2916,18 @@ var CERT_PASTE_HINT = '-----BEGIN CERTIFICATE-----\n' +
   '-----BEGIN PRIVATE KEY-----\n' +
   '4. its private key (not needed when the request was made here)\n' +
   '-----END PRIVATE KEY-----\n\n' +
-  'Any order is taken: they are sorted by themselves.';
+  'Any order is taken: they are sorted by themselves.\n' +
+  'A dual certificate: both pairs, RSA and ECDSA, each with its chain.';
 function certUpload(target, prof) {
   var got = [];
   modal('A certificate for ' + webTargetWords(target), function (body) {
-    body.appendChild(el('p', 'note', 'PEM files - the certificate, its key, the chain, the root, in any order or all in one - or one PFX / PKCS#12 file. ' +
+    var note = el('p', 'note');
+    note.appendChild(el('span', '', 'PEM files - the certificate, its key, the chain, the root, in any order or all in one - or one PFX / PKCS#12 file. ' +
       (prof && prof.pending ? 'A request waits here: the certificate the authority sent back is enough, its key is here.' : 'The key has to come with it.')));
+    note.appendChild(document.createTextNode(' '));
+    /* A dual one (2.6.3): a sentence of its own, translated by itself. */
+    note.appendChild(el('span', '', 'A dual certificate (RSA and ECDSA for the same names) comes the same way, as both pairs in PEM or as two PFX files - RSA is the main one, ECDSA goes beside it.'));
+    body.appendChild(note);
     var drop = el('div', 'drop');
     var inp = el('input'); inp.type = 'file'; inp.multiple = true; inp.hidden = true;
     inp.accept = '.pem,.crt,.cer,.key,.pfx,.p12,.chain,.ca,.txt';
@@ -2944,10 +2964,11 @@ function certUpload(target, prof) {
       {words: 'Put it in', cls: 'primary', icon: 'save', go: function (b) {
         var pem = got.filter(function (x) { return x.pem; }).map(function (x) { return x.pem; }).join('\n') + '\n' + ($('cu-paste').value || '');
         var pfx = got.filter(function (x) { return x.pfx; });
-        if (pfx.length > 1) { toast('one PFX / PKCS#12 file at a time', 'bad'); return; }
+        if (pfx.length > 2) { toast('two PFX / PKCS#12 files at most (RSA and ECDSA)', 'bad'); return; }
         if (!pfx.length && !/-----BEGIN /.test(pem)) { toast('choose the files first, or paste the PEM', 'bad'); return; }
         busy(b, true);
         api('web', {action: 'tls_upload', target: target, cert: pem, pfx: pfx.length ? pfx[0].pfx : '',
+                    pfx2: pfx.length > 1 ? pfx[1].pfx : '',
                     password: ($('cu-pw') || {}).value || ''}).then(function (x) {
           toast(x.message, 'good'); closeModal(); loadWeb();
         }).catch(function (e) { $('cu-said').className = 'said bad'; $('cu-said').textContent = e.message; }).then(function () { busy(b, false); });

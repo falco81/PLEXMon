@@ -8871,6 +8871,54 @@
   "xs0966": {
    "source": "pasted",
    "text": "vložen"
+  },
+  "xs0967": {
+   "source": "Both certificates - RSA and ECDSA, each with its own chain (and its own private key) - in one ZIP",
+   "text": "Oba certifikáty – RSA i ECDSA, každý se svým řetězcem (a svým privátním klíčem) – v jednom ZIPu"
+  },
+  "xs0968": {
+   "source": "PEM files - the certificate, its key, the chain, the root, in any order or all in one - or one PFX / PKCS#12 file. A dual certificate - RSA and ECDSA of the same names - comes the same way: both pairs in PEM, or two PFX files; RSA is the main one, ECDSA goes beside it. ",
+   "text": "Soubory PEM – certifikát, jeho klíč, řetězec, kořen, v libovolném pořadí nebo vše v jednom – nebo jeden soubor PFX / PKCS#12. Duální certifikát – RSA i ECDSA pro stejná jména – se nahraje stejně: oba páry v PEM, nebo dva soubory PFX; RSA je hlavní, ECDSA jde vedle něj. "
+  },
+  "xs0969": {
+   "source": "two PFX / PKCS#12 files at most (RSA and ECDSA)",
+   "text": "nejvýš dva soubory PFX / PKCS#12 (RSA a ECDSA)"
+  },
+  "xs0970": {
+   "source": "there is no second (ECDSA) certificate beside this one",
+   "text": "vedle tohoto certifikátu není druhý (ECDSA)"
+  },
+  "xs0971": {
+   "source": "the private key of the ECDSA certificate is not kept here",
+   "text": "privátní klíč certifikátu ECDSA tu není uložen"
+  },
+  "xs0972": {
+   "source": "more than two private keys were sent (a dual certificate is two: RSA and ECDSA)",
+   "text": "přišly víc než dva privátní klíče (duální certifikát má dva: RSA a ECDSA)"
+  },
+  "xs0973": {
+   "source": "two private keys came, but not the certificate of each of them",
+   "text": "přišly dva privátní klíče, ale ne certifikát ke každému z nich"
+  },
+  "xs0974": {
+   "source": "-----BEGIN CERTIFICATE-----\n1. the certificate of this name (the server's own)\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n2. the intermediate certificate(s), if there are any - one block each\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n3. the root certificate (optional)\n-----END CERTIFICATE-----\n-----BEGIN PRIVATE KEY-----\n4. its private key (not needed when the request was made here)\n-----END PRIVATE KEY-----\n\nAny order is taken: they are sorted by themselves.\nA dual certificate: both pairs, RSA and ECDSA, each with its chain.",
+   "text": "-----BEGIN CERTIFICATE-----\n1. certifikát pro toto jméno (vlastní certifikát serveru)\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n2. mezilehlé certifikáty, pokud jsou – každý ve vlastním bloku\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n3. kořenový certifikát (nepovinný)\n-----END CERTIFICATE-----\n-----BEGIN PRIVATE KEY-----\n4. jeho privátní klíč (není potřeba, pokud se tu vytvořila žádost)\n-----END PRIVATE KEY-----\n\nPořadí nevadí: certifikáty se seřadí samy.\nDuální certifikát: oba páry, RSA i ECDSA, každý se svým řetězcem."
+  },
+  "xs0975": {
+   "source": "A dual certificate - RSA and ECDSA of the same names - comes the same way: both pairs in PEM, or two PFX files; RSA is the main one, ECDSA goes beside it.",
+   "text": "Duální certifikát – RSA i ECDSA pro stejná jména – se nahraje stejně: oba páry v PEM, nebo dva soubory PFX; RSA je hlavní, ECDSA jde vedle něj."
+  },
+  "xs0976": {
+   "source": "A dual certificate (RSA and ECDSA of the same names) comes the same way, as both pairs in PEM or as two PFX files.",
+   "text": "Duální certifikát (RSA i ECDSA pro stejná jména) se nahraje stejně, jako oba páry v PEM nebo jako dva soubory PFX."
+  },
+  "xs0977": {
+   "source": "RSA is the main one, ECDSA goes beside it.",
+   "text": "RSA je hlavní, ECDSA jde vedle něj."
+  },
+  "xs0978": {
+   "source": "A dual certificate (RSA and ECDSA for the same names) comes the same way, as both pairs in PEM or as two PFX files - RSA is the main one, ECDSA goes beside it.",
+   "text": "Duální certifikát (RSA i ECDSA pro stejná jména) se nahraje stejně, jako oba páry v PEM nebo jako dva soubory PFX – RSA je hlavní, ECDSA jde vedle něj."
   }
  },
  "patterns": {
@@ -11253,6 +11301,22 @@
   "xp0212": {
    "source": "follows:{0}",
    "text": "řídí se {0}"
+  },
+  "xp0213": {
+   "source": "the certificates (RSA + ECDSA) of {0} are kept; they are put in within a few seconds",
+   "text": "certifikáty (RSA + ECDSA) pro {0} jsou uloženy; během několika sekund se nasadí"
+  },
+  "xp0214": {
+   "source": "two certificates came, both with {0} keys: a dual certificate is one RSA and one ECDSA certificate of the same names",
+   "text": "přišly dva certifikáty, oba s klíči {0}: duální certifikát je jeden RSA a jeden ECDSA certifikát pro stejná jména"
+  },
+  "xp0215": {
+   "source": "the two certificates are not for the same names ({0} / {1})",
+   "text": "oba certifikáty nejsou pro stejná jména ({0} / {1})"
+  },
+  "xp0216": {
+   "source": "the ECDSA certificate ran out on {0}",
+   "text": "certifikát ECDSA vypršel {0}"
   }
  },
  "rich": {

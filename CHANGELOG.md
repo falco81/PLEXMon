@@ -4,6 +4,28 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.6.3 - 2026-11-03
+
+- **A dual certificate (RSA + ECDSA) can be downloaded and uploaded whole.**
+  Before, Download gave only the main (RSA) certificate and its key - the
+  ECDSA one beside it, and its key, never left the server - and Upload took
+  one key only ("more than one private key was sent").
+  - **Download**: for a dual certificate a new choice, *Both certificates*:
+    the RSA and the ECDSA certificate, each with its own chain (and its own
+    private key, in the formats that have one), in one ZIP
+    (`NAME-rsa.pfx` + `NAME-ecdsa.pfx`, `NAME-rsa-fullchain.pem` + …). The
+    same rules as for one: the key only to a full administrator with their
+    own password, the same file password for both, every export an event.
+  - **Upload**: both pairs at once - PEM with the two certificates, the two
+    keys and their chains in any order, or two PFX / PKCS#12 files with one
+    password. RSA is the main one, ECDSA goes beside it (as Automatic
+    certificates keep their second one); each gets its own chain, issuer by
+    issuer. Refused, with words: two keys of the same kind, other names, a
+    key without its certificate, more than two keys.
+  - The command line too: `plexmon --cert-import rsa.pfx ecdsa.pfx`, or the
+    PEM files of both.
+  - One certificate is uploaded and downloaded exactly as before.
+
 ## 2.6.2 - 2026-11-01
 
 - **Certificates from acme looks exactly as in ai** (1.0.60): the state in the

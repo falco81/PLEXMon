@@ -3394,3 +3394,5 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 /* the tiles of Certificates from acme copy what is in them */
 .fact.copyable:hover,.push-code.copyable:hover{border-color:var(--info);box-shadow:0 0 0 1px var(--info) inset}
 .push-code.copyable{user-select:all;-webkit-user-select:all}
+/* Download: both of a dual certificate (2.6.3) */
+.cx-both{display:flex;align-items:center;gap:8px;margin:4px 0 12px;flex-wrap:wrap}

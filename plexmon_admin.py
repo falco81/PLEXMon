@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.6.2'
+__version__ = '2.6.3'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -2184,6 +2184,85 @@ def cert_bundle(cert='', key='', chain='', root='', pfx=b'', password='', pendin
             'root': ''.join(c + '\n' for c in roots), 'key': key_pem, 'info': info,
             'chain_info': [cert_info(c) for c in chain_out],
             'root_info': [cert_info(c) for c in roots], 'verify': verify}
+
+
+def _pfx_text(pfx, password=''):
+    """A PFX / PKCS#12 file as PEM text (its certificates and its key)."""
+    got, last = None, None
+    for extra in ([], ['-legacy']):
+        try:
+            got = _openssl(['pkcs12', '-nodes', '-passin', 'env:PLEXMON_PW'] + extra, pfx,
+                           {'PLEXMON_PW': password or ''}, what='the PFX / PKCS#12 file')
+            break
+        except ValueError as e:
+            last = e
+    if got is None:
+        raise ValueError('%s - is the password right?' % last)
+    return got.decode('utf-8', 'replace')
+
+
+def _key_kind(info):
+    return 'ec' if str((info or {}).get('key') or '').startswith('EC') else 'rsa'
+
+
+def cert_bundle_dual(texts, pfxs=(), root='', password=''):
+    """Two certificates of the same names sent at once (2.6.3) - an RSA one and
+    an ECDSA one, each with its key: PEM with both pairs, or two PFX files.
+    (rsa bundle, ecdsa bundle), each as cert_bundle makes it; None when only
+    one key came (an ordinary upload)."""
+    text = '\n'.join(str(t or '') for t in texts)
+    for one in pfxs:
+        if one:
+            text += '\n' + _pfx_text(one, password)
+    keys = []
+    for m in PEM_KEY.finditer(text):
+        if m.group(0) not in keys:
+            keys.append(m.group(0))
+    if len(keys) < 2:
+        return None
+    if len(keys) > 2:
+        raise ValueError('more than two private keys were sent (a dual certificate is two: '
+                         'RSA and ECDSA)')
+    certs = []
+    for m in PEM_CERT.finditer(text + '\n' + str(root or '')):
+        if m.group(0) not in certs:
+            certs.append(m.group(0))
+    plain = [key_plain(k, password) for k in keys]
+    leaves = []
+    for k in plain:
+        want = _pub_of_key(k)
+        leaf = next((c for c in certs if _pub_of_cert(c) == want), None)
+        if not leaf:
+            raise ValueError('two private keys came, but not the certificate of each of them')
+        leaves.append(leaf)
+    rest = [c for c in certs if c not in leaves]
+    infos = {c: cert_info(c) for c in rest}
+    out = []
+    for leaf, k in zip(leaves, plain):
+        # Each one its own chain: what leads up from it, issuer by issuer
+        # (an RSA and an ECDSA certificate of a CA have other intermediates).
+        mine, at = [], cert_info(leaf)
+        while True:
+            nxt = next((c for c in rest if c not in mine and
+                        infos[c].get('subject') == at.get('issuer')), None)
+            if not nxt:
+                break
+            mine.append(nxt)
+            if infos[nxt].get('self_signed'):
+                break
+            at = infos[nxt]
+        out.append(cert_bundle(leaf + '\n' + '\n'.join(mine), k, '', root))
+    kinds = [_key_kind(x['info']) for x in out]
+    if sorted(kinds) != ['ec', 'rsa']:
+        raise ValueError('two certificates came, both with %s keys: a dual certificate is one '
+                         'RSA and one ECDSA certificate of the same names'
+                         % ('ECDSA' if kinds[0] == 'ec' else 'RSA'))
+    names = [sorted(set([str(n).lower() for n in x['info'].get('san') or []] or
+                        [str(x['info'].get('cn') or '').lower()])) for x in out]
+    if names[0] != names[1]:
+        raise ValueError('the two certificates are not for the same names (%s / %s)'
+                         % (', '.join(names[0]), ', '.join(names[1])))
+    return (out[0], out[1]) if kinds[0] == 'rsa' else (out[1], out[0])
 
 
 def _san_ext(names):
@@ -6973,22 +7052,75 @@ EXPORT_FORMATS = {
 }
 
 
+def _export_file(fmt, name, cert, chain, key, pw, legacy):
+    """One certificate as a file in the format asked: (data, file name, type)."""
+    with tempfile.TemporaryDirectory(prefix='plexmon-export-') as tmp:
+        os.chmod(tmp, 0o700)
+        cf, chf, kf = (os.path.join(tmp, n) for n in ('c.pem', 'ch.pem', 'k.pem'))
+        for path_, v in ((cf, cert), (chf, chain), (kf, key)):
+            with open(path_, 'w') as f:
+                f.write(v)
+        env = {'PLEXMON_PW': pw}
+        if fmt == 'crt':
+            return cert.encode(), name + '.crt', 'application/x-pem-file'
+        if fmt == 'fullchain':
+            return (cert + chain).encode(), name + '-fullchain.pem', 'application/x-pem-file'
+        if fmt == 'der':
+            data = _openssl(['x509', '-in', cf, '-outform', 'DER'], what='the DER file')
+            return data, name + '.cer', 'application/pkix-cert'
+        if fmt == 'p7b':
+            args = ['crl2pkcs7', '-nocrl', '-certfile', cf]
+            if chain:
+                args += ['-certfile', chf]
+            data = _openssl(args + ['-outform', 'DER'], what='the PKCS#7 file')
+            return data, name + '.p7b', 'application/x-pkcs7-certificates'
+        if fmt in ('key', 'pem'):
+            kdata = key.encode()
+            if pw:
+                kdata = _openssl(['pkey', '-in', kf, '-aes256', '-passout', 'env:PLEXMON_PW'],
+                                 env=env, what='locking the key')
+            if fmt == 'key':
+                return kdata, name + '.key', 'application/x-pem-file'
+            return (cert + chain).encode() + kdata, name + '-with-key.pem', \
+                'application/x-pem-file'
+        args = ['pkcs12', '-export', '-inkey', kf, '-in', cf, '-passout', 'env:PLEXMON_PW',
+                '-name', name]
+        if chain:
+            args += ['-certfile', chf]
+        if legacy:
+            # Older Windows, macOS before 10.15, old Java and Android:
+            # what they read (as Plex's own file).
+            args += ['-certpbe', 'PBE-SHA1-3DES', '-keypbe', 'PBE-SHA1-3DES', '-macalg', 'sha1']
+        else:
+            args += ['-certpbe', 'AES-256-CBC', '-keypbe', 'AES-256-CBC', '-macalg', 'sha256']
+        data = _openssl(args, env=env, what='the PFX file')
+        return data, name + '.pfx', 'application/x-pkcs12'
+
+
 def cert_export(h, prof, target, b, who):
     """The certificate as a file in the format asked: with the private key only
     for a full administrator who gives their own password again, every such
-    export an event. A PFX always has a password; a PEM key may have one."""
+    export an event. A PFX always has a password; a PEM key may have one.
+    A dual one (2.6.3): with `both`, the RSA and the ECDSA certificate - each
+    in the format asked, with its own key - in one ZIP."""
     fmt = str(b.get('format') or '')
     if fmt not in EXPORT_FORMATS:
         raise ApiError(400, 'no such format')
     if not prof.get('cert'):
         raise ApiError(404, 'no certificate is kept for %s' % target)
     words, with_key = EXPORT_FORMATS[fmt]
+    ec = tls_ec_of(prof) if b.get('both') else None
+    if b.get('both') and not ec:
+        raise ApiError(404, 'there is no second (ECDSA) certificate beside this one')
+
+    def tidy(x):
+        x = (x or '').strip()
+        return x + '\n' if x else ''
     cert = prof['cert'].strip() + '\n'
-    chain = (prof.get('chain') or '').strip()
-    chain = chain + '\n' if chain else ''
+    chain = tidy(prof.get('chain'))
     name = re.sub(r'[^A-Za-z0-9._-]+', '_', str((prof.get('info') or {}).get('cn') or target)) or 'certificate'
     pw = str(b.get('password') or '')
-    key = ''
+    key = ekey = ''
     if with_key:
         acc = h.me('fulladmin')['account']
         k = h.throttle('password', int(CONFIG.get('login_tries') or 5), 5, name=acc['name'])
@@ -7000,61 +7132,40 @@ def cert_export(h, prof, target, b, who):
         if not key:
             raise ApiError(404, 'the private key of %s is not kept here (a request made '
                                 'elsewhere, or a certificate taken over without it)' % target)
+        if ec:
+            ekey = unseal_secret(ec.get('ec_key') or '', 'web:tls') or ''
+            if not ekey:
+                raise ApiError(404, 'the private key of the ECDSA certificate is not kept here')
         if fmt == 'pfx' and len(pw) < 4:
             raise ApiError(400, 'a PFX needs a password of 4 characters at least')
         if pw and pw != str(b.get('password2') or ''):
             raise ApiError(400, 'the two passwords are not the same')
-    with tempfile.TemporaryDirectory(prefix='plexmon-export-') as tmp:
-        os.chmod(tmp, 0o700)
-        cf, chf, kf = (os.path.join(tmp, n) for n in ('c.pem', 'ch.pem', 'k.pem'))
-        for path_, v in ((cf, cert), (chf, chain), (kf, key)):
-            with open(path_, 'w') as f:
-                f.write(v)
-        env = {'PLEXMON_PW': pw}
-        if fmt == 'crt':
-            data, fn, mime = cert.encode(), name + '.crt', 'application/x-pem-file'
-        elif fmt == 'fullchain':
-            data, fn, mime = (cert + chain).encode(), name + '-fullchain.pem', \
-                'application/x-pem-file'
-        elif fmt == 'der':
-            data = _openssl(['x509', '-in', cf, '-outform', 'DER'], what='the DER file')
-            fn, mime = name + '.cer', 'application/pkix-cert'
-        elif fmt == 'p7b':
-            args = ['crl2pkcs7', '-nocrl', '-certfile', cf]
-            if chain:
-                args += ['-certfile', chf]
-            data = _openssl(args + ['-outform', 'DER'], what='the PKCS#7 file')
-            fn, mime = name + '.p7b', 'application/x-pkcs7-certificates'
-        elif fmt in ('key', 'pem'):
-            kdata = key.encode()
-            if pw:
-                kdata = _openssl(['pkey', '-in', kf, '-aes256', '-passout', 'env:PLEXMON_PW'],
-                                 env=env, what='locking the key')
-            if fmt == 'key':
-                data, fn = kdata, name + '.key'
-            else:
-                data, fn = (cert + chain).encode() + kdata, name + '-with-key.pem'
-            mime = 'application/x-pem-file'
-        else:
-            args = ['pkcs12', '-export', '-inkey', kf, '-in', cf, '-passout', 'env:PLEXMON_PW',
-                    '-name', name]
-            if chain:
-                args += ['-certfile', chf]
-            if b.get('legacy'):
-                # Older Windows, macOS before 10.15, old Java and Android:
-                # what they read (as Plex's own file).
-                args += ['-certpbe', 'PBE-SHA1-3DES', '-keypbe', 'PBE-SHA1-3DES', '-macalg', 'sha1']
-            else:
-                args += ['-certpbe', 'AES-256-CBC', '-keypbe', 'AES-256-CBC', '-macalg', 'sha256']
-            data = _openssl(args, env=env, what='the PFX file')
-            fn, mime = name + '.pfx', 'application/x-pkcs12'
+    legacy = bool(b.get('legacy'))
+    if ec:
+        import io
+        import zipfile
+        main_kind = _key_kind(prof.get('info'))
+        parts = [(main_kind, cert, chain, key),
+                 ('ecdsa' if main_kind == 'rsa' else 'rsa', tidy(ec['ec_cert']),
+                  tidy(ec.get('ec_chain')), ekey)]
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as z:
+            for kind, c, ch, kk in parts:
+                kind = 'ecdsa' if kind in ('ec', 'ecdsa') else 'rsa'
+                data_, fn_, _m = _export_file(fmt, name + '-' + kind, c, ch, kk, pw, legacy)
+                z.writestr(fn_, data_)
+        data, fn, mime = buf.getvalue(), name + '-rsa+ecdsa.zip', 'application/zip'
+        words += ', both certificates (RSA + ECDSA)'
+    else:
+        data, fn, mime = _export_file(fmt, name, cert, chain, key, pw, legacy)
     if with_key:
-        h.store.add_event('settings', '%s exported the certificate of %s WITH its private key '
-                          '(%s%s)' % (who, target, words, ', locked with a password' if pw
+        h.store.add_event('settings', '%s exported the certificate%s of %s WITH %s private key%s '
+                          '(%s%s)' % (who, 's' if ec else '', target, 'their' if ec else 'its',
+                                      's' if ec else '', words, ', locked with a password' if pw
                                       else ', not locked'), 'warn', who=who)
     else:
-        h.store.add_event('settings', '%s exported the certificate of %s (%s)' % (
-            who, target, words), 'info', who=who)
+        h.store.add_event('settings', '%s exported the certificate%s of %s (%s)' % (
+            who, 's' if ec else '', target, words), 'info', who=who)
     return {'name': fn, 'mime': mime, 'b64': base64.b64encode(data).decode(), 'bytes': len(data),
             'with_key': with_key}
 
@@ -7096,10 +7207,23 @@ def _web_do(h):
                     raise ApiError(400, 'the PFX / PKCS#12 file did not arrive whole')
                 if len(pfx) > 200000:
                     raise ApiError(400, 'that is far bigger than any certificate file')
+            pfx2 = b''
+            if b.get('pfx2'):
+                try:
+                    pfx2 = base64.b64decode(str(b['pfx2']), validate=True)
+                except (ValueError, binascii.Error):
+                    raise ApiError(400, 'the second PFX / PKCS#12 file did not arrive whole')
+                if len(pfx2) > 200000:
+                    raise ApiError(400, 'that is far bigger than any certificate file')
             pending = unseal_secret(prof['pending_key'], 'web:tls') if prof.get('pending_key') \
                 else ''
-            got = cert_bundle(b.get('cert'), b.get('key'), b.get('chain'), b.get('root'), pfx,
-                              str(b.get('password') or ''), pending)
+            dual = cert_bundle_dual([b.get('cert'), b.get('key'), b.get('chain')], [pfx, pfx2],
+                                    b.get('root'), str(b.get('password') or ''))
+            if dual:
+                got, ec = dual
+            else:
+                got = cert_bundle(b.get('cert'), b.get('key'), b.get('chain'), b.get('root'),
+                                  pfx or pfx2, str(b.get('password') or ''), pending)
             how = 'uploaded'
         else:
             names = [x.strip() for x in re.split(r'[\s,;]+', str(b.get('names') or '')) if x.strip()]
@@ -7108,13 +7232,25 @@ def _web_do(h):
                                        org=str(b.get('org') or ''))
             got = cert_bundle(crt, key)
             how = 'self-signed, made here'
+            dual = None
         info = got['info']
         if info.get('not_after') and info['not_after'] < time.time():
             raise ApiError(400, 'this certificate ran out on %s' % stamp(info['not_after']))
+        if dual and ec['info'].get('not_after') and ec['info']['not_after'] < time.time():
+            raise ApiError(400, 'the ECDSA certificate ran out on %s'
+                           % stamp(ec['info']['not_after']))
         prof.update(cert=got['cert'], chain=got['chain'], root=got['root'],
                     key=seal_secret(got['key'], 'web:tls'), info=info,
                     chain_info=got['chain_info'], root_info=got['root_info'],
                     verify=got['verify'], how=how)
+        if dual:
+            # Both of a dual one (2.6.3): RSA the main one, ECDSA beside it -
+            # where Automatic certificates keep their second one.
+            for k in ('ec_cert', 'ec_chain', 'ec_key', 'ec_info', 'ec_for'):
+                prof.pop(k, None)
+            prof.update(ec_cert=ec['cert'], ec_chain=ec['chain'],
+                        ec_key=seal_secret(ec['key'], 'web:tls'), ec_info=ec['info'],
+                        ec_for=hashlib.sha256(got['cert'].encode()).hexdigest())
         prof.pop('pending_key', None)
         prof.pop('csr', None)
         prof.setdefault('preset', 'standard')
@@ -7122,9 +7258,13 @@ def _web_do(h):
         prof.setdefault('hsts', 0)
         tls_save(store, target, prof, who)
         acme_care_set(store, target, False, who, 'a certificate was put in by hand')
-        store.add_event('settings', '%s put a certificate in for %s: %s (until %s)' % (
+        store.add_event('settings', '%s put a certificate in for %s: %s (until %s)%s' % (
             who, words, info.get('subject'), stamp(info.get('not_after')) if
-            info.get('not_after') else '?'), 'warn', who=who)
+            info.get('not_after') else '?', ' - dual: RSA + ECDSA' if dual else ''), 'warn',
+            who=who)
+        if dual:
+            return {'message': 'the certificates (RSA + ECDSA) of %s are kept; they are put in '
+                               'within a few seconds' % words, 'tls': tls_view(prof)}
         return {'message': 'the certificate of %s is kept; it is put in within a few '
                            'seconds' % words, 'tls': tls_view(prof)}
     if act == 'tls_csr':
@@ -9118,7 +9258,8 @@ def build_parser():
                    help='the certificate, its TLS, and whether nginx has it')
     g.add_argument('--cert-import', nargs='+', metavar='FILE',
                    help='put a certificate in: PEM files (certificate, key, chain - any order) '
-                        'or one .pfx/.p12 (its password from PLEXMON_PFX_PASSWORD)')
+                        'or one .pfx/.p12 (its password from PLEXMON_PFX_PASSWORD); a dual '
+                        'one (RSA + ECDSA): both pairs, or two .pfx/.p12')
     g.add_argument('--cert-selfsigned', metavar='NAME', help='a self-signed certificate for NAME')
     g.add_argument('--tls-preset', choices=sorted(TLS_PRESETS), help='how TLS is spoken')
     g.add_argument('--tls-dh', choices=sorted(DH_WORDS), help='the DH parameters')
@@ -10341,16 +10482,32 @@ def cli_main(argv=None, mon=None):
     if args.cert_status:
         return cli_cert(store, pal, args.json)
     if args.cert_import:
-        pems, pfx = [], b''
+        pems, pfxs = [], []
         for f in args.cert_import:
             raw = Path(f).read_bytes()
             if b'-----BEGIN' in raw:
                 pems.append(raw.decode('utf-8', 'replace'))
             else:
-                pfx = raw
-        got = cert_bundle('\n'.join(pems), '', '', '', pfx,
-                          os.environ.get('PLEXMON_PFX_PASSWORD', ''))
+                pfxs.append(raw)
+        if len(pfxs) > 2:
+            raise SystemExit('plexmon: two .pfx/.p12 files at most (RSA and ECDSA)')
+        pw = os.environ.get('PLEXMON_PFX_PASSWORD', '')
+        try:
+            dual = cert_bundle_dual(pems, pfxs, '', pw)
+            got = dual[0] if dual else cert_bundle('\n'.join(pems), '', '', '',
+                                                   pfxs[0] if pfxs else b'', pw)
+        except ValueError as e:
+            raise SystemExit('plexmon: %s' % e)
         _put_cert(store, got, 'uploaded', by)
+        if dual:
+            # The ECDSA one beside it (2.6.3), as the pages put a dual one in.
+            ec = dual[1]
+            prof = tls_profile(store, node_name()) or {}
+            prof.update(ec_cert=ec['cert'], ec_chain=ec['chain'],
+                        ec_key=seal_secret(ec['key'], 'web:tls'), ec_info=ec['info'],
+                        ec_for=hashlib.sha256(prof['cert'].encode()).hexdigest())
+            tls_save(store, node_name(), prof, by)
+            print(pal.ok_line('a dual certificate: RSA + ECDSA'))
         st = _apply_now(store)
         print((pal.ok_line if st.get('state') == 'done' else pal.bad_line)(
             '; '.join(st.get('said') or [])))
