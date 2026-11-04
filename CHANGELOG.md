@@ -4,6 +4,20 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.6.5 - 2026-11-04
+
+- **`plexmon --get KEY`** - one setting, as `--set KEY=VALUE` changes it:
+  `key = value  (where it comes from)`; as often as you like
+  (`--get proxy --get backup_keep`), `--json` for a script (the key, the value,
+  the default, where it comes from). A password or a key only says *set* or
+  *not set*, never itself. A key this version does not know is refused with
+  the nearest ones it does ("did you mean proxy_password?").
+- **`plexmon --settings` lists every setting** - it showed 43 of the 93: the
+  proxy, restart and power off, system updates, the database, Plex's database,
+  backups and the Plex library were left out of the text (the `--json` had
+  them). The console's *Settings → Browse and change* left out the same ones,
+  and now has them too.
+
 ## 2.6.4 - 2026-11-03
 
 - **Upload takes a ZIP** - the one *Download → Both certificates* gives, or

@@ -51,6 +51,8 @@ plexmon --add-user jan --role fulladmin
 plexmon --cert-status            the nginx certificate
 plexmon --cert-import cert.pem key.pem chain.pem
 plexmon --tls-preset intermediate --tls-hsts 31536000
+plexmon --settings               every setting, and where it comes from
+plexmon --get proxy --get backup_keep   only these (--json for a script)
 plexmon --set acme=1 --set acme_node_name=plex.example.cz
 plexmon --acme-order             order a certificate now, follow the progress
 plexmon --plex-cert on           Plex Media Server gets the certificate too

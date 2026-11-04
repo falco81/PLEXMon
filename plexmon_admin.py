@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.6.4'
+__version__ = '2.6.5'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -9303,6 +9303,9 @@ def build_parser():
                    'from')
     g.add_argument('--set', action='append', metavar='KEY=VALUE',
                    help='change one (KEY=- asks for a secret); as often as you like')
+    g.add_argument('--get', action='append', metavar='KEY',
+                   help='write one setting and where it comes from (a secret: only set or not '
+                        'set); as often as you like, --json for a script')
     g.add_argument('--unset', action='append', metavar='KEY',
                    help='back to config.json\'s, or the built-in default')
     g = p.add_argument_group('CERTIFICATES AND TLS',
@@ -9432,6 +9435,7 @@ HELP_EXAMPLES = [
     ('plexmon --add-user jan --role fulladmin', 'an account for Settings (password asked)'),
     ('plexmon --cert-import plex.pem plex.key chain.pem', 'a certificate for nginx'),
     ('plexmon --set acme=1 --set acme_node_name=plex.example.cz', ''),
+    ('plexmon --get proxy --get backup_keep', 'one setting, and where it comes from'),
     ('plexmon --acme-order', 'a certificate from Let\'s Encrypt now'),
     ('plexmon --plex-cert on', 'Plex Media Server takes the certificate too'),
     ('plexmon --upgrade-online', 'the newest version: fetched, checked, put in'),
@@ -9672,21 +9676,76 @@ def cli_settings(store, pal, as_json):
         out_json({'settings': rows, 'panes': PANES})
         return 0
     by = {r['key']: r for r in rows}
+    seen = set()
+    groups = [(words, PANES.get(pane, [])) for pane, words in PANE_TITLES]
     for pane, words in PANE_TITLES:
+        seen.update(PANES.get(pane, []))
+    rest = [r['key'] for r in rows if r['key'] not in seen]
+    if rest:
+        groups.append(('Others', rest))
+    for words, keys in groups:
+        keys = [k for k in keys if k in by]
+        if not keys:
+            continue
         print(pal.head(words))
-        tbl = []
-        for k in PANES.get(pane, []):
-            r = by[k]
-            v = r['value']
-            shown = ('set' if r.get('set') else 'not set') if r['secret'] else (
-                'on' if v is True else 'off' if v is False else str(v))
-            tbl.append((k, shown, r['source_says']))
+        tbl = [(k, _setting_shown(by[k]), by[k]['source_says']) for k in keys]
         print(table(tbl, ['key', 'value', 'from'], [26, 40, 24]))
     return 0
 
 
+def _setting_shown(r):
+    """A setting's value as the command line writes it: a secret only set or
+    not set, never itself."""
+    v = r['value']
+    if r['secret']:
+        return 'set' if r.get('set') else 'not set'
+    if v is True:
+        return 'on'
+    if v is False:
+        return 'off'
+    if isinstance(v, (list, dict)):
+        return json.dumps(v, ensure_ascii=False)
+    return str(v)
+
+
+def cli_get(store, pal, keys, as_json):
+    """--get KEY (2.6.5): the settings asked for, each with where it comes
+    from - as --settings writes them, only these."""
+    rows = {r['key']: r for r in _bare(store).settings_state(False)}
+    bad = [k for k in keys if k not in rows]
+    if bad:
+        import difflib
+        near = difflib.get_close_matches(bad[0], list(rows), 3)
+        raise SystemExit('plexmon: %s %s not a setting this version knows%s' % (
+            ', '.join(bad), 'is' if len(bad) == 1 else 'are',
+            ' (did you mean %s?)' % ', '.join(near) if near else ' (plexmon --settings lists '
+                                                                 'them)'))
+    if as_json:
+        out = []
+        for k in keys:
+            r = rows[k]
+            one = {'key': k, 'value': None if r['secret'] else r['value'],
+                   'default': None if r['secret'] else r['default'], 'source': r['source'],
+                   'secret': r['secret'], 'name': r['name']}
+            if r['secret']:
+                one['set'] = bool(r.get('set'))
+            out.append(one)
+        out_json({'settings': out})
+        return 0
+    for k in keys:
+        r = rows[k]
+        print('%s = %s  %s' % (k, _setting_shown(r), pal.dim('(%s)' % r['source_says'])))
+    return 0
+
+
+# Every pane with settings, in the order of the pages (2.6.5: the proxy, the
+# restarts, the system updates, the databases, the backups and the Plex
+# library were left out of --settings and of the console's Browse).
 PANE_TITLES = [('people', 'Accounts'), ('web', 'Certificates and TLS'),
-               ('acme', 'Automatic certificates'), ('upgrade', 'Upgrades'),
+               ('acme', 'Automatic certificates'), ('proxy', 'Proxy'),
+               ('power', 'Restart and power off'), ('osup', 'System updates'),
+               ('db', 'The database'), ('plexdb', 'The database of Plex Media Server'),
+               ('backup', 'Backups'), ('upgrade', 'Upgrades'), ('plex', 'Plex library'),
                ('about', 'About and debugging')]
 
 
@@ -10511,6 +10570,8 @@ def cli_main(argv=None, mon=None):
         return 0
     if args.settings:
         return cli_settings(store, pal, args.json)
+    if args.get:
+        return cli_get(store, pal, [k.strip() for k in args.get], args.json)
     if args.set or args.unset:
         changes = {}
         for kv in args.set or []:
