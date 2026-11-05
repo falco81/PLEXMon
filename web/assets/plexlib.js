@@ -1423,7 +1423,7 @@ function tracksDialog(rks, what, after) {
     row.appendChild(rescan);
     row.appendChild(el('span', 'spacer'));
     row.appendChild(next);
-    w.appendChild(row);
+    footRow(w, row);
   };
   var plan = function (w) {
     api('plex', {action: 'tracks-plan', scan: T.scan.scan, audio: T.audio, subs: T.subs,
@@ -1485,7 +1485,7 @@ function tracksDialog(rks, what, after) {
         }).catch(function (e) { row.hidden = false; toast(String(e.message || e), 'bad'); });
       };
       row.appendChild(back); row.appendChild(el('span', 'spacer')); row.appendChild(goB);
-      w.appendChild(row);
+      footRow(w, row);
     }).catch(oops);
   };
   step1();
@@ -1583,15 +1583,17 @@ function ratingsDialog(rks, what, scope, after) {
       var o2 = el('label', 'check small'); var c2 = el('input'); c2.type = 'checkbox'; c2.checked = opt.lock;
       c2.onchange = function () { opt.lock = c2.checked; }; o2.appendChild(c2); o2.appendChild(el('span', '', 'lock them (a refresh by Plex keeps them)'));
       opts.appendChild(o1); opts.appendChild(o2);
-      opts.appendChild(el('span', 'spacer'));
-      var cfg = cmdButton('The sources…', 'gear', 'small');
+      w.appendChild(opts);
+      var acts = el('div', 'btnrow');
+      var cfg = cmdButton('The sources…', 'gear', '');
       cfg.onclick = function () { closeModal(); closeSheet(); PANE = 'plex'; showTab('settings'); if (typeof showPane === 'function') showPane('plex'); };
-      opts.appendChild(cfg);
+      acts.appendChild(cfg);
+      acts.appendChild(el('span', 'spacer'));
       var look = cmdButton('Look them up', 'search', 'primary');
       look.disabled = !Object.keys(S).some(function (k) { return S[k]; });
       look.onclick = function () { lookup(); };
-      opts.appendChild(look);
-      w.appendChild(opts);
+      acts.appendChild(look);
+      footRow(w, acts);
     };
     var lookup = function () {
       follow(api('plex', {action: 'ratings-preview', lib: '', rks: rks, overwrite: opt.overwrite}), w).then(function (r) {
@@ -1621,7 +1623,7 @@ function ratingsDialog(rks, what, scope, after) {
           }).catch(function (e) { row.hidden = false; toast(String(e.message || e), 'bad'); });
         };
         row.appendChild(back); row.appendChild(el('span', 'spacer')); row.appendChild(goB);
-        w.appendChild(row);
+        footRow(w, row);
         w._count();
       }).catch(function (e) { toast(String(e.message || e), 'bad'); start(); });
     };

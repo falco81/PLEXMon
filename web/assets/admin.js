@@ -3215,7 +3215,7 @@ function mustChange() {
     var out = cmdButton('Sign out', 'out', '');
     out.onclick = function () { api('logout', {}).then(function () { location.reload(); }, function () { location.reload(); }); };
     row.appendChild(out);
-    body.appendChild(row);
+    footRow(body, row);
   }, null, 'medium');
 }
 setTimeout(mustChange, 300);

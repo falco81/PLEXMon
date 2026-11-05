@@ -437,6 +437,42 @@ function iconForWords(words) {
 }
 
 /** Ask before doing something that cannot be taken back. */
+/* The buttons of a step of a popup - Scan again, Show the plan, Write… - in
+   its bottom bar beside Close (2.6.7), not at the end of what scrolls. `owner`
+   is what the step drew into: drawn again or emptied, its buttons go with it
+   (the next step puts its own). Outside a popup the row stays where it is. */
+function footRow(owner, row) {
+  var mark = el('span');
+  mark.hidden = true;
+  owner.appendChild(mark);
+  /* Placed a moment later: a step drawn while the popup is being made comes
+     before the popup puts its own buttons (and empties the bar for them). */
+  Promise.resolve().then(function () { footPlace(owner, row, mark); });
+  return row;
+}
+function footPlace(owner, row, mark) {
+  if (!mark.isConnected) return;
+  var foot = $('modal-foot');
+  if (!foot || !owner.closest || !owner.closest('#modal-body')) {
+    owner.insertBefore(row, mark);
+    return;
+  }
+  var slot = foot.querySelector('.foot-acts');
+  if (!slot) {
+    slot = el('div', 'foot-acts');
+    foot.insertBefore(slot, foot.firstChild);
+  }
+  clearInterval(slot._watch);
+  clear(slot);
+  row.style.marginTop = '0';
+  row.style.marginBottom = '0';
+  slot.appendChild(row);
+  slot._watch = setInterval(function () {
+    if (!row.isConnected) { clearInterval(slot._watch); return; }
+    if (!mark.isConnected) { clearInterval(slot._watch); if (row.parentNode === slot) clear(slot); }
+  }, 250);
+  return row;
+}
 function confirmThen(title, words, buttonWords, go, danger) {
   modal(title, function (body) {
     var p = el('p', 'note');

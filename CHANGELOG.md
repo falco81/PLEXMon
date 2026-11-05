@@ -4,6 +4,20 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.6.7 - 2026-11-05
+
+- **The buttons of a popup's step are in its bottom bar, beside Close** - not
+  at the end of what scrolls, where a long list of tracks pushed them out of
+  sight:
+  - *Audio and subtitles*: *Scan the files again* and *Show the plan*; in the
+    plan *Back* and *Set it on N videos*;
+  - *Ratings*: *The sources…* and *Look them up*; in the preview *Back* and
+    *Write N ratings* (the two switches stay above, with what they are for);
+  - *Choose your own password first*: *Change the password* and *Sign out*.
+  - While a step runs (a scan, a lookup) its buttons are away and only *Stop*
+    and *Close* are there; the next step puts its own. Every other popup had
+    its buttons there already.
+
 ## 2.6.6 - 2026-11-05
 
 - **Where yes and where no, under the pointer** - a count in the Plex library

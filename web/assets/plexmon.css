@@ -3396,3 +3396,8 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .push-code.copyable{user-select:all;-webkit-user-select:all}
 /* Download: both of a dual certificate (2.6.3) */
 .cx-both{display:flex;align-items:center;gap:8px;margin:4px 0 12px;flex-wrap:wrap}
+/* A popup step's own buttons in its bottom bar, beside Close (2.6.7) */
+.modal .foot > .foot-acts{flex:1 1 auto;display:flex;min-width:0;margin-right:auto}
+.modal .foot > .foot-acts:empty{display:none}
+.modal .foot > .foot-acts > .btnrow,.modal .foot > .foot-acts > .me-acts{flex:1 1 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0}
+.modal .foot > .foot-acts .spacer{flex:1 1 auto}
