@@ -4,6 +4,27 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.7.1 - 2026-11-05
+
+- **The performance meter never wakes a sleeping disk** (as nothing in plexmon
+  does - its very purpose):
+  - the `drivetemp` sensors are never read: their reading is an ATA command
+    sent to the disk itself - through a USB-SATA bridge too - and can spin a
+    sleeping disk up (ai's meter read every hwmon sensor, and offered
+    `modprobe drivetemp` for the temperatures of SATA disks);
+  - a disk's temperature is now the one plexmon's own SMART read gave - read
+    only while the disk is turning anyway - and a disk plexmon sees asleep is
+    shown as *asleep*, nothing read from it;
+  - free space is asked only of the kernel's own filesystems (ext4, xfs, btrfs,
+    zfs, f2fs, exfat, ntfs3…), which answer from memory, as the dashboard asks
+    them already (lsblk) - never of FUSE (mergerfs, ntfs-3g: a program that may
+    read the disks), a network share (NFS, CIFS: it may hang the daemon) or FAT
+    (it may count its clusters on the disk);
+  - checked with strace: the meter reads only `/proc` and `/sys` counters and
+    the filesystems' `statfs`; no command goes to any disk.
+- The dashboard's processor temperature, where the machine has no thermal zone
+  and it falls back to the hwmon sensors, passes over `drivetemp` too.
+
 ## 2.7.0 - 2026-11-05
 
 - **The performance meter** - ai's server load (1.0.72-1.0.76) in the header,

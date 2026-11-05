@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.7.0'
+__version__ = '2.7.1'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -5988,6 +5988,12 @@ def load_temps():
     for m in mons:
         d = os.path.join(base, m)
         chip = _read_first(os.path.join(d, 'name'))
+        # Never drivetemp (plexmon 2.7.1): its reading is an ATA command sent to
+        # the disk itself - through a USB bridge too - and it can wake a sleeping
+        # one. plexmon never wakes a disk; a disk's temperature comes from the
+        # SMART the dashboard reads only while the disk is turning anyway.
+        if chip == 'drivetemp':
+            continue
         try:
             files = sorted(f for f in os.listdir(d) if re.match(r'^temp\d+_input$', f))
         except OSError:
@@ -6096,7 +6102,15 @@ def _load_detail_raw():
     return raw
 
 
-def load_detail():
+# The filesystems whose free space is asked (plexmon 2.7.1): the kernel's own,
+# which answer from memory - the dashboard asks them the same (lsblk) - never
+# FUSE (mergerfs, ntfs-3g: a program that may read the disks) nor a network
+# share (it may hang the daemon), nor FAT (it may count its clusters on disk).
+LOAD_FS_KINDS = ('ext2', 'ext3', 'ext4', 'xfs', 'btrfs', 'zfs', 'f2fs', 'exfat', 'ntfs3', 'jfs',
+                 'reiserfs', 'nilfs2', 'bcachefs')
+
+
+def load_detail(disk_state=None):
     """What the header's panels show when opened: each core, its frequency and
     temperature, the disks one by one and the filesystems, the cards one by one,
     the processes taking most - read only while a panel is open."""
@@ -6143,8 +6157,14 @@ def load_detail():
         except OSError:
             pass
         disks = []
+        known = {str(x.get('dev')): x for x in (disk_state or []) if isinstance(x, dict)}
         for name, (rd, wr, ms) in sorted(raw['disks'].items()):
-            one = {'name': name, 'temp': temps['disks'].get(name),
+            st = known.get(name) or {}
+            temp = temps['disks'].get(name)
+            if temp is None and st.get('power') != 'standby' and isinstance(st.get('temp'), (int, float)):
+                temp = st['temp']          # what plexmon's own SMART read said (an awake disk)
+            one = {'name': name, 'temp': temp,
+                   'power': st.get('power') or '',
                    'size': int(_read_first(os.path.join(LOAD_SYS, 'block', name, 'size'), '0') or 0) * 512,
                    'model': _read_first(os.path.join(LOAD_SYS, 'block', name, 'device/model'))}
             if dt and name in was.get('disks', {}):
@@ -6164,7 +6184,9 @@ def load_detail():
                                 'fusectl', 'configfs', 'hugetlbfs', 'binfmt_misc', 'efivarfs', 'nsfs', 'ramfs',
                                 'rpc_pipefs', 'selinuxfs', 'fuse.lxcfs', 'iso9660') or dev in seen:
                         continue
-                    if not dev.startswith('/') and kind not in ('nfs', 'nfs4', 'cifs', 'smb3', 'zfs', 'btrfs'):
+                    if kind not in LOAD_FS_KINDS:
+                        continue
+                    if not dev.startswith('/') and kind not in ('zfs', 'btrfs'):
                         continue
                     seen.add(dev)
                     try:
@@ -6254,12 +6276,12 @@ def server_load():
         return out
 
 
-def api_load(detail=False, hist=False):
+def api_load(detail=False, hist=False, disk_state=None):
     """GET /api/load (administrators only): the summary; with ?detail=1 also the details.
     Here the route below, a full administrator's, while `perf_meter` is on."""
     out = dict(server_load())
     if detail:
-        out['detail'] = load_detail()
+        out['detail'] = load_detail(disk_state)
     if hist:
         t = time.time()
         with LOAD_LOCK:
@@ -6272,7 +6294,13 @@ def _load(h):
     h.me('fulladmin')
     if not CONFIG.get('perf_meter'):
         raise ApiError(403, 'the performance meter is switched off (Settings → About)')
-    return api_load(detail=bool(h.arg('detail')), hist=bool(h.arg('hist')))
+    state = None
+    if h.arg('detail') and h.d.monitor:
+        try:
+            state = (h.d.monitor() or {}).get('disk_state')
+        except Exception:                               # noqa: BLE001
+            state = None
+    return api_load(detail=bool(h.arg('detail')), hist=bool(h.arg('hist')), disk_state=state)
 
 
 # ---- passkeys: Face ID, Touch ID, Windows Hello (2.6.9) ---------------------------------

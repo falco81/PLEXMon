@@ -80,6 +80,15 @@ a hidden page asks nothing, the details only while their panel is open. The serv
 last two minutes of what it read, so a page loaded again (F5), another tab or another device
 draws the graphs from there at once. From ai 1.0.72-1.0.76.
 
+**It never wakes a sleeping disk**, as nothing in plexmon does: it reads only the kernel's
+counters (`/proc/stat`, `/proc/diskstats`, `/proc/net/dev`, `/proc/meminfo`, the processes in
+`/proc`, sizes and names in `/sys/block`), never a command to a disk - no SMART, no `hdparm`, and
+never the `drivetemp` sensors (their reading is an ATA command to the disk, through a USB bridge
+too). A disk's temperature is the one plexmon's own SMART read gave while the disk was turning
+anyway; a sleeping disk is shown as *asleep*. Free space is asked only of the kernel's own
+filesystems (ext4, xfs, btrfs, zfs…), which answer from memory - as the dashboard asks them
+already - never of FUSE (mergerfs, ntfs-3g), network shares or FAT.
+
 ## On an iPad
 
 *Share → Add to Home Screen* in Safari: plexmon gets its own icon and opens in a window of

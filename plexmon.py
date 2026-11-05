@@ -22,7 +22,7 @@ identical. Run it with:  python3 plexmon.py           (daemon)
 """
 from __future__ import annotations
 
-__version__ = "2.7.0"
+__version__ = "2.7.1"
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -1379,6 +1379,13 @@ def _cpu_temp():
             pass
     if best is None:
         for h in Path("/sys/class/hwmon").glob("hwmon*/temp*_input"):
+            # Never drivetemp (2.7.1): reading it sends a command to the disk
+            # and can wake a sleeping one - and it is not the processor.
+            try:
+                if (h.parent / "name").read_text().strip() == "drivetemp":
+                    continue
+            except OSError:
+                pass
             try:
                 v = int(h.read_text().strip()) / 1000.0
                 if best is None or v > best:
@@ -3299,7 +3306,12 @@ class Daemon:
                 "disks": len(snap.get("disks") or []),
                 "reasons": [r.get("text") for r in (snap.get("reasons") or [])][:6],
                 "plex": {"active": plex.get("active"), "version": plex.get("version"),
-                         "sessions": plex.get("sessions")}}
+                         "sessions": plex.get("sessions")},
+                # For Settings' performance meter (2.7.1): which disk sleeps, and
+                # the temperature its last SMART read gave - nothing read anew.
+                "disk_state": [{"dev": d.get("dev"), "power": d.get("power"),
+                                "temp": d.get("temp")}
+                               for d in (snap.get("disks") or []) if isinstance(d, dict)]}
 
     def _start_admin(self) -> None:
         """Settings (plexmon_admin.py): its own API and threads. A Settings

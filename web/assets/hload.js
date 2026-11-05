@@ -373,6 +373,16 @@ function hpNicRows(host, x) {
   host.appendChild(t);
   if (!(x.nics || []).length) host.appendChild(el('p', 'muted small', 'no card'));
 }
+/* A disk asleep is said so (plexmon 2.7.1) - nothing is read from it to show
+   a temperature; an awake one has what plexmon's own SMART read said. */
+function hpDiskTemp(dk) {
+  if (dk.power === 'standby') {
+    var z = el('span', 'hp-zzz', 'asleep');
+    z.title = 'Spun down: plexmon reads nothing from it, so it sleeps on';
+    return z;
+  }
+  return hlTemp(dk.temp);
+}
 function hpDisks(x) { return (x.disks || []).filter(function (dk) { return dk.size > 64 * 1048576; }); }
 function hpHead(p, k, extra) {
   var head = el('div', 'hp-head');
@@ -410,7 +420,7 @@ function hpTable(p, k) {
     td.appendChild(hr);
     hpDisks(x).forEach(function (dk) {
       var tr = el('tr', '');
-      hpTd(tr, dk.name, 'mono'); hpTd(tr, hloadRate(dk.rd), 'num'); hpTd(tr, hloadRate(dk.wr), 'num'); hpTd(tr, hpPct(dk.util), 'num'); hpTd(tr, hlTemp(dk.temp), 'num');
+      hpTd(tr, dk.name, 'mono'); hpTd(tr, hloadRate(dk.rd), 'num'); hpTd(tr, hloadRate(dk.wr), 'num'); hpTd(tr, hpPct(dk.util), 'num'); hpTd(tr, hpDiskTemp(dk), 'num');
       td.appendChild(tr);
     });
     p.appendChild(td);
@@ -474,7 +484,7 @@ function hpMap(p, k) {
     hpDisks(x).forEach(function (dk) {
       var c = el('div', 'hp-card'), t = el('div', 'hp-card-top');
       t.appendChild(noI18n(el('b', 'mono', dk.name)));
-      if (dk.temp !== null && dk.temp !== undefined) t.appendChild(hlTemp(dk.temp));
+      if ((dk.temp !== null && dk.temp !== undefined) || dk.power === 'standby') t.appendChild(hpDiskTemp(dk));
       c.appendChild(t);
       c.appendChild(noI18n(el('div', 'muted small hp-ell', bytes(dk.size) + (dk.model ? ' · ' + dk.model : ''))));
       c.appendChild(noI18n(el('div', 'hp-big', hpPct(dk.util))));
@@ -542,7 +552,7 @@ function hpWide(p) {
       var td = el('table', 'hp-t');
       hpDisks(x).forEach(function (dk) {
         var tr = el('tr', '');
-        hpTd(tr, dk.name, 'mono hp-name'); hpTd(tr, hlBar(dk.util), 'hp-barc'); hpTd(tr, hpPct(dk.util), 'num'); hpTd(tr, hlTemp(dk.temp), 'num');
+        hpTd(tr, dk.name, 'mono hp-name'); hpTd(tr, hlBar(dk.util), 'hp-barc'); hpTd(tr, hpPct(dk.util), 'num'); hpTd(tr, hpDiskTemp(dk), 'num');
         td.appendChild(tr);
         var tr2 = el('tr', 'hp-sub'); hpTd(tr2, ''); hpTd(tr2, noI18n(el('span', 'muted small', '↓' + hloadRate(dk.rd) + ' ↑' + hloadRate(dk.wr))));
         tr2.lastChild.colSpan = 3; td.appendChild(tr2);
@@ -639,7 +649,7 @@ function hpTiles(p, k) {
     var s1d = sec('Each disk');
     (x.disks || []).filter(function (dk) { return dk.size > 64 * 1048576; }).forEach(function (dk) {
       var r = row(s1d, [noI18n(el('b', 'mono', dk.name)), noI18n(el('span', 'muted small', bytes(dk.size) + (dk.model ? ' · ' + dk.model : ''))),
-        noI18n(el('span', 'num', '↓' + hloadRate(dk.rd) + ' ↑' + hloadRate(dk.wr))), hlTemp(dk.temp)]);
+        noI18n(el('span', 'num', '↓' + hloadRate(dk.rd) + ' ↑' + hloadRate(dk.wr))), hpDiskTemp(dk)]);
       r.classList.add('hp-disk');
       var u = el('div', 'hp-util');
       u.appendChild(el('span', 'muted small', 'busy'));
