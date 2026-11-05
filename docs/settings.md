@@ -81,8 +81,9 @@ last two minutes in **one small row of this node in the database**, written over
 after the last page is closed the sampling ends by itself. A hidden page asks nothing, the
 details are read only while their panel is open. A page loaded again (F5), another tab, another
 device - or the daemon started again - draws the same graphs at once. A graph is drawn when a
-reading comes and moved by **one SVG animation** of its own in between; nothing is redrawn by a
-timer. Where readings are missing (the meter was closed a while) the line breaks. From ai 1.0.72-1.0.76.
+reading comes and moved by **one animation** of its own in between, evenly and by time (a point
+stands where its time is now, so a graph drawn again is exactly where the moving one was);
+nothing is redrawn by a timer. Where readings are missing (the meter was closed a while) the line breaks. From ai 1.0.72-1.0.76.
 
 **It never wakes a sleeping disk**, as nothing in plexmon does: it reads only the kernel's
 counters (`/proc/stat`, `/proc/diskstats`, `/proc/net/dev`, `/proc/meminfo`, the processes in

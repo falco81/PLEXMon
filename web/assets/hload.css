@@ -164,3 +164,6 @@
 .hp-zzz{font-size:11px;font-weight:700;color:var(--info);letter-spacing:.02em}
 /* nothing at 0 % (plexmon 2.7.2): a round cap drew a dot there */
 .hl-ring-fg[stroke-dasharray^="0.0 "],.hp-ring-fg[stroke-dasharray^="0.0 "]{stroke:transparent}
+/* the graphs move by time (plexmon 2.7.7): one CSS animation a graph, linear */
+@keyframes hlmv{from{transform:translateX(0)}to{transform:translateX(var(--hlmv,0))}}
+.hl-move{animation-name:hlmv;animation-timing-function:linear;animation-fill-mode:forwards;will-change:transform}

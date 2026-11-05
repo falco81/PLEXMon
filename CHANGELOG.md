@@ -4,6 +4,21 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.7.7 - 2026-11-05
+
+- **The performance meter's graphs move smoothly** - evenly, all the time,
+  with no jump when a reading comes:
+  - the SVG animation of 2.7.6 (SMIL) did not move in Chromium at all, so the
+    line stood still and jumped a step every 5 s; it is a CSS animation of
+    each graph now (still one a graph), linear;
+  - a point stands where its time is now, against the daemon's clock (each
+    answer says it): a graph drawn again stands exactly where the moving one
+    was, whenever the reading came - late, early, or with nothing new;
+  - a new reading comes in from beyond the right edge and slides in, instead
+    of appearing at the edge at once.
+  - Measured: the line moves at 0.49 px/s in the header (two minutes across),
+    and across a redraw by 0.01-0.11 px - before, 2.4 px every 5 s.
+
 ## 2.7.6 - 2026-11-05
 
 - **The performance meter's graphs move by one SVG animation each**: a graph

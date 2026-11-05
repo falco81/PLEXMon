@@ -44,13 +44,19 @@ var HLOAD_EVERY = 5;            /* s between readings - and how long one step of
    where readings are missing - the meter was closed for a while, or the
    daemon started again - instead of drawing 45 s as one step. Without them
    (the previews) the values stand one step apart. Segments of "x,y". */
+/* Smooth (plexmon 2.7.7): a point stands where ITS TIME is now - the right
+   edge is "now", less one reading and a second - so a new reading comes in
+   from beyond the right edge and slides in, and a graph drawn again stands
+   exactly where the moving one was, whenever the reading came: nothing jumps. */
+var HLOAD_LEAD = 6;
+function hlNow() { return Date.now() / 1000 - (HLOAD.skew || 0); }
 function hlSegments(vals, w, h, top, pad, ats) {
   var step = w / (HLOAD_KEEP - 1), span = (HLOAD_KEEP - 1) * HLOAD_EVERY;
   var timed = ats && ats.length === vals.length && ats[ats.length - 1];
-  var newest = timed ? ats[ats.length - 1] : 0, off = HLOAD_KEEP - vals.length;
+  var now = timed ? hlNow() - HLOAD_LEAD : 0, off = HLOAD_KEEP - vals.length;
   var segs = [], cur = [];
   vals.forEach(function (v, i) {
-    var x = timed ? w - (newest - ats[i]) / span * w : (off + i) * step;
+    var x = timed ? w - (now - ats[i]) / span * w : (off + i) * step;
     if (timed && i && ats[i] - ats[i - 1] > HLOAD_EVERY * 2.5) { if (cur.length) segs.push(cur); cur = []; }
     if (x < -step) return;
     cur.push(x.toFixed(1) + ',' + (h - 1 - (h - pad) * Math.min(1, (v || 0) / top)).toFixed(1));
@@ -58,11 +64,15 @@ function hlSegments(vals, w, h, top, pad, ats) {
   if (cur.length) segs.push(cur);
   return segs.filter(function (sg) { return sg.length > 1; });
 }
-function hlMove(w) {
+/* One even movement for as long as nothing new comes (10 min): at the speed
+   time goes across the graph - two minutes from edge to edge. */
+function hlMoveAttr(w) {
+  /* A CSS animation of the graph's group (plexmon 2.7.7): SMIL's
+     animateTransform did not move in Chromium at all, and every reading then
+     jumped the line a step. */
   if (HLOAD.still) return '';
-  var step = (w / (HLOAD_KEEP - 1)).toFixed(2);
-  return '<animateTransform attributeName="transform" type="translate" from="0 0" to="-' + step
-    + ' 0" dur="' + HLOAD_EVERY + 's" fill="freeze"/>';
+  var span = (HLOAD_KEEP - 1) * HLOAD_EVERY, long = 600;
+  return ' class="hl-move" style="--hlmv:-' + (w / span * long).toFixed(1) + 'px;animation-duration:' + long + 's"';
 }
 function hloadSpark(vals, max, cls, ats) {
   var w = 56, h = 18, n = vals.length;
@@ -70,7 +80,7 @@ function hloadSpark(vals, max, cls, ats) {
   if (n > 1) {
     var top = Math.max(max || 0, 1);
     var segs = hlSegments(vals.slice(-HLOAD_KEEP), w, h, top, 2, ats ? ats.slice(-HLOAD_KEEP) : null);
-    svg += '<g>' + hlMove(w) + segs.map(function (pts) {
+    svg += '<g' + hlMoveAttr(w) + '>' + segs.map(function (pts) {
       return '<polyline points="' + pts.join(' ') + '" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
     }).join('') + '</g>';
   }
@@ -352,7 +362,7 @@ function hpArea(k, h, grid) {
   if (vals.length > 1) {
     var ats = ((HLOAD.hist || {}).at || []).slice(-HLOAD_KEEP);
     vals = vals.slice(-HLOAD_KEEP);
-    svg += '<g>' + hlMove(w);
+    svg += '<g' + hlMoveAttr(w) + '>';
     hlSegments(vals, w, h, top, 3, ats.length === vals.length ? ats : null).forEach(function (pts) {
       var first = pts[0].split(',')[0], last = pts[pts.length - 1].split(',')[0];
       svg += '<polygon points="' + first + ',' + h + ' ' + pts.join(' ') + ' ' + last + ',' + h + '" fill="currentColor" opacity=".16"/>';
@@ -747,6 +757,10 @@ function hloadTick(now) {
   /* The first question after the page is loaded (F5) brings the last two
      minutes the server kept: the graphs go on where they were (plexmon 2.7.0). */
   api('load' + (withDetail ? '&detail=1' : '')).then(function (d) {
+    if (d.now) {
+      var sk = Date.now() / 1000 - d.now;
+      HLOAD.skew = HLOAD.skew === undefined ? sk : HLOAD.skew * 0.8 + sk * 0.2;
+    }
     if (d.detail) { HLOAD.detail = d.detail; HLOAD.detailAt = Date.now(); }
     hloadDraw(d);
   }).catch(function () { }).then(function () { HLOAD.busy = false; });

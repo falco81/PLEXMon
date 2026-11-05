@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.7.6'
+__version__ = '2.7.7'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -6356,6 +6356,7 @@ def api_load(detail=False, hist=False, disk_state=None):
     """GET /api/load (administrators only): the summary; with ?detail=1 also the details.
     Here the route below, a full administrator's, while `perf_meter` is on."""
     out = dict(server_load())
+    out['now'] = time.time()           # the page sets its clock by it: the graphs move by time
     if detail:
         out['detail'] = load_detail(disk_state)
     if hist:
