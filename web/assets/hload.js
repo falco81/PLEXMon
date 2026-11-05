@@ -18,7 +18,7 @@ function hlLive() { return typeof LIVE === 'object' ? !!LIVE.on : LIVE !== false
    Plain JavaScript, no library. Needs the few helpers of helpers.js ($, el, clear,
    noI18n, bytes, api, prefs, savePrefs, LIVE, toast, oops) - or your own of the same names.
 
-   Start it:     hloadLoop();          (polls every 3 s while the page is shown)
+   Start it:     hloadLoop();          (asks every 5 s while the page is shown)
    The header:   <div class="hload" id="hload" hidden aria-live="off"></div>
    My account:   hloadPickers(host)    (the two rows of cards to choose the looks)
 */
@@ -34,14 +34,45 @@ function hloadRate(n) {
 }
 /* Four looks to choose from (1.0.72): pills with a bar, one plain line,
    small graphs of the last two minutes, rings. */
-var HLOAD_KEEP = 40;
-function hloadSpark(vals, max, cls) {
+var HLOAD_KEEP = 24;            /* plexmon 2.7.6: the daemon's two minutes, one reading every 5 s */
+var HLOAD_EVERY = 5;            /* s between readings - and how long one step of the graphs moves */
+/* The points of a graph, the newest at the right edge: drawn once a reading
+   comes, then moved one step to the left in HLOAD_EVERY seconds by ONE SVG
+   animation - nothing is drawn again by a timer (plexmon 2.7.6). */
+/* `ats`: when each value was read. With them a point stands where its time
+   is (the newest at the right edge, two minutes across) and the line breaks
+   where readings are missing - the meter was closed for a while, or the
+   daemon started again - instead of drawing 45 s as one step. Without them
+   (the previews) the values stand one step apart. Segments of "x,y". */
+function hlSegments(vals, w, h, top, pad, ats) {
+  var step = w / (HLOAD_KEEP - 1), span = (HLOAD_KEEP - 1) * HLOAD_EVERY;
+  var timed = ats && ats.length === vals.length && ats[ats.length - 1];
+  var newest = timed ? ats[ats.length - 1] : 0, off = HLOAD_KEEP - vals.length;
+  var segs = [], cur = [];
+  vals.forEach(function (v, i) {
+    var x = timed ? w - (newest - ats[i]) / span * w : (off + i) * step;
+    if (timed && i && ats[i] - ats[i - 1] > HLOAD_EVERY * 2.5) { if (cur.length) segs.push(cur); cur = []; }
+    if (x < -step) return;
+    cur.push(x.toFixed(1) + ',' + (h - 1 - (h - pad) * Math.min(1, (v || 0) / top)).toFixed(1));
+  });
+  if (cur.length) segs.push(cur);
+  return segs.filter(function (sg) { return sg.length > 1; });
+}
+function hlMove(w) {
+  if (HLOAD.still) return '';
+  var step = (w / (HLOAD_KEEP - 1)).toFixed(2);
+  return '<animateTransform attributeName="transform" type="translate" from="0 0" to="-' + step
+    + ' 0" dur="' + HLOAD_EVERY + 's" fill="freeze"/>';
+}
+function hloadSpark(vals, max, cls, ats) {
   var w = 56, h = 18, n = vals.length;
   var svg = '<svg class="hl-spark ' + (cls || '') + '" viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '" preserveAspectRatio="none" aria-hidden="true">';
   if (n > 1) {
     var top = Math.max(max || 0, 1);
-    var pts = vals.map(function (v, i) { return (i * w / (HLOAD_KEEP - 1)).toFixed(1) + ',' + (h - 1 - (h - 2) * Math.min(1, (v || 0) / top)).toFixed(1); });
-    svg += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+    var segs = hlSegments(vals.slice(-HLOAD_KEEP), w, h, top, 2, ats ? ats.slice(-HLOAD_KEEP) : null);
+    svg += '<g>' + hlMove(w) + segs.map(function (pts) {
+      return '<polyline points="' + pts.join(' ') + '" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+    }).join('') + '</g>';
   }
   return svg + '</svg>';
 }
@@ -70,7 +101,8 @@ function hloadDraw(d, into, asLook) {
     var push = function (k, v) { hist[k].push(v || 0); if (hist[k].length > HLOAD_KEEP) hist[k].shift(); };
     /* One point a reading: the same reading twice (asked within its second,
        or already in what the server kept) is not drawn twice (plexmon 2.7.0). */
-    if (d.cpu !== undefined && d.cpu !== null && !(d.at && HLOAD.lastAt && d.at <= HLOAD.lastAt)) {
+    if (d.hist) { hloadSeed(d.hist); hist = HLOAD.hist; }
+    else if (d.cpu !== undefined && d.cpu !== null && !(d.at && HLOAD.lastAt && d.at <= HLOAD.lastAt)) {
       push('cpu', d.cpu); push('mem', mp); push('disk', (d.disk_rd || 0) + (d.disk_wr || 0)); push('net', (d.net_rx || 0) + (d.net_tx || 0));
       if (d.at) HLOAD.lastAt = d.at;
     }
@@ -79,7 +111,7 @@ function hloadDraw(d, into, asLook) {
   host.className = 'hload look-' + look + (preview ? ' hl-preview' : '');
   clear(host);
   var tips = {
-    cpu: 'The processor, busy over the last ' + (d.over_s || 3) + ' s, all ' + d.cores + ' core(s) together' + (d.load ? ' · load ' + d.load.join(' / ') : ''),
+    cpu: 'The processor, busy over the last ' + (d.over_s || HLOAD_EVERY) + ' s, all ' + d.cores + ' core(s) together' + (d.load ? ' · load ' + d.load.join(' / ') : ''),
     mem: 'Memory in use (without what the kernel keeps as cache and gives back)' + (d.swap_used ? ' · swap in use ' + bytes(d.swap_used) : ''),
     disk: 'The disks: read ↓ and written ↑, every disk together',
     net: 'The network cards: down ↓ (in) and up ↑ (out), every card together - not the loopback nor the bridges of containers'
@@ -124,7 +156,7 @@ function hloadDraw(d, into, asLook) {
       if (look === 'graphs') {
         var g = el('span', 'hl-g');
         var vals = hist[x[2]], max = x[4] || Math.max.apply(null, vals.concat([1024]));
-        g.innerHTML = hloadSpark(vals, max);
+        g.innerHTML = hloadSpark(vals, max, '', preview ? null : hist.at);
         c.appendChild(g);
       }
       heat(c, x[3]);
@@ -187,24 +219,26 @@ function hlPreviewLook(sw, look) {
   var inner = el('div', 'hl-scale');
   var host = el('div', 'hload');
   inner.appendChild(host);
-  hloadDraw(hpSample().last, host, look);
+  HLOAD.still = true;                 /* a preview stands still */
+  try { hloadDraw(hpSample().last, host, look); } finally { HLOAD.still = false; }
   sw.appendChild(inner);
 }
 function hlPreviewPanel(sw, st) {
   if (st === 'off') {
     var t = el('div', 'hl-tipbox');
     t.appendChild(el('span', 'hl-tipchip', 'CPU 49 %'));
-    t.appendChild(el('span', 'hl-tip small', 'The processor, busy over the last 3 s, all 8 core(s) together'));
+    t.appendChild(el('span', 'hl-tip small', 'The processor, busy over the last 5 s, all 8 core(s) together'));
     sw.appendChild(t);
     return;
   }
   var smp = hpSample(), keep = [HLOAD.last, HLOAD.detail, HLOAD.hist, HLOAD.open];
+  HLOAD.still = true;
   HLOAD.last = smp.last; HLOAD.detail = smp.detail; HLOAD.hist = smp.hist; HLOAD.open = 'cpu';
   var p = el('div', 'hl-panel hp-' + st + ' hl-prevpanel');
   p.style.width = (st === 'wide' ? 1180 : (st === 'table' ? 420 : 470)) + 'px';
   try {
     if (st === 'table') hpTable(p, 'cpu'); else if (st === 'map') hpMap(p, 'cpu'); else if (st === 'wide') hpWide(p); else hpTiles(p, 'cpu');
-  } finally { HLOAD.last = keep[0]; HLOAD.detail = keep[1]; HLOAD.hist = keep[2]; HLOAD.open = keep[3]; }
+  } finally { HLOAD.last = keep[0]; HLOAD.detail = keep[1]; HLOAD.hist = keep[2]; HLOAD.open = keep[3]; HLOAD.still = false; }
   var inner = el('div', 'hl-scale hl-scale-p' + (st === 'wide' ? ' wide' : ''));
   inner.appendChild(p);
   sw.appendChild(inner);
@@ -316,10 +350,15 @@ function hpArea(k, h, grid) {
   var svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" height="' + h + '" preserveAspectRatio="none" aria-hidden="true">';
   if (grid) [0.25, 0.5, 0.75].forEach(function (g) { svg += '<line x1="0" x2="' + w + '" y1="' + h * g + '" y2="' + h * g + '" class="hp-grid" vector-effect="non-scaling-stroke"/>'; });
   if (vals.length > 1) {
-    var pts = vals.map(function (v, i) { return (i * w / (HLOAD_KEEP - 1)).toFixed(1) + ',' + (h - 1 - (h - 3) * Math.min(1, (v || 0) / top)).toFixed(1); });
-    var last = ((vals.length - 1) * w / (HLOAD_KEEP - 1)).toFixed(1);
-    svg += '<polygon points="0,' + h + ' ' + pts.join(' ') + ' ' + last + ',' + h + '" fill="currentColor" opacity=".16"/>';
-    svg += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+    var ats = ((HLOAD.hist || {}).at || []).slice(-HLOAD_KEEP);
+    vals = vals.slice(-HLOAD_KEEP);
+    svg += '<g>' + hlMove(w);
+    hlSegments(vals, w, h, top, 3, ats.length === vals.length ? ats : null).forEach(function (pts) {
+      var first = pts[0].split(',')[0], last = pts[pts.length - 1].split(',')[0];
+      svg += '<polygon points="' + first + ',' + h + ' ' + pts.join(' ') + ' ' + last + ',' + h + '" fill="currentColor" opacity=".16"/>';
+      svg += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+    });
+    svg += '</g>';
   }
   box.innerHTML = svg + '</svg>';
   return box;
@@ -610,7 +649,8 @@ function hpTiles(p, k) {
   var big = el('div', 'hp-graph');
   var vals = (HLOAD.hist || {})[k] || [];
   var max = (k === 'cpu' || k === 'mem') ? 100 : Math.max.apply(null, vals.concat([1024]));
-  big.innerHTML = hloadSpark(vals, max).replace('width="56" height="18"', 'width="100%" height="54"');
+  var ats = (HLOAD.hist || {}).at;
+  big.innerHTML = hloadSpark(vals, max, '', ats && ats.length === vals.length ? ats : null).replace('width="56" height="18"', 'width="100%" height="54"');
   big.classList.add('hl-' + k);
   var scale = el('span', 'hp-scale muted small', k === 'cpu' || k === 'mem' ? '100 %' : hloadRate(max));
   head.appendChild(scale);
@@ -706,21 +746,20 @@ function hloadTick(now) {
   var withDetail = !!HLOAD.open;
   /* The first question after the page is loaded (F5) brings the last two
      minutes the server kept: the graphs go on where they were (plexmon 2.7.0). */
-  api('load' + (withDetail ? '&detail=1' : '') + (HLOAD.seeded ? '' : '&hist=1')).then(function (d) {
-    if (d.hist && !HLOAD.seeded) hloadSeed(d.hist);
-    HLOAD.seeded = true;
+  api('load' + (withDetail ? '&detail=1' : '')).then(function (d) {
     if (d.detail) { HLOAD.detail = d.detail; HLOAD.detailAt = Date.now(); }
     hloadDraw(d);
   }).catch(function () { }).then(function () { HLOAD.busy = false; });
 }
 function hloadSeed(list) {
-  var hist = HLOAD.hist = {cpu: [], mem: [], disk: [], net: []};
+  var hist = HLOAD.hist = {cpu: [], mem: [], disk: [], net: [], at: []};
   list.slice(-HLOAD_KEEP).forEach(function (x) {
     if (x.cpu === null || x.cpu === undefined) return;
     hist.cpu.push(x.cpu);
     hist.mem.push(x.mem_total ? 100 * x.mem_used / x.mem_total : 0);
     hist.disk.push((x.disk_rd || 0) + (x.disk_wr || 0));
     hist.net.push((x.net_rx || 0) + (x.net_tx || 0));
+    hist.at.push(x.at);
     HLOAD.lastAt = x.at;
   });
 }
@@ -729,7 +768,7 @@ function hloadLoop() {
   clearInterval(HLOAD.timer);
   hloadTick();
   setTimeout(hloadTick, 1200);      /* the first rate needs a second reading */
-  HLOAD.timer = setInterval(hloadTick, 3000);
+  HLOAD.timer = setInterval(hloadTick, HLOAD_EVERY * 1000);
 }
 document.addEventListener('visibilitychange', function () { if (!document.hidden) hloadTick(); });
 

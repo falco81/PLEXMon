@@ -4,6 +4,22 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.7.6 - 2026-11-05
+
+- **The performance meter's graphs move by one SVG animation each**: a graph
+  is drawn once a reading comes and moved one step to the left in the 5 s
+  until the next one - nothing is redrawn by a timer. Each point stands at its
+  own time; where readings are missing (the meter was closed for a while, the
+  daemon started again) the line breaks instead of drawing them as one step.
+- **The daemon samples, and only while somebody looks**: one reading of the
+  kernel's counters every 5 s, the last two minutes kept in **one small row of
+  this node in the database**, written over each time - only while a page with
+  the meter is open (it asks every 5 s); **45 s after the last page is closed
+  the sampling ends by itself**. A page loaded again (F5), another tab, another
+  device or the daemon started again draw the same graphs at once. Nothing else
+  is read or written; the details are read only while their panel is open, and
+  nothing at all while the meter is off.
+
 ## 2.7.5 - 2026-11-05
 
 - **The performance meter switched off is off altogether** (Settings → About →

@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.7.5'
+__version__ = '2.7.6'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -421,13 +421,15 @@ SAYS = {
                 'name, with a certificate the browser trusts. While it is off, no passkey is '
                 'offered or taken.',
     'perf_meter': 'How busy the server is - the processor, the memory, the disks and the network - '
-                  'beside the state at the top of these pages, every 3 s, with the cores, the '
-                  'temperatures, the disks and the processes taking most when pointed at (a tap '
-                  'on an iPad). Only a full administrator sees it, and chooses its look in Your '
-                  'account. It reads the kernel\'s counters only while a page asks; nothing runs '
-                  'in the background, and it never wakes a sleeping disk. Off (the default) it is '
-                  'off altogether: the pages load nothing of it, ask nothing and draw nothing, '
-                  'and the daemon reads nothing for it.',
+                  'beside the state at the top of these pages, every 5 s, with a graph of the last '
+                  'two minutes, and the cores, the temperatures, the disks and the processes '
+                  'taking most when pointed at (a tap on an iPad). Only a full administrator sees '
+                  'it, and chooses its look in Your account. While a page with it is open, the '
+                  'daemon reads the kernel\'s counters once every 5 s and keeps the two minutes '
+                  'in one small row of the database; 45 s after the last page is closed it stops '
+                  'by itself. It never wakes a sleeping disk. Off (the default) it is off '
+                  'altogether: the pages load nothing of it, ask nothing and draw nothing, and '
+                  'the daemon reads nothing for it.',
     'passkey_is_2fa': 'With the second step on, a passkey checked by the face, a finger or the '
                       'PIN is both steps at once (as most services take it). Off: after the '
                       'passkey these pages ask for the code too.',
@@ -5894,10 +5896,70 @@ def _login(h):
 # counters. Pages asking within the same second share one reading.
 LOAD_LOCK = threading.Lock()
 LOAD_LAST = {'at': 0.0, 'raw': None, 'out': None}
-# The last two minutes of what was read (2.7.0): a page loaded again (F5),
-# another tab or another device draws its graphs from them at once instead
-# of starting empty. Only readings a page asked for; at most 40, 2.5 s apart.
-LOAD_HIST = collections.deque(maxlen=40)
+# The last two minutes, sampled by the daemon itself (2.7.6): one reading every
+# 5 s - but only while a page with the meter is open (it asks every 5 s); 45 s
+# after the last question the sampling ends by itself. The two minutes are
+# one small row of this node in the database, written over every 5 s, so a
+# page loaded again (F5), another tab, another device - or the daemon
+# started again - draw the same graphs at once.
+LOAD_SAMPLE_S = 5
+LOAD_WATCH_S = 45
+LOAD_HIST = collections.deque(maxlen=24)
+LOAD_WATCH = {'seen': 0.0, 'thread': None}
+LOAD_WATCH_LOCK = threading.Lock()
+
+
+def _load_hist_key():
+    return 'load:hist:' + node_name()
+
+
+def load_sampler(store):
+    """The sampling, while somebody looks: every 5 s one reading of the kernel's
+    counters, the two minutes written over in one row; it ends 45 s after the
+    last question, or when the meter is switched off."""
+    try:
+        while CONFIG.get('perf_meter') and time.time() - LOAD_WATCH['seen'] < LOAD_WATCH_S:
+            out = server_load()
+            if out.get('cpu') is not None:
+                with LOAD_LOCK:
+                    if not LOAD_HIST or out['at'] - LOAD_HIST[-1]['at'] >= LOAD_SAMPLE_S - 0.5:
+                        LOAD_HIST.append({k: out.get(k) for k in (
+                            'at', 'cpu', 'mem_used', 'mem_total', 'disk_rd', 'disk_wr', 'net_rx',
+                            'net_tx')})
+                    pts = list(LOAD_HIST)
+                try:
+                    store.set_meta(_load_hist_key(), json.dumps({'at': time.time(), 'points': pts}))
+                except Exception as e:                  # noqa: BLE001
+                    log('the performance meter could not keep its two minutes: %s' % e, 'warn')
+            time.sleep(LOAD_SAMPLE_S)
+    finally:
+        with LOAD_WATCH_LOCK:
+            LOAD_WATCH['thread'] = None
+
+
+def load_watch(store):
+    """A page asked: the sampling goes on (or starts) for 45 s more."""
+    with LOAD_WATCH_LOCK:
+        LOAD_WATCH['seen'] = time.time()
+        if not LOAD_WATCH.get('loaded'):
+            # The two minutes kept before the daemon started again: in this
+            # very answer already, not only in the next one.
+            LOAD_WATCH['loaded'] = True
+            try:
+                got = _meta_json(store, _load_hist_key()) or {}
+            except Exception:                           # noqa: BLE001
+                got = {}
+            t = time.time()
+            with LOAD_LOCK:
+                if not LOAD_HIST:
+                    for x in got.get('points') or []:
+                        if isinstance(x, dict) and t - float(x.get('at') or 0) <= 130:
+                            LOAD_HIST.append(x)
+        if LOAD_WATCH['thread'] is None:
+            th = threading.Thread(target=load_sampler, args=(store,), name='plexmon-load',
+                                  daemon=True)
+            LOAD_WATCH['thread'] = th
+            th.start()
 
 
 def _load_raw():
@@ -6286,10 +6348,6 @@ def server_load():
             for k in ('disk_rd', 'disk_wr', 'net_rx', 'net_tx'):
                 out[k] = rate(k)
             out['over_s'] = round(dt, 1)
-            if out.get('cpu') is not None and (not LOAD_HIST or now - LOAD_HIST[-1]['at'] >= 2.5):
-                LOAD_HIST.append({k: out.get(k) for k in ('at', 'cpu', 'mem_used', 'mem_total',
-                                                         'disk_rd', 'disk_wr', 'net_rx',
-                                                         'net_tx')})
         LOAD_LAST.update(at=now, raw=raw, out=out)
         return out
 
@@ -6312,13 +6370,14 @@ def _load(h):
     h.me('fulladmin')
     if not CONFIG.get('perf_meter'):
         raise ApiError(403, 'the performance meter is switched off (Settings → About)')
+    load_watch(h.store)
     state = None
     if h.arg('detail') and h.d.monitor:
         try:
             state = (h.d.monitor() or {}).get('disk_state')
         except Exception:                               # noqa: BLE001
             state = None
-    return api_load(detail=bool(h.arg('detail')), hist=bool(h.arg('hist')), disk_state=state)
+    return api_load(detail=bool(h.arg('detail')), hist=True, disk_state=state)
 
 
 # ---- passkeys: Face ID, Touch ID, Windows Hello (2.6.9) ---------------------------------

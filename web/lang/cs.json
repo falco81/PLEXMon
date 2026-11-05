@@ -9323,6 +9323,14 @@
   "xs1079": {
    "source": "How busy the server is - the processor, the memory, the disks and the network - beside the state at the top of these pages, every 3 s, with the cores, the temperatures, the disks and the processes taking most when pointed at (a tap on an iPad). Only a full administrator sees it, and chooses its look in Your account. It reads the kernel's counters only while a page asks; nothing runs in the background, and it never wakes a sleeping disk. Off (the default) it is off altogether: the pages load nothing of it, ask nothing and draw nothing, and the daemon reads nothing for it.",
    "text": "Jak je server vytížený – procesor, paměť, disky a síť – vedle stavu nahoře na těchto stránkách, každé 3 s, a po najetí myší (na iPadu po klepnutí) jádra, teploty, disky a procesy, které berou nejvíc. Vidí ho jen plný administrátor a vzhled si volí ve Vašem účtu. Čítače jádra čte jen ve chvíli, kdy se stránka ptá; nic neběží na pozadí a nikdy neprobudí spící disk. Vypnutý (výchozí) je vypnutý úplně: stránky z něj nic nenačtou, na nic se neptají a nic nekreslí a daemon pro něj nic nečte."
+  },
+  "xs1080": {
+   "source": "How busy the server is - the processor, the memory, the disks and the network - beside the state at the top of these pages, every 5 s, with a graph of the last two minutes, and the cores, the temperatures, the disks and the processes taking most when pointed at (a tap on an iPad). Only a full administrator sees it, and chooses its look in Your account. While a page with it is open, the daemon reads the kernel's counters once every 5 s and keeps the two minutes in one small row of the database; 45 s after the last page is closed it stops by itself. It never wakes a sleeping disk. Off (the default) it is off altogether: the pages load nothing of it, ask nothing and draw nothing, and the daemon reads nothing for it.",
+   "text": "Jak je server vytížený – procesor, paměť, disky a síť – vedle stavu nahoře na těchto stránkách, každých 5 s, s grafem posledních dvou minut, a po najetí myší (na iPadu po klepnutí) jádra, teploty, disky a procesy, které berou nejvíc. Vidí ho jen plný administrátor a vzhled si volí ve Vašem účtu. Dokud je otevřená stránka s ním, daemon čte čítače jádra jednou za 5 s a dvě minuty drží v jednom malém řádku databáze; 45 s po zavření poslední stránky sám skončí. Nikdy neprobudí spící disk. Vypnutý (výchozí) je vypnutý úplně: stránky z něj nic nenačtou, na nic se neptají a nic nekreslí a daemon pro něj nic nečte."
+  },
+  "xs1081": {
+   "source": "The processor, busy over the last 5 s, all 8 core(s) together",
+   "text": "Procesor, vytížení za posledních 5 s, všech 8 jader dohromady"
   }
  },
  "patterns": {
