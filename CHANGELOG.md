@@ -4,6 +4,25 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.6.6 - 2026-11-05
+
+- **Where yes and where no, under the pointer** - a count in the Plex library
+  opens a card that says which ones: the episodes (S01E03 and the title, with
+  its still) or the titles (with the poster), in groups - *has it* / *does not
+  have it*. It stays while the pointer is over it, so a long list can be
+  scrolled; Escape or moving away closes it.
+  - **Audio and subtitles**: *in 10 of 12* of every track, *default in 1*
+    (plays by default / there, but another one plays / not there), *2 of 12 do
+    not have it*, and in the plan *without that audio* / *without those
+    subtitles*.
+  - **Labels** of the ticked titles: *3 of 8* of each label - which carry it.
+- **Scan the files again counts anew**: after Plex has scanned, the episodes
+  of what was picked are read again as they are now (an episode Plex took in
+  as new, or let go, counts), and every count is made anew from them. A track
+  is counted once a video - before, once a part, so a video with two files
+  (a new one while the old one is still in Plex's trash) counted twice - and
+  *default in* is counted again too (it stayed as it was).
+
 ## 2.6.5 - 2026-11-04
 
 - **`plexmon --get KEY`** - one setting, as `--set KEY=VALUE` changes it:

@@ -8951,6 +8951,38 @@
   "xs0986": {
    "source": "there is no certificate in the ZIP (PEM, .pfx or .p12 files)",
    "text": "v ZIPu není žádný certifikát (soubory PEM, .pfx nebo .p12)"
+  },
+  "xs0987": {
+   "source": "Has it",
+   "text": "Má ji"
+  },
+  "xs0988": {
+   "source": "Does not have it",
+   "text": "Nemá ji"
+  },
+  "xs0989": {
+   "source": "Plays by default",
+   "text": "Hraje ve výchozím stavu"
+  },
+  "xs0990": {
+   "source": "There, but another one plays",
+   "text": "Je tam, ale hraje jiná"
+  },
+  "xs0991": {
+   "source": "Not there",
+   "text": "Není tam"
+  },
+  "xs0992": {
+   "source": "Left as they are - not there",
+   "text": "Zůstanou, jak jsou – není tam"
+  },
+  "xs0993": {
+   "source": "Carries it",
+   "text": "Má ho"
+  },
+  "xs0994": {
+   "source": "Does not carry it",
+   "text": "Nemá ho"
   }
  },
  "patterns": {
@@ -11361,6 +11393,18 @@
   "xp0219": {
    "source": "{0} in the ZIP cannot be read",
    "text": "{0} v ZIPu nejde přečíst"
+  },
+  "xp0220": {
+   "source": "default in {0} of {1}",
+   "text": "výchozí ve {0} z {1}"
+  },
+  "xp0221": {
+   "source": "{0} of {1} do not have it",
+   "text": "{0} z {1} ji nemá"
+  },
+  "xp0222": {
+   "source": "+{0} more",
+   "text": "a dalších {0}"
   }
  },
  "rich": {

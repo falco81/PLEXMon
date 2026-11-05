@@ -455,3 +455,28 @@
 .px-act-x{position:absolute;top:8px;right:8px}
 
 .px-chain{display:flex;flex-direction:column;gap:2px;max-width:420px}
+
+/* Where yes and where no (2.6.6): the card a count opens */
+.px-cov{cursor:help;text-decoration:underline dotted;text-underline-offset:3px;text-decoration-color:rgba(127,127,127,.6)}
+.px-cov-hint{display:inline-block}
+.px-cpop{position:fixed;z-index:10050;width:min(460px,calc(100vw - 16px));max-height:min(520px,calc(100vh - 16px));display:flex;flex-direction:column;
+  background:var(--panel,#161b22);border:1px solid var(--line,#262c37);border-radius:12px;box-shadow:0 18px 48px rgba(0,0,0,.55);overflow:hidden;
+  animation:pxCpop .12s ease-out}
+@keyframes pxCpop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.px-cpop-h{display:flex;flex-direction:column;gap:2px;padding:12px 14px 10px;border-bottom:1px solid var(--line,#262c37)}
+.px-cpop-h b{font-size:13.5px}
+.px-cpop-b{overflow:auto;padding:6px 10px 12px}
+.px-cpop-g{display:flex;align-items:center;gap:6px;margin:10px 4px 6px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--tx-dim,#9aa4b2)}
+.px-cpop-g .n{margin-left:auto;font-weight:700;padding:1px 8px;border-radius:999px;background:rgba(127,127,127,.15)}
+.px-cpop-g.yes{color:var(--ok,#3fb950)} .px-cpop-g.no{color:var(--warn,#d29922)} .px-cpop-g.mid{color:var(--info,#58a6ff)}
+.px-cpop-g svg{flex:none}
+.px-cpop-list{display:flex;flex-direction:column;gap:4px}
+.px-cpop-it{display:flex;align-items:center;gap:10px;padding:4px;border-radius:8px}
+.px-cpop-it:hover{background:rgba(127,127,127,.08)}
+.px-cpop-it .pic{flex:none;width:96px;height:54px;border-radius:6px;overflow:hidden;background:var(--panel2,#1c222b)}
+.px-cpop-it.poster .pic{width:36px;height:54px}
+.px-cpop-it .pic img{width:100%;height:100%;object-fit:cover;display:block}
+.px-cpop-it .t{display:flex;flex-direction:column;min-width:0;font-size:12.5px;line-height:1.35}
+.px-cpop-it .t .code{font:600 11px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--tx-dim,#9aa4b2)}
+.px-cpop-it .t .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.px-cpop-more{padding:6px 4px 0}

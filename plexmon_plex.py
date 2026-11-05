@@ -953,41 +953,72 @@ def ep_label(m):
     return m.get('title') or '#%s' % m.get('ratingKey')
 
 
+def _scan_item(k, m):
+    return {'rk': k, 'label': ep_label(m), 'lib': str(m.get('librarySectionID') or ''),
+            'show': m.get('grandparentTitle') or '', 'parts': list(iter_parts(m)),
+            's': m.get('parentIndex'), 'e': m.get('index'), 'title': m.get('title') or '',
+            'thumb': m.get('thumb') or m.get('parentThumb') or m.get('grandparentThumb') or '',
+            'type': m.get('type') or ''}
+
+
+def _scan_sort(data):
+    data.sort(key=lambda d: (d['show'], d['s'] or 0, d['e'] or 0, d['label']))
+
+
+def _scan_tracks(items):
+    """The tracks of these videos, each the same track in every one of them
+    (2.6.6): counted once a video - not once a part - with which videos have
+    it (`has`) and where it plays by default (`sel`), by their place in the
+    list, for the popup that says where yes and where no."""
+    regs = {ST_AUDIO: {}, ST_SUBTITLE: {}}
+    for i, d in enumerate(items):
+        for stt, reg in regs.items():
+            mine = {}
+            for _pid, streams in d['parts']:
+                for vk, v in streams_variants(streams, stt).items():
+                    if vk in mine:
+                        mine[vk]['selected'] = mine[vk]['selected'] or v['selected']
+                    else:
+                        mine[vk] = v
+            for vk, v in mine.items():
+                if vk not in reg:
+                    reg[vk] = dict(v, count=0, selected=0, has=[], sel=[])
+                r = reg[vk]
+                r['count'] += 1
+                r['has'].append(i)
+                if v['selected']:
+                    r['selected'] += 1
+                    r['sel'].append(i)
+    return finalize_variants(regs[ST_AUDIO]), finalize_variants(regs[ST_SUBTITLE])
+
+
+def _scan_public(ident, sc):
+    pub = lambda vs: [{k: v for k, v in x.items() if k != 'sig'} for x in vs]  # noqa: E731
+    return {'scan': ident, 'videos': len(sc['items']), 'audio': pub(sc['audio']),
+            'subs': pub(sc['subs']),
+            'items': [{k: d.get(k) for k in ('rk', 'label', 'show', 'title', 's', 'e', 'thumb',
+                                             'type')} for d in sc['items']]}
+
+
 def tracks_scan(rks):
     """What tracks every picked video has, merged across the episodes by the
     track itself; kept here under an id for the plan that follows."""
-    keys = _expand_to_videos([str(x) for x in rks])
+    picked = [str(x) for x in rks]
+    keys = _expand_to_videos(picked)
     if not keys:
         raise ValueError('nothing to scan: no movie or episode in what was picked')
     if len(keys) > 3000:
         raise ValueError('%d videos at once is too many - pick fewer' % len(keys))
     md_map = metadata_many(keys)
-    data, audio_reg, sub_reg = [], {}, {}
-    for k in keys:
-        m = md_map.get(k)
-        if not m:
-            continue
-        parts = list(iter_parts(m))
-        for _pid, streams in parts:
-            for stt, reg in ((ST_AUDIO, audio_reg), (ST_SUBTITLE, sub_reg)):
-                for vk, v in streams_variants(streams, stt).items():
-                    if vk in reg:
-                        reg[vk]['count'] += 1
-                        reg[vk]['selected'] += v['selected']
-                    else:
-                        reg[vk] = v
-        data.append({'rk': k, 'label': ep_label(m), 'lib': str(m.get('librarySectionID') or ''),
-                     'show': m.get('grandparentTitle') or '', 'parts': parts,
-                     's': m.get('parentIndex'), 'e': m.get('index')})
-    data.sort(key=lambda d: (d['show'], d['s'] or 0, d['e'] or 0, d['label']))
+    data = [_scan_item(k, md_map[k]) for k in keys if md_map.get(k)]
+    _scan_sort(data)
     ident = os.urandom(6).hex()
-    audio, subs = finalize_variants(audio_reg), finalize_variants(sub_reg)
-    _SCANS[ident] = {'at': time.time(), 'items': data, 'audio': audio, 'subs': subs}
+    audio, subs = _scan_tracks(data)
+    _SCANS[ident] = {'at': time.time(), 'items': data, 'audio': audio, 'subs': subs,
+                     'picked': picked}
     for old in [k for k, v in _SCANS.items() if time.time() - v['at'] > 3600]:
         _SCANS.pop(old, None)
-    pub = lambda vs: [{k: v for k, v in x.items() if k != 'sig'} for x in vs]  # noqa: E731
-    return {'scan': ident, 'videos': len(data), 'audio': pub(audio), 'subs': pub(subs),
-            'items': [{'rk': d['rk'], 'label': d['label'], 'show': d['show']} for d in data]}
+    return _scan_public(ident, _SCANS[ident])
 
 
 def _scan(ident):
@@ -1201,20 +1232,24 @@ def tracks_rescan(store, ident, by, wait_s=120):
 
 
 def tracks_scan_again(ident):
+    """Everything read again (2.6.6): the episodes of what was picked as they
+    are now - a file Plex took as a new episode, or one it let go, counted -
+    each with its tracks now, and the counts made anew from them."""
     sc = _scan(ident)
-    audio_reg, sub_reg = {}, {}
-    for d in sc['items']:
-        for _pid, streams in d['parts']:
-            for stt, reg in ((ST_AUDIO, audio_reg), (ST_SUBTITLE, sub_reg)):
-                for vk, v in streams_variants(streams, stt).items():
-                    if vk in reg:
-                        reg[vk]['count'] += 1
-                    else:
-                        reg[vk] = v
-    sc['audio'], sc['subs'] = finalize_variants(audio_reg), finalize_variants(sub_reg)
-    pub = lambda vs: [{k: v for k, v in x.items() if k != 'sig'} for x in vs]  # noqa: E731
-    return {'scan': ident, 'videos': len(sc['items']), 'audio': pub(sc['audio']),
-            'subs': pub(sc['subs'])}
+    keys = [d['rk'] for d in sc['items']]
+    if sc.get('picked'):
+        try:
+            keys = _expand_to_videos(sc['picked']) or keys
+        except PlexError:
+            pass
+    md_map = metadata_many(keys)
+    data = [_scan_item(k, md_map[k]) for k in keys if md_map.get(k)]
+    if data:
+        _scan_sort(data)
+        sc['items'] = data
+    sc['audio'], sc['subs'] = _scan_tracks(sc['items'])
+    sc['at'] = time.time()
+    return _scan_public(ident, sc)
 
 
 # ---------------------------------------------------------------------------

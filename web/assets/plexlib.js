@@ -1280,6 +1280,7 @@ function tracksDialog(rks, what, after) {
       w.firstChild.style.cssText = 'aspect-ratio:auto;height:120px';
       body.appendChild(w);
       api('plex', {action: 'tracks-scan', rks: rks}, 180).then(function (r) {
+        r.shows = Object.keys((r.items || []).reduce(function (a, x) { a[x.show || ''] = 1; return a; }, {})).length;
         T.scan = r;
         choose(w);
       }).catch(function (e) { clear(w); w.appendChild(el('p', 'note bad', String(e.message || e))); });
@@ -1319,8 +1320,26 @@ function tracksDialog(rks, what, after) {
         }
         o.appendChild(l);
         if (v.count !== undefined) {
-          o.appendChild(el('span', 'cnt', 'in ' + v.count + ' of ' + r.videos));
-          if (v.selected) o.appendChild(el('span', 'now', v.selected >= r.videos ? 'default' : 'default in ' + v.selected));
+          var all = (r.items || []).map(function (_x, i) { return i; });
+          var hasI = v.has || [], selI = v.sel || [];
+          var noI = all.filter(function (i) { return hasI.indexOf(i) < 0; });
+          var cnt = el('span', 'cnt', 'in ' + v.count + ' of ' + r.videos);
+          if (r.items && v.has) coverPop(cnt, function () {
+            return {title: v.label, sub: 'in ' + v.count + ' of ' + r.videos,
+                    groups: [{words: 'Has it', cls: 'yes', items: scanCards(r, hasI)},
+                             {words: 'Does not have it', cls: 'no', items: scanCards(r, noI)}]};
+          });
+          o.appendChild(cnt);
+          if (v.selected) {
+            var nowT = el('span', 'now', v.selected >= r.videos ? 'default' : 'default in ' + v.selected);
+            if (r.items && v.sel) coverPop(nowT, function () {
+              return {title: v.label, sub: 'default in ' + v.selected + ' of ' + r.videos,
+                      groups: [{words: 'Plays by default', cls: 'yes', icon: 'play', items: scanCards(r, selI)},
+                               {words: 'There, but another one plays', cls: 'mid', icon: 'list', items: scanCards(r, hasI.filter(function (i) { return selI.indexOf(i) < 0; }))},
+                               {words: 'Not there', cls: 'no', items: scanCards(r, noI)}]};
+            });
+            o.appendChild(nowT);
+          }
         }
         c.appendChild(o);
       });
@@ -1330,7 +1349,19 @@ function tracksDialog(rks, what, after) {
         var miss = el('div', 'px-note warn');
         miss.style.marginTop = '8px';
         var mt = el('div');
-        mt.appendChild(el('div', '', (r.videos - chosen.count) + ' of ' + r.videos + ' do not have it. There:'));
+        var missT = el('div', '', (r.videos - chosen.count) + ' of ' + r.videos + ' do not have it. There:');
+        if (r.items && chosen.has) {
+          var missW = el('span', 'px-cov-hint');
+          missW.appendChild(missT);
+          coverPop(missW, function () {
+            var hasI = chosen.has;
+            var noI = (r.items || []).map(function (_x, i) { return i; }).filter(function (i) { return hasI.indexOf(i) < 0; });
+            return {title: chosen.label, sub: (r.videos - chosen.count) + ' of ' + r.videos + ' do not have it',
+                    groups: [{words: 'Does not have it', cls: 'no', items: scanCards(r, noI)},
+                             {words: 'Has it', cls: 'yes', items: scanCards(r, hasI)}]};
+          });
+          mt.appendChild(missW);
+        } else mt.appendChild(missT);
         /* Replacement after replacement (2.5.0, plex_tools' coverage loop):
            where the one chosen is missing the next is tried, then the next. */
         var tk = kind === 'audio' ? 'ma' : 'ms';
@@ -1378,6 +1409,7 @@ function tracksDialog(rks, what, after) {
     rescan.onclick = function () {
       follow(api('plex', {action: 'tracks-rescan', scan: r.scan}), w).then(function (got) {
         T.scan = Object.assign({}, T.scan, got);
+        T.scan.shows = Object.keys((T.scan.items || []).reduce(function (a, x) { a[x.show || ''] = 1; return a; }, {})).length;
         choose(w);
         /* What the scan found (2.4.3): before, only "read again", whatever it was. */
         var n = (got && got.changed) || 0;
@@ -1400,8 +1432,20 @@ function tracksDialog(rks, what, after) {
       var sum = el('div', 'px-sum');
       var met = function (v, k, cls) { var m = el('div', 'metric ' + (cls || '')); m.innerHTML = '<div class="label"></div><div class="value"></div>'; m.firstChild.textContent = k; m.lastChild.textContent = v; return m; };
       sum.appendChild(met(p.change, 'videos change', 'ok'));
-      if (p.audio_missing) sum.appendChild(met(p.audio_missing, 'without that audio', 'warn'));
-      if (p.subs_missing) sum.appendChild(met(p.subs_missing, 'without those subtitles', 'warn'));
+      /* Which ones (2.6.6): the rows of the plan, with the pictures of the scan. */
+      var byRk = {};
+      (T.scan.items || []).forEach(function (x, i) { byRk[x.rk] = i; });
+      var planPop = function (node, test, words) {
+        coverPop(node, function () {
+          var yes = [], no = [];
+          p.rows.forEach(function (row) { var i = byRk[row.rk]; if (i === undefined) return; ((row.parts || []).some(test) ? no : yes).push(i); });
+          return {title: words, groups: [{words: 'Left as they are - not there', cls: 'no', items: scanCards(T.scan, no)},
+                                         {words: 'Has it', cls: 'yes', items: scanCards(T.scan, yes)}]};
+        });
+        return node;
+      };
+      if (p.audio_missing) sum.appendChild(planPop(met(p.audio_missing, 'without that audio', 'warn'), function (x) { return x.audio_missing; }, 'without that audio'));
+      if (p.subs_missing) sum.appendChild(planPop(met(p.subs_missing, 'without those subtitles', 'warn'), function (x) { return x.subs_missing; }, 'without those subtitles'));
       w.appendChild(sum);
       var box = el('div', 'px-plan');
       var tb = el('table');
@@ -1585,6 +1629,111 @@ function ratingsDialog(rks, what, scope, after) {
   }, [{words: 'Close', close: true}]);
 }
 
+/* ---- where yes and where no (2.6.6) ------------------------------------------
+   A count - "in 10 of 12", "default in 1", "2 of 12 do not have it", a label on
+   "3 of 8" - opens, under the pointer, a card that says which ones: each group
+   (has it / does not) with the picture of every episode or title. It stays
+   while the pointer is over it, so a long list can be scrolled. */
+var CPOP = {node: null, timer: null, at: null};
+function pxItemOf(rk) {
+  rk = String(rk);
+  var libs = Object.keys(PX.data || {});
+  for (var i = 0; i < libs.length; i++) {
+    var its = (PX.data[libs[i]] || {}).items || [];
+    for (var j = 0; j < its.length; j++) if (String(its[j].rk) === rk) return its[j];
+  }
+  return null;
+}
+function coverHide() {
+  clearInterval(CPOP.watch);
+  if (CPOP.node) { CPOP.node.remove(); CPOP.node = null; CPOP.at = null; }
+}
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') coverHide(); });
+window.addEventListener('scroll', function (e) { if (CPOP.node && !CPOP.node.contains(e.target)) coverHide(); }, true);
+function coverPop(anchor, getData) {
+  anchor.classList.add('px-cov');
+  var open = function () {
+    clearTimeout(CPOP.timer);
+    if (CPOP.at === anchor) return;
+    CPOP.timer = setTimeout(function () { coverShow(anchor, getData()); }, 200);
+  };
+  var leave = function () { clearTimeout(CPOP.timer); CPOP.timer = setTimeout(coverHide, 220); };
+  anchor.addEventListener('mouseenter', open);
+  anchor.addEventListener('mouseleave', leave);
+  anchor.addEventListener('focus', open);
+  anchor.addEventListener('blur', leave);
+  return anchor;
+}
+function coverShow(anchor, d) {
+  coverHide();
+  if (!d || !document.body.contains(anchor)) return;
+  var box = el('div', 'px-cpop');
+  box.addEventListener('mouseenter', function () { clearTimeout(CPOP.timer); });
+  box.addEventListener('mouseleave', function () { clearTimeout(CPOP.timer); CPOP.timer = setTimeout(coverHide, 220); });
+  if (d.title) {
+    var h = el('div', 'px-cpop-h');
+    h.appendChild(txt('b', '', d.title));
+    if (d.sub) h.appendChild(el('span', 'muted small', d.sub));
+    box.appendChild(h);
+  }
+  var bodyC = el('div', 'px-cpop-b');
+  (d.groups || []).forEach(function (g) {
+    if (!g.items || !g.items.length) return;
+    var gh = el('div', 'px-cpop-g ' + (g.cls || ''));
+    gh.appendChild(ico(g.icon || (g.cls === 'no' ? 'close' : 'check'), 13));
+    gh.appendChild(el('span', '', g.words));
+    gh.appendChild(txt('span', 'n', String(g.items.length)));
+    bodyC.appendChild(gh);
+    var list = el('div', 'px-cpop-list');
+    var most = 60;
+    g.items.slice(0, most).forEach(function (it) {
+      var c = el('div', 'px-cpop-it' + (it.poster ? ' poster' : ''));
+      var pic = el('div', 'pic');
+      if (it.thumb) {
+        var im = el('img');
+        im.loading = 'lazy';
+        im.alt = '';
+        im.src = it.poster ? imgUrl(it.thumb, 80, 120) : imgUrl(it.thumb, 160, 90);
+        im.onerror = function () { im.remove(); };
+        pic.appendChild(im);
+      }
+      c.appendChild(pic);
+      var t = el('div', 't');
+      if (it.code) t.appendChild(txt('span', 'code', it.code));
+      t.appendChild(txt('span', 'name', it.label || ''));
+      if (it.sub) t.appendChild(txt('small', 'muted', it.sub));
+      c.appendChild(t);
+      list.appendChild(c);
+    });
+    if (g.items.length > most) list.appendChild(el('div', 'muted small px-cpop-more', '+' + (g.items.length - most) + ' more'));
+    bodyC.appendChild(list);
+  });
+  box.appendChild(bodyC);
+  document.body.appendChild(box);
+  CPOP.node = box; CPOP.at = anchor;
+  /* Drawn again under it (another track picked, the popup closed): gone too. */
+  CPOP.watch = setInterval(function () { if (!document.body.contains(anchor)) coverHide(); }, 300);
+  /* Under the count, or over it when there is no room below; never off the screen. */
+  var r = anchor.getBoundingClientRect(), bw = box.offsetWidth, bh = box.offsetHeight;
+  var vw = window.innerWidth, vh = window.innerHeight;
+  var left = Math.max(8, Math.min(vw - bw - 8, r.left + r.width / 2 - bw / 2));
+  var top = r.bottom + 8;
+  if (top + bh > vh - 8 && r.top - bh - 8 > 8) top = r.top - bh - 8;
+  top = Math.max(8, Math.min(vh - bh - 8, top));
+  box.style.left = left + 'px';
+  box.style.top = top + 'px';
+}
+/* The videos of a scan as the card shows them: S01E03 and its title, its still. */
+function scanCards(r, idx) {
+  return idx.map(function (i) {
+    var it = (r.items || [])[i] || {};
+    var ep = it.type === 'episode' && it.s !== null && it.s !== undefined && it.e !== null && it.e !== undefined;
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    return {thumb: it.thumb, poster: it.type === 'movie', code: ep ? 'S' + pad(it.s) + 'E' + pad(it.e) : '',
+            label: ep ? it.title : (it.label || it.title), sub: ep && (r.shows || 0) > 1 ? it.show : ''};
+  });
+}
+
 /* ---- labels of a few ------------------------------------------------------------ */
 function labelsDialog(lib, rks, after) {
   var rows = [];
@@ -1611,7 +1760,16 @@ function labelsDialog(lib, rks, after) {
           var box = el('span', 'box', x.st === 'on' ? '✓' : (x.st === 'mixed' ? '–' : ''));
           b.appendChild(box);
           b.appendChild(txt('span', '', x.g.title));
-          b.appendChild(el('small', '', x.n + ' of ' + rks.length + (x.st !== x.orig ? ' → ' + (x.st === 'on' ? rks.length : (x.st === 'off' ? 0 : x.n)) : '')));
+          var nb = el('small', '', x.n + ' of ' + rks.length + (x.st !== x.orig ? ' → ' + (x.st === 'on' ? rks.length : (x.st === 'off' ? 0 : x.n)) : ''));
+          coverPop(nb, function () {
+            var on = {};
+            (x.g.items || []).forEach(function (k) { on[k] = 1; });
+            var card = function (k) { var it = pxItemOf(k) || {}; return {thumb: it.thumb, poster: true, label: it.title || ('#' + k), sub: it.year ? String(it.year) : ''}; };
+            return {title: x.g.title, sub: x.n + ' of ' + rks.length,
+                    groups: [{words: 'Carries it', cls: 'yes', items: rks.filter(function (k) { return on[k]; }).map(card)},
+                             {words: 'Does not carry it', cls: 'no', items: rks.filter(function (k) { return !on[k]; }).map(card)}]};
+          });
+          b.appendChild(nb);
           b.onclick = function () {
             var cyc = x.orig === 'mixed' ? ['mixed', 'on', 'off'] : (x.orig === 'on' ? ['on', 'off'] : ['off', 'on']);
             x.st = cyc[(cyc.indexOf(x.st) + 1) % cyc.length];

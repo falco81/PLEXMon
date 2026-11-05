@@ -25,7 +25,7 @@ on the Plex server.
 |---|---|
 | Library | posters, search (`*`, `?`), filters (unwatched, in progress, label, genre, country, without a rating), sorting, size; a title's detail: background, ratings, 4K/HDR, actors with photos, files, labels, tracks; for a show, its seasons and episodes |
 | Many at once | *Select* (or Ctrl-click, Shift for a range): watched, unwatched, audio and subtitles, labels, ratings, titles, watchlist, refresh metadata, export the titles to .txt |
-| Audio and subtitles | the default track of a movie, a whole show, a season or the ticked episodes - a particular track (external .srt × embedded, forced × SDH); where it is missing: leave it, switch the subtitles off, another track; *Scan the files again* for freshly added subtitles |
+| Audio and subtitles | the default track of a movie, a whole show, a season or the ticked episodes - a particular track (external .srt × embedded, forced × SDH); where it is missing: leave it, switch the subtitles off, another track; *Scan the files again* for freshly added subtitles; the pointer over a count (*in 10 of 12*, *default in 1*, *2 of 12 do not have it*) shows which episodes have it and which do not, each with its picture |
 | Labels | add / take off on many titles, rename, remove from the whole library |
 | Titles | finds titles in another language and converts them - the title only (locked, the ending *- Viki* is kept), the metadata language + a refresh, or Fix Match to their own entry; split items and locked titles are skipped |
 | Ratings | IMDb and Rotten Tomatoes (OMDb), TMDB, TVmaze, Trakt; only the missing ones or all; locked or not; a preview first |
