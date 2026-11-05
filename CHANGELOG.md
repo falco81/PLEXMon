@@ -4,6 +4,15 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.7.4 - 2026-11-05
+
+- **The performance meter: the memory the processes take is measured against
+  the memory in use**, not all of it - against 31 GB, Plex Media Server's 125 MB
+  was no bar at all beside "125 MB". The bars at 0 % (2.7.2) are checked in
+  every look of the header (graphs, pills, line, rings) and every style of the
+  details (tiles, table, map, wide) for the processor, the memory, the disks
+  and the network: all empty.
+
 ## 2.7.3 - 2026-11-05
 
 - **The performance meter has the temperature of every core**: Intel's

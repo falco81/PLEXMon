@@ -361,9 +361,11 @@ function hpProcs(host, list, what) {
   /* The bar is the share itself (plexmon 2.7.2), not the share of the busiest
      one: a process at 0 % drew a third of a bar beside "0 %". The processor:
      of one core (100 %), or of the busiest when it takes more than one; the
-     memory: of all of it. */
+     memory: of what is in use. */
   var t = el('table', 'hp-t'), top = 100;
-  var memAll = (HLOAD.last && HLOAD.last.mem_total) || 0;
+  /* of the memory in use (plexmon 2.7.4): against all of it, 125 MB of 31 GB
+     was no bar at all beside "125 MB" */
+  var memAll = (HLOAD.last && (HLOAD.last.mem_used || HLOAD.last.mem_total)) || 0;
   list.forEach(function (q) { if (what === 'cpu') top = Math.max(top, q.cpu || 0); });
   list.slice(0, 5).forEach(function (q) {
     var tr = el('tr', ''), v = what === 'cpu' ? q.cpu : q.rss;
