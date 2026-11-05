@@ -537,9 +537,9 @@ function trend_per_day(array $times, array $vals): ?float {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon.svg?v=<?= (int) @filemtime(__DIR__ . '/assets/favicon.svg') ?>" type="image/svg+xml">
 <link rel="manifest" href="assets/manifest-dash.json">
-<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="apple-touch-icon" href="assets/icon-180.png?v=<?= (int) @filemtime(__DIR__ . '/assets/favicon.svg') ?>">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Plex status">

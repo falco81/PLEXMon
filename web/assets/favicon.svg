@@ -1,16 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- plexmon: a shield (as otp's and isemon's) around a play mark and a pulse. -->
+  <!-- plexmon (2.7.8): a chevron in Plex's amber and the green bars of a load
+       meter - the Plex server, watched. -->
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#f5b942"/>
       <stop offset="1" stop-color="#e5a00d"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="14" fill="#161b22"/>
-  <path d="M32 9l19 7v15c0 12-8 20-19 24-11-4-19-12-19-24V16z"
-        fill="url(#g)" opacity=".16" stroke="url(#g)" stroke-width="2.5"
-        stroke-linejoin="round"/>
-  <path d="M27 22l12 9-12 9z" fill="url(#g)"/>
-  <path d="M17 44h8l3-4 4 6 3-4h12" fill="none" stroke="#3fb950" stroke-width="2.5"
-        stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="64" height="64" rx="14" fill="#1f1f1f"/>
+  <path d="M14 10h10l16 22-16 22H14l16-22z" fill="url(#g)"/>
+  <rect x="40" y="38" width="5" height="14" rx="1.5" fill="#3fb950"/>
+  <rect x="47" y="30" width="5" height="22" rx="1.5" fill="#3fb950" opacity=".85"/>
+  <rect x="54" y="42" width="5" height="10" rx="1.5" fill="#3fb950" opacity=".7"/>
 </svg>

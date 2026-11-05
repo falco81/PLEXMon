@@ -4,6 +4,17 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.7.8 - 2026-11-05
+
+- **A new icon**: a chevron in Plex's amber beside the green bars of a load
+  meter, on Plex's dark grey - the Plex server, watched. The tab of the
+  browser (`favicon.svg`), the icon on the home screen of an iPad or an iPhone
+  (180 px) and those of the manifests (192, 512 px; square, no transparency -
+  iOS rounds the corners itself), on the dashboard and on Settings. The
+  addresses of the icons carry their date, so a browser shows the new one at
+  once; an icon already on the home screen stays as it was until it is added
+  again.
+
 ## 2.7.7 - 2026-11-05
 
 - **The performance meter's graphs move smoothly** - evenly, all the time,
