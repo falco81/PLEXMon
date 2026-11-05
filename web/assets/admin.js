@@ -324,6 +324,13 @@ function showMe() {
     };
     lsec.appendChild(formField('The language of these pages', lang));
     if (ME.source !== 'directory') passkeySection(body, '', showMe);
+    /* The performance meter (2.7.0): its looks, while it is switched on. */
+    if (typeof hloadPickers === 'function' && $('hload') && STATUS && STATUS.perf_meter) {
+      var hs = el('div', 'me-sec');
+      hs.appendChild(el('h3', '', 'The performance meter'));
+      hloadPickers(hs);
+      body.appendChild(hs);
+    }
 
     /* The columns of the tables - exactly isemon's. */
     var cols = el('div', 'me-sec');

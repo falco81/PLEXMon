@@ -4,6 +4,29 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.7.0 - 2026-11-05
+
+- **The performance meter** - ai's server load (1.0.72-1.0.76) in the header,
+  **off by default** (Settings → About → *The performance meter in the header*):
+  - the processor, the memory, the disks and the network every 3 s, each with
+    its place fixed (nothing jumps), green / yellow from 70 % / red from 90 %;
+  - pointed at - tapped on an iPad - a number opens its details: each core
+    (busy, GHz, temperature), the sensors, each disk (read, write, busy,
+    temperature), the filesystems, each network card, the processes taking most
+    processor and memory; Esc, moving away or a tap elsewhere closes it;
+  - in *Your account → The performance meter* each full administrator picks
+    the look of the numbers (a graph of the last two minutes, pills, one line,
+    rings, not shown) and of the details (tiles, a table as htop, a map of the
+    cores with rings, one wide panel, none) from cards drawn by the same code;
+    kept with the account;
+  - **a page loaded again (F5) goes on with its graphs** - the server keeps the
+    last two minutes of what it read (40 readings) and hands them to the first
+    question of a page, so a new tab or another device has them at once too;
+  - only a full administrator sees it and may ask (`GET /api/load`, refused
+    while it is off); it reads `/proc` and `/sys` only when a page asks -
+    nothing in the background, one reading a second for every page, nothing
+    while the page is hidden or paused, the details only while a panel is open.
+
 ## 2.6.9 - 2026-11-05
 
 - **Sign-in with a passkey - Face ID, Touch ID, Windows Hello** (WebAuthn, as in

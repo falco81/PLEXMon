@@ -65,6 +65,21 @@ Plex reads the certificate only when it starts: with `plex_cert_restart` (the de
 ACME too - goes to Plex as well. *Plex back to its own* removes the names from Preferences.xml.
 In Plex then set *Custom server access URLs* to `https://plex.example.cz:32400`.
 
+## The performance meter
+
+Settings → About → *The performance meter in the header* (`perf_meter`, **off by default**):
+how busy the server is - the processor, the memory, the disks and the network - beside the state
+at the top of the pages, every 3 s, with a graph of the last two minutes. Pointed at (tapped on an
+iPad), a number opens its details: each core with its frequency and temperature, the sensors,
+each disk, the filesystems, each network card, the processes taking most. Only a full
+administrator sees it and asks for it; each chooses in *Your account → The performance meter*
+the look of the numbers (a graph, pills, one line, rings, not shown) and of the details (tiles,
+a table, a map of the cores, one wide panel, none). It reads `/proc` and `/sys` only when a page
+asks - nothing runs in the background, pages asking within the same second share one reading,
+a hidden page asks nothing, the details only while their panel is open. The server keeps the
+last two minutes of what it read, so a page loaded again (F5), another tab or another device
+draws the graphs from there at once. From ai 1.0.72-1.0.76.
+
 ## On an iPad
 
 *Share → Add to Home Screen* in Safari: plexmon gets its own icon and opens in a window of

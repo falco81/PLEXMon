@@ -3602,7 +3602,7 @@
   },
   "s4150": {
    "source": "read",
-   "text": "načteno"
+   "text": "čtení"
   },
   "s4151": {
    "source": "read only",
@@ -9123,6 +9123,202 @@
   "xs1029": {
    "source": "failed passkey sign-ins",
    "text": "nepovedených přihlášení passkey"
+  },
+  "xs1030": {
+   "source": "reading…",
+   "text": "čtu…"
+  },
+  "xs1031": {
+   "source": "Swap",
+   "text": "Swap"
+  },
+  "xs1032": {
+   "source": "Net",
+   "text": "Síť"
+  },
+  "xs1033": {
+   "source": "pills with a bar",
+   "text": "štítky s pruhem"
+  },
+  "xs1034": {
+   "source": "one plain line",
+   "text": "jeden prostý řádek"
+  },
+  "xs1035": {
+   "source": "with a graph of the last two minutes",
+   "text": "s grafem posledních dvou minut"
+  },
+  "xs1036": {
+   "source": "with rings",
+   "text": "s kroužky"
+  },
+  "xs1037": {
+   "source": "not shown",
+   "text": "nezobrazovat"
+  },
+  "xs1038": {
+   "source": "The load of the server in the header (CPU, RAM, the disks, the network)",
+   "text": "Vytížení serveru v záhlaví (CPU, RAM, disky, síť)"
+  },
+  "xs1039": {
+   "source": "Memory in use (without what the kernel keeps as cache and gives back)",
+   "text": "Použitá paměť (bez toho, co jádro drží jako cache a vrací zpět)"
+  },
+  "xs1040": {
+   "source": "The disks: read ↓ and written ↑, every disk together",
+   "text": "Disky: čtení ↓ a zápis ↑, všechny disky dohromady"
+  },
+  "xs1041": {
+   "source": "The network cards: down ↓ (in) and up ↑ (out), every card together - not the loopback nor the bridges of containers",
+   "text": "Síťové karty: příjem ↓ a odesílání ↑, všechny karty dohromady – bez loopbacku a mostů kontejnerů"
+  },
+  "xs1042": {
+   "source": "The processor",
+   "text": "Procesor"
+  },
+  "xs1043": {
+   "source": "The disks",
+   "text": "Disky"
+  },
+  "xs1044": {
+   "source": "The network",
+   "text": "Síť"
+  },
+  "xs1045": {
+   "source": "the last two minutes",
+   "text": "poslední dvě minuty"
+  },
+  "xs1046": {
+   "source": "load",
+   "text": "load"
+  },
+  "xs1047": {
+   "source": "Up for",
+   "text": "Běží"
+  },
+  "xs1048": {
+   "source": "processes",
+   "text": "procesů"
+  },
+  "xs1049": {
+   "source": "Each core",
+   "text": "Jednotlivá jádra"
+  },
+  "xs1050": {
+   "source": "No temperature: this machine has no sensors the kernel reads (a virtual machine has none).",
+   "text": "Bez teploty: tento stroj nemá čidla, která jádro čte (virtuální stroj je nemá)."
+  },
+  "xs1051": {
+   "source": "Taking most of the processor",
+   "text": "Nejvíc vytěžují procesor"
+  },
+  "xs1052": {
+   "source": "nothing busy just now",
+   "text": "teď nic nezatěžuje"
+  },
+  "xs1053": {
+   "source": "In use",
+   "text": "Použito"
+  },
+  "xs1054": {
+   "source": "Free for programs",
+   "text": "Volné pro programy"
+  },
+  "xs1055": {
+   "source": "Cache (given back when needed)",
+   "text": "Cache (vrací se, když je potřeba)"
+  },
+  "xs1056": {
+   "source": "Shared",
+   "text": "Sdílená"
+  },
+  "xs1057": {
+   "source": "Altogether",
+   "text": "Celkem"
+  },
+  "xs1058": {
+   "source": "Taking most memory",
+   "text": "Nejvíc paměti zabírají"
+  },
+  "xs1059": {
+   "source": "Each disk",
+   "text": "Jednotlivé disky"
+  },
+  "xs1060": {
+   "source": "busy",
+   "text": "vytížení"
+  },
+  "xs1061": {
+   "source": "Filesystems",
+   "text": "Souborové systémy"
+  },
+  "xs1062": {
+   "source": "Each card",
+   "text": "Jednotlivé karty"
+  },
+  "xs1063": {
+   "source": "no card",
+   "text": "žádná karta"
+  },
+  "xs1064": {
+   "source": "Other sensors",
+   "text": "Další čidla"
+  },
+  "xs1065": {
+   "source": "tiles - a card for each core",
+   "text": "dlaždice – karta pro každé jádro"
+  },
+  "xs1066": {
+   "source": "a table - a row for each core (as htop)",
+   "text": "tabulka – řádek pro každé jádro (jako htop)"
+  },
+  "xs1067": {
+   "source": "a map of the cores with rings",
+   "text": "mapa jader s kroužky"
+  },
+  "xs1068": {
+   "source": "one wide panel with everything at once",
+   "text": "jeden široký panel se vším najednou"
+  },
+  "xs1069": {
+   "source": "no details - only a short tip",
+   "text": "bez podrobností – jen krátký popisek"
+  },
+  "xs1070": {
+   "source": "Its details, when a number is pointed at (or tapped)",
+   "text": "Jeho podrobnosti při najetí na číslo (nebo klepnutí)"
+  },
+  "xs1071": {
+   "source": "Map of the cores (colour = how busy, number = temperature)",
+   "text": "Mapa jader (barva = vytížení, číslo = teplota)"
+  },
+  "xs1072": {
+   "source": "disk",
+   "text": "disk"
+  },
+  "xs1073": {
+   "source": "written",
+   "text": "zápis"
+  },
+  "xs1074": {
+   "source": "nothing in the header",
+   "text": "v záhlaví nic"
+  },
+  "xs1075": {
+   "source": "The performance meter in the header",
+   "text": "Měřič výkonu v záhlaví"
+  },
+  "xs1076": {
+   "source": "The performance meter",
+   "text": "Měřič výkonu"
+  },
+  "xs1077": {
+   "source": "How busy the server is - the processor, the memory, the disks and the network - beside the state at the top of these pages, every 3 s, with the cores, the temperatures, the disks and the processes taking most when pointed at (a tap on an iPad). Only a full administrator sees it, and chooses its look in Your account. It reads the kernel's counters only while a page asks; nothing runs in the background.",
+   "text": "Jak je server vytížený – procesor, paměť, disky a síť – vedle stavu nahoře na těchto stránkách, každé 3 s, a po najetí myší (na iPadu po klepnutí) jádra, teploty, disky a procesy, které berou nejvíc. Vidí ho jen plný administrátor a vzhled si volí ve Vašem účtu. Čítače jádra čte jen ve chvíli, kdy se stránka ptá; nic neběží na pozadí."
+  },
+  "xs1078": {
+   "source": "the performance meter is switched off (Settings → About)",
+   "text": "měřič výkonu je vypnutý (Nastavení → O aplikaci)"
   }
  },
  "patterns": {
@@ -11569,6 +11765,14 @@
   "xp0228": {
    "source": "{0} passkeys is the most an account keeps - take one away first",
    "text": "{0} passkeys je nejvíc, co účet může mít – nejdřív nějakou odeberte"
+  },
+  "xp0229": {
+   "source": "The processor, busy over the last {0} s, all {1} core(s) together · load {2}",
+   "text": "Procesor, vytížení za posledních {0} s, všech {1} jader dohromady · load {2}"
+  },
+  "xp0230": {
+   "source": "The processor, busy over the last {0} s, all {1} core(s) together",
+   "text": "Procesor, vytížení za posledních {0} s, všech {1} jader dohromady"
   }
  },
  "rich": {

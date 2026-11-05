@@ -312,6 +312,7 @@ if (isset($_GET['api'])) {
         'power' => '/api/power', 'ntp' => '/api/ntp', 'osup' => '/api/osup', 'db' => '/api/db',
         'rbackup' => '/api/rbackup', 'acme-push' => '/api/acme-push',
         'passkey-state' => '/api/auth/passkey/state', 'passkeys' => '/api/auth/passkeys',
+        'load' => '/api/load',
     ];
     $writes = [
         'settings' => '/api/settings', 'users' => '/api/users', 'sessions' => '/api/sessions',
@@ -523,6 +524,10 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
 <header>
   <h1 data-no-i18n><?= h($site ?: 'plexmon') ?> <span class="host"><?= h($host) ?></span></h1>
   <span id="state-pill" class="pill unknown"><span class="dot"></span><span>…</span></span>
+  <?php if (($me['role'] ?? '') === 'fulladmin'): ?>
+  <!-- The performance meter (2.7.0): a full administrator's, while it is switched on. -->
+  <div class="hload" id="hload" hidden aria-live="off"></div>
+  <?php endif; ?>
   <div class="spacer"></div>
   <div class="btnrow">
     <a class="btn small" id="to-dash" href="<?= h($base) ?>" data-icon="chart"
@@ -892,5 +897,6 @@ var PHP_SAFETY = <?= ($me['role'] ?? '') === 'fulladmin' ? json_encode(pm_php_sa
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/admin.js?v=<?= h(PM_VERSION) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/host.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/host.js')) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/plexlib.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/plexlib.js')) ?>"></script>
+<script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/hload.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/hload.js')) ?>"></script>
 </body>
 </html>

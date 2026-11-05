@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.6.9'
+__version__ = '2.7.0'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -112,6 +112,7 @@ DEFAULTS = {
     'admin_2fa_app': 1,
     'passkeys': 0,
     'passkey_is_2fa': 1,
+    'perf_meter': 0,
     # --- Plex Media Server's own certificate -----------------------------------
     'plex_cert': 0,
     'plex_cert_domain': '',
@@ -222,7 +223,7 @@ SEALED_KEYS = SECRET_KEYS
 TUNABLE = {
     'session_hours': (1, 168), 'session_idle_min': (5, 1440),
     'login_tries': (1, 100), 'login_wait_min': (1, 1440),
-    'admin_2fa': (0, 1), 'admin_2fa_app': (0, 1), 'passkeys': (0, 1), 'passkey_is_2fa': (0, 1),
+    'admin_2fa': (0, 1), 'admin_2fa_app': (0, 1), 'passkeys': (0, 1), 'passkey_is_2fa': (0, 1), 'perf_meter': (0, 1),
     'proxy': (0, 1), 'proxy_upgrade': (0, 1), 'proxy_os': (0, 1), 'proxy_acme': (0, 1),
     'proxy_dnsapi': (0, 1), 'proxy_discover': (0, 1), 'proxy_ratings': (0, 1),
     'plex_cert': (0, 1), 'plex_cert_restart': (0, 1),
@@ -309,6 +310,7 @@ NAMES = {
     'admin_2fa_app': '...with an authenticator app',
     'passkeys': 'Sign-in with a passkey (Face ID, Touch ID, Windows Hello)',
     'passkey_is_2fa': '...a passkey counts as the second step',
+    'perf_meter': 'The performance meter in the header',
     'plex_cert': 'Plex Media Server uses this certificate too',
     'plex_cert_domain': 'Plex’s custom certificate domain',
     'plex_cert_restart': 'Restart Plex Media Server to take a new one',
@@ -418,6 +420,12 @@ SAYS = {
                 'the face, a finger or the device\'s PIN. Only on the pages opened by their '
                 'name, with a certificate the browser trusts. While it is off, no passkey is '
                 'offered or taken.',
+    'perf_meter': 'How busy the server is - the processor, the memory, the disks and the network - '
+                  'beside the state at the top of these pages, every 3 s, with the cores, the '
+                  'temperatures, the disks and the processes taking most when pointed at (a tap '
+                  'on an iPad). Only a full administrator sees it, and chooses its look in Your '
+                  'account. It reads the kernel\'s counters only while a page asks; nothing runs '
+                  'in the background.',
     'passkey_is_2fa': 'With the second step on, a passkey checked by the face, a finger or the '
                       'PIN is both steps at once (as most services take it). Off: after the '
                       'passkey these pages ask for the code too.',
@@ -586,7 +594,7 @@ PANES = {
              'acme_dns_key', 'acme_dns_subdomain', 'acme_desec_domain', 'acme_desec_token',
              'acme_dns_alias', 'acme_dns_wait', 'acme_resolvers'],
     'upgrade': ['upgrade_check', 'upgrade_url', 'upgrade_downgrade'],
-    'about': ['site_name', 'ui_lang', 'api_port', 'debug', 'debug_api'],
+    'about': ['site_name', 'ui_lang', 'perf_meter', 'api_port', 'debug', 'debug_api'],
     'plex': ['plex_title_lang', 'plex_tmdb_key', 'plex_omdb_key', 'plex_trakt_id', 'plex_tvmaze'],
     'db': ['backup_daily', 'backup_keep', 'backup_at', 'retain_events_days'],
     'plexdb': ['plex_db_daily', 'plex_db_every', 'plex_db_day', 'plex_db_at', 'plex_db_keep',
@@ -5872,6 +5880,401 @@ def _login(h):
             'must_change': bool(ok.get('must_change')), 'mfa': stage}
 
 
+# ---- the performance meter: how busy the server is, in the header (2.7.0) -------
+# Taken over from ai (1.0.72-1.0.76) as it is: it reads /proc and /sys only
+# when a page asks, nothing runs in the background. Off until `perf_meter`
+# is switched on; then only a full administrator sees it and asks for it.
+
+# ---- how busy the server is, for the header (1.0.72) -------------------------
+# CPU, memory, the disks read and written, the network in and out - worked
+# out only when a page asks (every 3 s while it is shown), from the kernel's
+# counters in /proc: no thread of its own, nothing kept but the last
+# counters. Pages asking within the same second share one reading.
+LOAD_LOCK = threading.Lock()
+LOAD_LAST = {'at': 0.0, 'raw': None, 'out': None}
+# The last two minutes of what was read (2.7.0): a page loaded again (F5),
+# another tab or another device draws its graphs from them at once instead
+# of starting empty. Only readings a page asked for; at most 40, 2.5 s apart.
+LOAD_HIST = collections.deque(maxlen=40)
+
+
+def _load_raw():
+    raw = {'at': time.time()}
+    try:
+        with open('/proc/stat') as f:
+            parts = f.readline().split()[1:]
+        v = [int(x) for x in parts[:8]] + [0] * (8 - len(parts[:8]))
+        raw['cpu_idle'] = v[3] + v[4]
+        raw['cpu_all'] = sum(v)
+    except (OSError, ValueError):
+        pass
+    try:
+        mem = {}
+        with open('/proc/meminfo') as f:
+            for line in f:
+                k, _s, rest = line.partition(':')
+                mem[k] = int(rest.split()[0]) * 1024
+        raw['mem_total'] = mem.get('MemTotal', 0)
+        raw['mem_used'] = mem.get('MemTotal', 0) - mem.get('MemAvailable', mem.get('MemFree', 0))
+        raw['swap_used'] = mem.get('SwapTotal', 0) - mem.get('SwapFree', 0)
+    except (OSError, ValueError, IndexError):
+        pass
+    try:
+        rd = wr = 0
+        whole = set(os.listdir('/sys/block'))
+        with open('/proc/diskstats') as f:
+            for line in f:
+                x = line.split()
+                # whole disks only (a partition is in its disk's numbers already),
+                # no loop devices, no RAM disks, no device-mapper twice over
+                if len(x) < 10 or x[2] not in whole or x[2].startswith(('loop', 'ram', 'dm-', 'zram', 'sr')):
+                    continue
+                rd += int(x[5]) * 512
+                wr += int(x[9]) * 512
+        raw['disk_rd'], raw['disk_wr'] = rd, wr
+    except (OSError, ValueError):
+        pass
+    try:
+        rx = tx = 0
+        with open('/proc/net/dev') as f:
+            for line in f.readlines()[2:]:
+                name, _s, rest = line.partition(':')
+                name = name.strip()
+                # the cards, not the loopback nor the bridges and pairs of containers
+                if not load_nic_counted(name):
+                    continue
+                x = rest.split()
+                rx += int(x[0])
+                tx += int(x[8])
+        raw['net_rx'], raw['net_tx'] = rx, tx
+    except (OSError, ValueError, IndexError):
+        pass
+    return raw
+
+
+LOAD_SYS = '/sys'                # the tests point it at a sysfs of their own
+LOAD_DETAIL = {'at': 0.0, 'raw': None, 'out': None}
+
+
+def load_nic_counted(name):
+    """A network card counted: not the loopback, not the bridges and pairs of
+    containers, not a card that is a slave of a bond (the bond is counted)."""
+    if name == 'lo' or name.startswith(('veth', 'docker', 'br-', 'virbr', 'podman', 'cni', 'flannel', 'tun', 'tap',
+                                       'vnet', 'ifb', 'dummy', 'lxc', 'kube', 'cali', 'vxlan', 'genev')):
+        return False
+    master = os.path.join(LOAD_SYS, 'class/net', name, 'master')
+    if os.path.islink(master) and os.path.isdir(os.path.join(os.path.realpath(master), 'bonding')):
+        return False
+    return True
+
+
+def _read_first(path, default=''):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return default
+
+
+def load_temps():
+    """What the sensors say: {'cpu': [(label, °C)], 'cores': {core n: °C}, 'disks': {name: °C}, 'other': [...]}.
+    hwmon first (coretemp, k10temp, zenpower, nvme, drivetemp, acpitz...), then the thermal zones."""
+    out = {'cpu': [], 'cores': {}, 'disks': {}, 'other': []}
+    base = os.path.join(LOAD_SYS, 'class/hwmon')
+    try:
+        mons = sorted(os.listdir(base))
+    except OSError:
+        mons = []
+    for m in mons:
+        d = os.path.join(base, m)
+        chip = _read_first(os.path.join(d, 'name'))
+        try:
+            files = sorted(f for f in os.listdir(d) if re.match(r'^temp\d+_input$', f))
+        except OSError:
+            continue
+        for f in files:
+            n = f.split('_')[0]
+            try:
+                t = int(_read_first(os.path.join(d, f), 'x')) / 1000.0
+            except ValueError:
+                continue
+            if t <= -40 or t > 150:
+                continue
+            label = _read_first(os.path.join(d, n + '_label')) or chip
+            core = re.match(r'^Core (\d+)$', label)
+            if chip in ('coretemp', 'k10temp', 'zenpower', 'cpu_thermal', 'soc_thermal', 'k8temp', 'via_cputemp'):
+                if core:
+                    out['cores'][int(core.group(1))] = round(t, 1)
+                else:
+                    out['cpu'].append([label, round(t, 1)])
+            elif chip in ('nvme', 'drivetemp'):
+                dev = ''
+                try:
+                    dev = os.path.basename(os.path.realpath(os.path.join(d, 'device')))
+                except OSError:
+                    pass
+                if chip == 'nvme':
+                    try:
+                        nv = [x for x in os.listdir(os.path.join(d, 'device')) if re.match(r'^nvme\d+n\d+$', x)]
+                        dev = nv[0] if nv else dev
+                    except OSError:
+                        pass
+                elif chip == 'drivetemp':
+                    try:
+                        blk = os.listdir(os.path.join(d, 'device', 'block'))
+                        dev = blk[0] if blk else dev
+                    except OSError:
+                        pass
+                if label.lower() in ('composite', chip, '') or dev not in out['disks']:
+                    out['disks'][dev or chip] = round(t, 1)
+            else:
+                out['other'].append([chip + (' ' + label if label != chip else ''), round(t, 1)])
+    if not out['cpu'] and not out['cores']:
+        tz = os.path.join(LOAD_SYS, 'class/thermal')
+        try:
+            zones = sorted(z for z in os.listdir(tz) if z.startswith('thermal_zone'))
+        except OSError:
+            zones = []
+        for z in zones:
+            kind = _read_first(os.path.join(tz, z, 'type'))
+            try:
+                t = int(_read_first(os.path.join(tz, z, 'temp'), 'x')) / 1000.0
+            except ValueError:
+                continue
+            if -40 < t < 150:
+                (out['cpu'] if re.search(r'cpu|x86_pkg|soc|core', kind, re.I) else out['other']).append(
+                    [kind, round(t, 1)])
+    return out
+
+
+def _load_detail_raw():
+    raw = {'at': time.time(), 'cores': {}, 'disks': {}, 'nics': {}, 'procs': {}}
+    try:
+        with open('/proc/stat') as f:
+            for line in f:
+                m = re.match(r'^cpu(\d+)\s+(.*)$', line)
+                if m:
+                    v = [int(x) for x in m.group(2).split()[:8]]
+                    raw['cores'][int(m.group(1))] = (v[3] + v[4], sum(v))
+    except (OSError, ValueError):
+        pass
+    try:
+        whole = set(os.listdir(os.path.join(LOAD_SYS, 'block')))
+        with open('/proc/diskstats') as f:
+            for line in f:
+                x = line.split()
+                if len(x) < 13 or x[2] not in whole or x[2].startswith(('loop', 'ram', 'zram', 'sr')):
+                    continue
+                raw['disks'][x[2]] = (int(x[5]) * 512, int(x[9]) * 512, int(x[12]))
+    except (OSError, ValueError):
+        pass
+    try:
+        with open('/proc/net/dev') as f:
+            for line in f.readlines()[2:]:
+                name, _s, rest = line.partition(':')
+                name = name.strip()
+                if load_nic_counted(name):
+                    x = rest.split()
+                    raw['nics'][name] = (int(x[0]), int(x[8]))
+    except (OSError, ValueError, IndexError):
+        pass
+    tick = os.sysconf('SC_CLK_TCK') if hasattr(os, 'sysconf') else 100
+    page = os.sysconf('SC_PAGE_SIZE') if hasattr(os, 'sysconf') else 4096
+    try:
+        pids = [p for p in os.listdir('/proc') if p.isdigit()]
+    except OSError:
+        pids = []
+    for pid in pids:
+        try:
+            with open('/proc/%s/stat' % pid) as f:
+                st = f.read()
+            name = st[st.index('(') + 1:st.rindex(')')]
+            rest = st[st.rindex(')') + 2:].split()
+            raw['procs'][int(pid)] = (name[:40], (int(rest[11]) + int(rest[12])) / float(tick), int(rest[21]) * page)
+        except (OSError, ValueError, IndexError):
+            continue
+    return raw
+
+
+def load_detail():
+    """What the header's panels show when opened: each core, its frequency and
+    temperature, the disks one by one and the filesystems, the cards one by one,
+    the processes taking most - read only while a panel is open."""
+    with LOAD_LOCK:
+        now = time.time()
+        if LOAD_DETAIL['out'] and now - LOAD_DETAIL['at'] < 1.0:
+            return LOAD_DETAIL['out']
+        raw = _load_detail_raw()
+        was = LOAD_DETAIL['raw'] or {}
+        if not was or now - was.get('at', 0) > 30:
+            # the first look (or one long after the last): two readings a
+            # moment apart, so the panel opens with numbers, not dots
+            was = raw
+            time.sleep(0.3)
+            raw = _load_detail_raw()
+        dt = max(0.2, raw['at'] - was.get('at', raw['at'] - 1)) if was else None
+        temps = load_temps()
+        cores = []
+        for n in sorted(raw['cores']):
+            idle, allc = raw['cores'][n]
+            busy = None
+            if dt and n in was.get('cores', {}):
+                pi, pa = was['cores'][n]
+                if allc > pa:
+                    busy = round(max(0.0, min(1.0, 1 - (idle - pi) / float(allc - pa))) * 100, 1)
+            mhz = _read_first(os.path.join(LOAD_SYS, 'devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq' % n))
+            cores.append({'n': n, 'busy': busy, 'mhz': round(int(mhz) / 1000) if mhz.isdigit() else None,
+                          'temp': temps['cores'].get(n)})
+        if cores and not any(c['mhz'] for c in cores):
+            try:
+                with open('/proc/cpuinfo') as f:
+                    mh = [float(x.split(':')[1]) for x in f if x.startswith('cpu MHz')]
+                for c, m in zip(cores, mh):
+                    c['mhz'] = round(m)
+            except (OSError, ValueError, IndexError):
+                pass
+        model = ''
+        try:
+            with open('/proc/cpuinfo') as f:
+                for line in f:
+                    if line.startswith(('model name', 'Hardware', 'Model')):
+                        model = line.split(':', 1)[1].strip()
+                        break
+        except OSError:
+            pass
+        disks = []
+        for name, (rd, wr, ms) in sorted(raw['disks'].items()):
+            one = {'name': name, 'temp': temps['disks'].get(name),
+                   'size': int(_read_first(os.path.join(LOAD_SYS, 'block', name, 'size'), '0') or 0) * 512,
+                   'model': _read_first(os.path.join(LOAD_SYS, 'block', name, 'device/model'))}
+            if dt and name in was.get('disks', {}):
+                prd, pwr, pms = was['disks'][name]
+                one['rd'] = max(0, round((rd - prd) / dt))
+                one['wr'] = max(0, round((wr - pwr) / dt))
+                one['util'] = round(max(0.0, min(100.0, (ms - pms) / (dt * 10.0))), 1)
+            disks.append(one)
+        fss = []
+        seen = set()
+        try:
+            with open('/proc/mounts') as f:
+                for line in f:
+                    dev, mnt, kind = line.split()[:3]
+                    if kind in ('proc', 'sysfs', 'tmpfs', 'devtmpfs', 'devpts', 'cgroup', 'cgroup2', 'overlay',
+                                'squashfs', 'mqueue', 'debugfs', 'tracefs', 'securityfs', 'pstore', 'bpf', 'autofs',
+                                'fusectl', 'configfs', 'hugetlbfs', 'binfmt_misc', 'efivarfs', 'nsfs', 'ramfs',
+                                'rpc_pipefs', 'selinuxfs', 'fuse.lxcfs', 'iso9660') or dev in seen:
+                        continue
+                    if not dev.startswith('/') and kind not in ('nfs', 'nfs4', 'cifs', 'smb3', 'zfs', 'btrfs'):
+                        continue
+                    seen.add(dev)
+                    try:
+                        sv = os.statvfs(mnt)
+                    except OSError:
+                        continue
+                    total = sv.f_blocks * sv.f_frsize
+                    if not total:
+                        continue
+                    free = sv.f_bavail * sv.f_frsize
+                    fss.append({'mount': mnt, 'dev': dev, 'kind': kind, 'total': total, 'used': total - sv.f_bfree * sv.f_frsize,
+                                'free': free})
+        except OSError:
+            pass
+        nics = []
+        for name, (rx, tx) in sorted(raw['nics'].items()):
+            sp = _read_first(os.path.join(LOAD_SYS, 'class/net', name, 'speed'))
+            one = {'name': name, 'state': _read_first(os.path.join(LOAD_SYS, 'class/net', name, 'operstate')),
+                   'speed': int(sp) if sp.lstrip('-').isdigit() and int(sp) > 0 else None, 'rx_all': rx, 'tx_all': tx}
+            if dt and name in was.get('nics', {}):
+                one['rx'] = max(0, round((rx - was['nics'][name][0]) / dt))
+                one['tx'] = max(0, round((tx - was['nics'][name][1]) / dt))
+            nics.append(one)
+        procs = []
+        for pid, (name, cpu_s, rss) in raw['procs'].items():
+            p = {'pid': pid, 'name': name, 'rss': rss}
+            if dt and pid in was.get('procs', {}):
+                p['cpu'] = round(max(0.0, (cpu_s - was['procs'][pid][1]) / dt) * 100, 1)
+            procs.append(p)
+        mem = {}
+        try:
+            with open('/proc/meminfo') as f:
+                for line in f:
+                    k, _s, rest = line.partition(':')
+                    mem[k] = int(rest.split()[0]) * 1024
+        except (OSError, ValueError, IndexError):
+            pass
+        up = 0.0
+        try:
+            up = float(_read_first('/proc/uptime', '0').split()[0])
+        except ValueError:
+            pass
+        out = {'cores': cores, 'model': model, 'temps': temps, 'disks': disks, 'filesystems': fss, 'nics': nics,
+               'top_cpu': sorted([p for p in procs if p.get('cpu')], key=lambda p: -p['cpu'])[:6],
+               'top_mem': sorted(procs, key=lambda p: -p['rss'])[:6], 'uptime': up,
+               'mem': {k: mem.get(v) for k, v in (('total', 'MemTotal'), ('available', 'MemAvailable'),
+                                                  ('cached', 'Cached'), ('buffers', 'Buffers'),
+                                                  ('swap_total', 'SwapTotal'), ('swap_free', 'SwapFree'),
+                                                  ('shared', 'Shmem'))},
+               'procs': len(procs)}
+        LOAD_DETAIL.update(at=now, raw=raw, out=out)
+        return out
+
+
+def server_load():
+    """{cpu %, mem used/total, disk read/write B/s, net in/out B/s, load}."""
+    with LOAD_LOCK:
+        now = time.time()
+        if LOAD_LAST['out'] and now - LOAD_LAST['at'] < 1.0:
+            return LOAD_LAST['out']
+        raw = _load_raw()
+        was = LOAD_LAST['raw']
+        out = {'at': now, 'cores': os.cpu_count() or 1, 'mem_total': raw.get('mem_total'),
+               'mem_used': raw.get('mem_used'), 'swap_used': raw.get('swap_used')}
+        try:
+            out['load'] = [round(x, 2) for x in os.getloadavg()]
+        except OSError:
+            out['load'] = None
+        if was:
+            dt = max(0.2, raw['at'] - was['at'])
+
+            def rate(k):
+                if k in raw and k in was and raw[k] >= was[k]:
+                    return round((raw[k] - was[k]) / dt)
+                return None
+            if raw.get('cpu_all') and was.get('cpu_all') and raw['cpu_all'] > was['cpu_all']:
+                busy = 1 - (raw['cpu_idle'] - was['cpu_idle']) / float(raw['cpu_all'] - was['cpu_all'])
+                out['cpu'] = round(max(0.0, min(1.0, busy)) * 100, 1)
+            for k in ('disk_rd', 'disk_wr', 'net_rx', 'net_tx'):
+                out[k] = rate(k)
+            out['over_s'] = round(dt, 1)
+            if out.get('cpu') is not None and (not LOAD_HIST or now - LOAD_HIST[-1]['at'] >= 2.5):
+                LOAD_HIST.append({k: out.get(k) for k in ('at', 'cpu', 'mem_used', 'mem_total',
+                                                         'disk_rd', 'disk_wr', 'net_rx',
+                                                         'net_tx')})
+        LOAD_LAST.update(at=now, raw=raw, out=out)
+        return out
+
+
+def api_load(detail=False, hist=False):
+    """GET /api/load (administrators only): the summary; with ?detail=1 also the details.
+    Here the route below, a full administrator's, while `perf_meter` is on."""
+    out = dict(server_load())
+    if detail:
+        out['detail'] = load_detail()
+    if hist:
+        t = time.time()
+        with LOAD_LOCK:
+            out['hist'] = [x for x in LOAD_HIST if t - x['at'] <= 130]
+    return out
+
+
+@route('GET', '/api/load')
+def _load(h):
+    h.me('fulladmin')
+    if not CONFIG.get('perf_meter'):
+        raise ApiError(403, 'the performance meter is switched off (Settings → About)')
+    return api_load(detail=bool(h.arg('detail')), hist=bool(h.arg('hist')))
+
+
 # ---- passkeys: Face ID, Touch ID, Windows Hello (2.6.9) ---------------------------------
 #
 # WebAuthn, as ai does it: an account signed in with its password adds a
@@ -6599,6 +7002,16 @@ def _prefs(h):
         if str(b['lang']) not in ('cs', 'en'):
             raise ApiError(400, 'no such language here')
         prefs['lang'] = str(b['lang'])
+    # The look of the performance meter (2.7.0): the numbers, and the panel.
+    for k, allowed in (('hload', ('graphs', 'pills', 'line', 'rings', 'off')),
+                       ('hpanel', ('tiles', 'table', 'map', 'wide', 'off'))):
+        if k in b:
+            if b[k] is None:
+                prefs.pop(k, None)
+            elif str(b[k]) in allowed:
+                prefs[k] = str(b[k])
+            else:
+                raise ApiError(400, 'no such look here')
     h.store.set_account(acc['name'], prefs=json.dumps(prefs))
     return {'prefs': prefs}
 
@@ -6609,6 +7022,7 @@ def _status(h):
     s = h.me()
     out = h.d.status()
     out['role'] = s['role']
+    out['perf_meter'] = bool(CONFIG.get('perf_meter'))
     return out
 
 
