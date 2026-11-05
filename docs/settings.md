@@ -10,6 +10,17 @@ changes* bar at the bottom). The daemon always decides; the PHP pages only ask i
 - A password set by someone else is changed by its owner at the first sign-in.
 - *Second step* of signing in: `admin_2fa` (Accounts → the settings at the bottom) - a code
   from an authenticator app; reset: the button by the account or `plexmon --reset-2fa NAME`.
+- **Passkeys - Face ID, Touch ID, Windows Hello** (`passkeys`, off by default): an account
+  signed in with its password adds a passkey of its device in *Your account → Add a passkey of
+  this device*; the sign-in page then offers *Sign in with a passkey* - no name, no password,
+  the face, a finger or the device's PIN. Only on the pages opened by their **name** over
+  **HTTPS** with a certificate the browser trusts (`https://plex.example.com/smart/settings/`,
+  not an address), the same name to add and to sign in; on an iPad the iCloud Keychain on.
+  With the second step on, a passkey is both steps (`passkey_is_2fa`, on by default; off: the
+  code is asked for after it). The server keeps only the public half; a full administrator sees
+  and takes away anybody's passkeys by the key button beside the account (a lost iPad).
+  Command line: `plexmon --set passkeys=1`, `plexmon --passkeys [NAME]`,
+  `plexmon --passkey-forget ID|all`.
 - *Signed in now* - ending a sign-in elsewhere; *Locked out* - addresses and names
   with failed attempts, freed with one click.
 - *Columns of the tables* - everyone lays the tables out their own way (your name → Edit the
@@ -53,6 +64,17 @@ Plex reads the certificate only when it starts: with `plex_cert_restart` (the de
 (playback stops for a moment). Every further certificate - renewed through
 ACME too - goes to Plex as well. *Plex back to its own* removes the names from Preferences.xml.
 In Plex then set *Custom server access URLs* to `https://plex.example.cz:32400`.
+
+## On an iPad
+
+*Share → Add to Home Screen* in Safari: plexmon gets its own icon and opens in a window of
+its own, without Safari's bars, turning with the iPad (the dashboard can be added the same
+way, as *Plex status*). The home-screen app keeps its own sign-in: sign in there once (with a
+passkey it is one tap and the face). With a finger, what the mouse points at opens with a tap:
+the counts of the library (*in 10 of 12*) open their card, tapped again or anywhere else it
+closes; a button's explanation comes by holding the finger on it, and the button itself works
+with the first tap. A popup is never taller than what the keyboard on the screen leaves. An
+iPad with a trackpad or a mouse points as a PC does.
 
 ## Languages
 

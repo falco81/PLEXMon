@@ -54,6 +54,7 @@ plexmon --tls-preset intermediate --tls-hsts 31536000
 plexmon --settings               every setting, and where it comes from
 plexmon --get proxy --get backup_keep   only these (--json for a script)
 plexmon --set acme=1 --set acme_node_name=plex.example.cz
+plexmon --set passkeys=1 && plexmon --passkeys   sign-in with Face ID / Touch ID (passkeys)
 plexmon --acme-order             order a certificate now, follow the progress
 plexmon --plex-cert on           Plex Media Server gets the certificate too
 plexmon --upgrade-online         the newest version: download, verify, put in

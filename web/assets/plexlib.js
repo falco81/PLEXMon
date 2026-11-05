@@ -1651,6 +1651,9 @@ function coverHide() {
   if (CPOP.node) { CPOP.node.remove(); CPOP.node = null; CPOP.at = null; }
 }
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') coverHide(); });
+document.addEventListener('click', function (e) {
+  if (CPOP.node && !CPOP.node.contains(e.target) && !(CPOP.at && CPOP.at.contains(e.target))) coverHide();
+});
 window.addEventListener('scroll', function (e) { if (CPOP.node && !CPOP.node.contains(e.target)) coverHide(); }, true);
 function coverPop(anchor, getData) {
   anchor.classList.add('px-cov');
@@ -1660,10 +1663,17 @@ function coverPop(anchor, getData) {
     CPOP.timer = setTimeout(function () { coverShow(anchor, getData()); }, 200);
   };
   var leave = function () { clearTimeout(CPOP.timer); CPOP.timer = setTimeout(coverHide, 220); };
-  anchor.addEventListener('mouseenter', open);
-  anchor.addEventListener('mouseleave', leave);
-  anchor.addEventListener('focus', open);
-  anchor.addEventListener('blur', leave);
+  anchor.addEventListener('mouseenter', function () { if (canHover()) open(); });
+  anchor.addEventListener('mouseleave', function () { if (canHover()) leave(); });
+  /* A finger (2.6.9): a tap opens it, another tap - on it or anywhere else -
+     closes it; the tap does nothing else (not the track's radio under it). */
+  anchor.addEventListener('click', function (e) {
+    if (canHover()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (CPOP.at === anchor) { coverHide(); return; }
+    coverShow(anchor, getData());
+  });
   return anchor;
 }
 function coverShow(anchor, d) {

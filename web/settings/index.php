@@ -163,6 +163,34 @@ if (isset($_GET['api'])) {
         echo json_encode(is_array($data) ? $data : ['ok' => false, 'error' => 'sign-in failed']);
         exit;
     }
+    if ($what === 'passkey-login' && $post) {
+        /* A passkey's answer (2.6.9): as a password's - the daemon checks it,
+           and its session goes into the cookie the same way. */
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        $sent = sent_body();
+        $pick = [];
+        foreach (['id', 'clientDataJSON', 'authenticatorData', 'signature', 'userHandle'] as $k) {
+            $pick[$k] = substr((string) ($sent[$k] ?? ''), 0, 20000);
+        }
+        [$status, $body] = pm_call('/api/auth/passkey/login', 'POST', $pick, 30.0);
+        if ($status === 0) {
+            http_response_code(503);
+            echo json_encode(['ok' => false, 'error' =>
+                'the daemon is not answering — is plexmon.service running?']);
+            exit;
+        }
+        $data = json_decode($body, true);
+        if ($status === 200 && is_array($data) && !empty($data['token'])) {
+            pm_set_session((string) $data['token']);
+            unset($data['token']);
+            echo json_encode($data);
+            exit;
+        }
+        http_response_code($status === 200 ? 400 : $status);
+        echo json_encode(is_array($data) ? $data : ['ok' => false, 'error' => 'sign-in failed']);
+        exit;
+    }
     if ($what === 'mfa' && $post) {
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-store');
@@ -283,6 +311,7 @@ if (isset($_GET['api'])) {
         'plex-person' => '/api/plex/person', 'plex-discover' => '/api/plex/discover',
         'power' => '/api/power', 'ntp' => '/api/ntp', 'osup' => '/api/osup', 'db' => '/api/db',
         'rbackup' => '/api/rbackup', 'acme-push' => '/api/acme-push',
+        'passkey-state' => '/api/auth/passkey/state', 'passkeys' => '/api/auth/passkeys',
     ];
     $writes = [
         'settings' => '/api/settings', 'users' => '/api/users', 'sessions' => '/api/sessions',
@@ -293,6 +322,8 @@ if (isset($_GET['api'])) {
         'plex' => '/api/plex',
         'power' => '/api/power', 'ntp' => '/api/ntp', 'osup' => '/api/osup', 'db' => '/api/db',
         'rbackup' => '/api/rbackup', 'proxy' => '/api/proxy', 'acme-push' => '/api/acme-push',
+        'passkey-begin' => '/api/auth/passkey/begin', 'passkey-register' => '/api/auth/passkey/register',
+        'passkeys' => '/api/auth/passkeys',
     ];
     if ($post) {
         if (!isset($writes[$what])) {
@@ -392,6 +423,16 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
         ><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M14 12h7"/><path
         d="M18 9l3 3-3 3"/></svg><span>Sign in</span></button>
       <div class="said" id="in-said"></div>
+      <!-- A passkey (2.6.9): shown only when it is switched on, an account has
+           one, and the browser can (HTTPS, the pages opened by their name). -->
+      <div class="pk-or" id="pk-or" hidden>
+        <span class="muted small">or</span>
+        <button class="btn cmd" type="button" id="pk-go"><svg viewBox="0 0 24 24" width="17"
+          height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+          stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="9" r="4"/><path
+          d="M2 21v-1a6 6 0 0 1 9-5.2"/><path d="M15.5 13.5a3 3 0 1 1 3 3v4.5l-1.5 1-1.5-1v-1l1-1-1-1v-1.5"
+          /></svg><span>Sign in with a passkey (Face ID, Touch ID)</span></button>
+      </div>
     </form>
     <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center">
       <span class="muted small"><a class="fgo" href="<?= h($base) ?>">← the dashboard</a> · plexmon <?= h(PM_VERSION) ?></span>
@@ -441,6 +482,37 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
       $('in-pass').focus();
     });
   });
+  /* Sign in with a passkey (2.6.9). */
+  var canPasskey = window.PublicKeyCredential && navigator.credentials
+    && (location.protocol === 'https:' || location.hostname === 'localhost')
+    && !/^[0-9.]+$|^\[/.test(location.hostname);
+  if (canPasskey && !$('mfa-box').dataset.stage) {
+    api('passkey-state').then(function (st) { if (st && st.on && st.any) $('pk-or').hidden = false; }).catch(function () {});
+  }
+  $('pk-go').onclick = function () {
+    var b = $('pk-go'), words = b.querySelector('span');
+    said.className = 'said'; said.textContent = '';
+    b.disabled = true;
+    api('passkey-begin', {}).then(function (d) {
+      var o = d.publicKey;
+      o.challenge = pkBytes(o.challenge);
+      return navigator.credentials.get({publicKey: o});
+    }).then(function (cr) {
+      return api('passkey-login', {id: cr.id,
+        clientDataJSON: pkText(cr.response.clientDataJSON), authenticatorData: pkText(cr.response.authenticatorData),
+        signature: pkText(cr.response.signature), userHandle: cr.response.userHandle ? pkText(cr.response.userHandle) : ''});
+    }).then(function (d) {
+      if (d && d.mfa) { form.hidden = true; mfaStep(); return; }
+      said.className = 'said good';
+      said.textContent = 'Welcome back.';
+      location.reload();
+    }).catch(function (e) {
+      b.disabled = false;
+      if (e && (e.name === 'NotAllowedError' || e.name === 'AbortError')) return;   /* cancelled */
+      said.className = 'said bad';
+      said.textContent = String((e && e.message) || e);
+    });
+  };
   if ($('mfa-box').dataset.stage) mfaStep(); else $('in-name').focus();
 }());
 </script>

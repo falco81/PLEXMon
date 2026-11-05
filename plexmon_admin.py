@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.6.8'
+__version__ = '2.6.9'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -110,6 +110,8 @@ DEFAULTS = {
     'login_wait_min': 15,
     'admin_2fa': 0,
     'admin_2fa_app': 1,
+    'passkeys': 0,
+    'passkey_is_2fa': 1,
     # --- Plex Media Server's own certificate -----------------------------------
     'plex_cert': 0,
     'plex_cert_domain': '',
@@ -220,7 +222,7 @@ SEALED_KEYS = SECRET_KEYS
 TUNABLE = {
     'session_hours': (1, 168), 'session_idle_min': (5, 1440),
     'login_tries': (1, 100), 'login_wait_min': (1, 1440),
-    'admin_2fa': (0, 1), 'admin_2fa_app': (0, 1),
+    'admin_2fa': (0, 1), 'admin_2fa_app': (0, 1), 'passkeys': (0, 1), 'passkey_is_2fa': (0, 1),
     'proxy': (0, 1), 'proxy_upgrade': (0, 1), 'proxy_os': (0, 1), 'proxy_acme': (0, 1),
     'proxy_dnsapi': (0, 1), 'proxy_discover': (0, 1), 'proxy_ratings': (0, 1),
     'plex_cert': (0, 1), 'plex_cert_restart': (0, 1),
@@ -305,6 +307,8 @@ NAMES = {
     'login_wait_min': '...and the pause (min)',
     'admin_2fa': 'A second step when signing in to these pages',
     'admin_2fa_app': '...with an authenticator app',
+    'passkeys': 'Sign-in with a passkey (Face ID, Touch ID, Windows Hello)',
+    'passkey_is_2fa': '...a passkey counts as the second step',
     'plex_cert': 'Plex Media Server uses this certificate too',
     'plex_cert_domain': 'Plex’s custom certificate domain',
     'plex_cert_restart': 'Restart Plex Media Server to take a new one',
@@ -409,6 +413,14 @@ SAYS = {
                  'it set it up again. Sign-ins already open end, but the one saving it.',
     'admin_2fa_app': 'A code from an app (Google or Microsoft Authenticator…) - the way the '
                      'second step is given here.',
+    'passkeys': 'Every account may add passkeys in Your account (signed in with its password). '
+                'The sign-in page then offers Sign in with a passkey: no name and no password, '
+                'the face, a finger or the device\'s PIN. Only on the pages opened by their '
+                'name, with a certificate the browser trusts. While it is off, no passkey is '
+                'offered or taken.',
+    'passkey_is_2fa': 'With the second step on, a passkey checked by the face, a finger or the '
+                      'PIN is both steps at once (as most services take it). Off: after the '
+                      'passkey these pages ask for the code too.',
     'plex_cert': 'The certificate nginx answers with is also handed to Plex Media Server as '
                  'its custom certificate (a PKCS#12 file in /var/lib/plexmediaserver/plexmon, '
                  'named in its Preferences.xml) - so the Plex apps that connect straight to '
@@ -565,7 +577,7 @@ PANES = {
     'proxy': ['proxy', 'proxy_url', 'proxy_user', 'proxy_password', 'proxy_no', 'proxy_upgrade',
               'proxy_os', 'proxy_acme', 'proxy_dnsapi', 'proxy_discover', 'proxy_ratings'],
     'people': ['session_hours', 'session_idle_min', 'login_tries', 'login_wait_min',
-               'admin_2fa', 'admin_2fa_app'],
+               'admin_2fa', 'admin_2fa_app', 'passkeys', 'passkey_is_2fa'],
     'web': ['plex_cert', 'plex_cert_domain', 'plex_cert_restart'],
     'acme': ['acme', 'acme_email', 'acme_ca', 'acme_url', 'acme_ca_pem',
              'acme_node_name', 'acme_days', 'acme_key', 'acme_account_key', 'acme_challenge', 'acme_dns',
@@ -602,7 +614,7 @@ ONLY_WHEN = {
     'osup_auto_at': ['osup_auto', '1'], 'osup_auto_reboot': ['osup_auto', '1'],
     'power_auto_every': ['power_auto', '1'], 'power_auto_day': ['power_auto_every', 'weekly'],
     'power_auto_at': ['power_auto', '1'], 'power_auto_needed': ['power_auto', '1'],
-    'admin_2fa_app': ['admin_2fa', '1'],
+    'admin_2fa_app': ['admin_2fa', '1'], 'passkey_is_2fa': ['passkeys', '1'],
     'plex_cert_domain': ['plex_cert', '1'], 'plex_cert_restart': ['plex_cert', '1'],
     'acme_email': ['acme', '1'], 'acme_ca': ['acme', '1'],
     'acme_url': ['acme_ca', 'custom'], 'acme_ca_pem': ['acme_ca', 'custom'],
@@ -5860,6 +5872,461 @@ def _login(h):
             'must_change': bool(ok.get('must_change')), 'mfa': stage}
 
 
+# ---- passkeys: Face ID, Touch ID, Windows Hello (2.6.9) ---------------------------------
+#
+# WebAuthn, as ai does it: an account signed in with its password adds a
+# passkey of the device it is on; the sign-in page then signs it in with the
+# face, the finger or the device's PIN, without a name or a password. Off
+# until `passkeys` is switched on; the server keeps only the public half.
+
+PK_LIFE = 300
+PK_MOST = 20
+PK_CHAL = {}
+PK_LOCK = threading.Lock()
+
+
+def _b64u_raw(text):
+    t = str(text or '').strip()
+    if not re.match(r'^[A-Za-z0-9_-]*\Z', t):
+        raise ApiError(400, 'that is not base64url')
+    return base64.urlsafe_b64decode(t + '=' * (-len(t) % 4))
+
+
+def _cbor(data, i=0):
+    """One CBOR item at i: (value, next i) - what WebAuthn sends: integers,
+    bytes, text, arrays, maps, true/false/null."""
+    if i >= len(data):
+        raise ValueError('CBOR ends too soon')
+    ib = data[i]
+    major, info = ib >> 5, ib & 31
+    i += 1
+    if info < 24:
+        n = info
+    elif info in (24, 25, 26, 27):
+        size = {24: 1, 25: 2, 26: 4, 27: 8}[info]
+        if i + size > len(data):
+            raise ValueError('CBOR ends too soon')
+        n = int.from_bytes(data[i:i + size], 'big')
+        i += size
+    else:
+        raise ValueError('CBOR of a kind not taken here')
+    if major == 0:
+        return n, i
+    if major == 1:
+        return -1 - n, i
+    if major in (2, 3):
+        if i + n > len(data):
+            raise ValueError('CBOR ends too soon')
+        raw = data[i:i + n]
+        return (raw if major == 2 else raw.decode('utf-8')), i + n
+    if major == 4:
+        out = []
+        for _ in range(n):
+            v, i = _cbor(data, i)
+            out.append(v)
+        return out, i
+    if major == 5:
+        out = {}
+        for _ in range(n):
+            k, i = _cbor(data, i)
+            v, i = _cbor(data, i)
+            out[k] = v
+        return out, i
+    if major == 7:
+        return {20: False, 21: True, 22: None}.get(info), i
+    raise ValueError('CBOR of a kind not taken here')
+
+
+def _der_len(n):
+    if n < 128:
+        return bytes([n])
+    b = n.to_bytes((n.bit_length() + 7) // 8, 'big')
+    return bytes([0x80 | len(b)]) + b
+
+
+def _der_int(raw):
+    raw = raw.lstrip(b'\x00') or b'\x00'
+    if raw[0] & 0x80:
+        raw = b'\x00' + raw
+    return b'\x02' + _der_len(len(raw)) + raw
+
+
+def pk_cose_pem(cose):
+    """A COSE public key as PEM (SubjectPublicKeyInfo) and its algorithm."""
+    kty, alg = cose.get(1), cose.get(3)
+    if kty == 2 and alg == -7 and cose.get(-1) == 1:
+        x, y = cose.get(-2), cose.get(-3)
+        if not (isinstance(x, bytes) and isinstance(y, bytes) and len(x) == 32 and len(y) == 32):
+            raise ValueError('the ES256 key is not whole')
+        der = bytes.fromhex('3059301306072a8648ce3d020106082a8648ce3d030107034200') + b'\x04' + x + y
+    elif kty == 3 and alg == -257:
+        n, e = cose.get(-1), cose.get(-2)
+        if not (isinstance(n, bytes) and isinstance(e, bytes)) or len(n.lstrip(b'\x00')) < 256:
+            raise ValueError('the RSA key is under 2048 bits')
+        seq = _der_int(n) + _der_int(e)
+        rsa = b'\x30' + _der_len(len(seq)) + seq
+        bits = b'\x03' + _der_len(len(rsa) + 1) + b'\x00' + rsa
+        body = bytes.fromhex('300d06092a864886f70d0101010500') + bits
+        der = b'\x30' + _der_len(len(body)) + body
+    elif kty == 1 and alg == -8 and cose.get(-1) == 6:
+        x = cose.get(-2)
+        if not (isinstance(x, bytes) and len(x) == 32):
+            raise ValueError('the Ed25519 key is not whole')
+        der = bytes.fromhex('302a300506032b6570032100') + x
+    else:
+        raise ValueError('a passkey of a kind this does not take (ES256, RS256 and EdDSA are)')
+    b64 = base64.b64encode(der).decode()
+    pem = '-----BEGIN PUBLIC KEY-----\n' + '\n'.join(b64[i:i + 64] for i in range(0, len(b64), 64)) \
+        + '\n-----END PUBLIC KEY-----\n'
+    return pem, alg
+
+
+def pk_verify(pem, alg, msg, sig):
+    if alg == -8:
+        der = base64.b64decode(''.join(l for l in pem.splitlines() if '-----' not in l))
+        return ed25519_verify(der[-32:], msg, sig)
+    with tempfile.TemporaryDirectory(prefix='plexmon-pk-') as t:
+        kf, sf, mf = (os.path.join(t, n) for n in ('k.pem', 's.bin', 'm.bin'))
+        with open(kf, 'w') as f:
+            f.write(pem)
+        with open(sf, 'wb') as f:
+            f.write(sig)
+        with open(mf, 'wb') as f:
+            f.write(msg)
+        got = subprocess.run(['openssl', 'dgst', '-sha256', '-verify', kf, '-signature', sf, mf],
+                             capture_output=True, timeout=30)
+        return got.returncode == 0 and b'Verified OK' in got.stdout
+
+
+def pk_all(store):
+    got = _meta_json(store, 'passkeys') or {}
+    return [p for p in (got.get('list') or []) if isinstance(p, dict) and p.get('id')]
+
+
+def pk_put(store, rows):
+    store.set_meta('passkeys', json.dumps({'list': rows, 'at': time.time()}))
+
+
+def pk_view(p):
+    return {k: p.get(k) for k in ('id', 'user', 'name', 'alg', 'created', 'last_used', 'host',
+                                  'backed_up', 'count')}
+
+
+def pk_host(h):
+    """The name the pages were opened by - the passkey's RP ID - and the
+    origin a browser says it came from there. An address is refused: a
+    passkey cannot be tied to one."""
+    said = str(h.headers.get('X-Otp-Host') or '').strip().lower()
+    m = re.match(r'^([a-z0-9.-]{1,253})(:[0-9]{1,5})?\Z', said)
+    if not m:
+        raise ApiError(400, 'a passkey is added and used on the pages opened by their name over '
+                            'HTTPS (https://name/), not by an address')
+    host = m.group(1)
+    try:
+        ipaddress.ip_address(host)
+        is_ip = True
+    except ValueError:
+        is_ip = False
+    if is_ip or '.' not in host and host != 'localhost':
+        raise ApiError(400, 'a passkey is added and used on the pages opened by their name over '
+                            'HTTPS (https://name/), not by an address')
+    origins = {'https://' + said}
+    if m.group(2) is None:
+        origins.add('https://' + host + ':443')
+    if host == 'localhost':                 # a browser's own secure context (the tests)
+        origins.add('http://' + said)
+    return host, origins
+
+
+def pk_on():
+    if not CONFIG.get('passkeys'):
+        raise ApiError(403, 'passkeys are switched off on this server')
+
+
+def pk_challenge(kind, user, host):
+    raw = secrets.token_bytes(32)
+    c = _b64u(raw)
+    with PK_LOCK:
+        t = time.time()
+        for k in [k for k, v in PK_CHAL.items() if t - v['at'] > PK_LIFE]:
+            PK_CHAL.pop(k, None)
+        if len(PK_CHAL) > 2000:
+            PK_CHAL.clear()
+        PK_CHAL[c] = {'kind': kind, 'user': user, 'host': host, 'at': t}
+    return c
+
+
+def pk_client(b, want_type, kind, host, origins, user=None):
+    """clientDataJSON checked: its type, the challenge (once, of this kind,
+    5 minutes, for this name - and this account), the origin."""
+    raw = _b64u_raw(b.get('clientDataJSON'))
+    try:
+        cd = json.loads(raw.decode('utf-8'))
+    except (ValueError, UnicodeDecodeError):
+        raise ApiError(400, 'clientDataJSON is not JSON')
+    if not isinstance(cd, dict) or cd.get('type') != want_type:
+        raise ApiError(400, 'not a %s answer' % want_type)
+    with PK_LOCK:
+        ch = PK_CHAL.pop(str(cd.get('challenge') or ''), None)
+    if not ch or ch['kind'] != kind or time.time() - ch['at'] > PK_LIFE:
+        raise ApiError(400, 'that request ran out, or was used already - try again')
+    if ch['host'] != host or (user is not None and ch['user'] != user):
+        raise ApiError(400, 'that request was made for another name or account - try again')
+    if str(cd.get('origin') or '') not in origins:
+        raise ApiError(400, 'the passkey answered for %s, not for these pages'
+                       % str(cd.get('origin') or '?')[:120])
+    return raw
+
+
+def pk_auth_data(ad, host, need_key=False):
+    if len(ad) < 37:
+        raise ApiError(400, 'authenticatorData is too short')
+    if ad[:32] != hashlib.sha256(host.encode()).digest():
+        raise ApiError(400, 'the passkey is for another name')
+    flags = ad[32]
+    if not flags & 0x01:
+        raise ApiError(400, 'nobody was there (user presence)')
+    if not flags & 0x04:
+        raise ApiError(400, 'the device did not check who it is (face, finger or PIN) - a '
+                            'passkey is taken only with that')
+    if need_key and not flags & 0x40:
+        raise ApiError(400, 'the passkey sent no key')
+    return flags, int.from_bytes(ad[33:37], 'big')
+
+
+def pk_user_id(name):
+    return _b64u(hashlib.sha256(('plexmon-user:' + name).encode()).digest()[:16])
+
+
+@route('GET', '/api/auth/passkey/state')
+def _pk_state(h):
+    """For the sign-in page: whether to offer the button at all."""
+    return {'on': bool(CONFIG.get('passkeys')), 'any': bool(CONFIG.get('passkeys') and pk_all(h.store))}
+
+
+@route('POST', '/api/auth/passkey/register')
+def _pk_register(h):
+    s = h.me('readonly')
+    pk_on()
+    b = h.body()
+    host, origins = pk_host(h)
+    name = s['name']
+    mine = [p for p in pk_all(h.store) if p.get('user') == name]
+    step = str(b.get('step') or '')
+    if step == 'begin':
+        if len(mine) >= PK_MOST:
+            raise ApiError(409, '%d passkeys is the most an account keeps - take one away first'
+                           % PK_MOST)
+        acc = s.get('account') or {}
+        return {'publicKey': {
+            'challenge': pk_challenge('register', name, host),
+            'rp': {'id': host, 'name': 'plexmon · ' + host},
+            'user': {'id': pk_user_id(name), 'name': name,
+                     'displayName': acc.get('display') or name},
+            'pubKeyCredParams': [{'type': 'public-key', 'alg': -7},
+                                 {'type': 'public-key', 'alg': -8},
+                                 {'type': 'public-key', 'alg': -257}],
+            'authenticatorSelection': {'residentKey': 'required', 'requireResidentKey': True,
+                                       'userVerification': 'required'},
+            'excludeCredentials': [{'type': 'public-key', 'id': p['id']} for p in mine
+                                   if p.get('host') == host],
+            'attestation': 'none', 'timeout': PK_LIFE * 1000}}
+    if step != 'finish':
+        raise ApiError(400, 'step is begin or finish')
+    pk_client(b, 'webauthn.create', 'register', host, origins, user=name)
+    try:
+        att, _end = _cbor(_b64u_raw(b.get('attestationObject')))
+    except ValueError as e:
+        raise ApiError(400, 'attestationObject cannot be read: %s' % e)
+    ad = att.get('authData') if isinstance(att, dict) else None
+    if not isinstance(ad, bytes):
+        raise ApiError(400, 'attestationObject has no authData')
+    flags, count = pk_auth_data(ad, host, need_key=True)
+    if len(ad) < 55:
+        raise ApiError(400, 'authData is too short')
+    n = int.from_bytes(ad[53:55], 'big')
+    cid = ad[55:55 + n]
+    if len(cid) != n or not n:
+        raise ApiError(400, 'authData has no credential id')
+    try:
+        cose, _e = _cbor(ad, 55 + n)
+        pem, alg = pk_cose_pem(cose)
+    except ValueError as e:
+        raise ApiError(400, str(e))
+    cid_s = _b64u(cid)
+    rows = pk_all(h.store)
+    if any(p['id'] == cid_s for p in rows):
+        raise ApiError(409, 'this device has a passkey for this account already')
+    label = str(b.get('name') or '').strip()[:80] or 'a passkey'
+    rows.append({'id': cid_s, 'user': name, 'name': label, 'pem': pem, 'alg': alg,
+                 'count': count, 'created': time.time(), 'last_used': 0, 'host': host,
+                 'backed_up': bool(flags & 0x10)})
+    pk_put(h.store, rows)
+    h.store.add_event('accounts', '%s added a passkey (%s) for %s' % (name, label, host),
+                      'warn', who=name)
+    return {'message': 'the passkey is added - sign in with it next time',
+            'passkeys': [pk_view(p) for p in rows if p['user'] == name]}
+
+
+@route('POST', '/api/auth/passkey/begin')
+def _pk_begin(h):
+    pk_on()
+    host, _o = pk_host(h)
+    return {'publicKey': {'challenge': pk_challenge('login', None, host), 'rpId': host,
+                          'userVerification': 'required', 'allowCredentials': [],
+                          'timeout': PK_LIFE * 1000}}
+
+
+@route('POST', '/api/auth/passkey/login')
+def _pk_login(h):
+    pk_on()
+    b = h.body()
+    cid = str(b.get('id') or '')[:400]
+    key = h.throttle('passkey', int(CONFIG.get('login_tries') or 5),
+                     int(CONFIG.get('login_wait_min') or 15), name='passkey:' + cid,
+                     what='failed passkey sign-ins')
+    host, origins = pk_host(h)
+
+    def refuse(words, event, level='warn'):
+        h.failed(key)
+        h.store.add_event('sign-ins', event, level)
+        raise ApiError(401, words)
+    try:
+        cdj = pk_client(b, 'webauthn.get', 'login', host, origins)
+    except ApiError:
+        h.failed(key)
+        raise
+    rows = pk_all(h.store)
+    p = next((x for x in rows if x['id'] == cid), None)
+    if not p:
+        refuse('this passkey is not known here (taken away, or of another server)',
+               'a passkey not known here was tried from %s' % h.client_ip())
+    ad = _b64u_raw(b.get('authenticatorData'))
+    try:
+        flags, count = pk_auth_data(ad, host)
+    except ApiError:
+        h.failed(key)
+        raise
+    sig = _b64u_raw(b.get('signature'))
+    if not pk_verify(p['pem'], p.get('alg') or -7, ad + hashlib.sha256(cdj).digest(), sig):
+        refuse('the passkey\'s signature does not match',
+               'a passkey of %s (%s) with a wrong signature from %s' % (
+                   p['user'], p.get('name'), h.client_ip()), 'bad')
+    if p.get('count') and count and count <= int(p['count']):
+        refuse('the passkey\'s counter went back - it may have been copied',
+               'the counter of a passkey of %s (%s) went back - it may have been copied (from '
+               '%s)' % (p['user'], p.get('name'), h.client_ip()), 'bad')
+    acc = h.store.account(p['user'])
+    if not acc or acc.get('disabled'):
+        refuse('that account may not sign in',
+               '%s, switched off or gone, tried a passkey from %s' % (p['user'], h.client_ip()))
+    stage = ''
+    if CONFIG.get('admin_2fa') and not CONFIG.get('passkey_is_2fa'):
+        stage = mfa_stage(h.store, acc['name'])
+    data = {'passkey': cid}
+    if stage:
+        data['mfa'] = stage
+    token = h.store.session_new('admin', acc['name'], acc['role'], h.client_ip(),
+                                CONFIG.get('session_hours') or 12, data=data)
+    p.update(count=count, last_used=time.time())
+    pk_put(h.store, rows)
+    h.store.set_account(acc['name'], last_in=time.time(), last_from=h.client_ip())
+    h.store.add_event('sign-ins', '%s signed in from %s with a passkey (%s)%s' % (
+        acc['name'], h.client_ip(), p.get('name'),
+        (' - the second step to give' if stage == 'check' else ' - the second step to set up')
+        if stage else (' - it counts as the second step' if CONFIG.get('admin_2fa') else '')),
+        who=acc['name'])
+    return {'token': token, 'who': {'name': acc['name'], 'role': acc['role'] if not stage else ''},
+            'must_change': bool(acc.get('must_change')), 'mfa': stage}
+
+
+@route('GET', '/api/auth/passkeys')
+def _pk_list(h):
+    s = h.me('readonly')
+    rows = pk_all(h.store)
+    full = ROLE_RANK.get(s['role'], 0) >= ROLE_RANK['fulladmin']
+    if full and h.arg('all'):
+        pick = rows
+    elif full and h.arg('name'):
+        pick = [p for p in rows if p.get('user') == h.arg('name')]
+    else:
+        pick = [p for p in rows if p.get('user') == s['name']]
+    try:
+        here = pk_host(h)[0]
+    except ApiError:
+        here = ''
+    return {'passkeys': [pk_view(p) for p in pick], 'on': bool(CONFIG.get('passkeys')),
+            'is_2fa': bool(CONFIG.get('passkey_is_2fa')), 'here': here}
+
+
+@route('POST', '/api/auth/passkeys')
+def _pk_manage(h):
+    s = h.me('readonly')
+    b = h.body()
+    rows = pk_all(h.store)
+    p = next((x for x in rows if x['id'] == str(b.get('id') or '')), None)
+    if not p:
+        raise ApiError(404, 'no such passkey')
+    full = ROLE_RANK.get(s['role'], 0) >= ROLE_RANK['fulladmin']
+    if p.get('user') != s['name'] and not full:
+        raise ApiError(403, 'only a full administrator may change somebody else\'s passkey')
+    act = str(b.get('do') or '')
+    if act == 'rename':
+        label = str(b.get('name') or '').strip()[:80]
+        if not label:
+            raise ApiError(400, 'give it a name')
+        p['name'] = label
+        pk_put(h.store, rows)
+        said = 'renamed'
+    elif act == 'delete':
+        rows = [x for x in rows if x is not p]
+        pk_put(h.store, rows)
+        h.store.add_event('accounts', '%s took away a passkey of %s (%s)' % (
+            s['name'], p.get('user'), p.get('name')), 'warn', who=s['name'])
+        said = 'the passkey is taken away - it no longer signs in'
+    else:
+        raise ApiError(400, 'do is rename or delete')
+    return {'message': said, 'passkeys': [pk_view(x) for x in rows
+                                          if x.get('user') == p.get('user')]}
+
+
+def cli_passkeys(store, pal, name, as_json):
+    rows = [p for p in pk_all(store) if not name or p.get('user') == name]
+    if as_json:
+        out_json({'passkeys': [pk_view(p) for p in rows], 'on': bool(CONFIG.get('passkeys'))})
+        return 0
+    print(pal.head('passkeys%s - %s' % (' of ' + name if name else '',
+                                        'switched on' if CONFIG.get('passkeys') else
+                                        'switched off (plexmon --set passkeys=1)')))
+    if not rows:
+        print('  none')
+        return 0
+    print(table([(p['id'][:22] + '…', p.get('user'), p.get('name'), p.get('host'),
+                  stamp(p.get('created')), stamp(p.get('last_used')) if p.get('last_used')
+                  else 'never') for p in rows],
+                ['id', 'account', 'name', 'for', 'added', 'last used'], [24, 14, 24, 24, 20, 20]))
+    return 0
+
+
+def cli_passkey_forget(store, pal, which, by):
+    rows = pk_all(store)
+    if which == 'all':
+        gone, keep = rows, []
+    else:
+        gone = [p for p in rows if p['id'] == which or p['id'].startswith(which.rstrip('…'))]
+        if len(gone) != 1:
+            raise SystemExit('plexmon: %s passkeys match %s - give more of the id (plexmon '
+                             '--passkeys)' % (len(gone), which) if gone else
+                             'plexmon: no passkey %s' % which)
+        keep = [p for p in rows if p is not gone[0]]
+    pk_put(store, keep)
+    for p in gone:
+        store.add_event('accounts', '%s took away a passkey of %s (%s) on the command line' % (
+            by, p.get('user'), p.get('name')), 'warn', who=by)
+    print(pal.ok_line('%d passkey(s) taken away' % len(gone)))
+    return 0
+
+
 def _mfa_session(h):
     s = h.session('admin')
     if not s:
@@ -7821,9 +8288,22 @@ class Admin(object):
 
     def loop(self):
         last_tidy = 0.0
+        seen = None
         while not self.stop.is_set():
             UPGRADE_WAKE.wait(3)
             UPGRADE_WAKE.clear()
+            # A setting changed on the command line (plexmon --set) taken in
+            # within seconds (2.6.9) - before, only when the service restarted.
+            try:
+                saved = self.store.settings_saved()
+                fp = hashlib.sha256(json.dumps(saved, sort_keys=True, default=str)
+                                    .encode()).hexdigest()
+                if seen is not None and fp != seen:
+                    load_config(saved=saved)
+                    publish_lang()
+                seen = fp
+            except Exception as e:                      # noqa: BLE001
+                log('reading the settings again: %s' % e, 'warn')
             # In maintenance plexmon does nothing by itself (2.3.0): no renewal,
             # nothing on a schedule - the upgrade and the look for a new version go on.
             maint = bool(maintenance_now(self.store).get('on'))
@@ -9295,6 +9775,10 @@ def build_parser():
     g.add_argument('--enable-user', metavar='NAME', help='it may sign in again')
     g.add_argument('--del-user', metavar='NAME', help='take an account away')
     g.add_argument('--reset-2fa', metavar='NAME', help='it sets its second step up again')
+    g.add_argument('--passkeys', nargs='?', const='*', default=None, metavar='NAME',
+                   help='the passkeys (Face ID, Touch ID) of every account, or of NAME')
+    g.add_argument('--passkey-forget', metavar='ID',
+                   help='take one passkey away (its id, or the start of it); all = every one')
     g.add_argument('--admin-2fa', choices=('on', 'off', 'status'),
                    help='a second step (an authenticator app) for every sign-in to Settings')
     g.add_argument('--sessions', action='store_true', help='who is signed in to Settings now')
@@ -10540,6 +11024,11 @@ def cli_main(argv=None, mon=None):
                            '%s may no longer sign in', 'enable': '%s may sign in again'}[act]
                           % flag))
         return 0
+    if args.passkeys is not None:
+        return cli_passkeys(store, pal, '' if args.passkeys == '*' else args.passkeys.strip(),
+                            args.json)
+    if args.passkey_forget:
+        return cli_passkey_forget(store, pal, args.passkey_forget.strip(), by)
     if args.reset_2fa:
         had = mfa_reset(store, args.reset_2fa, 'root')
         store.db.run("DELETE FROM sessions WHERE kind = 'admin' AND LOWER(name) = ?",

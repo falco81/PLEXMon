@@ -8983,6 +8983,146 @@
   "xs0994": {
    "source": "Does not carry it",
    "text": "Nemá ho"
+  },
+  "xs0995": {
+   "source": "Passkeys - Face ID, Touch ID",
+   "text": "Passkeys – Face ID, Touch ID"
+  },
+  "xs0996": {
+   "source": "A passkey signs you in with the face, a finger or the PIN of this device - no name and no password to type. It is kept in the device (on an iPad and an iPhone in the iCloud Keychain, so on your other Apple devices too); the server has only its public half.",
+   "text": "Passkey vás přihlásí obličejem, prstem nebo PINem tohoto zařízení – bez psaní jména a hesla. Je uložená v zařízení (na iPadu a iPhonu v Klíčence na iCloudu, takže i na vašich dalších zařízeních Apple); server má jen její veřejnou část."
+  },
+  "xs0997": {
+   "source": "Passkey",
+   "text": "Passkey"
+  },
+  "xs0998": {
+   "source": "Last used",
+   "text": "Naposledy použito"
+  },
+  "xs0999": {
+   "source": "Rename it",
+   "text": "Přejmenovat"
+  },
+  "xs1000": {
+   "source": "Take this passkey away?",
+   "text": "Odebrat tuto passkey?"
+  },
+  "xs1001": {
+   "source": "No passkey yet.",
+   "text": "Zatím žádná passkey."
+  },
+  "xs1002": {
+   "source": "This account has no passkey.",
+   "text": "Tento účet nemá žádnou passkey."
+  },
+  "xs1003": {
+   "source": "Add a passkey of this device",
+   "text": "Přidat passkey tohoto zařízení"
+  },
+  "xs1004": {
+   "source": "Passkeys are switched off on this server - a full administrator switches them on in Settings → Accounts.",
+   "text": "Passkeys jsou na tomto serveru vypnuté – zapne je plný administrátor v Nastavení → Účty."
+  },
+  "xs1005": {
+   "source": "A passkey is added on the pages opened by their name over HTTPS (https://name/), not by an address.",
+   "text": "Passkey se přidává na stránkách otevřených přes jméno přes HTTPS (https://jméno/), ne přes adresu."
+  },
+  "xs1006": {
+   "source": "this device has a passkey for this account already",
+   "text": "toto zařízení už passkey pro tento účet má"
+  },
+  "xs1007": {
+   "source": "Sign in with a passkey (Face ID, Touch ID)",
+   "text": "Přihlásit přes passkey (Face ID, Touch ID)"
+  },
+  "xs1008": {
+   "source": "Sign-in with a passkey (Face ID, Touch ID, Windows Hello)",
+   "text": "Přihlášení přes passkey (Face ID, Touch ID, Windows Hello)"
+  },
+  "xs1009": {
+   "source": "...a passkey counts as the second step",
+   "text": "…passkey se počítá jako druhý krok"
+  },
+  "xs1010": {
+   "source": "Every account may add passkeys in Your account (signed in with its password). The sign-in page then offers Sign in with a passkey: no name and no password, the face, a finger or the device's PIN. Only on the pages opened by their name, with a certificate the browser trusts. While it is off, no passkey is offered or taken.",
+   "text": "Každý účet si může ve Vašem účtu přidat passkeys (musí být přihlášený heslem). Přihlašovací stránka pak nabídne Přihlásit přes passkey: bez jména a hesla, obličejem, prstem nebo PINem zařízení. Jen na stránkách otevřených přes jméno s certifikátem, kterému prohlížeč věří. Dokud je volba vypnutá, žádná passkey se nenabídne ani nepřijme."
+  },
+  "xs1011": {
+   "source": "With the second step on, a passkey checked by the face, a finger or the PIN is both steps at once (as most services take it). Off: after the passkey these pages ask for the code too.",
+   "text": "Se zapnutým druhým krokem je passkey ověřená obličejem, prstem nebo PINem oba kroky najednou (tak to bere většina služeb). Vypnuto: po passkey se stránky zeptají ještě na kód."
+  },
+  "xs1012": {
+   "source": "the passkey is added - sign in with it next time",
+   "text": "passkey je přidaná – příště se s ní přihlaste"
+  },
+  "xs1013": {
+   "source": "the passkey is taken away - it no longer signs in",
+   "text": "passkey je odebraná – už nepřihlásí"
+  },
+  "xs1014": {
+   "source": "renamed",
+   "text": "přejmenováno"
+  },
+  "xs1015": {
+   "source": "passkeys are switched off on this server",
+   "text": "passkeys jsou na tomto serveru vypnuté"
+  },
+  "xs1016": {
+   "source": "a passkey is added and used on the pages opened by their name over HTTPS (https://name/), not by an address",
+   "text": "passkey se přidává a používá na stránkách otevřených přes jméno přes HTTPS (https://jméno/), ne přes adresu"
+  },
+  "xs1017": {
+   "source": "that request ran out, or was used already - try again",
+   "text": "ta žádost vypršela nebo už byla použita – zkuste to znovu"
+  },
+  "xs1018": {
+   "source": "that request was made for another name or account - try again",
+   "text": "ta žádost byla pro jiné jméno nebo účet – zkuste to znovu"
+  },
+  "xs1019": {
+   "source": "the passkey is for another name",
+   "text": "passkey je pro jiné jméno"
+  },
+  "xs1020": {
+   "source": "nobody was there (user presence)",
+   "text": "u zařízení nikdo nebyl (přítomnost uživatele)"
+  },
+  "xs1021": {
+   "source": "the device did not check who it is (face, finger or PIN) - a passkey is taken only with that",
+   "text": "zařízení neověřilo, kdo to je (obličej, prst nebo PIN) – passkey se bere jen s tím"
+  },
+  "xs1022": {
+   "source": "this passkey is not known here (taken away, or of another server)",
+   "text": "tato passkey tu není známá (odebraná, nebo z jiného serveru)"
+  },
+  "xs1023": {
+   "source": "the passkey's signature does not match",
+   "text": "podpis passkey nesedí"
+  },
+  "xs1024": {
+   "source": "the passkey's counter went back - it may have been copied",
+   "text": "čítač passkey šel zpět – mohla být zkopírovaná"
+  },
+  "xs1025": {
+   "source": "that account may not sign in",
+   "text": "tento účet se nesmí přihlásit"
+  },
+  "xs1026": {
+   "source": "no such passkey",
+   "text": "taková passkey tu není"
+  },
+  "xs1027": {
+   "source": "give it a name",
+   "text": "dejte jí jméno"
+  },
+  "xs1028": {
+   "source": "only a full administrator may change somebody else's passkey",
+   "text": "cizí passkey smí měnit jen plný administrátor"
+  },
+  "xs1029": {
+   "source": "failed passkey sign-ins",
+   "text": "nepovedených přihlášení passkey"
   }
  },
  "patterns": {
@@ -11405,6 +11545,30 @@
   "xp0222": {
    "source": "+{0} more",
    "text": "a dalších {0}"
+  },
+  "xp0223": {
+   "source": "It no longer signs {0} in. It stays in the device until it is taken away there (Settings - Passwords).",
+   "text": "Už {0} nepřihlásí. V zařízení zůstane, dokud ji tam neodeberete (Nastavení – Hesla)."
+  },
+  "xp0224": {
+   "source": "It no longer signs you in. It stays in the device until it is taken away there (Settings - Passwords).",
+   "text": "Už vás nepřihlásí. V zařízení zůstane, dokud ji tam neodeberete (Nastavení – Hesla)."
+  },
+  "xp0225": {
+   "source": "Passkeys of {0}",
+   "text": "Passkeys účtu {0}"
+  },
+  "xp0226": {
+   "source": "The passkeys of {0} (Face ID, Touch ID): see them, take one away - a lost iPad.",
+   "text": "Passkeys účtu {0} (Face ID, Touch ID): zobrazit je, odebrat některou – třeba při ztrátě iPadu."
+  },
+  "xp0227": {
+   "source": "the passkey answered for {0}, not for these pages",
+   "text": "passkey odpověděla pro {0}, ne pro tyto stránky"
+  },
+  "xp0228": {
+   "source": "{0} passkeys is the most an account keeps - take one away first",
+   "text": "{0} passkeys je nejvíc, co účet může mít – nejdřív nějakou odeberte"
   }
  },
  "rich": {

@@ -17,7 +17,7 @@ if (PHP_SAPI !== 'cli' && isset($_SERVER['SCRIPT_FILENAME'])
     exit;
 }
 
-const PM_VERSION = '2.6.8';
+const PM_VERSION = '2.6.9';
 const PM_LANG_CODE = '/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/';
 
 header('Cache-Control: no-cache, no-store, must-revalidate');
@@ -249,9 +249,18 @@ function pm_head(string $title, string $lang, bool $load, string $nonce, string 
     $v = PM_VERSION . '-' . (int) @filemtime(__DIR__ . '/assets/plexmon.css')
        . '-' . (int) @filemtime(__DIR__ . '/assets/core.js');
     echo "<meta charset=\"utf-8\">\n";
-    echo "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n";
+    echo "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n";
     echo '<title>' . h($title) . "</title>\n";
     echo '<link rel="icon" href="' . h($base) . 'assets/favicon.svg" type="image/svg+xml">' . "\n";
+    /* On the home screen of an iPad or an iPhone (2.6.9): its own icon, its own
+       window without Safari's bars. Nothing changes in a browser. */
+    echo '<link rel="manifest" href="' . h($base) . 'assets/manifest.json">' . "\n";
+    echo '<link rel="apple-touch-icon" href="' . h($base) . 'assets/icon-180.png">' . "\n";
+    echo "<meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\n";
+    echo "<meta name=\"mobile-web-app-capable\" content=\"yes\">\n";
+    echo "<meta name=\"apple-mobile-web-app-title\" content=\"plexmon\">\n";
+    echo "<meta name=\"apple-mobile-web-app-status-bar-style\" content=\"black\">\n";
+    echo "<meta name=\"theme-color\" content=\"#0d1117\">\n";
     if ($load) {
         echo '<script nonce="' . h($nonce) . '" src="?api=lang&amp;code=' . h(rawurlencode($lang))
            . '&amp;v=' . (int) ($langs[$lang]['mtime'] ?? 0) . '"></script>' . "\n";

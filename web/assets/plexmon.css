@@ -3401,3 +3401,19 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .modal .foot > .foot-acts:empty{display:none}
 .modal .foot > .foot-acts > .btnrow,.modal .foot > .foot-acts > .me-acts{flex:1 1 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0}
 .modal .foot > .foot-acts .spacer{flex:1 1 auto}
+/* Sign in with a passkey (2.6.9) */
+.pk-or{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin-top:14px;text-align:center}
+.pk-or .btn{justify-content:center}
+.pk-table td{vertical-align:middle}
+/* An iPad or a phone (2.6.9) */
+.modal{top:var(--vvt,0);bottom:auto;height:var(--vvh,100%)}
+.modal .box{max-height:min(92vh,calc(var(--vvh,100vh) - 48px))}
+#modal-body,.px-cpop-b{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+@media (pointer:coarse){
+  .iconbtn,.btn.iconbtn{min-width:34px;min-height:34px}
+  .card.tappable .goes{opacity:.55}
+  .sw{transform:scale(1.08);transform-origin:left center}
+}
+@media (hover:none){
+  .px-card .px-rate,.px-card .shade{opacity:1}
+}

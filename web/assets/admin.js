@@ -172,6 +172,97 @@ function meInitials(name, display) {
   var two = words.length > 1 ? words[0][0] + words[words.length - 1][0] : String(words[0] || name || '?').slice(0, 2);
   return two.toUpperCase();
 }
+/* ---- passkeys: Face ID, Touch ID (2.6.9) --------------------------------
+   One account's passkeys: a table, Take it away, and - for your own account -
+   Add a passkey of this device. `name` empty: your own. */
+function passkeySection(host, name, reopen) {
+  var own = !name || (ME && name === ME.name);
+  var sec = el('div', 'me-sec');
+  sec.appendChild(el('h3', '', 'Passkeys - Face ID, Touch ID'));
+  sec.appendChild(el('p', '', 'A passkey signs you in with the face, a finger or the PIN of this device - no name and no password to type. It is kept in the device (on an iPad and an iPhone in the iCloud Keychain, so on your other Apple devices too); the server has only its public half.'));
+  var box = el('div', 'muted small', 'asking…');
+  sec.appendChild(box);
+  host.appendChild(sec);
+  var draw = function (d) {
+    clear(box);
+    box.className = '';
+    var rows = d.passkeys || [];
+    if (rows.length) {
+      box.appendChild(listTable(['Passkey', 'For', 'Added', 'Last used', {words: '', cls: 'act'}], rows, function (p) {
+        var tr = el('tr');
+        var nameTd = noI18n(el('td', '', p.name || '–'));
+        tr.appendChild(nameTd);
+        tr.appendChild(noI18n(el('td', 'mono small', p.host || '')));
+        tr.appendChild(stampCell(p.created));
+        tr.appendChild(p.last_used ? stampCell(p.last_used) : el('td', 'muted', 'never'));
+        var act = el('td', 'rowtools');
+        var rn = iconButton('edit', 'Rename it');
+        rn.onclick = function () {
+          clear(nameTd);
+          var t = textBox(p.name || '', '', '');
+          t.style.minWidth = '160px';
+          var save = function () {
+            var v = t.value.trim();
+            if (!v || v === p.name) { draw(d); return; }
+            api('passkeys', {'do': 'rename', id: p.id, name: v}).then(function (x) { toast(x.message, 'good'); d.passkeys = x.passkeys; draw(d); }).catch(oops);
+          };
+          t.addEventListener('keydown', function (e) { if (e.key === 'Enter') save(); if (e.key === 'Escape') { e.stopPropagation(); draw(d); } });
+          t.addEventListener('blur', save);
+          nameTd.appendChild(t);
+          t.focus(); t.select();
+        };
+        act.appendChild(rn);
+        var rm = iconButton('trash', 'Take it away');
+        rm.onclick = function () {
+          confirmThen('Take this passkey away?', 'It no longer signs ' + (own ? 'you' : htmlText(name)) + ' in. It stays in the device until it is taken away there (Settings - Passwords).', 'Take it away', function () {
+            api('passkeys', {'do': 'delete', id: p.id}).then(function (x) { toast(x.message, 'good'); if (reopen) reopen(); }).catch(oops);
+          }, true);
+        };
+        act.appendChild(rm);
+        tr.appendChild(act);
+        return tr;
+      }, 'pk-table'));
+    } else {
+      box.appendChild(el('p', 'muted', own ? 'No passkey yet.' : 'This account has no passkey.'));
+    }
+    if (!own) return;
+    var acts = el('div', 'me-acts');
+    acts.style.marginTop = '10px';
+    var add = cmdButton('Add a passkey of this device', 'key', 'small primary');
+    var why = '';
+    if (!d.on) why = 'Passkeys are switched off on this server - a full administrator switches them on in Settings → Accounts.';
+    else if (!canPasskeyHere()) why = 'A passkey is added on the pages opened by their name over HTTPS (https://name/), not by an address.';
+    add.disabled = !!why;
+    acts.appendChild(add);
+    if (why) acts.appendChild(el('span', 'muted small', why));
+    add.onclick = function () {
+      busy(add, true);
+      api('passkey-register', {step: 'begin'}).then(function (x) {
+        var o = x.publicKey;
+        o.challenge = pkBytes(o.challenge);
+        o.user.id = pkBytes(o.user.id);
+        o.excludeCredentials = (o.excludeCredentials || []).map(function (c) { return {type: c.type, id: pkBytes(c.id)}; });
+        return navigator.credentials.create({publicKey: o});
+      }).then(function (cr) {
+        return api('passkey-register', {step: 'finish', name: deviceName() + ' · ' + new Date().toLocaleDateString(),
+          clientDataJSON: pkText(cr.response.clientDataJSON), attestationObject: pkText(cr.response.attestationObject)});
+      }).then(function (x) {
+        toast(x.message, 'good');
+        d.passkeys = x.passkeys;
+        draw(d);
+      }).catch(function (e) {
+        busy(add, false);
+        if (e && e.name === 'InvalidStateError') toast('this device has a passkey for this account already', 'warn');
+        else if (!e || (e.name !== 'NotAllowedError' && e.name !== 'AbortError')) oops(e);
+      });
+    };
+    box.appendChild(acts);
+  };
+  api('passkeys' + (own ? '' : '&name=' + encodeURIComponent(name))).then(draw).catch(function (e) {
+    box.textContent = String((e && e.message) || e);
+  });
+}
+
 /* ---- the account signed in --------------------------------------------- */
 function showMe() {
   modal('Your account', function (body) {
@@ -232,6 +323,7 @@ function showMe() {
       api('prefs', {lang: lang.value}).then(function () { location.reload(); }).catch(oops);
     };
     lsec.appendChild(formField('The language of these pages', lang));
+    if (ME.source !== 'directory') passkeySection(body, '', showMe);
 
     /* The columns of the tables - exactly isemon's. */
     var cols = el('div', 'me-sec');
@@ -1532,6 +1624,13 @@ function loadUsers() {
           cb.disabled = true;
         }
         tools.appendChild(cb);
+        var pkb = iconButton('key', 'The passkeys of ' + u.name + ' (Face ID, Touch ID): see them, take one away - a lost iPad.');
+        pkb.onclick = function (ev) {
+          ev.stopPropagation();
+          var open = function () { modal('Passkeys of ' + u.name, function (body) { passkeySection(body, u.name, open); }, [{words: 'Close', close: true}]); };
+          open();
+        };
+        tools.appendChild(pkb);
         var mr = iconButton('shield', u.mfa
           ? 'Reset the second step: ' + u.name + ' sets it up again at the next sign-in. Their sign-ins are ended.'
           : u.name + ' has no second step set up: nothing to reset.');

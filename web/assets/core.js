@@ -437,6 +437,56 @@ function iconForWords(words) {
 }
 
 /** Ask before doing something that cannot be taken back. */
+/* Passkeys (2.6.9): base64url to bytes and back, and what the device is. */
+function pkBytes(s) {
+  s = String(s || '').replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  var bin = atob(s), out = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out.buffer;
+}
+function pkText(buf) {
+  var b = new Uint8Array(buf), bin = '';
+  for (var i = 0; i < b.length; i++) bin += String.fromCharCode(b[i]);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+/* A mouse or a trackpad that can point at something (2.6.9) - not what the
+   device is: an iPad with a trackpad points like a PC. */
+function canHover() {
+  return !window.matchMedia || window.matchMedia('(hover: hover)').matches;
+}
+/* The keyboard on the screen (2.6.9): a popup is never taller than what the
+   keyboard leaves, so the box being typed in and its buttons stay in sight. */
+(function () {
+  var vv = window.visualViewport;
+  if (!vv) return;
+  var fit = function () {
+    document.documentElement.style.setProperty('--vvh', Math.round(vv.height) + 'px');
+    document.documentElement.style.setProperty('--vvt', Math.round(vv.offsetTop) + 'px');
+  };
+  vv.addEventListener('resize', fit);
+  vv.addEventListener('scroll', fit);
+  fit();
+}());
+function isIOS() {      /* iPadOS says it is a Mac: told by its touch screen */
+  var ua = navigator.userAgent || '';
+  return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+}
+function deviceName() {
+  var ua = navigator.userAgent || '';
+  if (/iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'iPad';
+  if (/iPhone/.test(ua)) return 'iPhone';
+  if (/Mac/.test(ua)) return 'Mac';
+  if (/Windows/.test(ua)) return 'Windows';
+  if (/Android/.test(ua)) return 'Android';
+  return 'this device';
+}
+function canPasskeyHere() {
+  return !!(window.PublicKeyCredential && navigator.credentials
+    && (location.protocol === 'https:' || location.hostname === 'localhost')
+    && !/^[0-9.]+$|^\[/.test(location.hostname));
+}
+
 /* The buttons of a step of a popup - Scan again, Show the plan, Write… - in
    its bottom bar beside Close (2.6.7), not at the end of what scrolls. `owner`
    is what the step drew into: drawn again or emptied, its buttons go with it
@@ -878,9 +928,31 @@ function explain(over, words, extra) {
      off later leave the listeners in place, saying nothing and hiding
      nothing. */
   over.addEventListener('mouseenter', function (e) {
+    /* A finger (2.6.9): Safari makes a tap a "pointer over" first, and a page
+       that shows something then takes the tap for it - every button that
+       explains itself needed two taps on an iPad. With a finger the words
+       come by holding it (below); a mouse or a trackpad points as before. */
+    if (!canHover()) return;
     if (over._explainHtml) helpAt(over, over._explainHtml, e);
   });
+  over.addEventListener('touchstart', function () {
+    if (!over._explainHtml || canHover()) return;
+    clearTimeout(over._lpT);
+    over._lp = false;
+    over._lpT = setTimeout(function () {
+      over._lp = true;
+      helpAt(over, over._explainHtml);
+      clearTimeout(over._lpOff);
+      over._lpOff = setTimeout(hideHelp, 4000);
+    }, 550);
+  }, {passive: true});
+  over.addEventListener('touchmove', function () { clearTimeout(over._lpT); }, {passive: true});
+  over.addEventListener('touchend', function (e) {
+    clearTimeout(over._lpT);
+    if (over._lp) { over._lp = false; e.preventDefault(); }     /* held for the words: not a press */
+  });
   over.addEventListener('mouseleave', function (e) {
+    if (!canHover()) return;
     if (!over._explainHtml) return;
     /* Back out onto something around it that says something of its own:
        that is what is pointed at now. */

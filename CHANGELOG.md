@@ -4,6 +4,45 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.6.9 - 2026-11-05
+
+- **Sign-in with a passkey - Face ID, Touch ID, Windows Hello** (WebAuthn, as in
+  ai), **off by default** (`passkeys`, Settings → Accounts):
+  - *Your account → Passkeys*: *Add a passkey of this device* (the iPad asks for
+    the face, the passkey goes into the iCloud Keychain), the list with its
+    name, the name of the server it is for, added, last used; rename it, take
+    it away. A full administrator sees and takes away anybody's (the key button
+    beside the account - a lost iPad).
+  - The sign-in page offers *Sign in with a passkey* - only while it is on, an
+    account has one and the browser can (HTTPS, the pages opened by their name).
+  - With the second step on, a passkey checked by the face counts as both
+    (`passkey_is_2fa`, on by default); off, the code is asked for after it.
+  - The server checks everything WebAuthn says to: the challenge (once, 5
+    minutes, of its kind, for this name and account), the origin, the name's
+    hash, the user present **and verified** (face, finger, PIN), the signature
+    (ES256, RS256 with openssl, EdDSA), the counter, a switched-off account;
+    failed tries count as wrong passwords do; every add, removal, sign-in and
+    refusal is an event. It keeps only the public half; 20 passkeys an account.
+  - `plexmon --passkeys [NAME]`, `plexmon --passkey-forget ID|all`.
+  - A password signs in exactly as before.
+- **On an iPad**:
+  - *Add to Home Screen*: plexmon's own icon (180/192/512 px) and a window of
+    its own without Safari's bars, turning with the iPad (`manifest.json`;
+    the dashboard as *Plex status*). Nothing changes in a browser.
+  - A tap on a button that explains itself works the first time - Safari took
+    the first tap for showing its words; with a finger the words come by
+    holding it.
+  - The counts of the library open their card with a tap (and close with
+    another, or a tap anywhere else), not by pointing; the track under the
+    count is not picked by it.
+  - A popup is never taller than what the keyboard on the screen leaves;
+    finger-sized icon buttons; the rating and the shade of a poster shown
+    without pointing at it; lists that scroll by a finger keep the page still.
+  - An iPad with a trackpad or a mouse points as a PC does.
+- **`plexmon --set` reaches the running service within seconds** - before, a
+  setting changed on the command line was taken by the service only when it
+  restarted (`--get` and the pages already showed it as saved).
+
 ## 2.6.8 - 2026-11-05
 
 - **The tabs in the order Plex library · Events · Settings** - Settings always
