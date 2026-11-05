@@ -9319,6 +9319,10 @@
   "xs1078": {
    "source": "the performance meter is switched off (Settings → About)",
    "text": "měřič výkonu je vypnutý (Nastavení → O aplikaci)"
+  },
+  "xs1079": {
+   "source": "How busy the server is - the processor, the memory, the disks and the network - beside the state at the top of these pages, every 3 s, with the cores, the temperatures, the disks and the processes taking most when pointed at (a tap on an iPad). Only a full administrator sees it, and chooses its look in Your account. It reads the kernel's counters only while a page asks; nothing runs in the background, and it never wakes a sleeping disk. Off (the default) it is off altogether: the pages load nothing of it, ask nothing and draw nothing, and the daemon reads nothing for it.",
+   "text": "Jak je server vytížený – procesor, paměť, disky a síť – vedle stavu nahoře na těchto stránkách, každé 3 s, a po najetí myší (na iPadu po klepnutí) jádra, teploty, disky a procesy, které berou nejvíc. Vidí ho jen plný administrátor a vzhled si volí ve Vašem účtu. Čítače jádra čte jen ve chvíli, kdy se stránka ptá; nic neběží na pozadí a nikdy neprobudí spící disk. Vypnutý (výchozí) je vypnutý úplně: stránky z něj nic nenačtou, na nic se neptají a nic nekreslí a daemon pro něj nic nečte."
   }
  },
  "patterns": {

@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.7.4'
+__version__ = '2.7.5'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -425,7 +425,9 @@ SAYS = {
                   'temperatures, the disks and the processes taking most when pointed at (a tap '
                   'on an iPad). Only a full administrator sees it, and chooses its look in Your '
                   'account. It reads the kernel\'s counters only while a page asks; nothing runs '
-                  'in the background.',
+                  'in the background, and it never wakes a sleeping disk. Off (the default) it is '
+                  'off altogether: the pages load nothing of it, ask nothing and draw nothing, '
+                  'and the daemon reads nothing for it.',
     'passkey_is_2fa': 'With the second step on, a passkey checked by the face, a finger or the '
                       'PIN is both steps at once (as most services take it). Off: after the '
                       'passkey these pages ask for the code too.',

@@ -17,7 +17,7 @@ if (PHP_SAPI !== 'cli' && isset($_SERVER['SCRIPT_FILENAME'])
     exit;
 }
 
-const PM_VERSION = '2.7.4';
+const PM_VERSION = '2.7.5';
 const PM_LANG_CODE = '/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/';
 
 header('Cache-Control: no-cache, no-store, must-revalidate');
@@ -272,10 +272,6 @@ function pm_head(string $title, string $lang, bool $load, string $nonce, string 
        . '"></script>' . "\n";
     echo '<link rel="stylesheet" nonce="' . h($nonce) . '" href="' . h($base) . 'assets/plexmon.css?v='
        . h($v) . '">' . "\n";
-    if (is_file(__DIR__ . '/assets/hload.css')) {
-        echo '<link rel="stylesheet" nonce="' . h($nonce) . '" href="' . h($base) . 'assets/hload.css?v='
-           . h($v . '-' . (int) @filemtime(__DIR__ . '/assets/hload.css')) . '">' . "\n";
-    }
     if (is_file(__DIR__ . '/assets/plexlib.css')) {
         echo '<link rel="stylesheet" nonce="' . h($nonce) . '" href="' . h($base) . 'assets/plexlib.css?v='
            . h($v . '-' . (int) @filemtime(__DIR__ . '/assets/plexlib.css')) . '">' . "\n";

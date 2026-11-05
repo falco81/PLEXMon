@@ -4,6 +4,18 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.7.5 - 2026-11-05
+
+- **The performance meter switched off is off altogether** (Settings → About →
+  *The performance meter in the header*, off by default): the pages load
+  nothing of it - no script, no style, no element in the header, no timer -
+  ask the daemon nothing, and the daemon reads nothing for it. Before, its
+  script and style were loaded on every page and a timer looked every 3 s
+  whether it had been switched on.
+  - Switched on while a page is open, the page loads it within seconds (with
+    its next look at the state); switched off, it is stopped there and taken
+    off the page - without reloading it.
+
 ## 2.7.4 - 2026-11-05
 
 - **The performance meter: the memory the processes take is measured against

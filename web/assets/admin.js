@@ -77,8 +77,45 @@ function onTab(name) {
 /* ---- the header and the live updates -------------------------------------- */
 /* The pill says how the Plex server is, as the dashboard does - and whether
    Settings has trouble of its own. */
+/* The performance meter only while it is switched on (2.7.5): off, nothing
+   of it is loaded - no script, no style, no element, no timer, no question.
+   Switched on while the page is open, it is loaded then; switched off, it is
+   stopped and taken off the page. */
+function perfMeterFollow(s) {
+  if (!ADMIN || !s) return;
+  var on = !!s.perf_meter;
+  if (on && !$('hload') && window.HLOAD_SRC) {
+    var box = el('div', 'hload');
+    box.id = 'hload';
+    box.hidden = true;
+    box.setAttribute('aria-live', 'off');
+    var pill = $('state-pill');
+    if (pill && pill.parentNode) pill.parentNode.insertBefore(box, pill.nextSibling);
+    if (!document.querySelector('link[data-hload]')) {
+      var css = document.createElement('link');
+      css.rel = 'stylesheet'; css.href = HLOAD_SRC.css; css.setAttribute('data-hload', '');
+      document.head.appendChild(css);
+    }
+    if (typeof hloadLoop === 'function') hloadLoop();
+    else {
+      var js = document.createElement('script');
+      js.src = HLOAD_SRC.js;
+      document.body.appendChild(js);           /* it starts itself */
+    }
+  } else if (!on && $('hload')) {
+    if (typeof HLOAD === 'object') {
+      clearInterval(HLOAD.timer);
+      HLOAD.timer = null; HLOAD.seeded = false; HLOAD.hist = null; HLOAD.last = null; HLOAD.lastAt = 0;
+    }
+    if (typeof hloadPanelClose === 'function') hloadPanelClose();
+    $('hload').remove();
+    var p = $('hload-panel');
+    if (p) p.remove();
+  }
+}
 function paintHeader(s) {
   STATUS = s;
+  perfMeterFollow(s);
   var hs = document.querySelector('header .host');
   if (hs && s.node) {
     if (hs._base === undefined) hs._base = hs.textContent;

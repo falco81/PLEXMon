@@ -524,8 +524,11 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
 <header>
   <h1 data-no-i18n><?= h($site ?: 'plexmon') ?> <span class="host"><?= h($host) ?></span></h1>
   <span id="state-pill" class="pill unknown"><span class="dot"></span><span>…</span></span>
-  <?php if (($me['role'] ?? '') === 'fulladmin'): ?>
-  <!-- The performance meter (2.7.0): a full administrator's, while it is switched on. -->
+  <?php $pm_meter = ($me['role'] ?? '') === 'fulladmin' && !empty($initial['perf_meter']); ?>
+  <?php if ($pm_meter): ?>
+  <!-- The performance meter (2.7.0): a full administrator's, and only while it is
+       switched on - off, nothing of it is on the page at all (2.7.5). -->
+  <link rel="stylesheet" nonce="<?= h($nonce) ?>" href="<?= h($base) ?>assets/hload.css?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/hload.css')) ?>">
   <div class="hload" id="hload" hidden aria-live="off"></div>
   <?php endif; ?>
   <div class="spacer"></div>
@@ -890,6 +893,7 @@ plexmon --upgrade-status                   # an upgrade started on these pages</
 <script nonce="<?= h($nonce) ?>">
 var ME = <?= json_encode($me, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 var STATUS = <?= $initial ? json_encode($initial, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) : 'null' ?>;
+var HLOAD_SRC = <?= json_encode(['js' => $base . 'assets/hload.js?v=' . PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/hload.js'), 'css' => $base . 'assets/hload.css?v=' . PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/hload.css')], JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 var PHP_SAFETY = <?= ($me['role'] ?? '') === 'fulladmin' ? json_encode(pm_php_safety(), JSON_HEX_TAG | JSON_HEX_AMP) : 'null' ?>;
 </script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/core.js?v=<?= h(PM_VERSION) ?>"></script>
@@ -897,6 +901,8 @@ var PHP_SAFETY = <?= ($me['role'] ?? '') === 'fulladmin' ? json_encode(pm_php_sa
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/admin.js?v=<?= h(PM_VERSION) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/host.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/host.js')) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/plexlib.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/plexlib.js')) ?>"></script>
+<?php if (!empty($pm_meter)): ?>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/hload.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/hload.js')) ?>"></script>
+<?php endif; ?>
 </body>
 </html>

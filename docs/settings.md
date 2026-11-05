@@ -67,7 +67,8 @@ In Plex then set *Custom server access URLs* to `https://plex.example.cz:32400`.
 
 ## The performance meter
 
-Settings → About → *The performance meter in the header* (`perf_meter`, **off by default**):
+Settings → About → *The performance meter in the header* (`perf_meter`, **off by default** - and
+off, off altogether: the pages load nothing of it and ask nothing):
 how busy the server is - the processor, the memory, the disks and the network - beside the state
 at the top of the pages, every 3 s, with a graph of the last two minutes. Pointed at (tapped on an
 iPad), a number opens its details: each core with its frequency and temperature, the sensors,
