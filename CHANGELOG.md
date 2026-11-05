@@ -4,6 +4,17 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.7.2 - 2026-11-05
+
+- **The performance meter's bars say what their numbers say**:
+  - at 0 % no bar - a sliver of 1-2 % stood there with nothing busy (the
+    cores, the disks, the filesystems, the pills in the header), and a ring
+    drew a dot (its round end);
+  - the processes taking most: the bar is the share itself - of one core
+    (or of the busiest, when it takes more than one), of all the memory -
+    not of the busiest process: one at 0 % drew a third of a bar beside
+    "0 %".
+
 ## 2.7.1 - 2026-11-05
 
 - **The performance meter never wakes a sleeping disk** (as nothing in plexmon
