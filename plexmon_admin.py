@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.7.2'
+__version__ = '2.7.3'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -5979,7 +5979,7 @@ def _read_first(path, default=''):
 def load_temps():
     """What the sensors say: {'cpu': [(label, °C)], 'cores': {core n: °C}, 'disks': {name: °C}, 'other': [...]}.
     hwmon first (coretemp, k10temp, zenpower, nvme, drivetemp, acpitz...), then the thermal zones."""
-    out = {'cpu': [], 'cores': {}, 'disks': {}, 'other': []}
+    out = {'cpu': [], 'cores': {}, 'pkg_cores': {}, 'disks': {}, 'other': []}
     base = os.path.join(LOAD_SYS, 'class/hwmon')
     try:
         mons = sorted(os.listdir(base))
@@ -6010,7 +6010,13 @@ def load_temps():
             core = re.match(r'^Core (\d+)$', label)
             if chip in ('coretemp', 'k10temp', 'zenpower', 'cpu_thermal', 'soc_thermal', 'k8temp', 'via_cputemp'):
                 if core:
+                    # "Core N" is a physical core of one package (coretemp.P): kept
+                    # by both, a logical cpu is matched to it by its topology
+                    # (plexmon 2.7.3 - with hyperthreading, or core ids with
+                    # gaps, half the cpus had no temperature).
                     out['cores'][int(core.group(1))] = round(t, 1)
+                    pkg = re.search(r'\.(\d+)$', os.path.realpath(os.path.join(d, 'device')))
+                    out['pkg_cores']['%s:%s' % (pkg.group(1) if pkg else '0', core.group(1))] = round(t, 1)
                 else:
                     out['cpu'].append([label, round(t, 1)])
             elif chip in ('nvme', 'drivetemp'):
@@ -6137,8 +6143,18 @@ def load_detail(disk_state=None):
                 if allc > pa:
                     busy = round(max(0.0, min(1.0, 1 - (idle - pi) / float(allc - pa))) * 100, 1)
             mhz = _read_first(os.path.join(LOAD_SYS, 'devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq' % n))
+            topo = os.path.join(LOAD_SYS, 'devices/system/cpu/cpu%d/topology' % n)
+            cid = _read_first(os.path.join(topo, 'core_id'))
+            pid = _read_first(os.path.join(topo, 'physical_package_id'), '0')
+            temp = None
+            if cid.isdigit():
+                temp = temps['pkg_cores'].get('%s:%s' % (pid if pid.isdigit() else '0', cid))
+                if temp is None:
+                    temp = temps['cores'].get(int(cid))
+            if temp is None and not cid.isdigit():
+                temp = temps['cores'].get(n)
             cores.append({'n': n, 'busy': busy, 'mhz': round(int(mhz) / 1000) if mhz.isdigit() else None,
-                          'temp': temps['cores'].get(n)})
+                          'temp': temp})
         if cores and not any(c['mhz'] for c in cores):
             try:
                 with open('/proc/cpuinfo') as f:

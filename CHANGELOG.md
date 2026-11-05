@@ -4,6 +4,15 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.7.3 - 2026-11-05
+
+- **The performance meter has the temperature of every core**: Intel's
+  sensors (coretemp) give each physical core's ("Core N" of a package), and it
+  was put to the logical cpu of the same number - with hyperthreading (2 cores,
+  4 threads) or core ids with gaps (0, 1, 4, 5…) half the rows had none. Each
+  cpu now takes its core's by the kernel's topology (`core_id`, the package).
+  AMD's sensors give the whole processor's only, as before.
+
 ## 2.7.2 - 2026-11-05
 
 - **The performance meter's bars say what their numbers say**:
