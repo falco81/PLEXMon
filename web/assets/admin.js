@@ -45,7 +45,7 @@ dressButtons(document);
 }());
 
 /* ---- tabs ------------------------------------------------------------------ */
-var TABS = ['library', 'settings', 'events'];
+var TABS = ['library', 'events', 'settings'];
 window.optShowTab = function (name) {
   if (TABS.indexOf(name) < 0) name = 'settings';
   var btn = document.querySelector('.tabs button[data-tab="' + name + '"]');

@@ -470,10 +470,11 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
 <div class="tabs" role="tablist">
   <button role="tab" aria-selected="false" data-tab="library" data-icon="list"
           title="The movies and shows of this Plex server: their posters and details, and the tools - the default audio and subtitles, watched, labels, titles in another language, the watchlist, the ratings.">Plex library</button>
-  <button role="tab" aria-selected="true" data-tab="settings" data-icon="gear"
-          title="The accounts, the certificates of the Plex server and how TLS is spoken, automatic certificates, upgrades and what this is.">Settings</button>
   <button role="tab" aria-selected="false" data-tab="events" data-icon="history"
           title="Every sign-in, every change of a setting, every certificate put in - and the daemon’s own log.">Events</button>
+  <!-- Settings always the last one, at the right (2.6.8). -->
+  <button role="tab" aria-selected="true" data-tab="settings" data-icon="gear"
+          title="The accounts, the certificates of the Plex server and how TLS is spoken, automatic certificates, upgrades and what this is.">Settings</button>
 </div>
 
 <!-- ===================== Plex library ===================== -->

@@ -4,6 +4,11 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.6.8 - 2026-11-05
+
+- **The tabs in the order Plex library · Events · Settings** - Settings always
+  the last one, at the right.
+
 ## 2.6.7 - 2026-11-05
 
 - **The buttons of a popup's step are in its bottom bar, beside Close** - not
