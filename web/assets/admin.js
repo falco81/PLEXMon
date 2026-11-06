@@ -166,20 +166,76 @@ function taskCard(t, inBand) {
   if (row.firstChild) c.appendChild(row);
   return c;
 }
+/* "Not now" (2.8.1): a band put away in this browser for a day - the task
+   stays in Settings → Upgrades, and comes back by itself if still open. */
+function taskSnoozed(id) {
+  try { return Number(localStorage.getItem('plexmon-task-later:' + id) || 0) > Date.now(); } catch (e) { return false; }
+}
+function taskSnooze(id) {
+  try { localStorage.setItem('plexmon-task-later:' + id, String(Date.now() + 86400000)); } catch (e) { }
+}
+/* One band a task, as isemon draws its own (2.8.1): the mark, what to do and
+   why, what to type as root with a Copy, and how it goes away; at the right
+   Not now, Open it (the list on Upgrades) and - for a step nobody can see
+   from here - Done. */
+function taskBand(t) {
+  var c = el('div', 'tband ' + (t.level === 'crit' ? 'crit' : (t.level === 'info' ? 'info' : 'warn')));
+  var ic = el('span', 'tband-ic');
+  ic.innerHTML = iconMarkup('close', 18);
+  c.appendChild(ic);
+  var body = el('div', 'tband-b');
+  body.appendChild(el('div', 'tband-t', t.title));
+  var why = el('div', 'tband-w');
+  why.appendChild(el('span', '', t.why));
+  if (t.found) { why.appendChild(document.createTextNode(' ')); why.appendChild(noI18n(el('span', 'mono small', '(' + t.found + ')'))); }
+  body.appendChild(why);
+  if ((t.commands || []).length) {
+    body.appendChild(el('div', 'tband-l', 'As root, on the server:'));
+    var cmd = el('div', 'tband-cmd');
+    cmd.appendChild(noI18n(el('pre', 'mono', t.commands.join('\n'))));
+    var cp = cmdButton('Copy', 'copy', 'small');
+    cp.onclick = function () { copyText(t.commands.join('\n'), cp); };
+    cmd.appendChild(cp);
+    body.appendChild(cmd);
+  }
+  body.appendChild(el('div', 'tband-n', t.checked ? 'This band goes by itself within 15 s once it is right.'
+    : 'plexmon cannot see this from here: once it is done, say so with Done.'));
+  c.appendChild(body);
+  var acts = el('div', 'tband-a');
+  if (!t.checked && ADMIN) {
+    var d = cmdButton('Done', 'check', 'small primary');
+    d.onclick = function () {
+      busy(d, true);
+      api('tasks', {action: 'done', name: t.id}).then(function (x) { TASKS.list = x.tasks || []; tasksDraw(); toast(x.message, 'good'); })
+        .catch(oops).then(function () { busy(d, false); });
+    };
+    acts.appendChild(d);
+  }
+  var op = cmdButton('Open it', 'gear', 'small');
+  op.onclick = function () {
+    PANE = 'upgrade';
+    showTab('settings');
+    if (typeof showPane === 'function') showPane('upgrade');
+    setTimeout(function () { var k = $('up-tasks-card'); if (k) k.scrollIntoView({block: 'start', behavior: 'smooth'}); }, 300);
+  };
+  acts.appendChild(op);
+  var later = cmdButton('Not now', 'close', 'small');
+  explain(later, 'Put away in this browser for a day; Settings → Upgrades still lists it, and it comes back if it is still to do.');
+  later.onclick = function () { taskSnooze(t.id); tasksDraw(); };
+  acts.appendChild(later);
+  c.appendChild(acts);
+  return c;
+}
 function tasksDraw() {
   var act = TASKS.list.filter(function (t) { return t.active; });
   var band = $('tasks');
   if (band) {
     clear(band);
-    band.hidden = !act.length;
-    band.className = 'tasks-band' + (act.some(function (t) { return t.level === 'crit'; }) ? ' crit' : '');
-    if (act.length) {
-      var hd = el('div', 'tasks-head');
-      hd.appendChild(el('b', '', act.length === 1 ? 'To do on the server' : 'To do on the server: ' + act.length));
-      hd.appendChild(el('span', 'muted small', 'as root, on the machine itself - Settings → Upgrades lists them all'));
-      band.appendChild(hd);
-      act.forEach(function (t) { band.appendChild(taskCard(t, true)); });
-    }
+    var shown = act.filter(function (t) { return !taskSnoozed(t.id); });
+    band.hidden = !shown.length;
+    band.className = 'tasks-band';
+    shown.forEach(function (t) { band.appendChild(taskBand(t)); });
+    dressButtons(band);
   }
   var host = $('up-tasks');
   if (host) {

@@ -9415,6 +9415,26 @@
   "xs1102": {
    "source": "this one goes away by itself once it is done - Check again",
    "text": "tento zmizí sám, jakmile bude hotový – Zkontrolovat znovu"
+  },
+  "xs1103": {
+   "source": "As root, on the server:",
+   "text": "Jako root na serveru:"
+  },
+  "xs1104": {
+   "source": "Not now",
+   "text": "Teď ne"
+  },
+  "xs1105": {
+   "source": "This band goes by itself within 15 s once it is right.",
+   "text": "Tento pruh zmizí sám do 15 s, jakmile to bude v pořádku."
+  },
+  "xs1106": {
+   "source": "plexmon cannot see this from here: once it is done, say so with Done.",
+   "text": "plexmon to odsud nevidí: až to bude hotové, dejte Hotovo."
+  },
+  "xs1107": {
+   "source": "Put away in this browser for a day; Settings → Upgrades still lists it, and it comes back if it is still to do.",
+   "text": "Schová se v tomto prohlížeči na den; Nastavení → Upgrady ho dál ukazují, a pokud bude pořád potřeba, vrátí se."
   }
  },
  "patterns": {

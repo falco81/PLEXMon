@@ -4,6 +4,16 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.8.1 - 2026-11-06
+
+- **Tasks for the server: a band each, as isemon draws its own** - the mark, what
+  to do and why (and what plexmon found), *As root, on the server:* with the
+  commands and a *Copy*, and how it goes away (by itself within 15 s once it is
+  right, or *Done* for a step nobody can see from here). At the right *Open it*
+  (the list on Settings → Upgrades) and *Not now*: put away in this browser for
+  a day - the list still has it, and it comes back if it is still to do. Red
+  for one needed now, amber for the others.
+
 ## 2.8.0 - 2026-11-06
 
 - **Tasks for the server** - one way for every version to say what only root
