@@ -4,6 +4,18 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.8.3 - 2026-11-06
+
+- **Tasks for the server look like upsmon's "To be done by hand"**: one card
+  at the top of Settings → Upgrades, red-edged while a task is open, a band
+  each (a cross when needed now, a flag otherwise) with the command, how it
+  goes away and since when it is open; *Look again* and *Done* at the right -
+  Done now also for a task plexmon checks (kept away until it is gone).
+- **Done lately**: the last ten tasks done, taken back or gone by themselves,
+  what, how, who and when, with *Not done after all*.
+- The count is a red badge over the Upgrades icon of the menu, shut or open.
+- *Not now* is gone - the card lives on Upgrades only.
+
 ## 2.8.2 - 2026-11-06
 
 - **Tasks for the server are on Settings → Upgrades**, not at the top of every

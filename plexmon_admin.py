@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.8.2'
+__version__ = '2.8.3'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -5956,6 +5956,19 @@ TASKS_CACHE = {'at': 0.0, 'list': None}
 TASKS_LOCK = threading.Lock()
 
 
+def task_history_add(store, tid, title, how, who):
+    """Done lately (2.8.3): the last 20 - done, taken back, gone by itself."""
+    got = _meta_json(store, 'tasks:history') or {}
+    rows = [r for r in got.get('rows') or [] if isinstance(r, dict)]
+    rows.insert(0, {'id': tid, 'title': title, 'how': how, 'who': who or '', 'at': time.time()})
+    store.set_meta('tasks:history', json.dumps({'rows': rows[:20]}))
+
+
+def task_history(store):
+    return [r for r in (_meta_json(store, 'tasks:history') or {}).get('rows') or []
+            if isinstance(r, dict)][:10]
+
+
 def server_tasks(store, fresh=False):
     """Every task with its state: [{id, level, title, why, commands, since,
     active, found, checked, done: {at, by} or None}] - looked at every 15 s."""
@@ -5973,28 +5986,37 @@ def server_tasks(store, fresh=False):
                 continue
             done = _meta_json(store, 'task:done:' + t['id'])
             found = None
+            seen = 'task:seen:' + t['id']
             if t.get('check'):
                 try:
                     found = t['check'](store)
                 except Exception as e:                  # noqa: BLE001
                     found = None
                     log('the task %s could not be looked at: %s' % (t['id'], e), 'warn')
-                active = bool(found)
+                # Said done while the check still finds it (2.8.3): kept away
+                # until it is gone and comes again.
+                active = bool(found) and not done
+                if not found and done:
+                    store.set_meta('task:done:' + t['id'], '')
+                    done = None
+                if not found and store.get_meta(seen):
+                    store.set_meta(seen, '')
+                    task_history_add(store, t['id'], t['title'], 'gone by itself', '')
+                    store.add_event('settings', 'done on the server: %s' % t['title'], 'info')
             else:
                 active = not done
-            row = {k: t.get(k) for k in ('id', 'since', 'level', 'title', 'why', 'commands')}
-            row.update(active=active, found=found or '', checked=bool(t.get('check')),
-                       done=done if not t.get('check') else None)
-            out.append(row)
-            seen = 'task:seen:' + t['id']
             if active and not store.get_meta(seen):
                 store.set_meta(seen, str(time.time()))
                 store.add_event('settings', 'to do on the server: %s - %s' % (
                     t['title'], found or t['why']), 'bad' if t['level'] == 'crit' else 'warn')
-            elif not active and store.get_meta(seen):
-                store.set_meta(seen, '')
-                if t.get('check'):
-                    store.add_event('settings', 'done on the server: %s' % t['title'], 'info')
+            try:
+                seen_at = float(store.get_meta(seen) or 0) or None
+            except ValueError:
+                seen_at = None
+            row = {k: t.get(k) for k in ('id', 'since', 'level', 'title', 'why', 'commands')}
+            row.update(active=active, found=found or '', checked=bool(t.get('check')),
+                       done=done, seen_at=seen_at)
+            out.append(row)
         out.sort(key=lambda r: (not r['active'], {'crit': 0, 'warn': 1}.get(r['level'], 2)))
         TASKS_CACHE.update(at=time.time(), list=out)
         return out
@@ -6003,7 +6025,8 @@ def server_tasks(store, fresh=False):
 @route('GET', '/api/tasks')
 def _tasks(h):
     h.me()
-    return {'tasks': server_tasks(h.store, fresh=bool(h.arg('fresh')))}
+    return {'tasks': server_tasks(h.store, fresh=bool(h.arg('fresh'))),
+            'history': task_history(h.store)}
 
 
 @route('POST', '/api/tasks')
@@ -6013,23 +6036,27 @@ def _tasks_do(h):
     act = str(b.get('action') or '')
     tid = str(b.get('name') or '')
     if act == 'check':
-        return {'tasks': server_tasks(h.store, fresh=True), 'message': 'looked at again'}
+        return {'tasks': server_tasks(h.store, fresh=True), 'history': task_history(h.store),
+                'message': 'looked at again'}
     t = next((x for x in SERVER_TASKS if x['id'] == tid), None)
     if not t:
         raise ApiError(404, 'no such task')
-    if t.get('check'):
-        raise ApiError(409, 'this one goes away by itself once it is done - Check again')
     if act == 'done':
         h.store.set_meta('task:done:' + tid, json.dumps({'at': time.time(), 'by': s['name']}))
+        if not t.get('check'):
+            h.store.set_meta('task:seen:' + tid, '')
+        task_history_add(h.store, tid, t['title'], 'done', s['name'])
         h.store.add_event('settings', '%s says it is done on the server: %s' % (
             s['name'], t['title']), 'info', who=s['name'])
         said = 'kept as done'
     elif act == 'undo':
         h.store.set_meta('task:done:' + tid, '')
+        task_history_add(h.store, tid, t['title'], 'taken back', s['name'])
         said = 'shown again'
     else:
         raise ApiError(400, 'no such action')
-    return {'tasks': server_tasks(h.store, fresh=True), 'message': said}
+    return {'tasks': server_tasks(h.store, fresh=True), 'history': task_history(h.store),
+            'message': said}
 
 
 def cli_tasks(store, pal, as_json):
@@ -6049,8 +6076,7 @@ def cli_tasks(store, pal, as_json):
             print('    ' + pal.dim(r['why']))
             for c in r['commands'] or []:
                 print('      ' + c)
-            if not r['checked']:
-                print('    ' + pal.dim('done? plexmon --task-done %s' % r['id']))
+            print('    ' + pal.dim('done? plexmon --task-done %s' % r['id']))
     return 1 if any(r['active'] and r['level'] == 'crit' for r in rows) else 0
 
 
@@ -11759,15 +11785,17 @@ def cli_main(argv=None, mon=None):
         t = next((x for x in SERVER_TASKS if x['id'] == tid), None)
         if not t:
             raise SystemExit('plexmon: no task %s (plexmon --tasks lists them)' % tid)
-        if t.get('check'):
-            raise SystemExit('plexmon: %s goes away by itself once it is done' % tid)
         if args.task_done:
             store.set_meta('task:done:' + tid, json.dumps({'at': time.time(), 'by': by}))
+            if not t.get('check'):
+                store.set_meta('task:seen:' + tid, '')
+            task_history_add(store, tid, t['title'], 'done', 'the command line')
             store.add_event('settings', '%s says it is done on the server: %s' % (by, t['title']),
                             'info', who=by)
             print(pal.ok_line('kept as done: %s' % t['title']))
         else:
             store.set_meta('task:done:' + tid, '')
+            task_history_add(store, tid, t['title'], 'taken back', 'the command line')
             print(pal.ok_line('shown again: %s' % t['title']))
         return 0
     if args.passkeys is not None:

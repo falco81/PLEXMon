@@ -46,15 +46,20 @@ Most of an upgrade is done by root's helper (`install.sh --upgrade`) - from Sett
 too. What it does not do, or must not do by itself - a SELinux policy, the firewall, nginx's own
 file, a restart, a reboot - a version declares as a **task for the server**:
 
-- a band at the top of Settings → Upgrades while one is to do (red when something does not work
-  until it is done), each task with why, what to type on the server as root (with a Copy), and
-  the version that brought it; the Settings tab and Upgrades in its menu carry a badge with how
-  many there are; *Not now* puts a band away in that browser for a day;
+- the card **To be done by hand** at the top of Settings → Upgrades: a band for each task that
+  is open - red with a cross when something does not work until it is done, amber with a flag
+  otherwise - with why, what to type on the server as root (with a Copy), how the band goes
+  away and since when it has been open; the card has a red edge while anything is open and says
+  *Nothing is to be done by hand* when nothing is. Below the bands, **Done lately**: the last ten
+  tasks done, taken back or gone by themselves - what, how, who and when, with *Not done after
+  all* on one said done. The Settings tab and Upgrades in its menu carry a red count;
 - the command line: `plexmon` says them first, `plexmon --tasks` lists them (exit 1 while one
   that is needed now is open), an event is written when one comes and when it is done.
 
-A task plexmon can check (the version on the disk the one running, the upgrade helper there) goes away by itself once it is done - looked at every 15 s, or at once with *Check
-again*. One it cannot see from here stays until a full administrator says *Done* (or
+A task plexmon can check (the version on the disk the one running, the upgrade helper there)
+goes away by itself once it is done - looked at every 15 s, or at once with *Look again*; *Done*
+keeps it away until the check no longer finds it (and it is shown again if it comes back later).
+One it cannot see from here stays until a full administrator says *Done* (or
 `plexmon --task-done ID`; `--task-undo ID` shows it again).
 
 For a developer: a task is one entry in `SERVER_TASKS` in `plexmon_admin.py` - `id`, `since`,

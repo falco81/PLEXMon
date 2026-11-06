@@ -116,7 +116,7 @@ function perfMeterFollow(s) {
 /* ---- tasks for the server (2.8.0) ---------------------------------------
    What only root can do and a version asks for: a band on every page while
    one is to do, the whole list on Upgrades. */
-var TASKS = {ids: null, list: []};
+var TASKS = {ids: null, list: [], history: []};
 function tasksFollow(s) {
   var ids = (s.tasks || []).map(function (t) { return t.id; }).join(',');
   if (ids === TASKS.ids) return;
@@ -124,64 +124,24 @@ function tasksFollow(s) {
   tasksLoad();
 }
 function tasksLoad(fresh) {
-  return api('tasks' + (fresh ? '&fresh=1' : '')).then(function (d) { TASKS.list = d.tasks || []; tasksDraw(); })
+  return api('tasks' + (fresh ? '&fresh=1' : '')).then(function (d) { TASKS.list = d.tasks || []; TASKS.history = d.history || []; tasksDraw(); })
     .catch(function () { });
 }
-function taskCard(t, inBand) {
-  var c = el('div', 'task ' + (t.active ? (t.level || 'warn') : 'done'));
-  var h = el('div', 'task-h');
-  h.appendChild(el('span', 'task-ic', t.active ? (t.level === 'crit' ? '!' : '•') : '✓'));
-  h.appendChild(el('b', '', t.title));
-  if (!t.active) h.appendChild(el('span', 'tag ok', t.checked ? 'in order' : 'done'));
-  else if (t.level === 'crit') h.appendChild(el('span', 'tag crit', 'needed now'));
-  h.appendChild(noI18n(el('span', 'muted small task-since', 'plexmon ' + (t.since || ''))));
-  c.appendChild(h);
-  if (t.active && t.found) c.appendChild(noI18n(el('div', 'task-found mono small', t.found)));
-  if (t.active || !inBand) c.appendChild(el('p', 'task-why', t.why));
-  if (t.active && (t.commands || []).length) {
-    var cmd = el('div', 'task-cmd');
-    var pre = noI18n(el('pre', 'mono', t.commands.join('\n')));
-    cmd.appendChild(pre);
-    var cp = iconButton('copy', 'Copy');
-    cp.onclick = function () { copyText(t.commands.join('\n'), cp); };
-    cmd.appendChild(cp);
-    c.appendChild(cmd);
-  }
-  var row = el('div', 'btnrow');
-  if (t.active && t.checked) {
-    row.appendChild(el('span', 'muted small', 'Goes away by itself once it is done.'));
-    var again = cmdButton('Check again', 'refresh', 'small');
-    again.onclick = function () { busy(again, true); api('tasks', {action: 'check'}).then(function (d) { TASKS.list = d.tasks || []; tasksDraw(); toast(d.message, 'good'); }).catch(oops).then(function () { busy(again, false); }); };
-    row.appendChild(again);
-  } else if (!t.checked && ADMIN) {
-    var b = t.active ? cmdButton('Done', 'check', 'small primary') : cmdButton('Not done after all', 'undo', 'small');
-    if (!t.active && t.done) row.appendChild(el('span', 'muted small', 'said done by ' + (t.done.by || '?') + ' · ' + stamp(t.done.at)));
-    b.onclick = function () {
-      busy(b, true);
-      api('tasks', {action: t.active ? 'done' : 'undo', name: t.id}).then(function (d) { TASKS.list = d.tasks || []; tasksDraw(); toast(d.message, 'good'); })
-        .catch(oops).then(function () { busy(b, false); });
-    };
-    row.appendChild(b);
-  }
-  if (row.firstChild) c.appendChild(row);
-  return c;
+function tasksAct(btn, act, id) {
+  busy(btn, true);
+  api('tasks', {action: act, name: id}).then(function (d) {
+    TASKS.list = d.tasks || []; TASKS.history = d.history || []; tasksDraw(); toast(d.message, 'good');
+  }).catch(oops).then(function () { busy(btn, false); });
 }
-/* "Not now" (2.8.1): a band put away in this browser for a day - the task
-   stays in Settings → Upgrades, and comes back by itself if still open. */
-function taskSnoozed(id) {
-  try { return Number(localStorage.getItem('plexmon-task-later:' + id) || 0) > Date.now(); } catch (e) { return false; }
-}
-function taskSnooze(id) {
-  try { localStorage.setItem('plexmon-task-later:' + id, String(Date.now() + 86400000)); } catch (e) { }
-}
-/* One band a task, as isemon draws its own (2.8.1): the mark, what to do and
-   why, what to type as root with a Copy, and how it goes away; at the right
-   Not now, Open it (the list on Upgrades) and - for a step nobody can see
-   from here - Done. */
+/* One band a task, as upsmon draws its "To be done by hand" (2.8.3): the mark
+   (a cross when it is needed now, a flag otherwise), what to do and why, what
+   to type as root with a Copy, how it goes away and since when; at the right
+   Look again (a task plexmon can see) and Done. */
 function taskBand(t) {
-  var c = el('div', 'tband ' + (t.level === 'crit' ? 'crit' : (t.level === 'info' ? 'info' : 'warn')));
+  var lvl = t.level === 'crit' ? 'crit' : (t.level === 'info' ? 'info' : 'warn');
+  var c = el('div', 'tband ' + lvl);
   var ic = el('span', 'tband-ic');
-  ic.innerHTML = iconMarkup('close', 18);
+  ic.innerHTML = iconMarkup(lvl === 'crit' ? 'close' : (lvl === 'info' ? 'info' : 'flag'), 18);
   c.appendChild(ic);
   var body = el('div', 'tband-b');
   body.appendChild(el('div', 'tband-t', t.title));
@@ -198,57 +158,96 @@ function taskBand(t) {
     cmd.appendChild(cp);
     body.appendChild(cmd);
   }
-  body.appendChild(el('div', 'tband-n', t.checked ? 'This band goes by itself within 15 s once it is right.'
-    : 'plexmon cannot see this from here: once it is done, say so with Done.'));
+  body.appendChild(el('div', 'tband-n', t.checked ? 'This band goes by itself once it is right.'
+    : 'plexmon cannot see this from here. Once it is done, press Done.'));
+  if (t.seen_at) {
+    var since = el('div', 'tband-s');
+    since.appendChild(el('span', '', 'To do since'));
+    since.appendChild(document.createTextNode(' '));
+    since.appendChild(noI18n(el('span', '', stamp(t.seen_at))));
+    since.appendChild(noI18n(el('span', '', ' · plexmon ' + (t.since || ''))));
+    body.appendChild(since);
+  }
   c.appendChild(body);
   var acts = el('div', 'tband-a');
-  if (!t.checked && ADMIN) {
+  if (t.checked) {
+    var again = cmdButton('Look again', 'refresh', 'small');
+    again.onclick = function () { tasksAct(again, 'check', ''); };
+    acts.appendChild(again);
+  }
+  if (ADMIN) {
     var d = cmdButton('Done', 'check', 'small primary');
-    d.onclick = function () {
-      busy(d, true);
-      api('tasks', {action: 'done', name: t.id}).then(function (x) { TASKS.list = x.tasks || []; tasksDraw(); toast(x.message, 'good'); })
-        .catch(oops).then(function () { busy(d, false); });
-    };
+    if (t.checked) explain(d, 'Kept away until plexmon no longer finds it - and shown again if it comes back later.');
+    d.onclick = function () { tasksAct(d, 'done', t.id); };
     acts.appendChild(d);
   }
-  var later = cmdButton('Not now', 'close', 'small');
-  explain(later, 'Put away in this browser for a day, with the badge of Settings; it comes back if it is still to do (plexmon --tasks lists every task).');
-  later.onclick = function () { taskSnooze(t.id); tasksDraw(); };
-  acts.appendChild(later);
   c.appendChild(acts);
   return c;
 }
+var TASK_HOW = {'done': 'Done', 'taken back': 'Taken back', 'gone by itself': 'Gone by itself'};
 function tasksDraw() {
   var act = TASKS.list.filter(function (t) { return t.active; });
-  var shown = act.filter(function (t) { return !taskSnoozed(t.id); });
-  var band = $('tasks');
-  if (band) {
-    clear(band);
-    band.hidden = !shown.length;
-    band.className = 'tasks-band';
-    shown.forEach(function (t) { band.appendChild(taskBand(t)); });
-    dressButtons(band);
+  var card = $('tasks');
+  if (card) {
+    clear(card);
+    card.hidden = false;
+    card.className = 'card full tcard' + (act.length ? ' open' : '');
+    var h = el('h2', '');
+    h.appendChild(el('span', '', 'To be done by hand'));
+    if (act.length) h.appendChild(noI18n(el('span', 'tcard-n', String(act.length))));
+    card.appendChild(h);
+    card.appendChild(el('p', 'note', 'What plexmon cannot do itself and somebody has to - a step a new version needs on the command line, what the installer left to you (SELinux, the firewall, a restart). Kept here, counted beside Upgrades in the menu and on the Settings tab, and said in the console until it is done. One that can be checked goes by itself once it is so.'));
+    if (act.length) {
+      var band = el('div', 'tasks-band');
+      act.forEach(function (t) { band.appendChild(taskBand(t)); });
+      card.appendChild(band);
+    } else card.appendChild(el('div', 'tcard-none', 'Nothing is to be done by hand.'));
+    var hist = TASKS.history || [];
+    if (hist.length) {
+      card.appendChild(el('h3', 'tcard-h3', 'Done lately'));
+      var tb = el('table', 'tbl tcard-tbl');
+      var hr = el('tr', '');
+      ['What', 'How', 'Who', 'When', ''].forEach(function (x) { hr.appendChild(el('th', '', x)); });
+      var th = el('thead', ''); th.appendChild(hr); tb.appendChild(th);
+      var bd = el('tbody', ''); var undoOffered = {};
+      hist.forEach(function (r) {
+        var tr = el('tr', '');
+        tr.appendChild(el('td', '', r.title || r.id));
+        var tdh = el('td', '');
+        tdh.appendChild(el('span', 'tag ' + (r.how === 'taken back' ? 'warn' : 'ok'), TASK_HOW[r.how] || r.how));
+        tr.appendChild(tdh);
+        var tdw = el('td', 'muted');
+        if (r.who === 'the command line') tdw.appendChild(el('span', '', 'the command line'));
+        else tdw.appendChild(noI18n(el('span', '', r.who || '-')));
+        tr.appendChild(tdw);
+        tr.appendChild(noI18n(el('td', 'muted nowrap', stamp(r.at))));
+        var tdb = el('td', 'right');
+        var t = TASKS.list.find(function (x) { return x.id === r.id; });
+        if (ADMIN && r.how === 'done' && !undoOffered[r.id] && t && t.done && !t.active) {
+          var u = cmdButton('Not done after all', 'undo', 'small');
+          u.onclick = function () { tasksAct(u, 'undo', r.id); };
+          tdb.appendChild(u);
+        }
+        undoOffered[r.id] = true;
+        tr.appendChild(tdb);
+        bd.appendChild(tr);
+      });
+      tb.appendChild(bd);
+      var wrap = el('div', 'tblwrap'); wrap.appendChild(tb);
+      card.appendChild(wrap);
+    }
+    dressButtons(card);
   }
-  /* Below the bands the rest: in order, done, and those put away for now. */
-  var host = $('up-tasks');
-  if (host) {
-    clear(host);
-    var rest = TASKS.list.filter(function (t) { return shown.indexOf(t) < 0; });
-    if (!act.length) host.appendChild(el('p', 'note good', 'Nothing to do on the server.'));
-    rest.forEach(function (t) { host.appendChild(taskCard(t, false)); });
-  }
-  /* Seen from anywhere (2.8.2): a badge on the Settings tab and on Upgrades in
-     its menu while a task is to do - red when one is needed now. */
-  var crit = shown.some(function (t) { return t.level === 'crit'; });
+  /* Seen from anywhere (2.8.2; 2.8.3 a red count over the icon, as upsmon's):
+     on the Settings tab and on Upgrades in its menu while a task is to do. */
   ['.tabs [data-tab="settings"]', '#ctl-nav [data-pane="upgrade"]'].forEach(function (sel) {
     var b = document.querySelector(sel);
     if (!b) return;
     var bd = b.querySelector('.task-badge');
-    if (!shown.length || !ADMIN) { if (bd) bd.remove(); return; }
+    if (!act.length || !ADMIN) { if (bd) bd.remove(); return; }
     if (!bd) { bd = noI18n(el('span', 'task-badge')); b.appendChild(bd); }
-    bd.className = 'task-badge' + (crit ? ' crit' : '');
-    bd.textContent = String(shown.length);
-    bd.title = shown.length === 1 ? '1 task for the server - Settings → Upgrades' : shown.length + ' tasks for the server - Settings → Upgrades';
+    bd.textContent = String(act.length);
+    bd.title = act.length === 1 ? '1 task for the server - Settings → Upgrades' : act.length + ' tasks for the server - Settings → Upgrades';
   });
 }
 function paintHeader(s) {

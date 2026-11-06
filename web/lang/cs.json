@@ -9439,6 +9439,54 @@
   "xs1108": {
    "source": "Put away in this browser for a day, with the badge of Settings; it comes back if it is still to do (plexmon --tasks lists every task).",
    "text": "Schová se v tomto prohlížeči na den i s odznakem u Nastavení; pokud bude pořád potřeba, vrátí se (plexmon --tasks vypíše všechny úkoly)."
+  },
+  "xs1109": {
+   "source": "To be done by hand",
+   "text": "Udělat ručně"
+  },
+  "xs1110": {
+   "source": "What plexmon cannot do itself and somebody has to - a step a new version needs on the command line, what the installer left to you (SELinux, the firewall, a restart). Kept here, counted beside Upgrades in the menu and on the Settings tab, and said in the console until it is done. One that can be checked goes by itself once it is so.",
+   "text": "Co plexmon sám udělat nemůže a musí to udělat někdo jiný – krok, který nová verze potřebuje na příkazové řádce, co instalátor nechal na vás (SELinux, firewall, restart). Drží se tady, počítá se u Aktualizací v menu a u záložky Nastavení a hlásí se v konzoli, dokud to není hotové. Co jde zkontrolovat, zmizí samo, jakmile to platí."
+  },
+  "xs1111": {
+   "source": "Nothing is to be done by hand.",
+   "text": "Ručně není potřeba nic dělat."
+  },
+  "xs1112": {
+   "source": "Done lately",
+   "text": "Nedávno hotové"
+  },
+  "xs1113": {
+   "source": "Taken back",
+   "text": "Vzato zpět"
+  },
+  "xs1114": {
+   "source": "Gone by itself",
+   "text": "Zmizelo samo"
+  },
+  "xs1115": {
+   "source": "the command line",
+   "text": "příkazová řádka"
+  },
+  "xs1116": {
+   "source": "Look again",
+   "text": "Zkontrolovat znovu"
+  },
+  "xs1117": {
+   "source": "To do since",
+   "text": "Čeká od"
+  },
+  "xs1118": {
+   "source": "This band goes by itself once it is right.",
+   "text": "Tento pruh zmizí sám, jakmile to bude v pořádku."
+  },
+  "xs1119": {
+   "source": "plexmon cannot see this from here. Once it is done, press Done.",
+   "text": "plexmon to odsud nevidí. Až to bude hotové, stiskněte Hotovo."
+  },
+  "xs1120": {
+   "source": "Kept away until plexmon no longer finds it - and shown again if it comes back later.",
+   "text": "Schová se, dokud to plexmon nepřestane nacházet – a ukáže se znovu, pokud se to později vrátí."
   }
  },
  "patterns": {

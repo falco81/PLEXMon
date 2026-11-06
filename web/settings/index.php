@@ -714,7 +714,7 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
         works as it always has.</p></div>
     <!-- What only root can do (2.8.0): a band each while one is to do (2.8.2: here,
          on Upgrades - the Settings tab and the Upgrades item of the menu carry a badge). -->
-    <div id="tasks" class="tasks-band" hidden></div>
+    <div id="tasks" class="card full tcard fulladmin-only"><h2>To be done by hand</h2></div>
     <div class="card full" id="up-nodes-card">
       <h2>The nodes</h2>
       <p class="note">A server in maintenance does nothing by itself - no backups, copies of the
