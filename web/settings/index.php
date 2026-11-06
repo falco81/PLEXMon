@@ -312,7 +312,7 @@ if (isset($_GET['api'])) {
         'power' => '/api/power', 'ntp' => '/api/ntp', 'osup' => '/api/osup', 'db' => '/api/db',
         'rbackup' => '/api/rbackup', 'acme-push' => '/api/acme-push',
         'passkey-state' => '/api/auth/passkey/state', 'passkeys' => '/api/auth/passkeys',
-        'load' => '/api/load',
+        'load' => '/api/load', 'tasks' => '/api/tasks',
     ];
     $writes = [
         'settings' => '/api/settings', 'users' => '/api/users', 'sessions' => '/api/sessions',
@@ -324,7 +324,7 @@ if (isset($_GET['api'])) {
         'power' => '/api/power', 'ntp' => '/api/ntp', 'osup' => '/api/osup', 'db' => '/api/db',
         'rbackup' => '/api/rbackup', 'proxy' => '/api/proxy', 'acme-push' => '/api/acme-push',
         'passkey-begin' => '/api/auth/passkey/begin', 'passkey-register' => '/api/auth/passkey/register',
-        'passkeys' => '/api/auth/passkeys',
+        'passkeys' => '/api/auth/passkeys', 'tasks' => '/api/tasks',
     ];
     if ($post) {
         if (!isset($writes[$what])) {
@@ -544,6 +544,8 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
 </header>
 
 <div id="offline" class="offline" hidden></div>
+<!-- What only root can do (2.8.0): a version's tasks for the server, on every page until done. -->
+<div id="tasks" class="tasks-band" hidden></div>
 <div id="phpsafety" class="offline" hidden></div>
 <div id="problems" class="offline warnish" hidden></div>
 
@@ -712,6 +714,14 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
         upgraded - taken out of service first, so plexmon does nothing by itself while it is,
         and brought back only once it answers again. The command line (install.sh --upgrade)
         works as it always has.</p></div>
+    <div class="card full" id="up-tasks-card">
+      <h2>Tasks for the server</h2>
+      <p class="note">What a version asks of root that it cannot do by itself - a SELinux policy, the
+        firewall, nginx's own file, a restart. Each says why and what to type on the server; one
+        plexmon can check goes away by itself once it is done, one it cannot see stays until a full
+        administrator says Done. On the command line: plexmon --tasks.</p>
+      <div id="up-tasks"></div>
+    </div>
     <div class="card full" id="up-nodes-card">
       <h2>The nodes</h2>
       <p class="note">A server in maintenance does nothing by itself - no backups, copies of the

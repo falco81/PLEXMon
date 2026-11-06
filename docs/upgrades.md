@@ -39,3 +39,27 @@ Command line: `plexmon --upgrade-check`, `--upgrade-online [VERSION] [--yes]`,
 
 The public key: `deploy/release-keys/plexmon-release-1.pub`. A new key = a new
 `.pub` file next to it; install.sh puts them all in.
+
+## Tasks for the server
+
+Most of an upgrade is done by root's helper (`install.sh --upgrade`) - from Settings → Upgrades
+too. What it does not do, or must not do by itself - a SELinux policy, the firewall, nginx's own
+file, a restart, a reboot - a version declares as a **task for the server**:
+
+- a band at the top of every page of Settings while one is to do (red when something does not
+  work until it is done), each task with why, what to type on the server as root (with a Copy),
+  and the version that brought it;
+- the whole list, done ones too, in Settings → Upgrades → *Tasks for the server*;
+- the command line: `plexmon` says them first, `plexmon --tasks` lists them (exit 1 while one
+  that is needed now is open), an event is written when one comes and when it is done.
+
+A task plexmon can check (nginx adopted, the version on the disk the one running, the upgrade
+helper there) goes away by itself once it is done - looked at every 15 s, or at once with *Check
+again*. One it cannot see from here stays until a full administrator says *Done* (or
+`plexmon --task-done ID`; `--task-undo ID` shows it again).
+
+For a developer: a task is one entry in `SERVER_TASKS` in `plexmon_admin.py` - `id`, `since`,
+`level` (`crit`, `warn`, `info`), `title`, `why`, `commands`, and either `check(store)` (returns
+what it found while there is something to do, else `None`) or none (a step said done by hand);
+`when(store)` limits it to the machines it concerns (e.g. only where SELinux is enforcing).
+

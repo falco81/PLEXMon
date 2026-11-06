@@ -3417,3 +3417,22 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 @media (hover:none){
   .px-card .px-rate,.px-card .shade{opacity:1}
 }
+/* Tasks for the server (2.8.0): seen, not missed */
+.tasks-band{border:1px solid rgba(210,153,34,.55);background:var(--warn-bg, rgba(210,153,34,.12));border-radius:12px;
+  padding:12px 14px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 0 0 3px rgba(210,153,34,.08)}
+.tasks-band.crit{border-color:rgba(248,81,73,.6);background:var(--crit-bg, rgba(248,81,73,.1));box-shadow:0 0 0 3px rgba(248,81,73,.1)}
+.tasks-head{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.tasks-head b{font-size:15px}
+.tasks-band.crit .tasks-head b{color:var(--crit)} .tasks-band:not(.crit) .tasks-head b{color:var(--warn)}
+.task{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:10px;padding:10px 12px}
+.task.crit{border-left-color:var(--crit)} .task.done{border-left-color:var(--ok);opacity:.85} .task.info{border-left-color:var(--info)}
+#up-tasks .task+.task{margin-top:10px}
+.task-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.task-ic{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;font-weight:800;font-size:12px;background:var(--warn);color:#1a1204}
+.task.crit .task-ic{background:var(--crit);color:#fff} .task.done .task-ic{background:var(--ok);color:#06210e}
+.task-since{margin-left:auto}
+.task-found{color:var(--tx-dim);margin:6px 0 0}
+.task-why{margin:6px 0 0;color:var(--tx-dim);font-size:13px}
+.task-cmd{display:flex;gap:8px;align-items:flex-start;margin-top:8px}
+.task-cmd pre{flex:1;margin:0;padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:8px;font-size:12.5px;white-space:pre-wrap;overflow-wrap:anywhere}
+.task .btnrow{margin-top:8px;align-items:center;gap:10px}

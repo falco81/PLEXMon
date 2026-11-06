@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.7.9'
+__version__ = '2.8.0'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -5884,6 +5884,188 @@ def _login(h):
             'must_change': bool(ok.get('must_change')), 'mfa': stage}
 
 
+# ---- tasks for the server: what only root can do (2.8.0) -------------------------
+#
+# Most of an upgrade is done by root's helper (install.sh --upgrade), from the
+# pages too. What it does not do - or must not do by itself: a SELinux policy,
+# the firewall, nginx's own file, a restart, a reboot - a version says here, and
+# the pages show it in a band on every page of Settings until it is done, the
+# command line in `plexmon` and `plexmon --tasks`, and an event says it once.
+#
+# One task:
+#   id      stable, never reused
+#   since   the version that brought it (shown; and it is never older than that)
+#   level   'crit' (something does not work until it is done) | 'warn' | 'info'
+#   title   what to do, in a few words      why    why, in a sentence or two
+#   commands   what to type on the server, as root (shown with a Copy)
+#   check   fn(store) -> None while there is nothing to do, else a short line
+#           of what was found; WITHOUT a check the task is a step nobody can
+#           see from here - it stays until a full administrator says Done.
+#   when    fn(store) -> bool: whether it concerns this machine at all
+#           (e.g. only where SELinux is on); without it, every machine.
+#
+# A task that is checked goes away by itself once it is done (looked at again
+# every 15 s, or at once with Check again); one that is said done can be
+# shown again ("Not done after all").
+
+def _task_nginx(store):
+    if not NGINX_SITE.exists():
+        return None
+    return None if nginx_adopted() else '%s does not include plexmon\'s TLS settings yet' % NGINX_SITE
+
+
+def _task_restart(store):
+    try:
+        text = (LIB_DIR / 'plexmon_admin.py').read_text(errors='replace')
+    except OSError:
+        return None
+    m = re.search(r"^__version__ = ['\"]([^'\"]+)['\"]", text, re.M)
+    if not m or m.group(1) == __version__:
+        return None
+    return 'plexmon %s is put in, plexmon %s is still running' % (m.group(1), __version__)
+
+
+def _task_upgrade_helper(store):
+    miss = [str(p) for p in (UPGRADE_HELPER, UPGRADE_PATH_UNIT) if not p.exists()]
+    return ('missing: %s' % ', '.join(miss)) if miss else None
+
+
+def _selinux_enforcing():
+    try:
+        return Path('/sys/fs/selinux/enforce').read_text().strip() == '1'
+    except OSError:
+        return False
+
+
+SERVER_TASKS = [
+    {'id': 'nginx-adopt', 'since': '2.0.0', 'level': 'warn',
+     'title': 'Let plexmon look after nginx\'s TLS',
+     'why': 'The Plex vhost of nginx does not include plexmon\'s TLS settings yet: a certificate '
+            'can be put in, but the protocols, the ciphers and the answers for ACME cannot.',
+     'commands': ['plexmon --nginx-adopt'],
+     'check': _task_nginx},
+    {'id': 'restart', 'since': '2.8.0', 'level': 'crit',
+     'title': 'Restart plexmon',
+     'why': 'A newer plexmon was put on the disk than the one running - the pages and the '
+            'command line may not match until the service is restarted.',
+     'commands': ['systemctl restart plexmon'],
+     'check': _task_restart},
+    {'id': 'upgrade-helper', 'since': '2.0.0', 'level': 'warn',
+     'title': 'Upgrade once on the command line',
+     'why': 'Root\'s helper that puts a new version in from these pages is not installed, so '
+            'Settings → Upgrades cannot do it.',
+     'commands': ['cd <the unpacked plexmon package>', './install.sh --upgrade'],
+     'check': _task_upgrade_helper},
+    # How a later version asks for a step nobody can see from here - kept as an
+    # example, `when` never true:
+    # {'id': 'selinux-x.y.z', 'since': 'x.y.z', 'level': 'crit',
+    #  'title': 'Let SELinux allow plexmon to …', 'why': '…',
+    #  'commands': ['setsebool -P httpd_can_network_connect 1'],
+    #  'when': lambda store: _selinux_enforcing()},
+]
+
+TASKS_CACHE = {'at': 0.0, 'list': None}
+TASKS_LOCK = threading.Lock()
+
+
+def server_tasks(store, fresh=False):
+    """Every task with its state: [{id, level, title, why, commands, since,
+    active, found, checked, done: {at, by} or None}] - looked at every 15 s."""
+    with TASKS_LOCK:
+        if not fresh and TASKS_CACHE['list'] is not None and time.time() - TASKS_CACHE['at'] < 15:
+            return TASKS_CACHE['list']
+        out = []
+        for t in SERVER_TASKS:
+            try:
+                if t.get('when') and not t['when'](store):
+                    continue
+            except Exception:                           # noqa: BLE001
+                continue
+            if _ver_tuple(t.get('since') or '0') > _ver_tuple(__version__):
+                continue
+            done = _meta_json(store, 'task:done:' + t['id'])
+            found = None
+            if t.get('check'):
+                try:
+                    found = t['check'](store)
+                except Exception as e:                  # noqa: BLE001
+                    found = None
+                    log('the task %s could not be looked at: %s' % (t['id'], e), 'warn')
+                active = bool(found)
+            else:
+                active = not done
+            row = {k: t.get(k) for k in ('id', 'since', 'level', 'title', 'why', 'commands')}
+            row.update(active=active, found=found or '', checked=bool(t.get('check')),
+                       done=done if not t.get('check') else None)
+            out.append(row)
+            seen = 'task:seen:' + t['id']
+            if active and not store.get_meta(seen):
+                store.set_meta(seen, str(time.time()))
+                store.add_event('settings', 'to do on the server: %s - %s' % (
+                    t['title'], found or t['why']), 'bad' if t['level'] == 'crit' else 'warn')
+            elif not active and store.get_meta(seen):
+                store.set_meta(seen, '')
+                if t.get('check'):
+                    store.add_event('settings', 'done on the server: %s' % t['title'], 'info')
+        out.sort(key=lambda r: (not r['active'], {'crit': 0, 'warn': 1}.get(r['level'], 2)))
+        TASKS_CACHE.update(at=time.time(), list=out)
+        return out
+
+
+@route('GET', '/api/tasks')
+def _tasks(h):
+    h.me()
+    return {'tasks': server_tasks(h.store, fresh=bool(h.arg('fresh')))}
+
+
+@route('POST', '/api/tasks')
+def _tasks_do(h):
+    s = h.me('fulladmin')
+    b = h.body()
+    act = str(b.get('action') or '')
+    tid = str(b.get('name') or '')
+    if act == 'check':
+        return {'tasks': server_tasks(h.store, fresh=True), 'message': 'looked at again'}
+    t = next((x for x in SERVER_TASKS if x['id'] == tid), None)
+    if not t:
+        raise ApiError(404, 'no such task')
+    if t.get('check'):
+        raise ApiError(409, 'this one goes away by itself once it is done - Check again')
+    if act == 'done':
+        h.store.set_meta('task:done:' + tid, json.dumps({'at': time.time(), 'by': s['name']}))
+        h.store.add_event('settings', '%s says it is done on the server: %s' % (
+            s['name'], t['title']), 'info', who=s['name'])
+        said = 'kept as done'
+    elif act == 'undo':
+        h.store.set_meta('task:done:' + tid, '')
+        said = 'shown again'
+    else:
+        raise ApiError(400, 'no such action')
+    return {'tasks': server_tasks(h.store, fresh=True), 'message': said}
+
+
+def cli_tasks(store, pal, as_json):
+    rows = server_tasks(store, fresh=True)
+    if as_json:
+        out_json({'tasks': rows})
+        return 0
+    act = [r for r in rows if r['active']]
+    print(pal.head('to do on the server: %s' % (len(act) or 'nothing')))
+    for r in rows:
+        line = (pal.bad_line if r['level'] == 'crit' else pal.warn_line) if r['active'] \
+            else pal.ok_line
+        print(line('%s%s' % (r['title'], (' - ' + r['found']) if r['active'] and r['found'] else
+                             ('' if r['active'] else (' - in order' if r['checked']
+                                                      else ' - done')))))
+        if r['active']:
+            print('    ' + pal.dim(r['why']))
+            for c in r['commands'] or []:
+                print('      ' + c)
+            if not r['checked']:
+                print('    ' + pal.dim('done? plexmon --task-done %s' % r['id']))
+    return 1 if any(r['active'] and r['level'] == 'crit' for r in rows) else 0
+
+
 # ---- the performance meter: how busy the server is, in the header (2.7.0) -------
 # Taken over from ai (1.0.72-1.0.76) as it is: it reads /proc and /sys only
 # when a page asks, nothing runs in the background. Off until `perf_meter`
@@ -8693,10 +8875,8 @@ class Admin(object):
     # ---- what it is doing -----------------------------------------------------
     def status(self):
         problems = []
-        if not nginx_adopted():
-            problems.append('%s is not plexmon\'s yet: the certificate can be put in, but its '
-                            'TLS settings and the answers for ACME cannot - install.sh '
-                            '--upgrade adopts it' % NGINX_SITE)
+        # nginx not plexmon's yet is a task for the server now (2.8.0): the band
+        # of tasks says it, with what to type.
         st = web_status(self.store)
         if st.get('state') == 'failed':
             problems.append('the certificate could not be put in: %s'
@@ -8739,6 +8919,8 @@ class Admin(object):
                 'started': self.started, 'uptime': time.time() - self.started, 'now': time.time(),
                 'serial': '%s/%s' % (ev, int(web_status(self.store).get('at') or 0)),
                 'problems': problems, 'node': node_name(),
+                'tasks': [{k: t[k] for k in ('id', 'level', 'title')} for t in
+                          server_tasks(self.store) if t['active']],
                 'maintenance': maintenance_now(self.store),
                 'database': {'engine': 'sqlite', 'where': self.store.db.where(),
                              'size': self.store.db.size()},
@@ -10321,6 +10503,10 @@ def build_parser():
     g.add_argument('--enable-user', metavar='NAME', help='it may sign in again')
     g.add_argument('--del-user', metavar='NAME', help='take an account away')
     g.add_argument('--reset-2fa', metavar='NAME', help='it sets its second step up again')
+    g.add_argument('--tasks', action='store_true',
+                   help='what only root can do and a version asks for: what to type, and why')
+    g.add_argument('--task-done', metavar='ID', help='a task nobody can see from here: done')
+    g.add_argument('--task-undo', metavar='ID', help='...not done after all: shown again')
     g.add_argument('--passkeys', nargs='?', const='*', default=None, metavar='NAME',
                    help='the passkeys (Face ID, Touch ID) of every account, or of NAME')
     g.add_argument('--passkey-forget', metavar='ID',
@@ -10538,9 +10724,6 @@ def status_now(store):
     if not health:
         problems.append('Settings is not answering on 127.0.0.1:%s - systemctl status %s'
                         % (CONFIG.get('api_port'), SERVICE))
-    if not nginx_adopted():
-        problems.append('%s is not plexmon\'s: its TLS settings and the ACME answers cannot be '
-                        'written (plexmon --nginx-adopt)' % NGINX_SITE)
     st = web_status(store)
     if st.get('state') == 'failed':
         problems.append('the certificate could not be put in: %s' % (st.get('said') or ['?'])[-1])
@@ -10595,6 +10778,12 @@ def cli_status(store, pal, as_json, check=False, mon=None):
                             '(plexmon --maintenance off)' % (
                                 datetime.fromtimestamp(float(m.get('at') or 0)).strftime(
                                     '%d-%m-%Y %H:%M'), (' - ' + m['why']) if m.get('why') else '')))
+    # What only root can do (2.8.0): said first, with what to type.
+    for t in [x for x in server_tasks(store, fresh=True) if x['active']]:
+        print((pal.bad_line if t['level'] == 'crit' else pal.warn_line)(
+            'TO DO ON THE SERVER: %s%s' % (t['title'], (' - ' + t['found']) if t['found'] else '')))
+        for c in t['commands'] or []:
+            print('      ' + c)
     d = s['dashboard']
     if d:
         tone = {'ok': pal.ok_line, 'warn': pal.warn_line}.get(d.get('overall'), pal.bad_line)
@@ -11569,6 +11758,24 @@ def cli_main(argv=None, mon=None):
         print(pal.ok_line({'delete': 'the account %s is gone', 'disable':
                            '%s may no longer sign in', 'enable': '%s may sign in again'}[act]
                           % flag))
+        return 0
+    if args.tasks:
+        return cli_tasks(store, pal, args.json)
+    if args.task_done or args.task_undo:
+        tid = (args.task_done or args.task_undo).strip()
+        t = next((x for x in SERVER_TASKS if x['id'] == tid), None)
+        if not t:
+            raise SystemExit('plexmon: no task %s (plexmon --tasks lists them)' % tid)
+        if t.get('check'):
+            raise SystemExit('plexmon: %s goes away by itself once it is done' % tid)
+        if args.task_done:
+            store.set_meta('task:done:' + tid, json.dumps({'at': time.time(), 'by': by}))
+            store.add_event('settings', '%s says it is done on the server: %s' % (by, t['title']),
+                            'info', who=by)
+            print(pal.ok_line('kept as done: %s' % t['title']))
+        else:
+            store.set_meta('task:done:' + tid, '')
+            print(pal.ok_line('shown again: %s' % t['title']))
         return 0
     if args.passkeys is not None:
         return cli_passkeys(store, pal, '' if args.passkeys == '*' else args.passkeys.strip(),

@@ -113,9 +113,85 @@ function perfMeterFollow(s) {
     if (p) p.remove();
   }
 }
+/* ---- tasks for the server (2.8.0) ---------------------------------------
+   What only root can do and a version asks for: a band on every page while
+   one is to do, the whole list on Upgrades. */
+var TASKS = {ids: null, list: []};
+function tasksFollow(s) {
+  var ids = (s.tasks || []).map(function (t) { return t.id; }).join(',');
+  if (ids === TASKS.ids) return;
+  TASKS.ids = ids;
+  tasksLoad();
+}
+function tasksLoad(fresh) {
+  return api('tasks' + (fresh ? '&fresh=1' : '')).then(function (d) { TASKS.list = d.tasks || []; tasksDraw(); })
+    .catch(function () { });
+}
+function taskCard(t, inBand) {
+  var c = el('div', 'task ' + (t.active ? (t.level || 'warn') : 'done'));
+  var h = el('div', 'task-h');
+  h.appendChild(el('span', 'task-ic', t.active ? (t.level === 'crit' ? '!' : '•') : '✓'));
+  h.appendChild(el('b', '', t.title));
+  if (!t.active) h.appendChild(el('span', 'tag ok', t.checked ? 'in order' : 'done'));
+  else if (t.level === 'crit') h.appendChild(el('span', 'tag crit', 'needed now'));
+  h.appendChild(noI18n(el('span', 'muted small task-since', 'plexmon ' + (t.since || ''))));
+  c.appendChild(h);
+  if (t.active && t.found) c.appendChild(noI18n(el('div', 'task-found mono small', t.found)));
+  if (t.active || !inBand) c.appendChild(el('p', 'task-why', t.why));
+  if (t.active && (t.commands || []).length) {
+    var cmd = el('div', 'task-cmd');
+    var pre = noI18n(el('pre', 'mono', t.commands.join('\n')));
+    cmd.appendChild(pre);
+    var cp = iconButton('copy', 'Copy');
+    cp.onclick = function () { copyText(t.commands.join('\n'), cp); };
+    cmd.appendChild(cp);
+    c.appendChild(cmd);
+  }
+  var row = el('div', 'btnrow');
+  if (t.active && t.checked) {
+    row.appendChild(el('span', 'muted small', 'Goes away by itself once it is done.'));
+    var again = cmdButton('Check again', 'refresh', 'small');
+    again.onclick = function () { busy(again, true); api('tasks', {action: 'check'}).then(function (d) { TASKS.list = d.tasks || []; tasksDraw(); toast(d.message, 'good'); }).catch(oops).then(function () { busy(again, false); }); };
+    row.appendChild(again);
+  } else if (!t.checked && ADMIN) {
+    var b = t.active ? cmdButton('Done', 'check', 'small primary') : cmdButton('Not done after all', 'undo', 'small');
+    if (!t.active && t.done) row.appendChild(el('span', 'muted small', 'said done by ' + (t.done.by || '?') + ' · ' + stamp(t.done.at)));
+    b.onclick = function () {
+      busy(b, true);
+      api('tasks', {action: t.active ? 'done' : 'undo', name: t.id}).then(function (d) { TASKS.list = d.tasks || []; tasksDraw(); toast(d.message, 'good'); })
+        .catch(oops).then(function () { busy(b, false); });
+    };
+    row.appendChild(b);
+  }
+  if (row.firstChild) c.appendChild(row);
+  return c;
+}
+function tasksDraw() {
+  var act = TASKS.list.filter(function (t) { return t.active; });
+  var band = $('tasks');
+  if (band) {
+    clear(band);
+    band.hidden = !act.length;
+    band.className = 'tasks-band' + (act.some(function (t) { return t.level === 'crit'; }) ? ' crit' : '');
+    if (act.length) {
+      var hd = el('div', 'tasks-head');
+      hd.appendChild(el('b', '', act.length === 1 ? 'To do on the server' : 'To do on the server: ' + act.length));
+      hd.appendChild(el('span', 'muted small', 'as root, on the machine itself - Settings → Upgrades lists them all'));
+      band.appendChild(hd);
+      act.forEach(function (t) { band.appendChild(taskCard(t, true)); });
+    }
+  }
+  var host = $('up-tasks');
+  if (host) {
+    clear(host);
+    if (!TASKS.list.length) host.appendChild(el('p', 'note good', 'Nothing to do on the server.'));
+    TASKS.list.forEach(function (t) { host.appendChild(taskCard(t, false)); });
+  }
+}
 function paintHeader(s) {
   STATUS = s;
   perfMeterFollow(s);
+  tasksFollow(s);
   var hs = document.querySelector('header .host');
   if (hs && s.node) {
     if (hs._base === undefined) hs._base = hs.textContent;
@@ -2723,6 +2799,7 @@ var VERSION_LOADED = (function () {
   return m ? m[1] : '';
 }());
 function loadUpgrade(live) {
+  if (!live) tasksLoad(true);
   /* A short deadline while an upgrade runs (1.0.66): the node answering may
      be restarting, or the VIP address moving to the other one. */
   var running = upRunning();

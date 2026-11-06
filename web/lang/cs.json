@@ -9331,6 +9331,90 @@
   "xs1081": {
    "source": "The processor, busy over the last 5 s, all 8 core(s) together",
    "text": "Procesor, vytížení za posledních 5 s, všech 8 jader dohromady"
+  },
+  "xs1082": {
+   "source": "Tasks for the server",
+   "text": "Úkoly pro server"
+  },
+  "xs1083": {
+   "source": "What a version asks of root that it cannot do by itself - a SELinux policy, the firewall, nginx's own file, a restart. Each says why and what to type on the server; one plexmon can check goes away by itself once it is done, one it cannot see stays until a full administrator says Done. On the command line: plexmon --tasks.",
+   "text": "Co verze potřebuje od roota a sama udělat nemůže – pravidlo SELinuxu, firewall, vlastní soubor nginx, restart. U každého je proč a co napsat na serveru; úkol, který plexmon umí ověřit, zmizí sám, jakmile je hotový, a úkol, který odsud vidět není, zůstane, dokud plný administrátor neřekne Hotovo. Na příkazové řádce: plexmon --tasks."
+  },
+  "xs1084": {
+   "source": "To do on the server",
+   "text": "Na serveru je potřeba udělat"
+  },
+  "xs1085": {
+   "source": "as root, on the machine itself - Settings → Upgrades lists them all",
+   "text": "jako root, přímo na stroji – Nastavení → Upgrady je mají všechny"
+  },
+  "xs1086": {
+   "source": "needed now",
+   "text": "potřeba hned"
+  },
+  "xs1087": {
+   "source": "in order",
+   "text": "v pořádku"
+  },
+  "xs1088": {
+   "source": "Not done after all",
+   "text": "Nakonec nehotovo"
+  },
+  "xs1089": {
+   "source": "Check again",
+   "text": "Zkontrolovat znovu"
+  },
+  "xs1090": {
+   "source": "Goes away by itself once it is done.",
+   "text": "Zmizí samo, jakmile to bude hotové."
+  },
+  "xs1091": {
+   "source": "Nothing to do on the server.",
+   "text": "Na serveru není co dělat."
+  },
+  "xs1092": {
+   "source": "looked at again",
+   "text": "zkontrolováno znovu"
+  },
+  "xs1093": {
+   "source": "kept as done",
+   "text": "uloženo jako hotové"
+  },
+  "xs1094": {
+   "source": "shown again",
+   "text": "zase se ukazuje"
+  },
+  "xs1095": {
+   "source": "Let plexmon look after nginx's TLS",
+   "text": "Nechte plexmon spravovat TLS v nginx"
+  },
+  "xs1096": {
+   "source": "The Plex vhost of nginx does not include plexmon's TLS settings yet: a certificate can be put in, but the protocols, the ciphers and the answers for ACME cannot.",
+   "text": "Vhost Plexu v nginx ještě nezahrnuje nastavení TLS plexmonu: certifikát se vložit dá, ale protokoly, šifry a odpovědi pro ACME ne."
+  },
+  "xs1097": {
+   "source": "Restart plexmon",
+   "text": "Restartujte plexmon"
+  },
+  "xs1098": {
+   "source": "A newer plexmon was put on the disk than the one running - the pages and the command line may not match until the service is restarted.",
+   "text": "Na disku je novější plexmon než ten, který běží – stránky a příkazová řádka si nemusí odpovídat, dokud se služba nerestartuje."
+  },
+  "xs1099": {
+   "source": "Upgrade once on the command line",
+   "text": "Jednou upgradujte na příkazové řádce"
+  },
+  "xs1100": {
+   "source": "Root's helper that puts a new version in from these pages is not installed, so Settings → Upgrades cannot do it.",
+   "text": "Pomocník roota, který dává novou verzi z těchto stránek, není nainstalovaný, takže Nastavení → Upgrady to udělat nemůže."
+  },
+  "xs1101": {
+   "source": "no such task",
+   "text": "takový úkol není"
+  },
+  "xs1102": {
+   "source": "this one goes away by itself once it is done - Check again",
+   "text": "tento zmizí sám, jakmile bude hotový – Zkontrolovat znovu"
   }
  },
  "patterns": {
@@ -11785,6 +11869,26 @@
   "xp0230": {
    "source": "The processor, busy over the last {0} s, all {1} core(s) together",
    "text": "Procesor, vytížení za posledních {0} s, všech {1} jader dohromady"
+  },
+  "xp0231": {
+   "source": "To do on the server: {0}",
+   "text": "Na serveru je potřeba udělat: {0}"
+  },
+  "xp0232": {
+   "source": "said done by {0} · {1}",
+   "text": "hotovo podle {0} · {1}"
+  },
+  "xp0233": {
+   "source": "to do on the server: {0} - {1}",
+   "text": "na serveru je potřeba: {0} – {1}"
+  },
+  "xp0234": {
+   "source": "done on the server: {0}",
+   "text": "na serveru hotovo: {0}"
+  },
+  "xp0235": {
+   "source": "{0} says it is done on the server: {1}",
+   "text": "{0} říká, že je na serveru hotovo: {1}"
   }
  },
  "rich": {

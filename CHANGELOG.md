@@ -4,6 +4,27 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.8.0 - 2026-11-06
+
+- **Tasks for the server** - one way for every version to say what only root
+  can do on the machine and it must not do by itself (a SELinux policy, the
+  firewall, nginx's own file, a restart):
+  - a band at the top of every page of Settings while one is to do - red when
+    something does not work until it is done - with why, what to type on the
+    server (with a Copy) and the version that brought it;
+  - the whole list in Settings → Upgrades → *Tasks for the server*;
+  - `plexmon` says them first, `plexmon --tasks` lists them (exit 1 while one
+    needed now is open); an event when one comes and when it is done.
+  - A task plexmon can check goes away by itself once it is done (every 15 s,
+    or *Check again*); one it cannot see stays until a full administrator says
+    *Done* (`plexmon --task-done ID`, `--task-undo ID`).
+  - The first ones: *Let plexmon look after nginx's TLS* (`plexmon
+    --nginx-adopt`; it was a line among the troubles), *Restart plexmon* (a
+    newer plexmon on the disk than the one running), *Upgrade once on the
+    command line* (root's helper for upgrades from the pages missing).
+  - For a later version a task is one entry in `SERVER_TASKS`
+    (docs/upgrades.md).
+
 ## 2.7.9 - 2026-11-06
 
 - **The performance meter is there the moment a page opens**: the page comes
