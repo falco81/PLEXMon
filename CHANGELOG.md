@@ -4,6 +4,15 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.8.4 - 2026-11-06
+
+- **Clear list** at the right of *Done lately*: empties exactly the rows the
+  card shows - one come meanwhile stays, what is still to be done is never
+  touched; an event says who cleared how many. `plexmon --tasks-clear`
+  empties all of it from the command line.
+- Tasks for the server are a full administrator's only: `/api/tasks` asks
+  for one, and `/api/status` no longer sends them to anyone else.
+
 ## 2.8.3 - 2026-11-06
 
 - **Tasks for the server look like upsmon's "To be done by hand"**: one card

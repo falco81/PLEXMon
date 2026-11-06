@@ -52,7 +52,11 @@ file, a restart, a reboot - a version declares as a **task for the server**:
   away and since when it has been open; the card has a red edge while anything is open and says
   *Nothing is to be done by hand* when nothing is. Below the bands, **Done lately**: the last ten
   tasks done, taken back or gone by themselves - what, how, who and when, with *Not done after
-  all* on one said done. The Settings tab and Upgrades in its menu carry a red count;
+  all* on one said done, and *Clear list* at its right: it empties exactly the rows shown (one
+  come meanwhile stays) and never touches what is still to be done - `plexmon --tasks-clear`
+  empties all of it, and an event says who cleared how many. The Settings tab and Upgrades in
+  its menu carry a red count. Only a full administrator sees any of it: the tasks are not even
+  sent to anyone else;
 - the command line: `plexmon` says them first, `plexmon --tasks` lists them (exit 1 while one
   that is needed now is open), an event is written when one comes and when it is done.
 

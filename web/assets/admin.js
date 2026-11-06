@@ -127,9 +127,11 @@ function tasksLoad(fresh) {
   return api('tasks' + (fresh ? '&fresh=1' : '')).then(function (d) { TASKS.list = d.tasks || []; TASKS.history = d.history || []; tasksDraw(); })
     .catch(function () { });
 }
-function tasksAct(btn, act, id) {
+function tasksAct(btn, act, id, extra) {
   busy(btn, true);
-  api('tasks', {action: act, name: id}).then(function (d) {
+  var body = {action: act, name: id};
+  if (extra) Object.keys(extra).forEach(function (k) { body[k] = extra[k]; });
+  api('tasks', body).then(function (d) {
     TASKS.list = d.tasks || []; TASKS.history = d.history || []; tasksDraw(); toast(d.message, 'good');
   }).catch(oops).then(function () { busy(btn, false); });
 }
@@ -204,7 +206,17 @@ function tasksDraw() {
     } else card.appendChild(el('div', 'tcard-none', 'Nothing is to be done by hand.'));
     var hist = TASKS.history || [];
     if (hist.length) {
-      card.appendChild(el('h3', 'tcard-h3', 'Done lately'));
+      /* Its heading with Clear at its right (2.8.4, as ZIGMon's): exactly the rows
+         shown are emptied - one come meanwhile stays, what is to do is not touched. */
+      var dh = el('div', 'tcard-dh');
+      dh.appendChild(el('h3', 'tcard-h3', 'Done lately'));
+      var clr = cmdButton('Clear list', 'trash', 'small');
+      explain(clr, 'Empty this list - what is still to be done stays.');
+      clr.onclick = function () {
+        tasksAct(clr, 'clear_done', '', {items: hist.map(function (r) { return [r.id || '', r.at || 0]; })});
+      };
+      dh.appendChild(clr);
+      card.appendChild(dh);
       var tb = el('table', 'tbl tcard-tbl');
       var hr = el('tr', '');
       ['What', 'How', 'Who', 'When', ''].forEach(function (x) { hr.appendChild(el('th', '', x)); });

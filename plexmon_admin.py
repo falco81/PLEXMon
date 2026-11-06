@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.8.3'
+__version__ = '2.8.4'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -5964,6 +5964,29 @@ def task_history_add(store, tid, title, how, who):
     store.set_meta('tasks:history', json.dumps({'rows': rows[:20]}))
 
 
+def task_history_clear(store, items=None, who=''):
+    """Done lately emptied (2.8.4): the rows the pane shows ([id, at] each), or all
+    of it when none are named. What is still to be done is not touched."""
+    want = None
+    if items is not None:
+        want = set()
+        for one in list(items)[:200]:
+            if isinstance(one, (list, tuple)) and len(one) == 2:
+                try:
+                    want.add((str(one[0])[:80], round(float(one[1]), 3)))
+                except (TypeError, ValueError):
+                    continue
+    got = _meta_json(store, 'tasks:history') or {}
+    rows = [r for r in got.get('rows') or [] if isinstance(r, dict)]
+    keep = [] if want is None else [r for r in rows if (str(r.get('id') or ''),
+                                                        round(float(r.get('at') or 0), 3)) not in want]
+    gone = len(rows) - len(keep)
+    store.set_meta('tasks:history', json.dumps({'rows': keep}))
+    store.add_event('settings', '"done lately" cleared by %s (%d)' % (who or 'the command line', gone),
+                    'info', who=who or 'root')
+    return gone
+
+
 def task_history(store):
     return [r for r in (_meta_json(store, 'tasks:history') or {}).get('rows') or []
             if isinstance(r, dict)][:10]
@@ -6024,7 +6047,7 @@ def server_tasks(store, fresh=False):
 
 @route('GET', '/api/tasks')
 def _tasks(h):
-    h.me()
+    h.me('fulladmin')
     return {'tasks': server_tasks(h.store, fresh=bool(h.arg('fresh'))),
             'history': task_history(h.store)}
 
@@ -6038,6 +6061,11 @@ def _tasks_do(h):
     if act == 'check':
         return {'tasks': server_tasks(h.store, fresh=True), 'history': task_history(h.store),
                 'message': 'looked at again'}
+    if act == 'clear_done':
+        items = b.get('items') if isinstance(b.get('items'), list) else None
+        gone = task_history_clear(h.store, items, s['name'])
+        return {'tasks': server_tasks(h.store), 'history': task_history(h.store),
+                'message': 'done lately cleared (%d)' % gone}
     t = next((x for x in SERVER_TASKS if x['id'] == tid), None)
     if not t:
         raise ApiError(404, 'no such task')
@@ -7343,6 +7371,9 @@ def _status(h):
     out = h.d.status()
     out['role'] = s['role']
     out['perf_meter'] = bool(CONFIG.get('perf_meter'))
+    # Tasks for the server are a full administrator's (2.8.4): not even sent to anyone else.
+    if ROLE_RANK.get(s['role'], 0) < ROLE_RANK['fulladmin']:
+        out.pop('tasks', None)
     # The meter's last state, put into the page as it is made (2.7.9): drawn the
     # moment the page opens, the next reading only brings it up to date.
     if h.arg('perf') and out['perf_meter'] and \
@@ -10523,6 +10554,8 @@ def build_parser():
                    help='what only root can do and a version asks for: what to type, and why')
     g.add_argument('--task-done', metavar='ID', help='a task nobody can see from here: done')
     g.add_argument('--task-undo', metavar='ID', help='...not done after all: shown again')
+    g.add_argument('--tasks-clear', action='store_true',
+                   help='empty "done lately" - what is still to be done stays')
     g.add_argument('--passkeys', nargs='?', const='*', default=None, metavar='NAME',
                    help='the passkeys (Face ID, Touch ID) of every account, or of NAME')
     g.add_argument('--passkey-forget', metavar='ID',
@@ -11780,6 +11813,10 @@ def cli_main(argv=None, mon=None):
         return 0
     if args.tasks:
         return cli_tasks(store, pal, args.json)
+    if args.tasks_clear:
+        gone = task_history_clear(store, None, '')
+        print(pal.ok_line('done lately cleared (%d)' % gone))
+        return 0
     if args.task_done or args.task_undo:
         tid = (args.task_done or args.task_undo).strip()
         t = next((x for x in SERVER_TASKS if x['id'] == tid), None)

@@ -9487,6 +9487,14 @@
   "xs1120": {
    "source": "Kept away until plexmon no longer finds it - and shown again if it comes back later.",
    "text": "Schová se, dokud to plexmon nepřestane nacházet – a ukáže se znovu, pokud se to později vrátí."
+  },
+  "xs1121": {
+   "source": "Clear list",
+   "text": "Vymazat"
+  },
+  "xs1122": {
+   "source": "Empty this list - what is still to be done stays.",
+   "text": "Vyprázdní tento seznam – co je ještě potřeba udělat, zůstává."
   }
  },
  "patterns": {
@@ -11969,6 +11977,10 @@
   "xp0237": {
    "source": "{0} tasks for the server - Settings → Upgrades",
    "text": "úkoly pro server: {0} – Nastavení → Upgrady"
+  },
+  "xp0238": {
+   "source": "done lately cleared ({0})",
+   "text": "nedávno hotové vymazáno ({0})"
   }
  },
  "rich": {
