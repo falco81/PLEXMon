@@ -4,6 +4,20 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.7.9 - 2026-11-06
+
+- **The performance meter is there the moment a page opens**: the page comes
+  with the meter's last state - the two minutes of the graphs (the daemon's, or
+  its row in the database), the last numbers and the last details of a panel -
+  and draws them at once; the next reading only brings them up to date. Before,
+  the header stayed empty until the first answer and a panel said "reading…".
+  Nothing is read anew for it.
+  - Measured: back on a page, the numbers and graphs stood there in 0.12 s
+    with every question to the meter held back 4 s; a panel opened with its
+    cores at once.
+  - The graphs move together: one reading stands at the same share of every
+    graph - the four of the header and the panel's.
+
 ## 2.7.8 - 2026-11-05
 
 - **A new icon**: a chevron in Plex's amber beside the green bars of a load

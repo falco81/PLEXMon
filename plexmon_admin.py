@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.7.8'
+__version__ = '2.7.9'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -5937,6 +5937,24 @@ def load_sampler(store):
             LOAD_WATCH['thread'] = None
 
 
+def load_last_state(store):
+    """What the meter showed last - nothing read anew: the two minutes (the
+    daemon's, else the row in the database), the last reading, the last
+    details (when a panel was open in the last 10 minutes)."""
+    t = time.time()
+    with LOAD_LOCK:
+        hist = [x for x in LOAD_HIST if t - x['at'] <= 130]
+        last = dict(LOAD_LAST['out']) if LOAD_LAST['out'] and t - LOAD_LAST['at'] <= 130 else None
+        detail = LOAD_DETAIL['out'] if LOAD_DETAIL['out'] and t - LOAD_DETAIL['at'] <= 600 else None
+    if not hist:
+        got = _meta_json(store, _load_hist_key()) or {}
+        hist = [x for x in got.get('points') or [] if isinstance(x, dict)
+                and t - float(x.get('at') or 0) <= 130]
+    if not last and hist:
+        last = dict(hist[-1], cores=os.cpu_count() or 1)
+    return {'now': t, 'hist': hist, 'last': last, 'detail': detail}
+
+
 def load_watch(store):
     """A page asked: the sampling goes on (or starts) for 45 s more."""
     with LOAD_WATCH_LOCK:
@@ -7129,6 +7147,14 @@ def _status(h):
     out = h.d.status()
     out['role'] = s['role']
     out['perf_meter'] = bool(CONFIG.get('perf_meter'))
+    # The meter's last state, put into the page as it is made (2.7.9): drawn the
+    # moment the page opens, the next reading only brings it up to date.
+    if h.arg('perf') and out['perf_meter'] and \
+            ROLE_RANK.get(s['role'], 0) >= ROLE_RANK['fulladmin']:
+        try:
+            out['perf'] = load_last_state(h.store)
+        except Exception as e:                          # noqa: BLE001
+            log('the meter\'s last state: %s' % e, 'warn')
     return out
 
 

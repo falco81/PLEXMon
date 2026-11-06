@@ -777,8 +777,23 @@ function hloadSeed(list) {
     HLOAD.lastAt = x.at;
   });
 }
+/* The last state the page was made with (plexmon 2.7.9): drawn at once - the
+   graphs, the numbers, the details of a panel - before any question; the
+   next reading only brings it up to date. */
+function hloadFromPage() {
+  var st = typeof STATUS === 'object' && STATUS && STATUS.perf;
+  if (!st || HLOAD.fromPage) return;
+  HLOAD.fromPage = true;
+  if (st.now) HLOAD.skew = Date.now() / 1000 - st.now;
+  if (st.detail) { HLOAD.detail = st.detail; HLOAD.detailAt = 0; }   /* shown at once, asked anew when a panel opens */
+  HLOAD.look = hlPrefs().hload || 'graphs';
+  if (HLOAD.look === 'off') return;
+  if (st.last) hloadDraw(Object.assign({}, st.last, {hist: st.hist || []}));
+  else if ((st.hist || []).length) hloadSeed(st.hist);
+}
 function hloadLoop() {
   if (!$('hload')) return;
+  hloadFromPage();
   clearInterval(HLOAD.timer);
   hloadTick();
   setTimeout(hloadTick, 1200);      /* the first rate needs a second reading */

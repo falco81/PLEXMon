@@ -366,7 +366,7 @@ if (!$me && !pm_local()) {
     $health = ['lang' => (string) ($health['lang'] ?? 'cs'), 'database' => ['ok' => true],
                'users' => 1];
 }
-$initial = $me ? (pm_get('/api/status', 8.0) ?: null) : null;
+$initial = $me ? (pm_get('/api/status?perf=1', 8.0) ?: null) : null;   /* with the meter's last state (2.7.9) */
 $host    = (string) ($_SERVER['HTTP_HOST'] ?? php_uname('n'));
 $site    = (string) ($initial['site'] ?? '');
 $title   = $site !== '' ? $site . ' · plexmon' : 'plexmon';
