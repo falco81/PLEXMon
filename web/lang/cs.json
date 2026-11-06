@@ -9435,6 +9435,10 @@
   "xs1107": {
    "source": "Put away in this browser for a day; Settings → Upgrades still lists it, and it comes back if it is still to do.",
    "text": "Schová se v tomto prohlížeči na den; Nastavení → Upgrady ho dál ukazují, a pokud bude pořád potřeba, vrátí se."
+  },
+  "xs1108": {
+   "source": "Put away in this browser for a day, with the badge of Settings; it comes back if it is still to do (plexmon --tasks lists every task).",
+   "text": "Schová se v tomto prohlížeči na den i s odznakem u Nastavení; pokud bude pořád potřeba, vrátí se (plexmon --tasks vypíše všechny úkoly)."
   }
  },
  "patterns": {
@@ -11909,6 +11913,14 @@
   "xp0235": {
    "source": "{0} says it is done on the server: {1}",
    "text": "{0} říká, že je na serveru hotovo: {1}"
+  },
+  "xp0236": {
+   "source": "1 task for the server - Settings → Upgrades",
+   "text": "1 úkol pro server – Nastavení → Upgrady"
+  },
+  "xp0237": {
+   "source": "{0} tasks for the server - Settings → Upgrades",
+   "text": "úkoly pro server: {0} – Nastavení → Upgrady"
   }
  },
  "rich": {

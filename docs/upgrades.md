@@ -46,15 +46,14 @@ Most of an upgrade is done by root's helper (`install.sh --upgrade`) - from Sett
 too. What it does not do, or must not do by itself - a SELinux policy, the firewall, nginx's own
 file, a restart, a reboot - a version declares as a **task for the server**:
 
-- a band at the top of every page of Settings while one is to do (red when something does not
-  work until it is done), each task with why, what to type on the server as root (with a Copy),
-  and the version that brought it;
-- the whole list, done ones too, in Settings → Upgrades → *Tasks for the server*;
+- a band at the top of Settings → Upgrades while one is to do (red when something does not work
+  until it is done), each task with why, what to type on the server as root (with a Copy), and
+  the version that brought it; the Settings tab and Upgrades in its menu carry a badge with how
+  many there are; *Not now* puts a band away in that browser for a day;
 - the command line: `plexmon` says them first, `plexmon --tasks` lists them (exit 1 while one
   that is needed now is open), an event is written when one comes and when it is done.
 
-A task plexmon can check (nginx adopted, the version on the disk the one running, the upgrade
-helper there) goes away by itself once it is done - looked at every 15 s, or at once with *Check
+A task plexmon can check (the version on the disk the one running, the upgrade helper there) goes away by itself once it is done - looked at every 15 s, or at once with *Check
 again*. One it cannot see from here stays until a full administrator says *Done* (or
 `plexmon --task-done ID`; `--task-undo ID` shows it again).
 

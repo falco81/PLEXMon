@@ -211,16 +211,8 @@ function taskBand(t) {
     };
     acts.appendChild(d);
   }
-  var op = cmdButton('Open it', 'gear', 'small');
-  op.onclick = function () {
-    PANE = 'upgrade';
-    showTab('settings');
-    if (typeof showPane === 'function') showPane('upgrade');
-    setTimeout(function () { var k = $('up-tasks-card'); if (k) k.scrollIntoView({block: 'start', behavior: 'smooth'}); }, 300);
-  };
-  acts.appendChild(op);
   var later = cmdButton('Not now', 'close', 'small');
-  explain(later, 'Put away in this browser for a day; Settings → Upgrades still lists it, and it comes back if it is still to do.');
+  explain(later, 'Put away in this browser for a day, with the badge of Settings; it comes back if it is still to do (plexmon --tasks lists every task).');
   later.onclick = function () { taskSnooze(t.id); tasksDraw(); };
   acts.appendChild(later);
   c.appendChild(acts);
@@ -228,21 +220,36 @@ function taskBand(t) {
 }
 function tasksDraw() {
   var act = TASKS.list.filter(function (t) { return t.active; });
+  var shown = act.filter(function (t) { return !taskSnoozed(t.id); });
   var band = $('tasks');
   if (band) {
     clear(band);
-    var shown = act.filter(function (t) { return !taskSnoozed(t.id); });
     band.hidden = !shown.length;
     band.className = 'tasks-band';
     shown.forEach(function (t) { band.appendChild(taskBand(t)); });
     dressButtons(band);
   }
+  /* Below the bands the rest: in order, done, and those put away for now. */
   var host = $('up-tasks');
   if (host) {
     clear(host);
-    if (!TASKS.list.length) host.appendChild(el('p', 'note good', 'Nothing to do on the server.'));
-    TASKS.list.forEach(function (t) { host.appendChild(taskCard(t, false)); });
+    var rest = TASKS.list.filter(function (t) { return shown.indexOf(t) < 0; });
+    if (!act.length) host.appendChild(el('p', 'note good', 'Nothing to do on the server.'));
+    rest.forEach(function (t) { host.appendChild(taskCard(t, false)); });
   }
+  /* Seen from anywhere (2.8.2): a badge on the Settings tab and on Upgrades in
+     its menu while a task is to do - red when one is needed now. */
+  var crit = shown.some(function (t) { return t.level === 'crit'; });
+  ['.tabs [data-tab="settings"]', '#ctl-nav [data-pane="upgrade"]'].forEach(function (sel) {
+    var b = document.querySelector(sel);
+    if (!b) return;
+    var bd = b.querySelector('.task-badge');
+    if (!shown.length || !ADMIN) { if (bd) bd.remove(); return; }
+    if (!bd) { bd = noI18n(el('span', 'task-badge')); b.appendChild(bd); }
+    bd.className = 'task-badge' + (crit ? ' crit' : '');
+    bd.textContent = String(shown.length);
+    bd.title = shown.length === 1 ? '1 task for the server - Settings → Upgrades' : shown.length + ' tasks for the server - Settings → Upgrades';
+  });
 }
 function paintHeader(s) {
   STATUS = s;

@@ -3448,3 +3448,8 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .task-cmd{display:flex;gap:8px;align-items:flex-start;margin-top:8px}
 .task-cmd pre{flex:1;margin:0;padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:8px;font-size:12.5px;white-space:pre-wrap;overflow-wrap:anywhere}
 .task .btnrow{margin-top:8px;align-items:center;gap:10px}
+/* the badge of tasks for the server (2.8.2): on the Settings tab and on Upgrades */
+.task-badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:7px;border-radius:9px;
+  background:var(--warn);color:#1a1204;font-size:11px;font-weight:800;line-height:1;vertical-align:middle}
+.task-badge.crit{background:var(--crit);color:#fff;box-shadow:0 0 0 3px rgba(248,81,73,.22)}
+#pane-upgrade .tasks-band{margin-bottom:16px}

@@ -4,6 +4,16 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.8.2 - 2026-11-06
+
+- **Tasks for the server are on Settings → Upgrades**, not at the top of every
+  page: a band each at the top of Upgrades while one is to do, and a badge
+  with how many on the Settings tab and on Upgrades in its menu (red when one
+  is needed now). The card listing every task, in order or done, is gone -
+  `plexmon --tasks` lists them.
+- The alerts at the top of the pages stay as they were - and *nginx is not
+  plexmon's yet* is one of them again (2.8.0 had made it a task).
+
 ## 2.8.1 - 2026-11-06
 
 - **Tasks for the server: a band each, as isemon draws its own** - the mark, what

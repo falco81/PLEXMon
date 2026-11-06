@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.8.1'
+__version__ = '2.8.2'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -5908,12 +5908,6 @@ def _login(h):
 # every 15 s, or at once with Check again); one that is said done can be
 # shown again ("Not done after all").
 
-def _task_nginx(store):
-    if not NGINX_SITE.exists():
-        return None
-    return None if nginx_adopted() else '%s does not include plexmon\'s TLS settings yet' % NGINX_SITE
-
-
 def _task_restart(store):
     try:
         text = (LIB_DIR / 'plexmon_admin.py').read_text(errors='replace')
@@ -5938,12 +5932,6 @@ def _selinux_enforcing():
 
 
 SERVER_TASKS = [
-    {'id': 'nginx-adopt', 'since': '2.0.0', 'level': 'warn',
-     'title': 'Let plexmon look after nginx\'s TLS',
-     'why': 'The Plex vhost of nginx does not include plexmon\'s TLS settings yet: a certificate '
-            'can be put in, but the protocols, the ciphers and the answers for ACME cannot.',
-     'commands': ['plexmon --nginx-adopt'],
-     'check': _task_nginx},
     {'id': 'restart', 'since': '2.8.0', 'level': 'crit',
      'title': 'Restart plexmon',
      'why': 'A newer plexmon was put on the disk than the one running - the pages and the '
@@ -8875,8 +8863,10 @@ class Admin(object):
     # ---- what it is doing -----------------------------------------------------
     def status(self):
         problems = []
-        # nginx not plexmon's yet is a task for the server now (2.8.0): the band
-        # of tasks says it, with what to type.
+        if not nginx_adopted():
+            problems.append('%s is not plexmon\'s yet: the certificate can be put in, but its '
+                            'TLS settings and the answers for ACME cannot - install.sh '
+                            '--upgrade adopts it' % NGINX_SITE)
         st = web_status(self.store)
         if st.get('state') == 'failed':
             problems.append('the certificate could not be put in: %s'
@@ -10724,6 +10714,9 @@ def status_now(store):
     if not health:
         problems.append('Settings is not answering on 127.0.0.1:%s - systemctl status %s'
                         % (CONFIG.get('api_port'), SERVICE))
+    if not nginx_adopted():
+        problems.append('%s is not plexmon\'s: its TLS settings and the ACME answers cannot be '
+                        'written (plexmon --nginx-adopt)' % NGINX_SITE)
     st = web_status(store)
     if st.get('state') == 'failed':
         problems.append('the certificate could not be put in: %s' % (st.get('said') or ['?'])[-1])
