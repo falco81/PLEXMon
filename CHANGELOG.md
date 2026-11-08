@@ -4,6 +4,11 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.9.5 - 2026-11-08
+
+- The SELinux report: `processes.txt` was empty (`ps -eZo` is refused by ps) - the domains of
+  plexmon, Plex, nginx, php-fpm and the rest are in it again (`ps -eo label,...`).
+
 ## 2.9.4 - 2026-11-08
 
 - Settings → SELinux in three cards: **SELinux on this server** (the mode, the verdict with

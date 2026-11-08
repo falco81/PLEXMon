@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.9.4'
+__version__ = '2.9.5'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -8145,7 +8145,7 @@ def se_report_bytes():
                 lab.append(_se_out(['ls', '-Za', p], 20, light=False).rstrip())
             lab.append('  policy says: ' + _se_out(['matchpathcon', p], 20, light=False).strip())
     parts['labels.txt'] = '\n'.join(lab) + '\n'
-    ps = _se_out(['ps', '-eZo', 'label,user,pid,comm,args'], 60, light=False)
+    ps = _se_out(['ps', '-eo', 'label,user,pid,comm,args'], 60, light=False)
     parts['processes.txt'] = '\n'.join(x[:200] for x in ps.splitlines() if x.startswith('LABEL') or
                                        any(c in x for c in SE_REPORT_COMMS)) + '\n'
     ports = _se_out(['semanage', 'port', '-l'], 300)
