@@ -604,7 +604,7 @@ selinux_tools() {
     [[ "$PKG" == "dnf" ]] || return 0
     [[ -d /etc/selinux || -x /usr/sbin/getenforce ]] || return 0
     local want=() p
-    for p in policycoreutils libselinux-utils policycoreutils-python-utils audit selinux-policy-targeted; do
+    for p in policycoreutils libselinux-utils policycoreutils-python-utils audit selinux-policy-targeted setools-console; do
         rpm -q "$p" >/dev/null 2>&1 || want+=("$p")
     done
     if (( ${#want[@]} )); then

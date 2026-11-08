@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.9.3'
+__version__ = '2.9.4'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -7687,6 +7687,25 @@ def se_allowed_now(lines):
     return now
 
 
+SE_UNCONFINED_KNOWN = ('unconfined_service_t', 'unconfined_t', 'initrc_t', 'spc_t', 'unconfined_cronjob_t')
+SE_UNCONFINED = {'types': None}
+
+
+def se_unconfined(domain):
+    """Whether the policy loaded here makes a domain unconfined (2.9.4) - seinfo, once a run;
+    without it, the ones RHEL's targeted policy is known to make so (initrc_t among them: Plex's
+    own unit runs it there)."""
+    if SE_UNCONFINED['types'] is None:
+        got = _se_run(['seinfo', '-a', 'unconfined_domain_type', '-x'], 120, light=True)
+        types = set()
+        if got is not None and got.returncode == 0:
+            types = {w.strip() for w in got.stdout.split() if w.strip().endswith('_t')}
+        SE_UNCONFINED['types'] = types
+    if SE_UNCONFINED['types']:
+        return domain in SE_UNCONFINED['types']
+    return True if domain in SE_UNCONFINED_KNOWN else None
+
+
 def se_plex(on, denials):
     """Plex Media Server under SELinux (2.9.2): the domain its processes run in (read from
     /proc), the labels of its program and of its folder on the system's disk, and what was
@@ -7746,7 +7765,8 @@ def se_plex(on, denials):
     bools = [{'name': 'httpd_can_network_connect', 'on': se_bool('httpd_can_network_connect') if on else None,
               'why': 'nginx may connect to Plex on 127.0.0.1:32400 - without it Plex is not reached through nginx'}]
     return {'running': bool(procs),
-            'domains': [{'domain': d, 'procs': sorted(c)[:8]} for d, c in sorted(doms.items())],
+            'domains': [{'domain': d, 'procs': sorted(c)[:8], 'unconfined': se_unconfined(d) if on and d else None}
+                        for d, c in sorted(doms.items())],
             'labels': labels, 'listens': listens, 'booleans': bools, 'data_disks': se_data_mounts(),
             'refused': ((denials or {}).get('parts') or {}).get('plex') or 0}
 

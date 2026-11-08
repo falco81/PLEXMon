@@ -4486,13 +4486,8 @@ function sePlexCard(s, n) {
   var c = el('div', 'card full se-card');
   var h = el('h2', 'se-h');
   h.appendChild(el('span', '', 'Plex Media Server and nginx'));
-  var tl = el('span', 'right se-tools');
-  var look = cmdButton('Look again', 'refresh', 'small');
-  look.disabled = !!n.pending;
-  look.onclick = function () { busy(look, true); seAsk('check').then(function () { busy(look, false); }); };
-  tl.appendChild(look);
-  h.appendChild(tl);
   c.appendChild(h);
+  seWait(c, n, ['plex', 'plex-restart']);
   /* What can be done for Plex here (2.9.3): put in what it and nginx need, and restart Plex -
      in permissive that shows what is refused only when it starts. Enforcing itself is the
      whole system's: the card above. */
@@ -4524,8 +4519,9 @@ function sePlexCard(s, n) {
   var list = el('div', 'se-list');
   if (!x.running) seRow(list, null, 'Plex Media Server does not run now - its domain cannot be read');
   (x.domains || []).forEach(function (dm) {
-    var good = dm.domain === 'unconfined_service_t' || dm.domain === 'unconfined_t' || dm.domain === 'spc_t';
+    /* Unconfined as the policy says it (2.9.4): initrc_t is, on RHEL's targeted policy. */
     var badd = dm.domain === 'init_t' || dm.domain === 'container_t' || dm.domain === 'svirt_lxc_net_t';
+    var good = !badd && dm.unconfined === true;
     seRow(list, good ? true : badd ? false : null,
       good ? 'Plex runs unconfined - SELinux does not restrict what it reads, writes or listens on, the data disks included'
         : dm.domain === 'init_t' ? 'Plex runs as init_t - under enforcing it would be refused nearly everything'
@@ -4565,15 +4561,37 @@ function sePlexCard(s, n) {
   if (row.childNodes.length) c.appendChild(row);
   return c;
 }
+/* Three cards (2.9.4): what is the whole system's on top - the mode, the verdict, the report,
+   the switch to enforcing and back; then plexmon with its own button; then Plex with nginx and
+   its own buttons. */
 function drawSelinux() {
   var host = $('se-host');
   if (!host || !SE.d) return;
   clear(host);
   var n = SE.d, s = n.state || {}, m = s.mode || '';
+  var on = m === 'Enforcing' || m === 'Permissive';
+  host.appendChild(seCommonCard(n, s, m));
+  if (on) {
+    host.appendChild(sePlexmonCard(n, s, m));
+    var pc = sePlexCard(s, n);
+    if (pc) host.appendChild(pc);
+  }
+  dressButtons(host);
+}
+/* The spinner on the card whose button asked (2.9.4): a step of plexmon's on its card, Plex's on
+   Plex's, the rest on top. */
+function seWait(c, n, mine) {
+  if (!n.pending || mine.indexOf(n.pending) < 0) return;
+  var w = el('div', 'se-wait');
+  w.appendChild(el('span', 'spin'));
+  w.appendChild(el('span', '', {plex: 'putting it in…', 'plex-restart': 'restarting Plex Media Server…', check: 'looking…', prepare: 'putting it in…', enforce: 'switching to enforcing…', permissive: 'switching to permissive…', report: 'making the report…'}[n.pending] || 'asked…'));
+  c.appendChild(w);
+}
+function seCommonCard(n, s, m) {
   var c = el('div', 'card full se-card se-' + (m || 'unknown').toLowerCase());
   var h = el('h2', 'se-h');
   var nm = el('span', 'se-name');
-  nm.appendChild(el('span', '', 'This server'));
+  nm.appendChild(el('span', '', 'SELinux on this server'));
   nm.appendChild(noI18n(el('span', 'muted', ' · ' + (n.name || ''))));
   h.appendChild(nm);
   h.appendChild(el('span', 'se-mode', seModeWords(m)));
@@ -4584,7 +4602,7 @@ function drawSelinux() {
   tl.appendChild(look);
   if (m && m !== 'absent') {
     var rep = cmdButton('Download the report', 'download', 'small');
-    explain(rep, 'Everything SELinux says here, in one file - for whoever writes plexmon\'s module. Nothing is changed to make it.');
+    explain(rep, 'Everything SELinux says here, in one file - plexmon, Plex, nginx and the rest of the system. Nothing is changed to make it.');
     rep.disabled = !!n.pending;
     rep.onclick = function () { seReport(rep); };
     tl.appendChild(rep);
@@ -4595,28 +4613,14 @@ function drawSelinux() {
   if (s.config && m !== 'absent' && s.config.toLowerCase() !== (m || '').toLowerCase() && (m !== 'Disabled' || s.relabel_pending))
     c.appendChild(el('p', 'se-next', 'After the next restart of the machine: ' + seModeWords(s.config.charAt(0).toUpperCase() + s.config.slice(1))));
   if (s.relabel_pending) c.appendChild(el('p', 'se-next', 'Every file is labelled at the next start - it takes a long while (up to tens of minutes) and the machine restarts once more by itself before Plex is back. The data disks are left out.'));
-  /* Switched off by selinux=0 alone, the config still saying enforcing (2.9.1): taking selinux=0
-     away there starts SELinux enforcing on files never labelled - Plex does not start. */
   if (s.cmdline_off && /^enforcing$/i.test(s.config || '') && !s.relabel_pending)
     c.appendChild(el('p', 'note bad small', 'Do not take selinux=0 off the kernel\'s command line by hand: the configuration says enforcing and no file is labelled - the machine would start enforcing and Plex would not start. "Make it ready (permissive)" first.'));
-  if (s.cmdline_off) c.appendChild(el('p', 'note bad small', 'The kernel\'s command line has selinux=0 - it stays off whatever the configuration says. Settings → Upgrades says what to type.'));
-  if (n.pending) {
-    var w = el('div', 'se-wait');
-    w.appendChild(el('span', 'spin'));
-    w.appendChild(el('span', '', {plex: 'putting it in…', 'plex-restart': 'restarting Plex Media Server…', check: 'looking…', prepare: 'putting it in…', enforce: 'switching to enforcing…', permissive: 'switching to permissive…', report: 'making the report…'}[n.pending] || 'asked…'));
-    c.appendChild(w);
-  }
-  if (!m) {
-    c.appendChild(el('p', 'muted small', 'Not said yet - looked at within a minute.'));
-    host.appendChild(c);
-    return;
-  }
-  if (m === 'absent') {
-    c.appendChild(el('p', 'note', 'There is no SELinux on this machine - nothing to do.'));
-    host.appendChild(c);
-    return;
-  }
+  else if (s.cmdline_off) c.appendChild(el('p', 'note bad small', 'The kernel\'s command line has selinux=0 - it stays off whatever the configuration says. Settings → Upgrades says what to type.'));
+  seWait(c, n, m === 'Permissive' ? ['check', 'enforce', 'permissive', 'report'] : ['check', 'prepare', 'enforce', 'permissive', 'report']);
+  if (!m) { c.appendChild(el('p', 'muted small', 'Not said yet - looked at within a minute.')); return c; }
+  if (m === 'absent') { c.appendChild(el('p', 'note', 'There is no SELinux on this machine - nothing to do.')); return c; }
   var made = m === 'Disabled' && /^(permissive|enforcing)$/i.test(s.config || '') && !!s.relabel_pending;
+  var probs = s.problems || [];
   if (made) {
     var v = el('div', 'se-verdict ready');
     v.appendChild(el('b', '', 'Made ready - waiting for a restart of the machine'));
@@ -4627,48 +4631,21 @@ function drawSelinux() {
       c.appendChild(el('p', 'note small', 'The configuration says ' + s.config.toLowerCase() + ', but the kernel does not start SELinux.'));
     c.appendChild(el('p', 'note', 'Disabled - plexmon runs as always. Made ready, it comes up permissive at the next restart of the machine: nothing is refused yet, only written down, and plexmon\'s own needs are put in. Enforcing comes after, once nothing was refused.'));
   } else {
-    var list = el('div', 'se-list');
-    seRow(list, s.module === true ? true : s.module === false ? false : null,
-          s.module === false ? 'plexmon\'s module (plexmon_server) is not installed' : 'plexmon\'s module (plexmon_server) installed');
-    if (s.module === true && s.module_newer) seRow(list, false, 'A newer plexmon_server came with this version - "Put in what plexmon needs" puts it into the policy');
-    (s.labels || []).forEach(function (x) {
-      seRow(list, x.ok, x.why, noI18n(el('span', 'mono small se-what', x.path + '  ' + (x.label || '?') + (x.ok ? '' : '  →  ' + x.want))));
-    });
-    (s.booleans || []).forEach(function (x) {
-      seRow(list, x.on, x.why, noI18n(el('span', 'mono small se-what', x.name + ' = ' + (x.on ? 'on' : 'off'))));
-    });
-    (s.ports || []).forEach(function (x) {
-      seRow(list, x.labelled, x.why, noI18n(el('span', 'mono small se-what', x.port + '/' + x.proto + '  ' + x.type)));
-    });
-    var d = s.denials || {}, parts = d.parts || {};
-    /* Every program counts (2.9.2): enforcing is the whole system's. Plex's part is on its own
-       card below; here plexmon with nginx and php-fpm, and every other program. */
-    if (!d.tool) seRow(list, null, 'What SELinux refused cannot be read: ausearch is not on this machine (dnf install audit)');
-    else {
-      var pm = parts.plexmon || 0, ot = parts.other || 0;
-      seRow(list, !pm, pm ? 'Refused to plexmon, nginx, php-fpm and systemd: ' + num(pm) : 'Nothing refused to plexmon, nginx, php-fpm and systemd');
-      seRow(list, !ot, ot ? 'Refused to other programs of the system: ' + num(ot) : 'Nothing refused to the other programs of the system');
-    }
-    if (d.tool && d.settled) seRow(list, true, num(d.settled) + ' refused before, allowed now - by a newer plexmon_server or a boolean put in since; not counted');
-    if (s.auditd === false) seRow(list, false, 'auditd does not run - what SELinux refuses is not written down (systemctl enable --now auditd)');
-    c.appendChild(list);
-    var mine = (d.groups || []).filter(function (g) { return g.part !== 'plex'; });
-    if (mine.length) c.appendChild(seAvc(mine));
-    var probs = s.problems || [];
-    var known = s.module !== false && !s.module_newer && !(s.labels || []).some(function (x) { return x.ok === false; }) &&
-      !(s.booleans || []).some(function (x) { return x.on === false; }) &&
-      !(s.ports || []).some(function (x) { return x.labelled === false; });
-    if (d.total && known) {
-      var hint = el('div', 'se-verdict bad');
-      hint.appendChild(el('b', '', 'plexmon does not know this one yet'));
-      hint.appendChild(el('span', 'small', 'Everything plexmon knows it needs is in place - what was refused is something its module does not cover yet. "Put in what plexmon needs" changes nothing for it: download the report (top right) and send it, so that the module learns it.'));
-      c.appendChild(hint);
-    }
     var verdict = el('div', 'se-verdict ' + (m === 'Enforcing' && !probs.length ? 'good' : s.ready ? 'ready' : probs.length ? 'bad' : ''));
-    verdict.appendChild(el('b', '', m === 'Enforcing' ? (probs.length ? 'Enforcing - but something is not as plexmon needs it' : 'Enforcing - and everything plexmon needs is there')
+    verdict.appendChild(el('b', '', m === 'Enforcing' ? (probs.length ? 'Enforcing - but something is not as plexmon or Plex needs it' : 'Enforcing - and everything plexmon and Plex need is there')
       : s.ready ? 'Ready for enforcing' : 'Not ready for enforcing yet'));
     if (m === 'Permissive' && s.ready) verdict.appendChild(el('span', 'small', 'Before switching: restart the server once more, still permissive (or at least plexmon, nginx, php-fpm and Plex), then look again - what is refused only when a service starts shows up then.'));
-    if (m === 'Permissive' && !s.ready) verdict.appendChild(el('span', 'small', 'Let it run a day or two as the server is used - Plex played in and out of the house, the dashboard, Settings, a certificate renewed, a backup - then look again.'));
+    if (m === 'Permissive' && !s.ready) {
+      var ul = el('ul', 'small se-probs');
+      probs.forEach(function (p) { ul.appendChild(el('li', '', p)); });
+      if (probs.length) verdict.appendChild(ul);
+      verdict.appendChild(el('span', 'small', 'Let it run a day or two as the server is used - Plex played in and out of the house, the dashboard, Settings, a certificate renewed, a backup - then look again.'));
+    }
+    if (m === 'Enforcing' && probs.length) {
+      var ul2 = el('ul', 'small se-probs');
+      probs.forEach(function (p) { ul2.appendChild(el('li', '', p)); });
+      verdict.appendChild(ul2);
+    }
     c.appendChild(verdict);
   }
   if ((s.excluded || []).length) {
@@ -4690,25 +4667,22 @@ function drawSelinux() {
     c.appendChild(la);
   }
   var row = el('div', 'btnrow se-btns');
-  if (ADMIN && ((m === 'Disabled' && !made) || m === 'Permissive')) {
-    var prep = cmdButton(m === 'Disabled' ? 'Make it ready (permissive)' : 'Put in what plexmon needs', 'shield', m === 'Disabled' ? 'primary' : '');
+  if (ADMIN && m === 'Disabled' && !made) {
+    var prep = cmdButton('Make it ready (permissive)', 'shield', 'primary');
     prep.disabled = !!n.pending;
     prep.onclick = function () {
       var disks = (n.data_disks || []).length ? ' The data disks (' + htmlText(n.data_disks.join(', ')) + ') are left out of that labelling - they are not woken or read.' : '';
-      confirmThen(m === 'Disabled' ? 'Make SELinux ready?' : 'Put in what plexmon needs?',
-        m === 'Disabled'
-          ? htmlText('The configuration says permissive and every file is labelled at the next start of the machine; plexmon\'s module goes in. Nothing is refused while permissive - SELinux only writes down what it would refuse. The machine is not restarted now: restart it when it suits.') + disks
-          : htmlText('plexmon\'s module, the labels of its files, the boolean nginx needs to pass Plex on and the ports nginx listens on are put in. Still permissive: nothing is refused.'),
-        m === 'Disabled' ? 'Make it ready' : 'Put it in', function () { seAsk('prepare'); }, false);
+      confirmThen('Make SELinux ready?', htmlText('The configuration says permissive and every file is labelled at the next start of the machine; plexmon\'s module goes in. Nothing is refused while permissive - SELinux only writes down what it would refuse. The machine is not restarted now: restart it when it suits.') + disks,
+        'Make it ready', function () { seAsk('prepare'); }, false);
     };
     row.appendChild(prep);
   }
   if (ADMIN && m === 'Permissive') {
     var enf = cmdButton('Switch to enforcing', 'lock', s.ready ? 'primary' : '');
     enf.disabled = !!n.pending || !s.ready;
-    if (!s.ready) explain(enf, 'Once nothing is missing and nothing was refused.');
+    if (!s.ready) explain(enf, 'Once nothing is missing and nothing was refused - plexmon, Plex and the rest of the system.');
     enf.onclick = function () {
-      confirmThen('Switch to enforcing?', htmlText('From now on SELinux refuses what its policy does not allow - and stays enforcing after a restart. Nothing plexmon needs is missing and nothing was refused. If something stops working - Plex from outside, the dashboard - "Back to permissive" here (or setenforce 0 on the server) undoes it at once.'),
+      confirmThen('Switch to enforcing?', htmlText('From now on SELinux refuses what its policy does not allow - on the whole system, and it stays enforcing after a restart. Nothing plexmon or Plex needs is missing and nothing was refused. If something stops working - Plex from outside, the dashboard - "Back to permissive" here (or setenforce 0 on the server) undoes it at once.'),
         'Switch to enforcing', function () { seAsk('enforce'); }, false);
     };
     row.appendChild(enf);
@@ -4723,10 +4697,60 @@ function drawSelinux() {
     row.appendChild(back);
   }
   if (row.childNodes.length) c.appendChild(row);
-  host.appendChild(c);
-  var pc = sePlexCard(s, n);
-  if (pc) host.appendChild(pc);
-  dressButtons(host);
+  return c;
+}
+function sePlexmonCard(n, s, m) {
+  var c = el('div', 'card full se-card');
+  var h = el('h2', 'se-h');
+  h.appendChild(el('span', '', 'plexmon and the rest of the system'));
+  c.appendChild(h);
+  seWait(c, n, m === 'Permissive' ? ['prepare'] : []);
+  var list = el('div', 'se-list');
+  seRow(list, s.module === true ? true : s.module === false ? false : null,
+        s.module === false ? 'plexmon\'s module (plexmon_server) is not installed' : 'plexmon\'s module (plexmon_server) installed');
+  if (s.module === true && s.module_newer) seRow(list, false, 'A newer plexmon_server came with this version - "Put in what plexmon needs" puts it into the policy');
+  (s.labels || []).forEach(function (x) {
+    seRow(list, x.ok, x.why, noI18n(el('span', 'mono small se-what', x.path + '  ' + (x.label || '?') + (x.ok ? '' : '  →  ' + x.want))));
+  });
+  (s.booleans || []).forEach(function (x) {
+    seRow(list, x.on, x.why, noI18n(el('span', 'mono small se-what', x.name + ' = ' + (x.on ? 'on' : 'off'))));
+  });
+  (s.ports || []).forEach(function (x) {
+    seRow(list, x.labelled, x.why, noI18n(el('span', 'mono small se-what', x.port + '/' + x.proto + '  ' + x.type)));
+  });
+  var d = s.denials || {}, parts = d.parts || {};
+  if (!d.tool) seRow(list, null, 'What SELinux refused cannot be read: ausearch is not on this machine (dnf install audit)');
+  else {
+    var pm = parts.plexmon || 0, ot = parts.other || 0;
+    seRow(list, !pm, pm ? 'Refused to plexmon, nginx, php-fpm and systemd: ' + num(pm) : 'Nothing refused to plexmon, nginx, php-fpm and systemd');
+    seRow(list, !ot, ot ? 'Refused to other programs of the system: ' + num(ot) : 'Nothing refused to the other programs of the system');
+  }
+  if (d.tool && d.settled) seRow(list, true, num(d.settled) + ' refused before, allowed now - by a newer plexmon_server or a boolean put in since; not counted');
+  if (s.auditd === false) seRow(list, false, 'auditd does not run - what SELinux refuses is not written down (systemctl enable --now auditd)');
+  c.appendChild(list);
+  var mine = (d.groups || []).filter(function (g) { return g.part !== 'plex'; });
+  if (mine.length) c.appendChild(seAvc(mine));
+  var known = s.module !== false && !s.module_newer && !(s.labels || []).some(function (x) { return x.ok === false; }) &&
+    !(s.booleans || []).some(function (x) { return x.on === false; }) &&
+    !(s.ports || []).some(function (x) { return x.labelled === false; });
+  if (((parts.plexmon || 0) + (parts.other || 0)) && known) {
+    var hint = el('div', 'se-verdict bad');
+    hint.appendChild(el('b', '', 'plexmon does not know this one yet'));
+    hint.appendChild(el('span', 'small', 'Everything plexmon knows it needs is in place - what was refused is something its module does not cover yet. "Put in what plexmon needs" changes nothing for it: download the report (top right) and send it, so that the module learns it.'));
+    c.appendChild(hint);
+  }
+  if (ADMIN && m === 'Permissive') {
+    var row = el('div', 'btnrow se-btns');
+    var prep = cmdButton('Put in what plexmon needs', 'shield', '');
+    prep.disabled = !!n.pending;
+    prep.onclick = function () {
+      confirmThen('Put in what plexmon needs?', htmlText('plexmon\'s module, the labels of its files, the boolean nginx needs to pass Plex on and the ports nginx listens on are put in. Still permissive: nothing is refused.'),
+        'Put it in', function () { seAsk('prepare'); }, false);
+    };
+    row.appendChild(prep);
+    c.appendChild(row);
+  }
+  return c;
 }
 
 /* ---- Trusted roots of the system (2.9.0, as otp's) -------------------------------------

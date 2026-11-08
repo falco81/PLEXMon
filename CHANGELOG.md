@@ -4,6 +4,17 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.9.4 - 2026-11-08
+
+- Settings → SELinux in three cards: **SELinux on this server** (the mode, the verdict with
+  what is still missing, *Look again*, *Download the report* - one for everything - and the
+  switch to enforcing and back: the whole system's), **plexmon and the rest of the system**
+  (*Put in what plexmon needs*) and **Plex Media Server and nginx** (*Put in what Plex and
+  nginx need*, *Restart Plex Media Server*). The spinner shows on the card whose button asked.
+- Plex's domain is judged by the policy itself (`seinfo -a unconfined_domain_type`): Plex's
+  own unit runs it as `initrc_t`, which RHEL's targeted policy leaves unconfined - shown as
+  such, not as confined. install.sh puts `setools-console` in with the SELinux tools.
+
 ## 2.9.3 - 2026-11-08
 
 - The card **Plex Media Server and nginx** has its own buttons: *Look again*, *Put in what

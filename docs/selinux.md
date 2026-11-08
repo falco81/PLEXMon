@@ -52,7 +52,15 @@ server. It is put in by the installer where SELinux is on and it changed (compar
 *Put in what plexmon needs*; `install.sh --uninstall` takes it out (`semodule -r
 plexmon_server`). The mode, the boolean and the ports are the machine's and stay.
 
-### The card
+### The cards
+
+Three (2.9.4): **SELinux on this server** - the mode, the verdict with what is still missing,
+*Look again*, *Download the report* (one for everything) and the switch to enforcing and back,
+which is the whole system's; **plexmon and the rest of the system** with *Put in what plexmon
+needs*; **Plex Media Server and nginx** with its own buttons. Plex's domain is judged by the
+policy (`seinfo -a unconfined_domain_type`, from `setools-console`): Plex's unit runs it as
+`initrc_t`, unconfined on RHEL's targeted policy.
+
 
 The mode (pill), what it will be after the next restart, whether every file is labelled at the
 next start, `selinux=0` on the kernel's command line; then a line each: the module, every

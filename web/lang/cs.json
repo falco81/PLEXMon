@@ -10183,6 +10183,34 @@
   "xs1294": {
    "source": "nothing was missing for Plex and nginx",
    "text": "Plexu ani nginxu nic nechybělo"
+  },
+  "xs1295": {
+   "source": "SELinux on this server",
+   "text": "SELinux na tomto serveru"
+  },
+  "xs1296": {
+   "source": "plexmon and the rest of the system",
+   "text": "plexmon a zbytek systému"
+  },
+  "xs1297": {
+   "source": "Everything SELinux says here, in one file - plexmon, Plex, nginx and the rest of the system. Nothing is changed to make it.",
+   "text": "Vše, co tu SELinux hlásí, v jednom souboru – plexmon, Plex, nginx i zbytek systému. Nic se při tom nemění."
+  },
+  "xs1298": {
+   "source": "Enforcing - but something is not as plexmon or Plex needs it",
+   "text": "Enforcing – ale něco není tak, jak plexmon nebo Plex potřebují"
+  },
+  "xs1299": {
+   "source": "Enforcing - and everything plexmon and Plex need is there",
+   "text": "Enforcing – a vše, co plexmon a Plex potřebují, je na místě"
+  },
+  "xs1300": {
+   "source": "Once nothing is missing and nothing was refused - plexmon, Plex and the rest of the system.",
+   "text": "Až nic nebude chybět a nic nebude odmítnuto – plexmon, Plex i zbytek systému."
+  },
+  "xs1301": {
+   "source": "From now on SELinux refuses what its policy does not allow - on the whole system, and it stays enforcing after a restart. Nothing plexmon or Plex needs is missing and nothing was refused. If something stops working - Plex from outside, the dashboard - \"Back to permissive\" here (or setenforce 0 on the server) undoes it at once.",
+   "text": "Od teď SELinux odmítá, co jeho politika nedovoluje – na celém systému, a enforcing zůstane i po restartu. Nic, co plexmon nebo Plex potřebují, nechybí a nic nebylo odmítnuto. Když něco přestane fungovat – Plex zvenku, dashboard –, „Zpět na permissive“ tady (nebo setenforce 0 na serveru) to okamžitě vrátí."
   }
  },
  "patterns": {
