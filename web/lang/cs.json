@@ -9495,6 +9495,514 @@
   "xs1122": {
    "source": "Empty this list - what is still to be done stays.",
    "text": "Vyprázdní tento seznam – co je ještě potřeba udělat, zůstává."
+  },
+  "xs1123": {
+   "source": "SELinux on this server: how it is, what plexmon needs of it, and the way to enforcing.",
+   "text": "SELinux na tomto serveru: jak je nastavený, co od něj plexmon potřebuje a cesta k režimu enforcing."
+  },
+  "xs1124": {
+   "source": "What SELinux refuses to nginx, php-fpm and the rest when it is enforcing - and what plexmon needs of it. Nothing changes here unless asked: disabled stays disabled, and plexmon runs as always. The way to enforcing is disabled, permissive (a restart, every file labelled - the data disks left out), a day or two of use, then enforcing once nothing was refused. On the server: plexmon --selinux-check.",
+   "text": "Co SELinux v režimu enforcing zakazuje nginxu, php-fpm a ostatním – a co od něj plexmon potřebuje. Nic se tu nemění, dokud o to nepožádáte: vypnutý zůstává vypnutý a plexmon běží jako vždy. Cesta k enforcing: vypnuto, permissive (restart, označení všech souborů – datové disky se vynechají), den či dva běžného provozu, pak enforcing, jakmile nic nebylo odmítnuto. Na serveru: plexmon --selinux-check."
+  },
+  "xs1125": {
+   "source": "Download the report",
+   "text": "Stáhnout report"
+  },
+  "xs1126": {
+   "source": "Everything SELinux says here, in one file - for whoever writes plexmon's module. Nothing is changed to make it.",
+   "text": "Vše, co tu SELinux hlásí, v jednom souboru – pro toho, kdo píše modul plexmonu. Nic se při tom nemění."
+  },
+  "xs1127": {
+   "source": "enforcing",
+   "text": "enforcing"
+  },
+  "xs1128": {
+   "source": "permissive",
+   "text": "permissive"
+  },
+  "xs1129": {
+   "source": "not on this machine",
+   "text": "na tomto stroji není"
+  },
+  "xs1130": {
+   "source": "Every file is labelled at the next start - it takes a few minutes before the machine answers. The data disks are left out.",
+   "text": "Při příštím startu se označí všechny soubory – chvíli potrvá, než stroj odpoví. Datové disky se vynechají."
+  },
+  "xs1131": {
+   "source": "The kernel's command line has selinux=0 - it stays off whatever the configuration says. Settings → Upgrades says what to type.",
+   "text": "Příkazová řádka jádra obsahuje selinux=0 – SELinux zůstane vypnutý bez ohledu na konfiguraci. Co napsat, najdete v Nastavení → Aktualizace."
+  },
+  "xs1132": {
+   "source": "putting it in…",
+   "text": "nastavuji…"
+  },
+  "xs1133": {
+   "source": "switching to enforcing…",
+   "text": "přepínám na enforcing…"
+  },
+  "xs1134": {
+   "source": "switching to permissive…",
+   "text": "přepínám na permissive…"
+  },
+  "xs1135": {
+   "source": "making the report…",
+   "text": "vytvářím report…"
+  },
+  "xs1136": {
+   "source": "asked…",
+   "text": "požádáno…"
+  },
+  "xs1137": {
+   "source": "Not said yet - looked at within a minute.",
+   "text": "Zatím neznámo – zjistí se do minuty."
+  },
+  "xs1138": {
+   "source": "There is no SELinux on this machine - nothing to do.",
+   "text": "Na tomto stroji SELinux není – není co dělat."
+  },
+  "xs1139": {
+   "source": "Made ready - waiting for a restart of the machine",
+   "text": "Připraveno – čeká se na restart stroje"
+  },
+  "xs1140": {
+   "source": "Restart it when it suits (Settings → Restart and power off). It comes up permissive; then look here again.",
+   "text": "Restartujte ho, až se to bude hodit (Nastavení → Restart a vypnutí). Naběhne v režimu permissive; pak se sem znovu podívejte."
+  },
+  "xs1141": {
+   "source": ", but the kernel does not start SELinux.",
+   "text": ", ale jádro SELinux nespouští."
+  },
+  "xs1142": {
+   "source": "Disabled - plexmon runs as always. Made ready, it comes up permissive at the next restart of the machine: nothing is refused yet, only written down, and plexmon's own needs are put in. Enforcing comes after, once nothing was refused.",
+   "text": "Vypnuto – plexmon běží jako vždy. Po přípravě naběhne při příštím restartu v režimu permissive: zatím se nic neodmítá, jen zapisuje, a doplní se, co potřebuje plexmon. Enforcing přijde potom, až nebude nic odmítnuto."
+  },
+  "xs1143": {
+   "source": "plexmon's module (plexmon_server) is not installed",
+   "text": "modul plexmonu (plexmon_server) není nainstalovaný"
+  },
+  "xs1144": {
+   "source": "plexmon's module (plexmon_server) installed",
+   "text": "modul plexmonu (plexmon_server) je nainstalovaný"
+  },
+  "xs1145": {
+   "source": "the folder of the API token",
+   "text": "složka API tokenu"
+  },
+  "xs1146": {
+   "source": "the API token the pages read",
+   "text": "API token, který čtou stránky"
+  },
+  "xs1147": {
+   "source": "the folder of the dashboard's token",
+   "text": "složka tokenu dashboardu"
+  },
+  "xs1148": {
+   "source": "the token the dashboard reads",
+   "text": "token, který čte dashboard"
+  },
+  "xs1149": {
+   "source": "the dashboard and Settings",
+   "text": "dashboard a Nastavení"
+  },
+  "xs1150": {
+   "source": "the answers for the ACME CA",
+   "text": "odpovědi pro ACME CA"
+  },
+  "xs1151": {
+   "source": "nginx passes Plex on (127.0.0.1:32400) and the pages ask plexmon's daemon",
+   "text": "nginx předává Plex (127.0.0.1:32400) a stránky se ptají daemona plexmonu"
+  },
+  "xs1152": {
+   "source": "What SELinux refused cannot be read: ausearch is not on this machine (dnf install audit)",
+   "text": "Co SELinux odmítl, nejde přečíst: na stroji chybí ausearch (dnf install audit)"
+  },
+  "xs1153": {
+   "source": "Nothing refused since plexmon's needs were put in",
+   "text": "Od doplnění potřeb plexmonu nic odmítnuto"
+  },
+  "xs1154": {
+   "source": "Nothing refused since the machine started",
+   "text": "Od startu stroje nic odmítnuto"
+  },
+  "xs1155": {
+   "source": "auditd does not run - what SELinux refuses is not written down (systemctl enable --now auditd)",
+   "text": "auditd neběží – co SELinux odmítne, se nikam nezapisuje (systemctl enable --now auditd)"
+  },
+  "xs1156": {
+   "source": "plexmon does not know this one yet",
+   "text": "Tohle plexmon zatím nezná"
+  },
+  "xs1157": {
+   "source": "Everything plexmon knows it needs is in place - what was refused is something its module does not cover yet. \"Put in what plexmon needs\" changes nothing for it: download the report (top right) and send it, so that the module learns it.",
+   "text": "Vše, o čem plexmon ví, že potřebuje, je na místě – odmítnuté je něco, co jeho modul zatím nepokrývá. „Doplnit, co plexmon potřebuje“ na tom nic nezmění: stáhněte report (vpravo nahoře) a pošlete ho, aby se to modul naučil."
+  },
+  "xs1158": {
+   "source": "Enforcing - but something is not as plexmon needs it",
+   "text": "Enforcing – ale něco není tak, jak plexmon potřebuje"
+  },
+  "xs1159": {
+   "source": "Enforcing - and everything plexmon needs is there",
+   "text": "Enforcing – a vše, co plexmon potřebuje, je na místě"
+  },
+  "xs1160": {
+   "source": "Ready for enforcing",
+   "text": "Připraveno na enforcing"
+  },
+  "xs1161": {
+   "source": "Not ready for enforcing yet",
+   "text": "Na enforcing zatím není připraveno"
+  },
+  "xs1162": {
+   "source": "Let it run a day or two as the server is used - Plex played in and out of the house, the dashboard, Settings, a certificate renewed, a backup - then look again.",
+   "text": "Nechte ho den či dva běžet při běžném používání – Plex doma i zvenku, dashboard, Nastavení, obnova certifikátu, záloha – a pak se podívejte znovu."
+  },
+  "xs1163": {
+   "source": "Left out of the relabelling (the data disks):",
+   "text": "Vynecháno z označování (datové disky):"
+  },
+  "xs1164": {
+   "source": "Looked at",
+   "text": "Zjištěno"
+  },
+  "xs1165": {
+   "source": "Make it ready (permissive)",
+   "text": "Připravit (permissive)"
+  },
+  "xs1166": {
+   "source": "Put in what plexmon needs",
+   "text": "Doplnit, co plexmon potřebuje"
+  },
+  "xs1167": {
+   "source": "Switch to enforcing",
+   "text": "Přepnout na enforcing"
+  },
+  "xs1168": {
+   "source": "Back to permissive",
+   "text": "Zpět na permissive"
+  },
+  "xs1169": {
+   "source": "Make SELinux ready?",
+   "text": "Připravit SELinux?"
+  },
+  "xs1170": {
+   "source": "Put in what plexmon needs?",
+   "text": "Doplnit, co plexmon potřebuje?"
+  },
+  "xs1171": {
+   "source": "Switch to enforcing?",
+   "text": "Přepnout na enforcing?"
+  },
+  "xs1172": {
+   "source": "Back to permissive?",
+   "text": "Zpět na permissive?"
+  },
+  "xs1173": {
+   "source": "Make it ready",
+   "text": "Připravit"
+  },
+  "xs1174": {
+   "source": "The configuration says permissive and every file is labelled at the next start of the machine; plexmon's module goes in. Nothing is refused while permissive - SELinux only writes down what it would refuse. The machine is not restarted now: restart it when it suits.",
+   "text": "Konfigurace se přepne na permissive a při příštím startu stroje se označí všechny soubory; nainstaluje se modul plexmonu. V režimu permissive se nic neodmítá – SELinux jen zapisuje, co by odmítl. Stroj se teď nerestartuje: restartujte ho, až se to bude hodit."
+  },
+  "xs1175": {
+   "source": "plexmon's module, the labels of its files, the boolean nginx needs to pass Plex on and the ports nginx listens on are put in. Still permissive: nothing is refused.",
+   "text": "Doplní se modul plexmonu, označení jeho souborů, boolean, který nginx potřebuje k předávání Plexu, a porty, na kterých nginx poslouchá. Pořád permissive: nic se neodmítá."
+  },
+  "xs1176": {
+   "source": "From now on SELinux refuses what its policy does not allow - and stays enforcing after a restart. Nothing plexmon needs is missing and nothing was refused. If something stops working - Plex from outside, the dashboard - \"Back to permissive\" here (or setenforce 0 on the server) undoes it at once.",
+   "text": "Od teď SELinux odmítá, co jeho politika nedovoluje – a enforcing zůstane i po restartu. Nic, co plexmon potřebuje, nechybí a nic nebylo odmítnuto. Když něco přestane fungovat – Plex zvenku, dashboard –, „Zpět na permissive“ tady (nebo setenforce 0 na serveru) to okamžitě vrátí."
+  },
+  "xs1177": {
+   "source": "SELinux no longer refuses anything - it only writes down what it would refuse - now and after a restart.",
+   "text": "SELinux už nic neodmítá – jen zapisuje, co by odmítl – teď i po restartu."
+  },
+  "xs1178": {
+   "source": "Once nothing is missing and nothing was refused.",
+   "text": "Až nic nebude chybět a nic nebude odmítnuto."
+  },
+  "xs1179": {
+   "source": "Downloaded. Look through avc*.txt in it before sending it on: the audit log holds the command lines of the programs SELinux refused something to.",
+   "text": "Staženo. Než ho pošlete dál, projděte v něm avc*.txt: auditní log obsahuje příkazové řádky programů, kterým SELinux něco odmítl."
+  },
+  "xs1180": {
+   "source": "the report was not made in four minutes",
+   "text": "report se za čtyři minuty nevytvořil"
+  },
+  "xs1181": {
+   "source": "asked: looked at within seconds",
+   "text": "požádáno: zjistí se během pár sekund"
+  },
+  "xs1182": {
+   "source": "asked: done within seconds",
+   "text": "požádáno: hotovo během pár sekund"
+  },
+  "xs1183": {
+   "source": "asked: SELinux switches to enforcing within seconds",
+   "text": "požádáno: SELinux se během pár sekund přepne na enforcing"
+  },
+  "xs1184": {
+   "source": "asked: SELinux switches to permissive within seconds",
+   "text": "požádáno: SELinux se během pár sekund přepne na permissive"
+  },
+  "xs1185": {
+   "source": "asked: the report is made within a minute",
+   "text": "požádáno: report bude do minuty"
+  },
+  "xs1186": {
+   "source": "no report made in the last hour - make one first",
+   "text": "za poslední hodinu se žádný report nevytvořil – nejdřív ho vytvořte"
+  },
+  "xs1187": {
+   "source": "the report is gone - make it again",
+   "text": "report už tu není – vytvořte ho znovu"
+  },
+  "xs1188": {
+   "source": "the files are labelled at the next start of the machine",
+   "text": "soubory se označí při příštím startu stroje"
+  },
+  "xs1189": {
+   "source": "plexmon's module installed",
+   "text": "modul plexmonu nainstalován"
+  },
+  "xs1190": {
+   "source": "httpd_can_network_connect on",
+   "text": "httpd_can_network_connect zapnut"
+  },
+  "xs1191": {
+   "source": "plexmon's files labelled again",
+   "text": "soubory plexmonu znovu označeny"
+  },
+  "xs1192": {
+   "source": "SELinux is enforcing, and stays so after a restart",
+   "text": "SELinux je v režimu enforcing a zůstane tak i po restartu"
+  },
+  "xs1193": {
+   "source": "SELinux is permissive, and stays so after a restart",
+   "text": "SELinux je v režimu permissive a zůstane tak i po restartu"
+  },
+  "xs1194": {
+   "source": "restart the machine when it suits - it comes up permissive: nothing is refused yet, what would be is written down",
+   "text": "restartujte stroj, až se to bude hodit – naběhne v režimu permissive: zatím se nic neodmítá, jen se zapisuje, co by se odmítlo"
+  },
+  "xs1195": {
+   "source": "the kernel's command line has selinux=0 - take it away as root: grubby --update-kernel ALL --remove-args selinux",
+   "text": "příkazová řádka jádra obsahuje selinux=0 – odstraňte ho jako root: grubby --update-kernel ALL --remove-args selinux"
+  },
+  "xs1196": {
+   "source": "there is no SELinux on this machine",
+   "text": "na tomto stroji SELinux není"
+  },
+  "xs1197": {
+   "source": "SELinux is enforcing already",
+   "text": "SELinux už je v režimu enforcing"
+  },
+  "xs1198": {
+   "source": "SELinux is disabled - \"Make it ready\" makes it permissive",
+   "text": "SELinux je vypnutý – „Připravit“ ho přepne na permissive"
+  },
+  "xs1199": {
+   "source": "ausearch is not on this machine - what SELinux refused cannot be read (dnf install audit)",
+   "text": "na stroji chybí ausearch – co SELinux odmítl, nejde přečíst (dnf install audit)"
+  },
+  "xs1200": {
+   "source": "semanage is not on this machine - the ports cannot be checked (dnf install policycoreutils-python-utils)",
+   "text": "na stroji chybí semanage – porty nejde ověřit (dnf install policycoreutils-python-utils)"
+  },
+  "xs1201": {
+   "source": "Let the kernel start SELinux",
+   "text": "Nechte jádro spustit SELinux"
+  },
+  "xs1202": {
+   "source": "SELinux was made ready, but the kernel's command line has selinux=0 - it stays off whatever /etc/selinux/config says. Restart the machine afterwards.",
+   "text": "SELinux je připravený, ale příkazová řádka jádra obsahuje selinux=0 – zůstane vypnutý bez ohledu na /etc/selinux/config. Potom stroj restartujte."
+  },
+  "xs1203": {
+   "source": "Trusted roots of the system",
+   "text": "Důvěryhodné kořenové CA systému"
+  },
+  "xs1204": {
+   "source": "Certificate authorities of your own - your company's root, an intermediate - trusted by the operating system of this server as a whole: curl, dnf, mail, LDAPS, plexmon's own connections - every program that uses the system's trust. The distribution's own list stays as it is and keeps coming with the system's updates; these are added beside it, the way the system itself takes local additions (update-ca-trust on RHEL, AlmaLinux and Rocky, update-ca-certificates on Debian and Ubuntu), and stay there through those updates. Plex Media Server keeps a list of its own and is not touched.",
+   "text": "Vlastní certifikační autority – kořenová CA vaší firmy, mezilehlá CA – kterým důvěřuje celý operační systém tohoto serveru: curl, dnf, pošta, LDAPS, vlastní spojení plexmonu – každý program, který používá důvěru systému. Seznam distribuce zůstává, jak je, a dál přichází s aktualizacemi systému; tyto se přidávají vedle něj, tak jak systém sám přijímá místní doplňky (update-ca-trust na RHEL, AlmaLinuxu a Rocky, update-ca-certificates na Debianu a Ubuntu), a zůstávají tam i přes ty aktualizace. Plex Media Server má vlastní seznam a nic z toho se ho netýká."
+  },
+  "xs1205": {
+   "source": "Add an authority",
+   "text": "Přidat autoritu"
+  },
+  "xs1206": {
+   "source": "A root or an intermediate certificate authority of your own - pasted as PEM, or a .pem, .crt or .cer file; a file with a chain adds each authority in it.",
+   "text": "Vlastní kořenová nebo mezilehlá certifikační autorita – vložená jako PEM, nebo soubor .pem, .crt či .cer; soubor s řetězem přidá každou autoritu v něm."
+  },
+  "xs1207": {
+   "source": "as wanted",
+   "text": "jak má být"
+  },
+  "xs1208": {
+   "source": "nothing added by plexmon",
+   "text": "plexmon nic nepřidal"
+  },
+  "xs1209": {
+   "source": "plexmon has added none - the server trusts its system's own list alone.",
+   "text": "plexmon žádnou nepřidal – server důvěřuje jen vlastnímu seznamu systému."
+  },
+  "xs1210": {
+   "source": "Authority",
+   "text": "Autorita"
+  },
+  "xs1211": {
+   "source": "Valid",
+   "text": "Platnost"
+  },
+  "xs1212": {
+   "source": "In the system's list",
+   "text": "V seznamu systému"
+  },
+  "xs1215": {
+   "source": "Download it (PEM)",
+   "text": "Stáhnout (PEM)"
+  },
+  "xs1216": {
+   "source": "Take it out of the system's trust",
+   "text": "Odebrat z důvěry systému"
+  },
+  "xs1217": {
+   "source": "plexmon's own connections (ACME, upgrades, the rating databases, backups) use the system's list too - what is added here reaches them at their next connection.",
+   "text": "Vlastní spojení plexmonu (ACME, aktualizace, databáze hodnocení, zálohy) používají seznam systému taky – co se tu přidá, platí pro ně od příštího spojení."
+  },
+  "xs1218": {
+   "source": "plexmon's own connections do not use the system's list here - what is added here does not reach them.",
+   "text": "Vlastní spojení plexmonu tu seznam systému nepoužívají – co se tu přidá, se jich netýká."
+  },
+  "xs1219": {
+   "source": "The system's own list",
+   "text": "Vlastní seznam systému"
+  },
+  "xs1220": {
+   "source": "Its package",
+   "text": "Jeho balíček"
+  },
+  "xs1221": {
+   "source": "Made last",
+   "text": "Naposledy vytvořen"
+  },
+  "xs1222": {
+   "source": "Local additions in",
+   "text": "Místní doplňky v"
+  },
+  "xs1223": {
+   "source": "Made by",
+   "text": "Vytváří"
+  },
+  "xs1224": {
+   "source": "plexmon's additions there",
+   "text": "Doplňky plexmonu tam"
+  },
+  "xs1225": {
+   "source": " (not on this machine)",
+   "text": " (na tomto stroji není)"
+  },
+  "xs1226": {
+   "source": "Added by somebody else - plexmon leaves them as they are:",
+   "text": "Přidal někdo jiný – plexmon je nechává, jak jsou:"
+  },
+  "xs1227": {
+   "source": "not an authority",
+   "text": "není autorita"
+  },
+  "xs1228": {
+   "source": " - a link",
+   "text": " – odkaz"
+  },
+  "xs1229": {
+   "source": " - no certificate read",
+   "text": " – žádný certifikát nenačten"
+  },
+  "xs1230": {
+   "source": "Add to the system's trust",
+   "text": "Přidat do důvěry systému"
+  },
+  "xs1231": {
+   "source": "A certificate authority of your own - a root, or an intermediate - as PEM (<code>-----BEGIN CERTIFICATE-----</code>), or a <code>.pem</code>, <code>.crt</code> or <code>.cer</code> file. A chain adds every authority in it. Only authorities are taken (CA:TRUE), never a private key.",
+   "text": "Vlastní certifikační autorita – kořenová nebo mezilehlá – jako PEM (<code>-----BEGIN CERTIFICATE-----</code>), nebo soubor <code>.pem</code>, <code>.crt</code> či <code>.cer</code>. Řetěz přidá každou autoritu v něm. Berou se jen autority (CA:TRUE), nikdy soukromý klíč."
+  },
+  "xs1232": {
+   "source": "Every program of this server trusts what they sign from then on.",
+   "text": "Od té chvíle každý program tohoto serveru důvěřuje tomu, co podepíšou."
+  },
+  "xs1233": {
+   "source": "Read a file…",
+   "text": "Načíst soubor…"
+  },
+  "xs1234": {
+   "source": "Add them",
+   "text": "Přidat"
+  },
+  "xs1235": {
+   "source": "that file is far bigger than certificates are",
+   "text": "ten soubor je na certifikáty příliš velký"
+  },
+  "xs1236": {
+   "source": "there already",
+   "text": "už je tam"
+  },
+  "xs1237": {
+   "source": "asked: read again within seconds",
+   "text": "požádáno: načte se znovu během pár sekund"
+  },
+  "xs1238": {
+   "source": "taken away - out of the system's trust within seconds",
+   "text": "odebráno – z důvěry systému zmizí během pár sekund"
+  },
+  "xs1239": {
+   "source": "nothing added: every certificate in it is there already",
+   "text": "nic nepřidáno: všechny certifikáty v tom už tam jsou"
+  },
+  "xs1240": {
+   "source": "it is not a certificate authority (CA:FALSE) - a server's own certificate does not go here",
+   "text": "není to certifikační autorita (CA:FALSE) – vlastní certifikát serveru sem nepatří"
+  },
+  "xs1241": {
+   "source": "it says nothing of being an authority (no basicConstraints CA:TRUE) - only a certificate authority goes here",
+   "text": "neuvádí, že je autorita (chybí basicConstraints CA:TRUE) – sem patří jen certifikační autorita"
+  },
+  "xs1242": {
+   "source": "its key usage does not let it sign certificates (no keyCertSign)",
+   "text": "jeho použití klíče nedovoluje podepisovat certifikáty (chybí keyCertSign)"
+  },
+  "xs1243": {
+   "source": "no private key and nothing but certificates (-----BEGIN CERTIFICATE-----)",
+   "text": "žádný soukromý klíč a nic než certifikáty (-----BEGIN CERTIFICATE-----)"
+  },
+  "xs1244": {
+   "source": "no certificate in it (-----BEGIN CERTIFICATE-----)",
+   "text": "není v tom žádný certifikát (-----BEGIN CERTIFICATE-----)"
+  },
+  "xs1245": {
+   "source": "the certificates: PEM text, or a file",
+   "text": "certifikáty: text PEM, nebo soubor"
+  },
+  "xs1246": {
+   "source": "the SHA-256 fingerprint - 12 characters of it at least",
+   "text": "otisk SHA-256 – aspoň 12 znaků"
+  },
+  "xs1247": {
+   "source": "plexmon has added no certificate with that fingerprint",
+   "text": "plexmon nepřidal žádný certifikát s tímto otiskem"
+  },
+  "xs1248": {
+   "source": "an intermediate without its root here: programs that take a partial chain (curl, Python 3.13 on) trust it by itself, others want its root too - add the root as well, unless the system's list has it",
+   "text": "mezilehlá CA bez své kořenové: programy, které berou částečný řetěz (curl, Python 3.13 a novější), jí důvěřují samotné, ostatní chtějí i kořenovou – přidejte i ji, pokud ji seznam systému nemá"
+  },
+  "xs1249": {
+   "source": "its root is not among these - trusted by itself only where a partial chain is taken (curl, Python 3.13 on), unless the system's list has the root",
+   "text": "její kořenová CA mezi nimi není – sama o sobě je důvěryhodná jen tam, kde se bere částečný řetěz (curl, Python 3.13 a novější), pokud kořenovou nemá seznam systému"
+  },
+  "xs1213": {
+   "source": "root CA",
+   "text": "kořenová CA"
+  },
+  "xs1214": {
+   "source": "intermediate CA",
+   "text": "mezilehlá CA"
   }
  },
  "patterns": {
@@ -11981,6 +12489,82 @@
   "xp0238": {
    "source": "done lately cleared ({0})",
    "text": "nedávno hotové vymazáno ({0})"
+  },
+  "xp0239": {
+   "source": "After the next restart of the machine: {0}",
+   "text": "Po příštím restartu stroje: {0}"
+  },
+  "xp0240": {
+   "source": "The configuration says {0}, but the kernel does not start SELinux.",
+   "text": "Konfigurace říká {0}, ale jádro SELinux nespouští."
+  },
+  "xp0241": {
+   "source": "SELinux refused {0} thing(s) since plexmon's needs were put in",
+   "text": "SELinux od doplnění potřeb plexmonu odmítl {0}×"
+  },
+  "xp0242": {
+   "source": "SELinux refused {0} thing(s) since the machine started",
+   "text": "SELinux od startu stroje odmítl {0}×"
+  },
+  "xp0243": {
+   "source": "{0} refused before, allowed now - by a newer plexmon_server or a boolean put in since; not counted",
+   "text": "{0}× odmítnuto dřív, teď povoleno – novějším plexmon_server nebo booleanem; nepočítá se"
+  },
+  "xp0244": {
+   "source": "What was refused ({0})",
+   "text": "Co bylo odmítnuto ({0})"
+  },
+  "xp0245": {
+   "source": "{0} authorities",
+   "text": "{0} autorit"
+  },
+  "xp0246": {
+   "source": " The data disks ({0}) are left out of that labelling - they are not woken or read.",
+   "text": " Datové disky ({0}) se z toho označování vynechají – neprobudí se ani nečtou."
+  },
+  "xp0247": {
+   "source": "not yet: {0}",
+   "text": "zatím ne: {0}"
+  },
+  "xp0248": {
+   "source": "added {0} - the system trusts {1} within seconds",
+   "text": "přidáno: {0} – systém {1} bude důvěřovat během pár sekund"
+  },
+  "xp0249": {
+   "source": "left out of the relabelling ({0}): {1}",
+   "text": "vynecháno z označování ({0}): {1}"
+  },
+  "xp0250": {
+   "source": "{0}: SELINUX=permissive",
+   "text": "{0}: SELINUX=permissive"
+  },
+  "xp0251": {
+   "source": "port {0}/{1} labelled {2}",
+   "text": "port {0}/{1} označen {2}"
+  },
+  "xp0252": {
+   "source": "the boolean {0} is off ({1})",
+   "text": "boolean {0} je vypnutý ({1})"
+  },
+  "xp0253": {
+   "source": "{0} is labelled {1}, not {2} ({3})",
+   "text": "{0} má označení {1}, ne {2} ({3})"
+  },
+  "xp0254": {
+   "source": "port {0}/{1} is not labelled {2} ({3})",
+   "text": "port {0}/{1} nemá označení {2} ({3})"
+  },
+  "xp0255": {
+   "source": "the kernel's command line has selinux=0 - SELinux stays off whatever {0} says",
+   "text": "příkazová řádka jádra obsahuje selinux=0 – SELinux zůstane vypnutý bez ohledu na {0}"
+  },
+  "xp0256": {
+   "source": "SELinux: {0}",
+   "text": "SELinux: {0}"
+  },
+  "xp0257": {
+   "source": "nginx listens on it ({0})",
+   "text": "nginx na něm poslouchá ({0})"
   }
  },
  "rich": {

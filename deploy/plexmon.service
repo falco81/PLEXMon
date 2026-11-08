@@ -31,6 +31,11 @@ ProtectSystem=full
 ReadWritePaths=/var/www/html/smart /var/lib/plex-status /run/plex-status
 ReadWritePaths=/var/lib/plexmon /var/log/plexmon /etc/plexmon /etc/nginx /var/www/plexmon-acme
 ReadWritePaths=-/var/lib/plexmediaserver /etc/profile.d -/etc/chrony.conf -/etc/localtime
+# Settings -> SELinux and the system's trusted roots (2.9.0): only when asked there - the
+# policy's store and /etc/selinux/config; the folder of local certificate authorities and the
+# lists the system's own tool (update-ca-trust, update-ca-certificates) makes from it.
+ReadWritePaths=-/etc/selinux -/var/lib/selinux -/etc/pki/ca-trust -/etc/pki/java
+ReadWritePaths=-/usr/local/share/ca-certificates -/etc/ssl/certs -/etc/ca-certificates
 RuntimeDirectory=plex-status plexmon
 # The small posters of Settings → Plex library (400 MB at most).
 CacheDirectory=plexmon

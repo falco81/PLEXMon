@@ -27,8 +27,9 @@ the same behaviour - narrowed to what a Plex server needs:
 | | |
 |---|---|
 | Accounts | full administrator / read-only, passwords, disabling, who is signed in, who is locked out, the second sign-in step (authenticator app), the table columns of each account, export / import of its own settings |
-| Certificates and TLS | the certificate the Plex address answers with (nginx): upload of PEM and PFX / PKCS#12, a request (CSR) made here, self-signed; protocols, ciphers, DH, HSTS; all through `nginx -t`, on a refusal the original state comes back. On top of that for Plex: **Plex Media Server uses this certificate too** (Plex's own certificate, PKCS#12 in Preferences.xml). **Certificates from acme** (acme push, off by default): an acme certificate manager pairs once and pushes and renews the certificate by itself ([docs/acme-push.md](docs/acme-push.md)) |
+| Certificates and TLS | the certificate the Plex address answers with (nginx): upload of PEM and PFX / PKCS#12, a request (CSR) made here, self-signed; protocols, ciphers, DH, HSTS; all through `nginx -t`, on a refusal the original state comes back. On top of that for Plex: **Plex Media Server uses this certificate too** (Plex's own certificate, PKCS#12 in Preferences.xml). **Certificates from acme** (acme push, off by default): an acme certificate manager pairs once and pushes and renews the certificate by itself ([docs/acme-push.md](docs/acme-push.md)). **Trusted roots of the system**: certificate authorities of your own trusted by the whole operating system, beside the distribution's list ([docs/selinux.md](docs/selinux.md)) |
 | Automatic certificates | Let's Encrypt or another ACME CA, HTTP-01 and DNS-01 (deSEC, Cloudflare, RFC 2136, acme-dns, by hand), renewal by itself, *In your DNS*, *Try port 80*, *Back to the one before* |
+| SELinux | how SELinux is on the server, what plexmon needs of it, the way from disabled through permissive to enforcing - the data disks never relabelled, enforcing only once nothing was refused; a report for whoever writes the module ([docs/selinux.md](docs/selinux.md)) |
 | Upgrades | a new version from the web in one click (it looks into `release/` of this repository daily) or from a file; Ed25519 signature, every file verified; back to an older version (only a safe one) |
 | About | the version, what it runs on, the language of the pages (Czech / English - `lang/*.json`, editable), the console after root signs in, the debug log |
 | Events | every sign-in, change, certificate, upgrade |
@@ -58,6 +59,8 @@ plexmon --set passkeys=1 && plexmon --passkeys   sign-in with Face ID / Touch ID
 plexmon --acme-order             order a certificate now, follow the progress
 plexmon --plex-cert on           Plex Media Server gets the certificate too
 plexmon --upgrade-online         the newest version: download, verify, put in
+plexmon --selinux-check          SELinux: the mode, what plexmon needs, what it refused
+plexmon --os-roots-add ca.pem     a certificate authority of your own into the system's trust
 plexmon --plex-tracks "Breaking Bad" --audio eng --subs cze   default tracks of a whole series
 plexmon --help                   everything
 ```
@@ -80,5 +83,6 @@ newest one is unpacked in the root of this repository.
 - [docs/settings.md](docs/settings.md) - Settings: accounts, certificates, Plex, languages
 - [docs/acme.md](docs/acme.md) - automatic certificates (HTTP-01 and DNS-01)
 - [docs/upgrades.md](docs/upgrades.md) - upgrades from the web, signature, going back, releasing a version
+- [docs/selinux.md](docs/selinux.md) - SELinux and the system's trusted roots
 - [docs/console.md](docs/console.md) - the console
 - [CONFIG.md](CONFIG.md) - dashboard settings (`/etc/plex-status/config.json`)

@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.8.4'
+__version__ = '2.9.0'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -5944,6 +5944,14 @@ SERVER_TASKS = [
             'Settings → Upgrades cannot do it.',
      'commands': ['cd <the unpacked plexmon package>', './install.sh --upgrade'],
      'check': _task_upgrade_helper},
+    # SELinux asked for (Settings -> SELinux), the kernel started with selinux=0 (2.9.0):
+    # /boot is the system's, not plexmon's to change - root takes it off.
+    {'id': 'selinux-cmdline', 'since': '2.9.0', 'level': 'warn',
+     'title': 'Let the kernel start SELinux',
+     'why': 'SELinux was made ready, but the kernel\'s command line has selinux=0 - it stays off '
+            'whatever /etc/selinux/config says. Restart the machine afterwards.',
+     'commands': ['grubby --update-kernel ALL --remove-args selinux'],
+     'check': lambda store: selinux_cmdline_task(store)},
     # How a later version asks for a step nobody can see from here - kept as an
     # example, `when` never true:
     # {'id': 'selinux-x.y.z', 'since': 'x.y.z', 'level': 'crit',
@@ -7362,6 +7370,1627 @@ def _prefs(h):
                 raise ApiError(400, 'no such look here')
     h.store.set_account(acc['name'], prefs=json.dumps(prefs))
     return {'prefs': prefs}
+
+
+# ---- SELinux (2.9.0, as otp 1.0.265) ---------------------------------------------------
+#
+# Settings → SELinux: how SELinux is on this server, what plexmon needs of it, and the steps
+# to enforcing - disabled → permissive (a restart) → let it run → enforcing. Nothing changes
+# unless somebody asks: a machine with SELinux disabled stays so, and plexmon runs as always.
+#
+# plexmon itself runs unconfined (a service from /usr/local); what needs care are the confined
+# programs around it - nginx and php-fpm (httpd_t), which pass Plex on and serve the pages:
+#   /run/plexmon, /run/plex-status   the API token the pages read - plexmon_server.cil labels
+#                                    them httpd_var_run_t (systemd makes them var_run_t)
+#   httpd_can_network_connect        nginx passes Plex on (127.0.0.1:32400) and the pages ask
+#                                    plexmon's daemon - without it Plex is not reached at all
+#   the ports nginx listens on       http_port_t (80, 443, 8443 ... are already)
+#   /var/www/html/smart, /var/www/plexmon-acme   the policy's own labels - restorecon
+# The daemon is root: it does every step itself (no helper), at the lowest priority.
+#
+# Never wakes a disk: everything it reads is on the system's disk (the policy, the audit log,
+# plexmon's own files); and when it makes SELinux ready from disabled, the data disks are put
+# into /etc/selinux/fixfiles_exclude_dirs first - the relabelling at the next start would
+# otherwise read every file on them.
+SE_CONFIG = os.environ.get('PLEXMON_SELINUX_CONFIG', '/etc/selinux/config')
+SE_RELABEL = os.environ.get('PLEXMON_SELINUX_RELABEL', '/.autorelabel')
+SE_CMDLINE = os.environ.get('PLEXMON_SELINUX_CMDLINE', '/proc/cmdline')
+SE_EXCLUDE = os.environ.get('PLEXMON_SELINUX_EXCLUDE', '/etc/selinux/fixfiles_exclude_dirs')
+SE_MOUNTS = os.environ.get('PLEXMON_SELINUX_MOUNTS', '/proc/mounts')
+SE_MODULE = 'plexmon_server'
+SE_CIL = os.environ.get('PLEXMON_SELINUX_CIL', str(LIB_DIR / 'plexmon_server.cil'))
+SE_APPLIED = STATE_DIR / 'selinux-applied'      # root's alone (/var/lib/plexmon is 0700)
+SE_REPORT = STATE_DIR / 'selinux-report.tar.gz'
+SE_LABELS = (('/run/plexmon', 'httpd_var_run_t', 'the folder of the API token'),
+             ('/run/plexmon/api-token', 'httpd_var_run_t', 'the API token the pages read'),
+             ('/run/plex-status', 'httpd_var_run_t', 'the folder of the dashboard\'s token'),
+             ('/run/plex-status/api-token', 'httpd_var_run_t', 'the token the dashboard reads'),
+             (str(WEB_ROOT), 'httpd_sys_content_t', 'the dashboard and Settings'),
+             ('/var/www/plexmon-acme', 'httpd_sys_content_t', 'the answers for the ACME CA'))
+SE_SAME = {'httpd_var_run_t': ('httpd_var_run_t', 'httpd_runtime_t')}
+SE_BOOLEANS = ('httpd_can_network_connect',)
+SE_PORT_TYPES = ('http_port_t',)
+# The programs whose refusals are plexmon's business - and every line that names Plex.
+SE_DOMAINS = ('httpd_t', 'init_t', 'chronyd_t', 'logrotate_t', 'smbd_t', 'nmbd_t', 'nfsd_t',
+              'unconfined_service_t')
+SE_ACTIONS = ('check', 'prepare', 'enforce', 'permissive', 'report')
+SE_EVERY = 1800
+SE_REPORT_KEEP_S = 3600
+SE_REPORT_PART = 2 * 1024 * 1024
+# The TCP ports the targeted policy gives a type nginx may bind already (http_port_t,
+# http_cache_port_t) - only another one is asked of semanage.
+SE_HTTPD_TCP = ((80, 81), (443, 443), (488, 488), (8008, 8009), (8443, 8443), (9000, 9000),
+                (8080, 8080), (8118, 8118), (8123, 8123), (10001, 10010))
+# The first look two minutes after the start: semanage and ausearch take a core for seconds.
+SE_WORK = {'busy': False, 'seen': time.time() - SE_EVERY + 120, 'tried': ''}
+SE_SYSTEM_MOUNTS = ('/', '/boot', '/boot/efi', '/efi', '/usr', '/var', '/var/log', '/var/lib',
+                    '/home', '/opt', '/tmp', '/srv', '/root', '/etc')
+SE_REAL_FS = ('ext2', 'ext3', 'ext4', 'xfs', 'btrfs', 'jfs', 'reiserfs', 'f2fs', 'zfs', 'bcachefs')
+
+
+class SeRefused(Exception):
+    pass
+
+
+def _se_read(path):
+    try:
+        with open(path, encoding='utf-8', errors='replace') as f:
+            return f.read(1048576)
+    except OSError:
+        return None
+
+
+def _se_run(cmd, timeout=120, light=False, data=None):
+    if not shutil.which(cmd[0]):
+        return None
+    if light:
+        if shutil.which('ionice'):
+            cmd = ['ionice', '-c', '3'] + cmd
+        if shutil.which('nice'):
+            cmd = ['nice', '-n', '19'] + cmd
+    try:
+        return subprocess.run(cmd, input=data, capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def _se_err(got):
+    return ((got.stderr or got.stdout or '') if got else 'not on this machine').strip()[-200:]
+
+
+def selinux_want(store=None):
+    """What plexmon needs of SELinux here: the booleans and the ports, and why."""
+    bools = [{'name': 'httpd_can_network_connect',
+              'why': 'nginx passes Plex on (127.0.0.1:32400) and the pages ask plexmon\'s daemon'}]
+    ports = []
+    for p in nginx_listen_ports():
+        if not any(lo <= p <= hi for lo, hi in SE_HTTPD_TCP):
+            ports.append({'port': p, 'proto': 'tcp', 'type': 'http_port_t',
+                          'why': 'nginx listens on it (%s)' % NGINX_SITE})
+    return {'booleans': bools, 'ports': ports[:8]}
+
+
+def nginx_listen_ports():
+    """The ports the Plex vhost of nginx listens on."""
+    out = []
+    text = _se_read(str(NGINX_SITE)) or ''
+    for m in re.finditer(r'(?m)^\s*listen\s+([^;]+);', text):
+        first = m.group(1).split()[0]
+        n = re.search(r'(\d+)\Z', first)
+        if n and (':' in first or first.isdigit()):
+            v = int(n.group(1))
+            if 1 <= v <= 65535 and v not in out:
+                out.append(v)
+    return out
+
+
+def se_auditd():
+    fake = os.environ.get('PLEXMON_SELINUX_AUDITD')
+    if fake:
+        return fake == 'active'
+    got = _se_run(['systemctl', 'is-active', 'auditd'], 20)
+    return got is None or (got.stdout or '').strip() == 'active'
+
+
+def se_mode():
+    got = _se_run(['getenforce'], 20)
+    if got is None:
+        return 'absent'             # no SELinux on this machine at all (Debian, Ubuntu)
+    return (got.stdout or '').strip() or 'Disabled'
+
+
+def se_config():
+    text = _se_read(SE_CONFIG) or ''
+    out = {}
+    for line in text.splitlines():
+        m = re.match(r'^\s*(SELINUX|SELINUXTYPE)\s*=\s*([A-Za-z0-9_-]+)\s*$', line)
+        if m:
+            out[m.group(1)] = m.group(2)
+    return {'mode': out.get('SELINUX', ''), 'type': out.get('SELINUXTYPE', ''), 'there': bool(text)}
+
+
+def _se_put(path, text):
+    """Written in place - the file keeps its owner, its mode and its SELinux label."""
+    with open(path, 'r+', encoding='utf-8') as f:
+        f.seek(0)
+        f.write(text)
+        f.truncate()
+        f.flush()
+        os.fsync(f.fileno())
+
+
+def se_config_set(mode):
+    if mode not in ('permissive', 'enforcing'):
+        raise SeRefused('permissive or enforcing')
+    text = _se_read(SE_CONFIG)
+    if text is None:
+        raise SeRefused('%s is not there - is the SELinux policy installed? '
+                        '(dnf install selinux-policy-targeted)' % SE_CONFIG)
+    if re.search(r'(?m)^\s*SELINUX\s*=', text):
+        new = re.sub(r'(?m)^(\s*)SELINUX\s*=.*$', r'\g<1>SELINUX=%s' % mode, text)
+    else:
+        new = text.rstrip('\n') + '\nSELINUX=%s\n' % mode
+    if new != text:
+        _se_put(SE_CONFIG, new)
+
+
+def se_cmdline_off():
+    return bool(re.search(r'(?:^|\s)selinux=0(?:\s|$)', _se_read(SE_CMDLINE) or ''))
+
+
+def se_label(path):
+    fake = os.environ.get('PLEXMON_SELINUX_LABELS')         # tests: {path: label}
+    if fake:
+        try:
+            return (json.load(open(fake)) or {}).get(path)
+        except (OSError, ValueError):
+            return None
+    try:
+        raw = os.getxattr(path, 'security.selinux', follow_symlinks=False)
+    except (OSError, AttributeError):
+        return None
+    parts = raw.decode('utf-8', 'replace').rstrip('\0').split(':')
+    return parts[2] if len(parts) >= 3 else None
+
+
+def se_module_in():
+    got = _se_run(['semodule', '-l'], 120, light=True)
+    if got is None or got.returncode != 0:
+        return None
+    return any(line.split()[:1] == [SE_MODULE] for line in got.stdout.splitlines())
+
+
+def se_bool(name):
+    got = _se_run(['getsebool', name], 20)
+    if got is None or got.returncode != 0:
+        return None
+    return bool(re.search(r'-->\s*on\s*$', got.stdout.strip()))
+
+
+def se_ports():
+    """semanage port -l: {(type, proto): [(lo, hi), ...]}; None without semanage."""
+    got = _se_run(['semanage', 'port', '-l'], 120, light=True)
+    if got is None or got.returncode != 0:
+        return None
+    out = {}
+    for line in got.stdout.splitlines():
+        m = re.match(r'^(\S+_port_t)\s+(tcp|udp|sctp|dccp)\s+(.+)$', line.strip())
+        if not m:
+            continue
+        for p in m.group(3).split(','):
+            a, _, b = p.strip().partition('-')
+            try:
+                out.setdefault((m.group(1), m.group(2)), []).append((int(a), int(b or a)))
+            except ValueError:
+                continue
+    return out
+
+
+def se_port_has(ports, kind, proto, port):
+    return any(lo <= port <= hi for lo, hi in (ports or {}).get((kind, proto), []))
+
+
+def se_applied_at():
+    try:
+        return float((json.loads(SE_APPLIED.read_text()) or {}).get('at') or 0)
+    except (OSError, TypeError, ValueError, AttributeError):
+        return 0.0
+
+
+def se_denials(since=0.0):
+    """What SELinux refused since the machine started - or since plexmon's needs were last put
+    in (what was refused before is what they put right) - to the programs plexmon works with."""
+    got = _se_run(['ausearch', '-m', 'AVC,USER_AVC', '-ts', 'boot'], 120, light=True)
+    if got is None:
+        return {'tool': False, 'total': 0, 'groups': [], 'since': since}
+    groups, lines, total = {}, {}, 0
+    for line in (got.stdout or '').splitlines():
+        if 'avc:' not in line or 'denied' not in line:
+            continue
+        when = re.search(r'msg=audit\((\d+)(?:\.\d+)?:', line)
+        if since and when and int(when.group(1)) < since:
+            continue
+        perms = re.search(r'denied\s+\{([^}]*)\}', line)
+        sc = re.search(r'scontext=(\S+)', line)
+        tc = re.search(r'tcontext=(\S+)', line)
+        cl = re.search(r'tclass=(\S+)', line)
+        comm = re.search(r'comm=(\S+)', line)
+        name = re.search(r'\bname=(\S+)', line)
+        if not (perms and sc and tc and cl):
+            continue
+        st = (sc.group(1).split(':') + ['', '', ''])[2]
+        tt = (tc.group(1).split(':') + ['', '', ''])[2]
+        if st not in SE_DOMAINS and 'plex' not in line.lower():
+            continue
+        what = ' '.join(x for x in (comm.group(1) if comm else '', name.group(1) if name else '') if x)
+        total += 1
+        key = (st, tt, cl.group(1), perms.group(1).strip())
+        lines[key] = line
+        g = groups.setdefault(key, {'source': st, 'target': tt, 'class': cl.group(1),
+                                    'perms': perms.group(1).strip(), 'count': 0, 'what': ''})
+        g['count'] += 1
+        g['what'] = what.replace('"', '')[:120] or g['what']
+    settled = 0
+    for key in se_allowed_now(lines):
+        settled += groups[key]['count']
+        total -= groups.pop(key)['count']
+    out = sorted(groups.values(), key=lambda g: -g['count'])[:30]
+    return {'tool': True, 'total': total, 'groups': out, 'since': since, 'settled': settled}
+
+
+def se_allowed_now(lines):
+    """Refused once, allowed by the policy loaded now (audit2why: "would be allowed by active
+    policy") - a newer plexmon_server, a boolean switched on since: not counted."""
+    by_id = {}
+    for key, line in lines.items():
+        m = re.search(r'msg=audit\(([0-9.]+:\d+)\)', line)
+        if m:
+            by_id[m.group(1)] = key
+    if not by_id:
+        return []
+    got = _se_run(['audit2why'], 300, light=True,
+                  data=''.join(lines[k] + '\n' for k in by_id.values()))
+    if got is None or got.returncode != 0:
+        return []
+    now, cur = set(), None
+    for line in (got.stdout or '').splitlines():
+        m = re.search(r'msg=audit\(([0-9.]+:\d+)\)', line)
+        if m and 'avc:' in line:
+            cur = by_id.get(m.group(1))
+            continue
+        if cur is not None and 'would be allowed by active policy' in line:
+            now.add(cur)
+    return sorted(now)
+
+
+def se_data_mounts():
+    """The data disks' mount points - those the relabelling must leave alone: every mounted
+    filesystem that is not one of the system's own and not on the system's disk. Read from
+    /proc/mounts and /sys - nothing of a disk itself."""
+    rows = []
+    for line in (_se_read(SE_MOUNTS) or '').splitlines():
+        p = line.split()
+        if len(p) < 3:
+            continue
+        mp = p[1].replace('\\040', ' ')
+        rows.append((p[0], mp, p[2]))
+
+    def disk(src):
+        if not src.startswith('/dev/'):
+            return None
+        try:
+            name = os.path.basename(os.path.realpath(src))
+            real = os.path.realpath('/sys/class/block/%s' % name)
+            parent = os.path.basename(os.path.dirname(real))
+            return parent if parent not in ('block', '') and os.path.exists(
+                '/sys/class/block/%s' % parent) else name
+        except OSError:
+            return None
+    system = {disk(s) for s, mp, fs in rows if mp in SE_SYSTEM_MOUNTS} - {None}
+    out = []
+    for src, mp, fs in rows:
+        if fs not in SE_REAL_FS or mp in SE_SYSTEM_MOUNTS:
+            continue
+        if any(mp.startswith(x.rstrip('/') + '/') for x in ('/proc', '/sys', '/dev', '/run', '/boot')):
+            continue
+        d = disk(src)
+        if d is not None and d in system:
+            continue
+        if mp not in out:
+            out.append(mp)
+    return out[:64]
+
+
+SE_EXCLUDE_HEAD = '# plexmon: the data disks - not relabelled (they would be woken and read whole)'
+
+
+def se_exclude_data_disks(said):
+    """The data disks put into fixfiles_exclude_dirs - the lines of anybody else kept."""
+    mounts = se_data_mounts()
+    old = _se_read(SE_EXCLUDE) or ''
+    keep, ours = [], False
+    for line in old.splitlines():
+        if line.strip() == SE_EXCLUDE_HEAD:
+            ours = True
+            continue
+        if ours and line.startswith('/'):
+            continue
+        ours = False
+        keep.append(line)
+    have = {x.strip() for x in keep if x.strip().startswith('/')}
+    add = [m for m in mounts if m not in have]
+    text = '\n'.join(keep).rstrip('\n')
+    if add:
+        text = (text + '\n' if text else '') + SE_EXCLUDE_HEAD + '\n' + '\n'.join(add)
+    text = text + '\n' if text else ''
+    if text != old:
+        if os.path.exists(SE_EXCLUDE):
+            _se_put(SE_EXCLUDE, text)
+        else:
+            with open(SE_EXCLUDE, 'w', encoding='utf-8') as f:
+                f.write(text)
+            os.chmod(SE_EXCLUDE, 0o644)
+    if mounts:
+        said.append('left out of the relabelling (%s): %s' % (SE_EXCLUDE, ', '.join(mounts)))
+    return mounts
+
+
+def se_want_checked(r):
+    bools = []
+    for b in (r.get('booleans') or [])[:8]:
+        if not isinstance(b, dict) or b.get('name') not in SE_BOOLEANS:
+            raise SeRefused('a boolean plexmon does not set')
+        bools.append({'name': b['name'], 'why': str(b.get('why') or '')[:160]})
+    ports = []
+    for p in (r.get('ports') or [])[:16]:
+        if not isinstance(p, dict) or p.get('type') not in SE_PORT_TYPES or \
+                p.get('proto') not in ('tcp', 'udp'):
+            raise SeRefused('a port type plexmon does not set')
+        try:
+            n = int(p.get('port'))
+        except (TypeError, ValueError):
+            raise SeRefused('a port is a number')
+        if not 1 <= n <= 65535:
+            raise SeRefused('a port is 1 to 65535')
+        ports.append({'port': n, 'proto': p['proto'], 'type': p['type'],
+                      'why': str(p.get('why') or '')[:160]})
+    return bools, ports
+
+
+def se_check(r=None):
+    bools, ports = se_want_checked(r or selinux_want())
+    mode = se_mode()
+    conf = se_config()
+    out = {'mode': mode, 'config': conf['mode'], 'policy': conf['type'],
+           'relabel_pending': os.path.exists(SE_RELABEL), 'cmdline_off': se_cmdline_off(),
+           'tools': {'semanage': bool(shutil.which('semanage')),
+                     'ausearch': bool(shutil.which('ausearch')),
+                     'semodule': bool(shutil.which('semodule'))},
+           'module': None, 'labels': [], 'booleans': [], 'ports': [],
+           'denials': {'tool': False, 'total': 0, 'groups': []}, 'problems': [],
+           'excluded': [x for x in (_se_read(SE_EXCLUDE) or '').splitlines()
+                        if x.startswith('/')][:64] if mode != 'absent' else []}
+    if mode == 'absent':
+        out['ready'] = False
+        return out
+    on = mode in ('Enforcing', 'Permissive')
+    out['module'] = se_module_in() if on else None
+    for path, want, why in SE_LABELS:
+        if not os.path.exists(path):
+            continue
+        got = se_label(path) if on else None
+        out['labels'].append({'path': path, 'label': got, 'want': want, 'why': why,
+                              'ok': (got in SE_SAME.get(want, (want,))) if on else None})
+    for b in bools:
+        out['booleans'].append(dict(b, on=se_bool(b['name']) if on else None))
+    known = se_ports() if on else None
+    for p in ports:
+        out['ports'].append(dict(p, labelled=(se_port_has(known, p['type'], p['proto'], p['port'])
+                                             if known is not None else None)))
+    if on:
+        out['denials'] = se_denials(se_applied_at())
+        out['auditd'] = se_auditd()
+    probs = out['problems']
+    if on:
+        if out['module'] is False:
+            probs.append('plexmon\'s module (%s) is not installed' % SE_MODULE)
+        probs.extend('%s is labelled %s, not %s (%s)' % (x['path'], x['label'] or '?', x['want'], x['why'])
+                     for x in out['labels'] if x['ok'] is False)
+        probs.extend('the boolean %s is off (%s)' % (x['name'], x['why'])
+                     for x in out['booleans'] if x['on'] is False)
+        probs.extend('port %d/%s is not labelled %s (%s)' % (x['port'], x['proto'], x['type'], x['why'])
+                     for x in out['ports'] if x['labelled'] is False)
+        if known is None and ports:
+            probs.append('semanage is not on this machine - the ports cannot be checked '
+                         '(dnf install policycoreutils-python-utils)')
+        if out['denials']['total']:
+            probs.append(('SELinux refused %d thing(s) since plexmon\'s needs were put in'
+                          if out['denials'].get('since') else
+                          'SELinux refused %d thing(s) since the machine started') % out['denials']['total'])
+        if not out.get('auditd', True):
+            probs.append('auditd does not run - what SELinux refuses is not written down '
+                         '(systemctl enable --now auditd)')
+        if not out['denials']['tool']:
+            probs.append('ausearch is not on this machine - what SELinux refused cannot be read '
+                         '(dnf install audit)')
+    out['ready'] = mode == 'Permissive' and not probs
+    return out
+
+
+def se_restorecon(said):
+    if not shutil.which('restorecon'):
+        return False
+    paths = [x for x in ('/run/plexmon', '/run/plex-status', str(WEB_ROOT), '/var/www/plexmon-acme')
+             if os.path.exists(x)]
+    if not paths:
+        return False
+    got = _se_run(['restorecon', '-R', '-v'] + paths, 300)
+    if got is not None and 'elabel' in (got.stdout or '') + (got.stderr or ''):
+        said.append('plexmon\'s files labelled again')
+        return True
+    return False
+
+
+def se_apply(bools, ports, said, mark=True):
+    """plexmon's module, its labels, booleans and ports - where SELinux is on. `mark`: when
+    anything was changed, what SELinux refused before no longer counts."""
+    changed = False
+    inpol = _se_read(SE_CIL + '.in-policy')
+    if os.path.exists(SE_CIL) and shutil.which('semodule') and (
+            se_module_in() is not True or inpol != _se_read(SE_CIL)):
+        got = _se_run(['semodule', '-i', SE_CIL], 300)
+        if got is None or got.returncode != 0:
+            raise SeRefused('semodule -i %s: %s' % (SE_CIL, _se_err(got)))
+        said.append('plexmon\'s module installed')
+        changed = True
+        try:
+            shutil.copyfile(SE_CIL, SE_CIL + '.in-policy')
+        except OSError:
+            pass
+    for b in bools:
+        if se_bool(b['name']) is False:
+            got = _se_run(['setsebool', '-P', b['name'], 'on'], 300)
+            if got is None or got.returncode != 0:
+                raise SeRefused('setsebool -P %s on: %s' % (b['name'], _se_err(got)))
+            said.append('%s on' % b['name'])
+            changed = True
+    known = se_ports() if ports else {}
+    for p in ports:
+        if known is None:
+            raise SeRefused('semanage is not on this machine (dnf install policycoreutils-python-utils)')
+        if se_port_has(known, p['type'], p['proto'], p['port']):
+            continue
+        got = _se_run(['semanage', 'port', '-a', '-t', p['type'], '-p', p['proto'], str(p['port'])], 300)
+        if got is not None and got.returncode != 0 and 'already defined' in (got.stderr or ''):
+            # Never taken from the service it belongs to: -m would label it for nginx, and that
+            # service could not bind it at its next start.
+            raise SeRefused('port %d/%s is another service\'s in the SELinux policy - choose another '
+                            'port for it (%s)' % (p['port'], p['proto'], p['why']))
+        if got is None or got.returncode != 0:
+            raise SeRefused('semanage port %d/%s: %s' % (p['port'], p['proto'], _se_err(got)))
+        said.append('port %d/%s labelled %s' % (p['port'], p['proto'], p['type']))
+        changed = True
+    if se_restorecon(said):
+        changed = True
+    if mark and changed:
+        write_replacing(SE_APPLIED, json.dumps({'at': time.time()}), 0o600)
+
+
+def se_do(do, by=''):
+    """One step, as root: check, prepare, enforce or permissive - what it did and how it is."""
+    bools, ports = se_want_checked(selinux_want())
+    said = []
+    if do == 'check':
+        return se_check()
+    mode = se_mode()
+    if mode == 'absent':
+        raise SeRefused('there is no SELinux on this machine')
+    if do == 'prepare':
+        if mode == 'Enforcing':
+            raise SeRefused('SELinux is enforcing already')
+        if mode == 'Disabled':
+            # The data disks first: the relabelling at the next start would read every file.
+            se_exclude_data_disks(said)
+        se_config_set('permissive')
+        said.append('%s: SELINUX=permissive' % SE_CONFIG)
+        if mode == 'Disabled':
+            open(SE_RELABEL, 'a').close()
+            said.append('the files are labelled at the next start of the machine')
+            if se_cmdline_off():
+                said.append('the kernel\'s command line has selinux=0 - take it away as root: '
+                            'grubby --update-kernel ALL --remove-args selinux')
+            if os.path.exists(SE_CIL) and shutil.which('semodule'):
+                got = _se_run(['semodule', '-i', SE_CIL], 300)      # may not work while disabled
+                if got is not None and got.returncode == 0:
+                    said.append('plexmon\'s module installed')
+            said.append('restart the machine when it suits - it comes up permissive: nothing is '
+                        'refused yet, what would be is written down')
+        else:
+            se_apply(bools, ports, said)
+    elif do == 'enforce':
+        if mode != 'Permissive':
+            raise SeRefused('SELinux is %s - it goes to enforcing from permissive only' % mode.lower())
+        se_apply(bools, ports, said, mark=False)
+        c = se_check()
+        if c['problems']:
+            raise SeRefused('not yet: ' + '; '.join(c['problems'][:4]))
+        got = _se_run(['setenforce', '1'], 60)
+        if got is None or got.returncode != 0:
+            raise SeRefused('setenforce 1: %s' % _se_err(got))
+        se_config_set('enforcing')
+        said.append('SELinux is enforcing, and stays so after a restart')
+    elif do == 'permissive':
+        if mode == 'Disabled':
+            raise SeRefused('SELinux is disabled - "Make it ready" makes it permissive')
+        if mode == 'Enforcing':
+            got = _se_run(['setenforce', '0'], 60)
+            if got is None or got.returncode != 0:
+                raise SeRefused('setenforce 0: %s' % _se_err(got))
+        se_config_set('permissive')
+        said.append('SELinux is permissive, and stays so after a restart')
+    else:
+        raise SeRefused('check, prepare, enforce or permissive')
+    out = se_check()
+    out['said'] = said
+    return out
+
+
+# -- the report, for whoever writes plexmon's module ---------------------------------------
+SE_REPORT_PATHS = ('/run/plexmon', '/run/plexmon/api-token', '/run/plex-status', '/var/lib/plexmon',
+                   '/etc/plexmon', str(WEB_ROOT), '/var/www/plexmon-acme', '/usr/local/lib/plexmon',
+                   '/var/log/plexmon', '/etc/nginx/certs', '/etc/nginx/conf.d', '/etc/nginx/plexmon',
+                   '/etc/chrony.conf', '/run/php-fpm', '/usr/lib/plexmediaserver',
+                   '/var/lib/plexmediaserver')
+SE_REPORT_COMMS = ('python', 'plexmon', 'nginx', 'php-fpm', 'Plex', 'chronyd', 'auditd', 'smbd')
+
+
+def _se_out(cmd, timeout=120, data=None, light=True):
+    got = _se_run(cmd, timeout, light, data)
+    if got is None:
+        return '(%s is not on this machine, or did not answer)\n' % cmd[0]
+    text = (got.stdout or '') + (('\n--- stderr ---\n' + got.stderr) if (got.stderr or '').strip() else '')
+    b = text.encode('utf-8', 'replace')
+    if len(b) <= SE_REPORT_PART:
+        return text
+    return '(the first %d bytes left out - too long)\n' % (len(b) - SE_REPORT_PART) + \
+        b[-SE_REPORT_PART:].decode('utf-8', 'replace')
+
+
+def se_report_bytes():
+    """Everything SELinux says here, in one tar.gz - read only, nothing is changed."""
+    import io
+    import tarfile
+    parts = {'check.json': json.dumps(se_check(), indent=1, sort_keys=True),
+             'plexmon.json': json.dumps({'plexmon': __version__, 'want': selinux_want(),
+                                         'nginx_listens': nginx_listen_ports(),
+                                         'data_disks': se_data_mounts()}, indent=1, sort_keys=True)}
+    raw = _se_out(['ausearch', '-m', 'AVC,USER_AVC,SELINUX_ERR,USER_SELINUX_ERR', '-ts', 'boot'], 300)
+    parts['avc-raw.txt'] = raw
+    parts['avc.txt'] = _se_out(['ausearch', '-m', 'AVC,USER_AVC,SELINUX_ERR,USER_SELINUX_ERR',
+                                '-ts', 'boot', '-i'], 300)
+    if raw.startswith('('):
+        parts['audit2why.txt'] = parts['audit2allow.te'] = raw
+    else:
+        parts['audit2why.txt'] = _se_out(['audit2why'], 300, data=raw)
+        parts['audit2allow.te'] = _se_out(['audit2allow', '-m', 'plexmon_local'], 300, data=raw)
+    sysw = []
+    for name, cmd in (('os-release', ['cat', '/etc/os-release']), ('kernel', ['uname', '-a']),
+                      ('started', ['uptime', '-s']), ('getenforce', ['getenforce']),
+                      ('sestatus', ['sestatus', '-v']),
+                      ('packages', ['rpm', '-q', 'selinux-policy', 'selinux-policy-targeted',
+                                    'policycoreutils', 'policycoreutils-python-utils',
+                                    'libselinux-utils', 'audit', 'nginx', 'php-fpm', 'plexmediaserver']),
+                      ('kernel command line', ['cat', SE_CMDLINE]), ('selinux config', ['cat', SE_CONFIG]),
+                      ('fixfiles_exclude_dirs', ['cat', SE_EXCLUDE]),
+                      ('auditd', ['systemctl', 'is-active', 'auditd'])):
+        sysw.append('==== %s\n%s' % (name, _se_out(cmd, 60, light=False)))
+    parts['system.txt'] = '\n'.join(sysw)
+    lab = []
+    for p in SE_REPORT_PATHS:
+        if os.path.lexists(p):
+            lab.append(_se_out(['ls', '-Zd', p], 20, light=False).rstrip())
+            if os.path.isdir(p) and not p.startswith('/var/lib/plexmediaserver'):
+                lab.append(_se_out(['ls', '-Za', p], 20, light=False).rstrip())
+            lab.append('  policy says: ' + _se_out(['matchpathcon', p], 20, light=False).strip())
+    parts['labels.txt'] = '\n'.join(lab) + '\n'
+    ps = _se_out(['ps', '-eZo', 'label,user,pid,comm,args'], 60, light=False)
+    parts['processes.txt'] = '\n'.join(x[:200] for x in ps.splitlines() if x.startswith('LABEL') or
+                                       any(c in x for c in SE_REPORT_COMMS)) + '\n'
+    ports = _se_out(['semanage', 'port', '-l'], 300)
+    parts['ports.txt'] = '==== labelled\n' + '\n'.join(
+        x for x in ports.splitlines() if x.split()[:1] and x.split()[0] in
+        ('http_port_t', 'http_cache_port_t', 'unreserved_port_t')) + \
+        '\n\n==== listening\n' + _se_out(['ss', '-lntupZ'], 60, light=False)
+    bools = _se_out(['getsebool', '-a'], 60, light=False)
+    parts['booleans.txt'] = '\n'.join(x for x in bools.splitlines() if re.match(
+        r'^(httpd_|daemons_|logging_|samba_|nfs_|use_nfs|use_samba|domain_can)', x)) + '\n'
+    mods = _se_out(['semodule', '-l'], 300)
+    parts['modules.txt'] = '==== plexmon\n' + '\n'.join(x for x in mods.splitlines() if 'plex' in x.lower()) + \
+        '\n\n==== %s\n%s\n==== in the policy\n%s\n' % (SE_CIL, _se_read(SE_CIL) or '(not there)',
+                                                     _se_read(SE_CIL + '.in-policy') or '(none put in yet)')
+    parts['README.txt'] = (
+        'plexmon - what SELinux says on this server, for whoever writes plexmon\'s module (%s).\n'
+        'Made %s. Nothing was changed to make it.\n\n'
+        'check.json      the card: mode, module, labels, booleans, ports, refusals\n'
+        'avc*.txt        what SELinux refused since the machine started (raw and readable)\n'
+        'audit2why.txt   why; audit2allow.te: what would allow it - a hint, not to be loaded\n'
+        'labels.txt      the labels of plexmon\'s files and what the policy says they should be\n'
+        'processes.txt   the domains the programs run in; ports.txt, booleans.txt, modules.txt\n'
+        'system.txt      the system, the policy and the packages; plexmon.json: what plexmon needs\n\n'
+        'No password, key or token of plexmon is in it. The audit log holds the command lines of the\n'
+        'programs refused something: other programs on this machine may put a secret on one.\n'
+        'Look through avc*.txt before sending it on.\n' % (SE_MODULE, time.strftime('%Y-%m-%d %H:%M:%S')))
+    top = re.sub(r'[^A-Za-z0-9._-]', '', node_name())[:60] or 'plexmon'
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode='w:gz') as tf:
+        for name, text in parts.items():
+            data = text.encode('utf-8', 'replace')
+            info = tarfile.TarInfo('plexmon-selinux-%s/%s' % (top, name))
+            info.size, info.mtime, info.mode = len(data), int(time.time()), 0o600
+            tf.addfile(info, io.BytesIO(data))
+    return buf.getvalue()
+
+
+# -- the daemon: a step asked, done; how it is, looked at now and then ----------------------
+def selinux_view(store):
+    now = _meta_json(store, 'selinux:now') or {}
+    want = _meta_json(store, 'selinux:want') or {}
+    rep = _meta_json(store, 'selinux:report') or {}
+    if rep and time.time() - float(rep.get('at') or 0) > SE_REPORT_KEEP_S:
+        rep = {}
+    return {'name': node_name(), 'state': now.get('data') or {}, 'at': now.get('at'),
+            'error': now.get('error') or '', 'said': now.get('said') or [],
+            'action': now.get('action') or '',
+            'pending': want.get('do') if want and want.get('id') != now.get('done') else '',
+            'report': {k: rep.get(k) for k in ('at', 'bytes', 'error')} if rep else None,
+            'data_disks': se_data_mounts()}
+
+
+def selinux_ask(store, action, by):
+    if action not in SE_ACTIONS:
+        raise ApiError(400, 'check, prepare, enforce, permissive or report')
+    was = _meta_json(store, 'selinux:want') or {}
+    now = _meta_json(store, 'selinux:now') or {}
+    # A step asked and not done yet is not put aside by a look or a report.
+    if action in ('check', 'report') and was.get('do') in ('prepare', 'enforce', 'permissive') and \
+            was.get('id') != now.get('done') and time.time() - float(was.get('at') or 0) < 3600:
+        if action == 'check':
+            return
+        raise ApiError(409, 'a step asked of SELinux is not done yet (%s) - ask for the report after it'
+                       % was.get('do'))
+    store.set_meta('selinux:want', json.dumps({'id': secrets.token_hex(6), 'do': action, 'by': by,
+                                               'at': time.time()}))
+    if action not in ('check', 'report'):
+        store.add_event('settings', '%s asked SELinux: %s' % (by, {
+            'prepare': 'made ready (permissive) / plexmon\'s needs put in', 'enforce': 'enforcing',
+            'permissive': 'permissive again'}[action]), 'warn', who=by)
+    UPGRADE_WAKE.set()
+
+
+def selinux_tick(store):
+    want = _meta_json(store, 'selinux:want') or {}
+    now = _meta_json(store, 'selinux:now') or {}
+    asked = bool(want) and want.get('id') != now.get('done') and want.get('id') != SE_WORK['tried']
+    if SE_WORK['busy'] or not (asked or time.time() - SE_WORK['seen'] > SE_EVERY):
+        return
+    SE_WORK['busy'] = True
+    SE_WORK['seen'] = time.time()
+    if asked:
+        SE_WORK['tried'] = want.get('id') or ''
+    do = want.get('do') if asked and want.get('do') in SE_ACTIONS else 'check'
+
+    def go():
+        try:
+            err, said = '', []
+            data = now.get('data') if isinstance(now.get('data'), dict) else {}
+            try:
+                if do == 'report':
+                    raw = se_report_bytes()
+                    fd = os.open(str(SE_REPORT), os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+                    with os.fdopen(fd, 'wb') as f:
+                        f.write(raw)
+                    store.set_meta('selinux:report', json.dumps({'at': time.time(), 'bytes': len(raw),
+                                                                 'error': ''}))
+                else:
+                    data = se_do(do, want.get('by') or '')
+                    said = data.pop('said', []) if isinstance(data, dict) else []
+            except SeRefused as e:
+                err = str(e)[:400]
+            except Exception as e:                      # noqa: BLE001
+                err = ('it went wrong: %s' % e)[:400]
+            if do == 'report' and err:
+                store.set_meta('selinux:report', json.dumps({'at': time.time(), 'bytes': 0, 'error': err}))
+            if do not in ('check', 'report'):
+                store.add_event('settings', 'SELinux: %s' % (err or '; '.join(said) or 'done'),
+                                'bad' if err else 'warn')
+                log('SELinux: %s' % (err or '; '.join(said) or 'done'), 'warn')
+            store.set_meta('selinux:now', json.dumps({
+                'data': data, 'at': time.time(), 'done': want.get('id') if asked else now.get('done'),
+                'error': err if do != 'report' else '', 'said': said,
+                'action': do}))
+        except Exception as e:                          # noqa: BLE001
+            log('SELinux: %s' % e, 'warn')
+        finally:
+            SE_WORK['busy'] = False
+    threading.Thread(target=go, name='plexmon-selinux', daemon=True).start()
+
+
+def selinux_cmdline_task(store):
+    """For the tasks for the server: SELinux asked for, the kernel started with selinux=0."""
+    d = (_meta_json(store, 'selinux:now') or {}).get('data') or {}
+    if d.get('cmdline_off') and str(d.get('config') or '').lower() in ('permissive', 'enforcing'):
+        return 'the kernel\'s command line has selinux=0 - SELinux stays off whatever %s says' % SE_CONFIG
+    return None
+
+
+@route('GET', '/api/selinux')
+def _selinux(h):
+    h.me('fulladmin')
+    return selinux_view(h.store)
+
+
+@route('POST', '/api/selinux')
+def _selinux_do(h):
+    s = h.me('fulladmin')
+    b = h.body()
+    action = str(b.get('action') or '')
+    if action == 'download':
+        rep = _meta_json(h.store, 'selinux:report') or {}
+        if not rep or rep.get('error') or time.time() - float(rep.get('at') or 0) > SE_REPORT_KEEP_S:
+            raise ApiError(404, rep.get('error') or 'no report made in the last hour - make one first')
+        try:
+            raw = SE_REPORT.read_bytes()
+        except OSError:
+            raise ApiError(404, 'the report is gone - make it again')
+        h.store.add_event('settings', '%s took the SELinux report' % s['name'], 'info', who=s['name'])
+        return {'name': 'plexmon-selinux-report-%s.tar.gz' % time.strftime('%Y%m%d-%H%M'),
+                'file': base64.b64encode(raw).decode('ascii'), 'mime': 'application/gzip'}
+    selinux_ask(h.store, action, s['name'])
+    return {'message': {'check': 'asked: looked at within seconds',
+                        'prepare': 'asked: done within seconds',
+                        'enforce': 'asked: SELinux switches to enforcing within seconds',
+                        'permissive': 'asked: SELinux switches to permissive within seconds',
+                        'report': 'asked: the report is made within a minute'}[action]}
+
+
+def se_report_text(c):
+    """plexmon --selinux-check: what se_check found, for a person."""
+    lines = ['SELinux: %s (config: %s%s)' % (c['mode'], c.get('config') or '?',
+                                            ', %s' % c['policy'] if c.get('policy') else '')]
+    if c['mode'] == 'absent':
+        lines.append('  no SELinux on this machine - nothing to do')
+        return '\n'.join(lines)
+    if c.get('relabel_pending'):
+        lines.append('  the files are labelled at the next start of the machine')
+    if c.get('cmdline_off'):
+        lines.append('  the kernel\'s command line has selinux=0')
+    if c.get('excluded'):
+        lines.append('  left out of the relabelling: %s' % ', '.join(c['excluded']))
+    if c['mode'] == 'Disabled':
+        lines.append('  disabled - plexmon runs as always; plexmon --selinux prepare (or Settings -> '
+                     'SELinux) makes it permissive at the next start')
+        return '\n'.join(lines)
+    lines.append('  module %s: %s' % (SE_MODULE, {True: 'installed', False: 'NOT installed',
+                                                  None: '?'}[c['module']]))
+    for x in c['labels']:
+        lines.append('  %s %s: %s%s' % ('ok  ' if x['ok'] else 'FAIL', x['path'], x['label'] or '?',
+                                        '' if x['ok'] else ' (want %s)' % x['want']))
+    for x in c['booleans']:
+        lines.append('  %s boolean %s: %s - %s' % ('ok  ' if x['on'] else 'FAIL', x['name'],
+                                                   'on' if x['on'] else 'off', x['why']))
+    for x in c['ports']:
+        lines.append('  %s port %d/%s %s - %s' % ('ok  ' if x['labelled'] else 'FAIL', x['port'],
+                                                 x['proto'], x['type'], x['why']))
+    d = c['denials']
+    lines.append('  refused%s: %s' % (' since the needs were put in' if d.get('since') else ' since the start',
+                                      d['total'] if d['tool'] else '? (ausearch is not there)'))
+    if d.get('settled'):
+        lines.append('  refused before, allowed now (not counted): %d' % d['settled'])
+    for g in d['groups'][:15]:
+        lines.append('    %4dx %s -> %s %s { %s } %s' % (g['count'], g['source'], g['target'],
+                                                         g['class'], g['perms'], g['what']))
+    lines.append('ready for enforcing' if c.get('ready') else
+                 ('enforcing' if c['mode'] == 'Enforcing' and not c['problems'] else
+                  'not ready: ' + '; '.join(c['problems'][:6]) if c['problems'] else ''))
+    return '\n'.join(x for x in lines if x)
+
+
+def cli_selinux(store, args, pal):
+    """plexmon --selinux-check, --selinux STEP, --selinux-report [FILE] - as root."""
+    if os.geteuid() != 0:
+        raise SystemExit('plexmon: SELinux is root\'s - run it as root')
+    if args.selinux_report is not None:
+        out = (args.selinux_report if args.selinux_report != '*' else '') or \
+            '/root/plexmon-selinux-report-%s-%s.tar.gz' % (
+            re.sub(r'[^A-Za-z0-9._-]', '', node_name())[:60] or 'plexmon', time.strftime('%Y%m%d-%H%M'))
+        print(pal.dim('gathering what SELinux says here - a minute or two (ausearch, semanage)...'))
+        raw = se_report_bytes()
+        fd = os.open(out, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, 'wb') as f:
+            f.write(raw)
+        print(pal.ok_line('the report is in %s (%d kB)' % (out, len(raw) >> 10)))
+        print('  look through avc*.txt in it before sending it on: the audit log holds the command '
+              'lines of the programs SELinux refused something to')
+        return 0
+    step = args.selinux or 'check'
+    if step == 'check':
+        c = se_check()
+        prev = _meta_json(store, 'selinux:now') or {}
+        store.set_meta('selinux:now', json.dumps({'data': c, 'at': time.time(), 'done': prev.get('done') or '',
+                                                  'error': '', 'said': [], 'action': 'check'}))
+        if args.json:
+            out_json(c)
+        else:
+            print(se_report_text(c))
+        return 0 if c['mode'] in ('absent', 'Disabled') or not c['problems'] else 1
+    words = {'prepare': 'SELinux made ready: permissive (at the next start of this machine when it is '
+                        'disabled now - the data disks left out of the relabelling), plexmon\'s module, '
+                        'labels, booleans and ports put in',
+             'enforce': 'SELinux ENFORCING on this machine, now and after a restart',
+             'permissive': 'SELinux permissive on this machine, now and after a restart'}[step]
+    if not args.yes:
+        if not sys.stdin.isatty():
+            raise SystemExit('plexmon: %s - add --yes to do it without a terminal' % words)
+        if input('%s. Go on? [y/N] ' % words).strip().lower() not in ('y', 'yes'):
+            print('nothing done')
+            return 1
+    try:
+        c = se_do(step, 'root')
+    except SeRefused as e:
+        store.add_event('settings', 'SELinux (root, on the command line): %s' % e, 'bad', who='root')
+        raise SystemExit('plexmon: %s' % e)
+    said = c.pop('said', [])
+    store.add_event('settings', 'SELinux (root, on the command line): %s' % ('; '.join(said) or 'done'),
+                    'warn', who='root')
+    prev = _meta_json(store, 'selinux:now') or {}
+    store.set_meta('selinux:now', json.dumps({'data': c, 'at': time.time(), 'done': prev.get('done') or '',
+                                              'error': '', 'said': said, 'action': step}))
+    if args.json:
+        out_json(dict(c, said=said))
+        return 0
+    for x in said:
+        print(pal.ok_line(x))
+    print(se_report_text(c))
+    return 0
+
+
+# ---- the system's trusted roots (2.9.0, as otp 1.0.265) -----------------------------------
+#
+# Settings → Certificates and TLS → Trusted roots of the system: certificate authorities of
+# one's own (a company's root, an intermediate) put into the trust of the operating system as a
+# whole - curl, dnf, mail, LDAPS, plexmon's own connections: every program that uses the
+# system's trust. Only by the system's own way of adding to it, never by touching the
+# distribution's bundle - a file in the folder of local additions, then its own tool:
+#   RHEL / AlmaLinux / Rocky: /etc/pki/ca-trust/source/anchors/*.pem, then update-ca-trust extract
+#   Debian / Ubuntu:          /usr/local/share/ca-certificates/*.crt, then update-ca-certificates
+# Both merge that folder with the distribution's list every time they run - also when an update
+# of the ca-certificates package runs them - so the distribution's list keeps coming with the
+# system's updates and these stay beside it. plexmon's files are named plexmon-<sha256 16>.pem
+# (.crt): plexmon writes and removes only those; anything else there is somebody else's and is
+# only shown. Plex Media Server keeps its own list - it is not touched by any of it.
+#
+# 'oscerts:want' = {v, certs: [{pem, fp, cn, kind, by, at}], by, at, what} - the set wanted;
+# 'oscerts:node' = how the machine is, as the daemon last brought it there (no PEMs).
+OSR_MAX = 50
+OSR_PEM_MAX = 16384
+OSR_RESYNC_S = 1800
+OSR_RETRY_S = 600
+OSR_NAME_RE = re.compile(r'^plexmon-[0-9a-f]{16}\.(pem|crt)\Z')
+OSR_BLOCK_RE = re.compile(r'-----BEGIN CERTIFICATE-----([A-Za-z0-9+/=\s]*?)-----END CERTIFICATE-----')
+OSR_FLAVOURS = {
+    'rhel': {'dir': '/etc/pki/ca-trust/source/anchors', 'ext': '.pem',
+             'tool': ['update-ca-trust', 'extract'],
+             'bundle': '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem',
+             'pkg': ['rpm', '-q', 'ca-certificates']},
+    'debian': {'dir': '/usr/local/share/ca-certificates', 'ext': '.crt',
+               'tool': ['update-ca-certificates'],
+               'bundle': '/etc/ssl/certs/ca-certificates.crt',
+               'pkg': ['dpkg-query', '-W', '-f=ca-certificates-${Version}', 'ca-certificates']}}
+OSR_SYSTEM_BUNDLES = ('/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem',
+                      '/etc/ssl/certs/ca-certificates.crt', '/etc/pki/tls/certs/ca-bundle.crt')
+OSR = {'busy': False, 'since': 0.0, 'done_hash': None, 'done_at': 0.0, 'fail_hash': None,
+       'fail_at': 0.0, 'again_seen': None}
+OSR_LOCK = threading.Lock()
+OSR_PY = {'fixed': ''}
+OSR_FACTS = {}
+
+
+def osr_python_fix():
+    """plexmon's own TLS clients use ssl.create_default_context() - OpenSSL's default places. A
+    Python with an OpenSSL of its own may look where there is nothing: pointed at the system's
+    list then, and only then; a SSL_CERT_FILE or SSL_CERT_DIR given stays as given."""
+    if os.environ.get('SSL_CERT_FILE') or os.environ.get('SSL_CERT_DIR'):
+        return
+    try:
+        p = ssl.get_default_verify_paths()
+    except Exception:                                   # noqa: BLE001
+        return
+    if p.cafile and os.path.isfile(p.cafile):
+        return
+    try:
+        if p.capath and os.path.isdir(p.capath) and any(n.endswith('.0') for n in os.listdir(p.capath)):
+            return
+    except OSError:
+        pass
+    for f in OSR_SYSTEM_BUNDLES:
+        if os.path.isfile(f):
+            os.environ['SSL_CERT_FILE'] = f
+            OSR_PY['fixed'] = f
+            return
+
+
+osr_python_fix()
+
+
+def osr_python_trust():
+    try:
+        p = ssl.get_default_verify_paths()
+    except Exception:                                   # noqa: BLE001
+        return {}
+    cafile = os.environ.get('SSL_CERT_FILE') or p.cafile or ''
+    capath = os.environ.get('SSL_CERT_DIR') or p.capath or ''
+    sysf = [f for f in OSR_SYSTEM_BUNDLES if os.path.isfile(f)]
+    real = os.path.realpath(cafile) if cafile else ''
+    system = bool(real and any(os.path.realpath(f) == real for f in sysf)) or \
+        bool(capath and os.path.realpath(capath) in ('/etc/ssl/certs', '/etc/pki/tls/certs'))
+    return {'cafile': cafile, 'capath': capath, 'system': system, 'fixed': OSR_PY['fixed']}
+
+
+def osr_where():
+    """Which way this system adds to its trust - each part overridable for the tests."""
+    fl = os.environ.get('PLEXMON_OSROOTS_FLAVOUR', '')
+    if fl not in OSR_FLAVOURS:
+        fl = ''
+        if os.path.isdir('/etc/pki/ca-trust/source') or shutil.which('update-ca-trust'):
+            fl = 'rhel'
+        elif os.path.isdir('/usr/local/share/ca-certificates') or shutil.which('update-ca-certificates'):
+            fl = 'debian'
+    if not fl:
+        return None
+    w = dict(OSR_FLAVOURS[fl], flavour=fl)
+    w['dir'] = os.environ.get('PLEXMON_OSROOTS_DIR') or w['dir']
+    w['bundle'] = os.environ.get('PLEXMON_OSROOTS_BUNDLE') or w['bundle']
+    if os.environ.get('PLEXMON_OSROOTS_EXTRACT'):
+        w['tool'] = os.environ['PLEXMON_OSROOTS_EXTRACT'].split()
+    if 'PLEXMON_OSROOTS_PKG' in os.environ:
+        w['pkg'] = os.environ['PLEXMON_OSROOTS_PKG'].split()
+    return w
+
+
+def osr_blocks(text):
+    """Each certificate of a text as (pem, der); a private key, or no certificate, refused."""
+    text = str(text or '')
+    if re.search(r'PRIVATE KEY|BEGIN ENCRYPTED|BEGIN PKCS7|BEGIN TRUSTED CERTIFICATE', text):
+        raise ValueError('no private key and nothing but certificates (-----BEGIN CERTIFICATE-----)')
+    out = []
+    for body in OSR_BLOCK_RE.findall(text):
+        try:
+            der = base64.b64decode(re.sub(r'\s+', '', body), validate=True)
+        except (ValueError, binascii.Error):
+            raise ValueError('a certificate that is not base64')
+        if not der or len(der) > OSR_PEM_MAX * 3 // 4:
+            raise ValueError('a certificate of %d bytes - one is a few kB at most' % len(der))
+        enc = base64.b64encode(der).decode('ascii')
+        out.append(('-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----\n' % '\n'.join(
+            enc[i:i + 64] for i in range(0, len(enc), 64)), der))
+    if not out:
+        raise ValueError('no certificate in it (-----BEGIN CERTIFICATE-----)')
+    return out
+
+
+def osr_text(raw):
+    """A file as it came - PEM, or one certificate in DER (.cer) - as PEM text."""
+    if isinstance(raw, str):
+        raw = raw.encode('utf-8', 'replace')
+    if b'-----BEGIN' in raw:
+        return raw.decode('ascii', 'replace')
+    if raw[:1] == b'\x30':
+        try:
+            return _openssl(['x509', '-inform', 'DER'], data=raw, what='not a certificate in DER').decode('ascii')
+        except ValueError:
+            pass
+    raise ValueError('neither PEM (-----BEGIN CERTIFICATE-----) nor one certificate in DER')
+
+
+def _osr_time(s):
+    import calendar
+    try:
+        return calendar.timegm(time.strptime(re.sub(r'\s+', ' ', s.strip()), '%b %d %H:%M:%S %Y %Z'))
+    except ValueError:
+        return 0
+
+
+def osr_facts(pem, der):
+    """What one certificate is: its names, its time, its key, whether it is an authority -
+    `refused` what stands against it, `warn` what is to be known."""
+    txt = _openssl(['x509', '-noout', '-text', '-nameopt', 'RFC2253'], data=pem.encode('ascii'),
+                   what='not a certificate openssl reads').decode('utf-8', 'replace')
+
+    def one(rx):
+        m = re.search(rx, txt, re.M)
+        return m.group(1).strip() if m else ''
+    f = {'fp': hashlib.sha256(der).hexdigest(), 'subject': one(r'^\s*Subject: ?(.*)$')[:400],
+         'issuer': one(r'^\s*Issuer: ?(.*)$')[:400],
+         'not_before': _osr_time(one(r'Not Before\s*: (.*)$')),
+         'not_after': _osr_time(one(r'Not After\s*: (.*)$')),
+         'sig': one(r'Signature Algorithm: (\S+)')[:60]}
+    cn = re.search(r'(?:^|,)CN=((?:\\.|[^,])*)', f['subject'])
+    f['cn'] = (cn.group(1) if cn else f['subject'])[:200]
+    alg = one(r'Public Key Algorithm: (\S+)')
+    bits = one(r'Public-Key: \((\d+) bit\)')
+    curve = one(r'NIST CURVE: (\S+)') or one(r'ASN1 OID: (\S+)')
+    f['key'] = ('RSA %s' % bits) if alg == 'rsaEncryption' else \
+        ('EC %s' % (curve or bits)) if alg == 'id-ecPublicKey' else \
+        (alg.replace('ED25519', 'Ed25519').replace('ED448', 'Ed448')[:40] if alg else '?')
+    f['bits'] = int(bits) if bits.isdigit() else 0
+    bc = re.search(r'X509v3 Basic Constraints:.*\n\s*(CA:(TRUE|FALSE))', txt)
+    f['ca'] = bool(bc and bc.group(2) == 'TRUE')
+    ku = re.search(r'X509v3 Key Usage:.*\n\s*(.*)', txt)
+    f['ku_sign'] = None if not ku else ('Certificate Sign' in ku.group(1))
+    f['root'] = f['subject'] == f['issuer']
+    f['kind'] = 'root' if f['root'] else 'intermediate'
+    refused, warn = [], []
+    now = time.time()
+    if not bc:
+        refused.append('it says nothing of being an authority (no basicConstraints CA:TRUE) - '
+                       'only a certificate authority goes here')
+    elif not f['ca']:
+        refused.append('it is not a certificate authority (CA:FALSE) - a server\'s own certificate '
+                       'does not go here')
+    if f['ku_sign'] is False:
+        refused.append('its key usage does not let it sign certificates (no keyCertSign)')
+    if f['not_after'] and f['not_after'] < now:
+        warn.append('it ran out on %s - nothing it signed is trusted' % time.strftime(
+            '%Y-%m-%d', time.gmtime(f['not_after'])))
+    if f['not_before'] and f['not_before'] > now + 300:
+        warn.append('it is valid only from %s' % time.strftime('%Y-%m-%d', time.gmtime(f['not_before'])))
+    if not f['root'] and re.match(r'(?i)(sha1|md5|md2)', f['sig']):
+        warn.append('it is signed with %s - the system\'s crypto policy (DEFAULT) refuses it, and '
+                    'every chain through it' % f['sig'])
+    if f['key'].startswith('RSA') and 0 < f['bits'] < 2048:
+        warn.append('its key has %d bits - the system\'s crypto policy (DEFAULT) refuses fewer '
+                    'than 2048' % f['bits'])
+    f['refused'], f['warn'] = refused, warn
+    return f
+
+
+def osr_hash(certs):
+    return hashlib.sha256(','.join(sorted(str(c.get('fp') or '') for c in certs or [])).encode()).hexdigest()[:24]
+
+
+def osr_want(store):
+    """The set wanted - None while none was ever written."""
+    got = _meta_json(store, 'oscerts:want')
+    if not isinstance(got, dict) or not isinstance(got.get('certs'), list):
+        return None
+    certs = [c for c in got['certs'] if isinstance(c, dict) and isinstance(c.get('pem'), str)
+             and re.match(r'^[0-9a-f]{64}\Z', str(c.get('fp') or ''))][:OSR_MAX]
+    return {'v': int(got.get('v') or 0), 'certs': certs, 'by': str(got.get('by') or ''),
+            'at': float(got.get('at') or 0), 'what': str(got.get('what') or ''), 'hash': osr_hash(certs)}
+
+
+def osr_save(store, certs, by, what):
+    was = osr_want(store) or {'v': 0}
+    row = {'v': max(int(time.time() * 1000), was['v'] + 1), 'certs': certs, 'by': by,
+           'at': time.time(), 'what': what}
+    store.set_meta('oscerts:want', json.dumps(row))
+    store.add_event('settings', '%s %s - the system\'s trusted roots' % (by, what), 'warn', who=by)
+    UPGRADE_WAKE.set()
+    return row
+
+
+def osr_read_text(text):
+    if not isinstance(text, str) or not text.strip():
+        raise ValueError('the certificates: PEM text, or a file')
+    if len(text) > OSR_MAX * OSR_PEM_MAX:
+        raise ValueError('that is far more than %d certificates' % OSR_MAX)
+    blocks = osr_blocks(osr_text(text))
+    if len(blocks) > OSR_MAX:
+        raise ValueError('%d certificates in it - %d at most' % (len(blocks), OSR_MAX))
+    return [dict(osr_facts(pem, der), pem=pem) for pem, der in blocks]
+
+
+def osr_check(store, text):
+    """What adding this text would do - nothing written."""
+    want = osr_want(store) or {'certs': []}
+    have = {c['fp'] for c in want['certs']}
+    subjects = {osr_facts_kept(c['pem']).get('subject') for c in want['certs']}
+    got = osr_read_text(text)
+    subjects |= {f['subject'] for f in got if not f['refused']}
+    for f in got:
+        f['already'] = f['fp'] in have
+        if not f['root'] and not f['refused'] and f['issuer'] not in subjects:
+            f['warn'] = f['warn'] + ['an intermediate without its root here: programs that take a '
+                                     'partial chain (curl, Python 3.13 on) trust it by itself, others '
+                                     'want its root too - add the root as well, unless the system\'s '
+                                     'list has it']
+    return got
+
+
+def osr_add(store, text, by):
+    got = osr_check(store, text)
+    want = osr_want(store) or {'certs': []}
+    certs = list(want['certs'])
+    seen = set()
+    added = [f for f in got if not f['refused'] and not f['already'] and
+             not (f['fp'] in seen or seen.add(f['fp']))]
+    refused = [{'cn': f['cn'], 'fp': f['fp'], 'why': '; '.join(f['refused'])} for f in got if f['refused']]
+    if not added:
+        if refused:
+            raise ValueError('nothing added: %s' % '; '.join('%s - %s' % (r['cn'], r['why']) for r in refused))
+        raise ValueError('nothing added: every certificate in it is there already')
+    if len(certs) + len(added) > OSR_MAX:
+        raise ValueError('%d certificates at most - %d are there, %d more asked' % (
+            OSR_MAX, len(certs), len(added)))
+    for f in added:
+        certs.append({'pem': f['pem'], 'fp': f['fp'], 'cn': f['cn'], 'kind': f['kind'],
+                      'by': by, 'at': time.time()})
+    osr_save(store, certs, by, 'added %s' % ', '.join('%s (%s, SHA-256 %s)' % (
+        f['cn'], f['kind'], f['fp'][:16]) for f in added))
+    return {'added': [{k: f[k] for k in ('cn', 'fp', 'kind', 'warn')} for f in added],
+            'refused': refused, 'already': [f['cn'] for f in got if f['already']],
+            'message': 'added %d - the system trusts %s within seconds' % (
+                len(added), 'it' if len(added) == 1 else 'them')}
+
+
+def osr_find(certs, fp):
+    fp = re.sub(r'[^0-9a-f]', '', str(fp or '').lower())
+    if len(fp) < 12:
+        raise ValueError('the SHA-256 fingerprint - 12 characters of it at least')
+    hit = [c for c in certs if c['fp'].startswith(fp)]
+    if not hit:
+        raise ValueError('plexmon has added no certificate with that fingerprint')
+    if len(hit) > 1:
+        raise ValueError('more than one certificate begins with that - give more of it')
+    return hit[0]
+
+
+def osr_remove(store, fp, by):
+    want = osr_want(store) or {'certs': []}
+    c = osr_find(want['certs'], fp)
+    osr_save(store, [x for x in want['certs'] if x['fp'] != c['fp']], by,
+             'took away %s (SHA-256 %s)' % (c.get('cn') or '?', c['fp'][:16]))
+    return {'message': 'taken away - out of the system\'s trust within seconds'}
+
+
+# -- the machine, as root -------------------------------------------------------------------
+def osr_dir_ok(d, make=False):
+    """The folder of local additions: a folder of root's, never a link."""
+    import stat as _stat
+    try:
+        st = os.lstat(d)
+    except FileNotFoundError:
+        if not make:
+            return False
+        os.makedirs(d, 0o755, exist_ok=True)
+        st = os.lstat(d)
+    if not _stat.S_ISDIR(st.st_mode):
+        raise ValueError('%s is not a folder (a link?) - nothing is written there' % d)
+    if st.st_uid != os.geteuid() or st.st_mode & 0o022:
+        raise ValueError('%s is not root\'s alone (owner %d, mode %o) - nothing is written there'
+                         % (d, st.st_uid, _stat.S_IMODE(st.st_mode)))
+    return True
+
+
+def _osr_file(path, most=1048576):
+    """A plain file's bytes - None for a link (never followed), a folder, a pipe."""
+    import errno
+    import stat as _stat
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    except OSError as e:
+        if e.errno in (errno.ELOOP, errno.EISDIR, errno.ENXIO):
+            return None
+        raise
+    try:
+        if not _stat.S_ISREG(os.fstat(fd).st_mode):
+            return None
+        data = os.read(fd, most + 1)
+    finally:
+        os.close(fd)
+    return data[:most]
+
+
+def osr_files(d):
+    """[(relative name, path)] - one level of subfolders too (Debian reads them)."""
+    out = []
+    try:
+        top = sorted(os.listdir(d))
+    except OSError:
+        return out
+    for n in top[:500]:
+        p = os.path.join(d, n)
+        if os.path.isdir(p) and not os.path.islink(p):
+            try:
+                out += [(n + '/' + m, os.path.join(p, m)) for m in sorted(os.listdir(p))[:200]]
+            except OSError:
+                pass
+        else:
+            out.append((n, p))
+    return out
+
+
+def osr_cert_of_file(path):
+    raw = _osr_file(path)
+    if raw is None:
+        return None
+    try:
+        blocks = osr_blocks(osr_text(raw))
+    except ValueError:
+        return []
+    out = []
+    for pem, der in blocks[:20]:
+        try:
+            f = osr_facts(pem, der)
+            out.append({k: f[k] for k in ('fp', 'cn', 'subject', 'issuer', 'not_before', 'not_after',
+                                          'key', 'kind', 'ca')})
+        except ValueError:
+            continue
+    return out
+
+
+def osr_bundle(w):
+    out = {'path': w['bundle'], 'count': 0, 'bytes': 0, 'at': 0}
+    try:
+        st = os.stat(w['bundle'])
+        out.update(bytes=st.st_size, at=st.st_mtime)
+        with open(w['bundle'], 'rb') as f:
+            out['count'] = f.read(64 * 1048576).count(b'-----BEGIN CERTIFICATE-----')
+    except OSError:
+        out['missing'] = True
+    pkg = ''
+    if w.get('pkg') and shutil.which(w['pkg'][0]):
+        try:
+            got = subprocess.run(w['pkg'], capture_output=True, text=True, timeout=30)
+            if got.returncode == 0 and got.stdout.strip():
+                pkg = got.stdout.strip().splitlines()[0][:120]
+        except (OSError, subprocess.SubprocessError):
+            pkg = ''
+    out['package'] = pkg
+    return out
+
+
+def osr_machine(w):
+    """plexmon's own, the others', the system's list."""
+    ours, others, ders = [], [], {}
+    if w and os.path.isdir(w['dir']):
+        for rel, p in osr_files(w['dir']):
+            if OSR_NAME_RE.match(rel):
+                raw = _osr_file(p, 65536)
+                if raw is None:
+                    others.append({'file': rel, 'certs': [], 'link': os.path.islink(p)})
+                    continue
+                try:
+                    (pem, der), = osr_blocks(raw.decode('ascii', 'replace'))
+                    f = osr_facts(pem, der)
+                    f.pop('refused', None)
+                    f['file'] = rel
+                    ders[f['fp']] = der
+                    ours.append(f)
+                except ValueError:
+                    ours.append({'file': rel, 'broken': True})
+            elif os.path.islink(p):
+                try:
+                    to = os.readlink(p)[:300]
+                except OSError:
+                    to = '?'
+                others.append({'file': rel, 'link': to, 'certs': []})
+            else:
+                read = sum(1 for o in others if o.get('certs'))
+                others.append({'file': rel, 'certs': (osr_cert_of_file(p) or []) if read < 60 else []})
+    if w and ders:
+        try:
+            with open(w['bundle'], 'rb') as fh:
+                flat = re.sub(rb'\s+', b'', fh.read(64 * 1048576))
+        except OSError:
+            flat = None
+        for f in ours:
+            if f.get('fp') in ders:
+                f['in_bundle'] = None if flat is None else base64.b64encode(ders[f['fp']]) in flat
+    return {'ours': ours, 'others': others[:200], 'system': osr_bundle(w) if w else {},
+            'flavour': (w or {}).get('flavour', ''), 'dir': (w or {}).get('dir', ''),
+            'tool': ' '.join((w or {}).get('tool') or []),
+            'tool_there': bool(w and shutil.which(w['tool'][0]))}
+
+
+def _osr_put(d, name, pem):
+    fd, tmp = tempfile.mkstemp(prefix='.plexmon-', dir=d)
+    try:
+        os.fchmod(fd, 0o644)
+        try:
+            os.fchown(fd, 0, 0)
+        except OSError:
+            pass
+        with os.fdopen(fd, 'w') as f:
+            fd = None
+            f.write(pem)
+        os.replace(tmp, os.path.join(d, name))
+    except BaseException:
+        if fd is not None:
+            os.close(fd)
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
+def osr_sync(w, certs, force=False):
+    """The folder made to hold exactly plexmon's certificates wanted - the others' left as they
+    are - and the system's tool run when anything changed. (said, refused)."""
+    if not w:
+        raise ValueError('this system has neither update-ca-trust (RHEL, AlmaLinux, Rocky) nor '
+                         'update-ca-certificates (Debian, Ubuntu)')
+    want, refused = {}, []
+    for c in certs[:OSR_MAX]:
+        (pem, der), = osr_blocks(c)
+        f = osr_facts(pem, der)
+        if f['refused']:
+            refused.append({'fp': f['fp'], 'cn': f['cn'], 'why': '; '.join(f['refused'])})
+            continue
+        want['plexmon-%s%s' % (f['fp'][:16], w['ext'])] = pem
+    osr_dir_ok(w['dir'], make=bool(want))
+    said, changed = [], False
+    have = {rel: p for rel, p in osr_files(w['dir']) if OSR_NAME_RE.match(rel)} \
+        if os.path.isdir(w['dir']) else {}
+    for name, pem in sorted(want.items()):
+        p = have.get(name)
+        if p is not None:
+            raw = _osr_file(p, 65536)
+            if raw is not None and raw.decode('ascii', 'replace') == pem and not os.path.islink(p):
+                continue
+            os.unlink(p)
+        _osr_put(w['dir'], name, pem)
+        said.append('added %s' % name)
+        changed = True
+        if shutil.which('restorecon') and os.path.isdir('/sys/fs/selinux') and \
+                not os.environ.get('PLEXMON_OSROOTS_DIR'):
+            _se_run(['restorecon', '-F', os.path.join(w['dir'], name)], 60)
+    for name, p in sorted(have.items()):
+        if name not in want:
+            os.unlink(p)
+            said.append('removed %s' % name)
+            changed = True
+    if changed or force:
+        if not shutil.which(w['tool'][0]):
+            raise ValueError('%s is not on this machine - the files are in %s, the system\'s list is '
+                             'not made again until it runs' % (w['tool'][0], w['dir']))
+        got = subprocess.run(w['tool'], capture_output=True, text=True, timeout=300)
+        if got.returncode != 0:
+            raise ValueError('%s ended with %d: %s' % (' '.join(w['tool']), got.returncode,
+                                                       ((got.stderr or got.stdout).strip() or '-')[-300:]))
+        said.append('%s run' % ' '.join(w['tool']))
+    return said, refused
+
+
+def osroots_tick(store):
+    with OSR_LOCK:
+        if OSR['busy'] and time.time() - OSR['since'] < 900:
+            return
+    want = osr_want(store)
+    h = want['hash'] if want else None
+    again = str(store.get_meta('oscerts:again') or '')
+    now = time.time()
+    due = now - OSR['done_at'] > OSR_RESYNC_S
+    if want is not None and h != OSR['done_hash'] and \
+            not (h == OSR['fail_hash'] and now - OSR['fail_at'] < OSR_RETRY_S):
+        due = True
+    if again != OSR['again_seen']:
+        first = OSR['again_seen'] is None
+        OSR['again_seen'] = again
+        if again and not first:
+            due = True
+    if not due:
+        return
+    with OSR_LOCK:
+        if OSR['busy'] and time.time() - OSR['since'] < 900:
+            return
+        OSR['busy'], OSR['since'] = True, time.time()
+
+    def go():
+        row = {'at': time.time(), 'v': want['v'] if want else 0, 'hash': h or '', 'ok': False,
+               'error': '', 'said': [], 'refused': [], 'python': osr_python_trust()}
+        old = _meta_json(store, 'oscerts:node') or {}
+        try:
+            w = osr_where()
+            said, refused = osr_sync(w, [c['pem'] for c in want['certs']]) if want is not None else ([], [])
+            row.update(ok=True, said=said[:120], refused=refused[:OSR_MAX], state=osr_machine(w))
+            OSR.update(done_hash=h, done_at=time.time(), fail_hash=None)
+            if said:
+                log('the system\'s trusted roots: %s' % '; '.join(said))
+                store.add_event('settings', 'the system\'s trusted roots: %s' % '; '.join(said), 'info')
+        except Exception as e:                          # noqa: BLE001
+            row.update(error=str(e)[:400] or e.__class__.__name__, state=old.get('state') or {})
+            OSR.update(done_hash=None, done_at=time.time(), fail_hash=h, fail_at=time.time())
+            if want is not None:
+                log('the system\'s trusted roots: %s' % e, 'warn')
+        try:
+            store.set_meta('oscerts:node', json.dumps(row))
+        except Exception as e:                          # noqa: BLE001
+            log('the system\'s trusted roots: %s' % e, 'warn')
+        finally:
+            with OSR_LOCK:
+                OSR['busy'] = False
+    threading.Thread(target=go, name='plexmon-osroots', daemon=True).start()
+
+
+def osr_status(want, row):
+    if want is None:
+        return ('failed', str(row['error'])) if row.get('error') else ('none', '')
+    if row.get('at') and row.get('hash') == want['hash']:
+        if not row.get('ok'):
+            return 'failed', str(row.get('error') or 'it could not be done')
+        if row.get('refused'):
+            return 'failed', '; '.join('%s - %s' % (r.get('cn') or '?', r.get('why') or '?')
+                                       for r in row['refused'])
+        return 'applied', ''
+    if time.time() - float(want.get('at') or 0) > 300:
+        return 'waiting', 'asked more than five minutes ago and not done - is plexmon running?' + (
+            (' (last: %s)' % row['error']) if row.get('error') else '')
+    return 'waiting', ''
+
+
+def osr_facts_kept(pem):
+    key = hashlib.sha256(pem.encode('utf-8', 'replace')).hexdigest()
+    got = OSR_FACTS.get(key)
+    if got is None:
+        try:
+            p, der = osr_blocks(pem)[0]
+            got = osr_facts(p, der)
+        except ValueError as e:
+            got = {'cn': '?', 'warn': [], 'refused': [str(e)]}
+        if len(OSR_FACTS) > 400:
+            OSR_FACTS.clear()
+        OSR_FACTS[key] = got
+    return got
+
+
+def osr_view(store):
+    want = osr_want(store)
+    row = _meta_json(store, 'oscerts:node') or {}
+    status, why = osr_status(want, row)
+    st = row.get('state') if isinstance(row.get('state'), dict) else {}
+    node = {'name': node_name(), 'status': status, 'why': why, 'at': row.get('at'),
+            'said': row.get('said') or [], 'error': row.get('error') or '',
+            'ours': st.get('ours') or [], 'others': st.get('others') or [], 'system': st.get('system') or {},
+            'flavour': st.get('flavour') or '', 'dir': st.get('dir') or '', 'tool': st.get('tool') or '',
+            'tool_there': st.get('tool_there'), 'python': row.get('python') or {}}
+    facts = [(c, osr_facts_kept(c['pem'])) for c in (want or {}).get('certs') or []]
+    subjects = {f.get('subject') for _c, f in facts}
+    certs = []
+    for c, f in facts:
+        warn = list(f.get('warn') or [])
+        if f.get('kind') == 'intermediate' and f.get('issuer') not in subjects:
+            warn.append('its root is not among these - trusted by itself only where a partial chain '
+                        'is taken (curl, Python 3.13 on), unless the system\'s list has the root')
+        hit = [x for x in node['ours'] if x.get('fp') == c['fp']]
+        certs.append({'fp': c['fp'], 'pem': c['pem'], 'cn': f.get('cn'), 'subject': f.get('subject'),
+                      'issuer': f.get('issuer'), 'not_before': f.get('not_before'),
+                      'not_after': f.get('not_after'), 'key': f.get('key'), 'kind': f.get('kind'),
+                      'sig': f.get('sig'), 'warn': warn, 'by': c.get('by') or '', 'at': c.get('at'),
+                      'on': bool(hit) and hit[0].get('in_bundle') is not False})
+    return {'certs': certs, 'node': node, 'max': OSR_MAX,
+            'want': {k: want[k] for k in ('v', 'by', 'at', 'what', 'hash')} if want else None,
+            'python': osr_python_trust()}
+
+
+@route('GET', '/api/osroots')
+def _osroots(h):
+    h.me()          # read-only may see: certificates of authorities are nothing secret
+    return osr_view(h.store)
+
+
+@route('POST', '/api/osroots')
+def _osroots_do(h):
+    s = h.me('fulladmin')
+    b = h.body()
+    act = str(b.get('action') or '')
+    try:
+        if act == 'check':
+            got = osr_check(h.store, b.get('text'))
+            return {'certs': [{k: f[k] for k in ('fp', 'cn', 'subject', 'issuer', 'not_before', 'not_after',
+                                                   'key', 'kind', 'sig', 'warn', 'refused', 'already')}
+                              for f in got]}
+        if act == 'add':
+            return osr_add(h.store, b.get('text'), s['name'])
+        if act == 'remove':
+            return osr_remove(h.store, b.get('fp'), s['name'])
+        if act == 'refresh':
+            h.store.set_meta('oscerts:again', repr(time.time()))
+            UPGRADE_WAKE.set()
+            return {'message': 'asked: read again within seconds'}
+    except ValueError as e:
+        raise ApiError(400, str(e))
+    raise ApiError(400, 'check, add, remove or refresh')
+
+
+def cli_os_roots(store, args, pal):
+    """plexmon --os-roots, --os-roots-add FILE, --os-roots-remove FINGERPRINT."""
+    by = 'root'
+    if args.os_roots_add:
+        try:
+            with open(args.os_roots_add, 'rb') as f:
+                raw = f.read(OSR_MAX * OSR_PEM_MAX + 1)
+            text = osr_text(raw)
+            got = osr_check(store, text)
+        except (OSError, ValueError) as e:
+            raise SystemExit('plexmon: %s: %s' % (args.os_roots_add, e))
+        for c in got:
+            print('  %s  %s  %s' % (pal.head(c['cn'] or '?'), c['kind'], pal.dim('SHA-256 ' + c['fp'])))
+            print(pal.dim('    issued by %s; valid %s - %s; %s' % (
+                c['issuer'], stamp(c['not_before']) if c['not_before'] else '?',
+                stamp(c['not_after']) if c['not_after'] else '?', c['key'])))
+            for w in c['refused']:
+                print(pal.bad_line('    not taken: %s' % w))
+            for w in c['warn']:
+                print(pal.warn_line('    %s' % w))
+            if c['already']:
+                print(pal.dim('    there already'))
+        if not any(not c['refused'] and not c['already'] for c in got):
+            raise SystemExit('plexmon: nothing to add')
+        if not args.yes:
+            if not sys.stdin.isatty():
+                raise SystemExit('plexmon: every program of this server will trust what these sign - '
+                                 'add --yes to do it without a terminal')
+            if input('Every program of this server will trust what these sign. Go on? [y/N] ').strip().lower() \
+                    not in ('y', 'yes'):
+                print('nothing done')
+                return 1
+        try:
+            r = osr_add(store, text, by)
+        except ValueError as e:
+            raise SystemExit('plexmon: %s' % e)
+        print(pal.ok_line(r['message'].replace('within seconds', 'within seconds (the daemon does it)')))
+        return 0
+    if args.os_roots_remove:
+        try:
+            c = osr_find((osr_want(store) or {'certs': []})['certs'], args.os_roots_remove)
+        except ValueError as e:
+            raise SystemExit('plexmon: %s' % e)
+        if not args.yes:
+            if not sys.stdin.isatty():
+                raise SystemExit('plexmon: add --yes to do it without a terminal')
+            if input('What %s signs is no longer trusted by this server. Go on? [y/N] ' % (c.get('cn') or '?')) \
+                    .strip().lower() not in ('y', 'yes'):
+                print('nothing done')
+                return 1
+        print(pal.ok_line(osr_remove(store, c['fp'], by)['message']))
+        return 0
+    v = osr_view(store)
+    if args.json:
+        out_json(v)
+        return 0
+    print(pal.head('the system\'s trusted roots - plexmon\'s additions (%d of %d at most)' % (len(v['certs']), v['max'])))
+    if v['certs']:
+        print(table([[c['cn'] or '?', c['kind'] or '?', c['fp'][:16],
+                      stamp(c['not_after']) if c.get('not_after') else '?', c.get('key') or '?',
+                      'yes' if c['on'] else 'no'] for c in v['certs']],
+                    ['name', 'kind', 'sha-256', 'valid until', 'key', 'in the system\'s list']))
+    else:
+        print(pal.dim('  none - the system trusts its own list alone'))
+    for c in v['certs']:
+        for w in c.get('warn') or []:
+            print(pal.warn_line('  %s: %s' % (c['cn'], w)))
+    n = v['node']
+    s = n['system'] or {}
+    say = {'applied': pal.ok_line, 'failed': pal.bad_line}.get(n['status'], pal.warn_line)
+    print(say('%s%s' % ({'applied': 'as wanted', 'waiting': 'waiting', 'failed': 'failed',
+                         'none': 'nothing added by plexmon'}.get(n['status'], n['status']),
+                        (': ' + n['why']) if n['why'] else '')))
+    if n.get('dir'):
+        print(pal.dim('  local additions in %s, made into the system\'s list by %s' % (n['dir'], n['tool'])))
+    if s:
+        print(pal.dim('  the system\'s own list: %s certificates in %s%s' % (
+            s.get('count', '?'), s.get('path', '?'), ('; package %s' % s['package']) if s.get('package') else '')))
+    for o in n.get('others') or []:
+        cs = o.get('certs') or []
+        print('    %s  %s' % (o.get('file'), ', '.join('%s (%s)' % (c.get('cn'), c.get('kind')) for c in cs)
+                              or ('a link to %s' % o['link'] if o.get('link') else 'no certificate read')))
+    py = n.get('python') or v.get('python') or {}
+    if py and not py.get('system'):
+        print(pal.warn_line('  plexmon\'s own connections trust %s - not the system\'s list' % (
+            py.get('cafile') or py.get('capath') or '?')))
+    return 0
 
 
 # ---- what it is doing --------------------------------------------------------------
@@ -9082,7 +10711,8 @@ class Admin(object):
             # In maintenance plexmon does nothing by itself (2.3.0): no renewal,
             # nothing on a schedule - the upgrade and the look for a new version go on.
             maint = bool(maintenance_now(self.store).get('on'))
-            for fn in (upgrade_tick, online_tick) + (() if maint else (acme_tick,)) + (HX.tick,):
+            for fn in (upgrade_tick, online_tick) + (() if maint else (acme_tick,)) + \
+                    (HX.tick, selinux_tick, osroots_tick):
                 try:
                     fn(self.store)
                 except Exception as e:                  # noqa: BLE001
@@ -10554,6 +12184,16 @@ def build_parser():
                    help='what only root can do and a version asks for: what to type, and why')
     g.add_argument('--task-done', metavar='ID', help='a task nobody can see from here: done')
     g.add_argument('--task-undo', metavar='ID', help='...not done after all: shown again')
+    g.add_argument('--selinux-check', action='store_true',
+                   help='SELinux here: the mode, what plexmon needs of it, what it refused (root)')
+    g.add_argument('--selinux', choices=('check', 'prepare', 'enforce', 'permissive'), metavar='STEP',
+                   help='a step of SELinux: check, prepare, enforce, permissive (root; asks first)')
+    g.add_argument('--selinux-report', nargs='?', const='*', default=None, metavar='FILE',
+                   help='everything SELinux says here, in one tar.gz (root; nothing is changed)')
+    g.add_argument('--os-roots', action='store_true',
+                   help='certificate authorities of your own in the system\'s trust')
+    g.add_argument('--os-roots-add', metavar='FILE', help='...one more (PEM or DER; asks first)')
+    g.add_argument('--os-roots-remove', metavar='SHA256', help='...one taken away (12+ characters of it)')
     g.add_argument('--tasks-clear', action='store_true',
                    help='empty "done lately" - what is still to be done stays')
     g.add_argument('--passkeys', nargs='?', const='*', default=None, metavar='NAME',
@@ -11014,7 +12654,7 @@ def cli_get(store, pal, keys, as_json):
 # library were left out of --settings and of the console's Browse).
 PANE_TITLES = [('people', 'Accounts'), ('web', 'Certificates and TLS'),
                ('acme', 'Automatic certificates'), ('proxy', 'Proxy'),
-               ('power', 'Restart and power off'), ('osup', 'System updates'),
+               ('power', 'Restart and power off'), ('selinux', 'SELinux'), ('osup', 'System updates'),
                ('db', 'The database'), ('plexdb', 'The database of Plex Media Server'),
                ('backup', 'Backups'), ('upgrade', 'Upgrades'), ('plex', 'Plex library'),
                ('about', 'About and debugging')]
@@ -11813,6 +13453,10 @@ def cli_main(argv=None, mon=None):
         return 0
     if args.tasks:
         return cli_tasks(store, pal, args.json)
+    if args.selinux_check or args.selinux or args.selinux_report is not None:
+        return cli_selinux(store, args, pal)
+    if args.os_roots or args.os_roots_add or args.os_roots_remove:
+        return cli_os_roots(store, args, pal)
     if args.tasks_clear:
         gone = task_history_clear(store, None, '')
         print(pal.ok_line('done lately cleared (%d)' % gone))

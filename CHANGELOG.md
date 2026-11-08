@@ -4,6 +4,31 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.9.0 - 2026-11-08
+
+- **Settings → SELinux** (as otp 1.0.265): the mode now and after a restart, what plexmon
+  needs of it - its module `plexmon_server` (the API token's folders labelled for the pages),
+  `httpd_can_network_connect` (nginx passing Plex on), the ports nginx listens on - and what
+  SELinux refused. The way to enforcing step by step: *Make it ready (permissive)*, *Put in
+  what plexmon needs*, *Switch to enforcing* (only once nothing is missing and nothing was
+  refused), *Back to permissive*. Nothing changes unless asked; disabled stays disabled.
+- **The data disks are never relabelled**: before the first step from disabled their mount
+  points go into `/etc/selinux/fixfiles_exclude_dirs`, so the relabelling at the next start
+  does not wake them or read them.
+- The checks read only the system's disk, at the lowest priority, every 30 minutes.
+- `selinux=0` on the kernel's command line is a task in *To be done by hand* (grubby), gone by
+  itself once the kernel starts SELinux.
+- *Download the report* / `plexmon --selinux-report`; `plexmon --selinux-check`,
+  `plexmon --selinux STEP`.
+- **Trusted roots of the system** (Certificates and TLS): certificate authorities of your own
+  put into the trust of the whole operating system by its own way (update-ca-trust,
+  update-ca-certificates) - the distribution's list untouched, only `plexmon-<sha>` files ever
+  written; refused unless it is an authority, warnings for what the crypto policy refuses.
+  `plexmon --os-roots`, `--os-roots-add FILE`, `--os-roots-remove SHA256`.
+- install.sh: the SELinux tools and auditd where SELinux is present, the module put in when it
+  changed, the labels of the pages; `--uninstall` takes the module out. `plexmon.service` may
+  write `/etc/selinux` and the folders of the system's certificate authorities.
+
 ## 2.8.4 - 2026-11-06
 
 - **Clear list** at the right of *Done lately*: empties exactly the rows the

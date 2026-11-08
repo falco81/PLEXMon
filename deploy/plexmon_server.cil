@@ -1,0 +1,28 @@
+; plexmon - what SELinux needs for plexmon that the system's policy does not say (2.9.0).
+; Installed by install.sh and every upgrade where SELinux is on (semodule -i plexmon_server.cil),
+; and by Settings -> SELinux; taken away by install.sh --uninstall (semodule -r plexmon_server).
+; Labels first; a narrow rule only where no label or boolean does it, in a block of its own.
+;
+; /run/plexmon and /run/plex-status hold the daemon's API token and port. The pages (php-fpm,
+; httpd_t) read them; systemd makes them (RuntimeDirectory=) as var_run_t, which httpd_t may not
+; read. Labelled as the web server's own run files; the daemon (unconfined_service_t) writes them.
+;
+; Both spellings: the policy reads a path through file_contexts.subs_dist first - on RHEL 8
+; "/run" is looked up as "/var/run", on newer policies the other way round - so a rule for one
+; of them alone may never be matched. The one never looked up does nothing.
+(filecon "/run/plexmon" dir (system_u object_r httpd_var_run_t ((s0) (s0))))
+(filecon "/run/plexmon/.*" any (system_u object_r httpd_var_run_t ((s0) (s0))))
+(filecon "/var/run/plexmon" dir (system_u object_r httpd_var_run_t ((s0) (s0))))
+(filecon "/var/run/plexmon/.*" any (system_u object_r httpd_var_run_t ((s0) (s0))))
+(filecon "/run/plex-status" dir (system_u object_r httpd_var_run_t ((s0) (s0))))
+(filecon "/run/plex-status/.*" any (system_u object_r httpd_var_run_t ((s0) (s0))))
+(filecon "/var/run/plex-status" dir (system_u object_r httpd_var_run_t ((s0) (s0))))
+(filecon "/var/run/plex-status/.*" any (system_u object_r httpd_var_run_t ((s0) (s0))))
+
+; systemd hands RuntimeDirectory= back to the service before every command of the unit - it may
+; change the owner and the mode of what is in it (init_t -> httpd_var_run_t setattr). Only that:
+; no read, no write. In a block of its own, so that a policy without one of the types still
+; takes the rest of the module.
+(optional plexmon_server_systemd_runtime
+    (allow init_t httpd_var_run_t (dir (getattr setattr search open read)))
+    (allow init_t httpd_var_run_t (file (getattr setattr))))

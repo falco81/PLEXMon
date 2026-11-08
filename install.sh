@@ -88,6 +88,11 @@ if [ "$MODE" = uninstall ]; then
     rm -f "$UNITS/plexmon.service" "$UNITS/plexmon-upgrade.path" "$UNITS/plexmon-upgrade.service" \
           "$UNITS/plex-status.service" /etc/profile.d/zz-plexmon-console.sh "$BIN" \
           /etc/logrotate.d/plexmon /etc/sysctl.d/80-plexmon-console.conf
+    # SELinux (2.9.0): plexmon's module goes with it; the mode, the booleans and the ports are
+    # the machine's and stay.
+    if command -v semodule >/dev/null 2>&1 && semodule -l 2>/dev/null | awk '$1=="plexmon_server"{f=1} END{exit !f}'; then
+        semodule -r plexmon_server >/dev/null 2>&1 && ok "SELinux: plexmon's module (plexmon_server) taken out of the policy"
+    fi
     rm -rf "$LIB"
     rm -rf "$WEB/settings" "$WEB/assets" "$WEB/lang" "$WEB/plexmon-page.php" "$WEB/plexmon-admin-api.php"
     systemctl daemon-reload
@@ -589,12 +594,85 @@ else
     warn "$NGINX_SITE is not there: put deploy/nginx-plex.conf.example there (and adjust it), then ./install.sh --upgrade"
 fi
 
+# ---------------------------------------------------------------------------
+# SELinux (2.9.0, as otp does it). Nothing changes unless somebody asks: a machine with SELinux
+# disabled stays so - only the tools are put in (Settings -> SELinux needs them to make it
+# ready) and plexmon's module is laid beside the program. Where SELinux is on: the module put
+# into the policy when it changed, the labels of plexmon's files, and the boolean that lets
+# nginx pass Plex on and the pages ask the daemon.
+selinux_tools() {
+    [[ "$PKG" == "dnf" ]] || return 0
+    [[ -d /etc/selinux || -x /usr/sbin/getenforce ]] || return 0
+    local want=() p
+    for p in policycoreutils libselinux-utils policycoreutils-python-utils audit selinux-policy-targeted; do
+        rpm -q "$p" >/dev/null 2>&1 || want+=("$p")
+    done
+    if (( ${#want[@]} )); then
+        if dnf install -y -q "${want[@]}" >/dev/null 2>&1; then
+            ok "SELinux: put in ${want[*]}"
+        else
+            warn "SELinux: ${want[*]} could not be put in (no repository reached?) - dnf install -y ${want[*]}"
+        fi
+    fi
+    if command -v getenforce >/dev/null 2>&1 && [[ "$(getenforce 2>/dev/null)" != "Disabled" ]] &&
+            command -v auditd >/dev/null 2>&1 && ! systemctl is-active --quiet auditd 2>/dev/null; then
+        # auditd refuses to be started by systemctl on some releases: service(8) then.
+        if systemctl enable --now auditd >/dev/null 2>&1 || service auditd start >/dev/null 2>&1; then
+            ok "SELinux: auditd started - what SELinux refuses is written down"
+        else
+            warn "SELinux: auditd could not be started - systemctl enable --now auditd"
+        fi
+    fi
+    return 0
+}
+selinux_module() {
+    selinux_tools
+    install -m 0644 "$HERE/deploy/plexmon_server.cil" "$LIB/plexmon_server.cil"
+    command -v getenforce >/dev/null 2>&1 || return 0
+    command -v semodule >/dev/null 2>&1 || return 0
+    [[ "$(getenforce 2>/dev/null)" == "Disabled" ]] && { say "SELinux is disabled: left so (Settings -> SELinux)"; return 0; }
+    local had=""
+    # Compared with the one last put into the policy, not with the copy beside the program:
+    # a semodule that failed once would leave the copy new and the policy old for good.
+    cmp -s "$LIB/plexmon_server.cil" "$LIB/plexmon_server.cil.in-policy" 2>/dev/null && had=1
+    if [[ -z "$had" ]] || ! semodule -l 2>/dev/null | awk '$1=="plexmon_server"{f=1} END{exit !f}'; then
+        if semodule -i "$LIB/plexmon_server.cil" 2>/dev/null; then
+            install -m 0644 "$LIB/plexmon_server.cil" "$LIB/plexmon_server.cil.in-policy"
+            ok "SELinux: plexmon's module (plexmon_server) is in the policy"
+        else
+            warn "SELinux: plexmon's module could not be put in: semodule -i $LIB/plexmon_server.cil"
+        fi
+    fi
+    if command -v getsebool >/dev/null 2>&1 && ! getsebool httpd_can_network_connect 2>/dev/null | grep -q -- '--> on'; then
+        setsebool -P httpd_can_network_connect 1 >/dev/null 2>&1 &&
+            ok "SELinux: httpd_can_network_connect on - nginx passes Plex on, the pages ask the daemon" ||
+            warn "SELinux: setsebool -P httpd_can_network_connect 1 failed"
+    fi
+    if command -v restorecon >/dev/null 2>&1; then
+        restorecon -R "$WEB" "$ACME_ROOT" >/dev/null 2>&1 || true
+    fi
+    if command -v matchpathcon >/dev/null 2>&1; then
+        local want
+        want="$(matchpathcon /run/plexmon 2>/dev/null || true)"
+        case "$want" in
+            *httpd_var_run_t*|*httpd_runtime_t*) ;;
+            *) warn "SELinux: the policy does not label /run/plexmon for the pages (${want:-nothing}) - plexmon --selinux-check";;
+        esac
+    fi
+}
+step "SELinux"
+selinux_module
+
 step "Starting"
 systemctl restart plexmon.service
 for i in $(seq 1 30); do
     [ -s /run/plexmon/api-port ] && break
     sleep 1
 done
+if command -v getenforce >/dev/null 2>&1 && [[ "$(getenforce 2>/dev/null)" != "Disabled" ]] &&
+        command -v restorecon >/dev/null 2>&1; then
+    restorecon -R /run/plexmon /run/plex-status >/dev/null 2>&1 || true
+fi
 if systemctl is-active --quiet plexmon.service; then
     ok "plexmon.service is running"
 else

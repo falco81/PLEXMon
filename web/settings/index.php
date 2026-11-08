@@ -312,7 +312,8 @@ if (isset($_GET['api'])) {
         'power' => '/api/power', 'ntp' => '/api/ntp', 'osup' => '/api/osup', 'db' => '/api/db',
         'rbackup' => '/api/rbackup', 'acme-push' => '/api/acme-push',
         'passkey-state' => '/api/auth/passkey/state', 'passkeys' => '/api/auth/passkeys',
-        'load' => '/api/load', 'tasks' => '/api/tasks',
+        'load' => '/api/load', 'tasks' => '/api/tasks', 'selinux' => '/api/selinux',
+        'osroots' => '/api/osroots',
     ];
     $writes = [
         'settings' => '/api/settings', 'users' => '/api/users', 'sessions' => '/api/sessions',
@@ -324,7 +325,8 @@ if (isset($_GET['api'])) {
         'power' => '/api/power', 'ntp' => '/api/ntp', 'osup' => '/api/osup', 'db' => '/api/db',
         'rbackup' => '/api/rbackup', 'proxy' => '/api/proxy', 'acme-push' => '/api/acme-push',
         'passkey-begin' => '/api/auth/passkey/begin', 'passkey-register' => '/api/auth/passkey/register',
-        'passkeys' => '/api/auth/passkeys', 'tasks' => '/api/tasks',
+        'passkeys' => '/api/auth/passkeys', 'tasks' => '/api/tasks', 'selinux' => '/api/selinux',
+        'osroots' => '/api/osroots',
     ];
     if ($post) {
         if (!isset($writes[$what])) {
@@ -606,6 +608,7 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
     <button type="button" class="fulladmin-only" data-pane="proxy" data-icon="globe" title="An HTTP proxy - used only by what you switch on: upgrades, system updates, ACME, the DNS API, Plex Discover, the ratings.">Proxy</button>
     <button type="button" class="fulladmin-only" data-pane="time" data-icon="clock" title="The clock of this server: chrony, its time servers, how far off it is, the time zone.">Time</button>
     <button type="button" class="fulladmin-only" data-pane="power" data-icon="power" title="Restart or switch off this server - now, or a restart on a schedule.">Restart and power off</button>
+    <button type="button" class="fulladmin-only" data-pane="selinux" data-icon="shield" title="SELinux on this server: how it is, what plexmon needs of it, and the way to enforcing.">SELinux</button>
     <button type="button" class="fulladmin-only" data-pane="osup" data-icon="download" title="The operating system's packages updated by dnf; a restart offered when one is needed.">System updates</button>
     <div class="ctl-group">Data</div>
     <button type="button" class="fulladmin-only" data-pane="db" data-icon="db" title="plexmon's database and Plex Media Server's own: copies, a check, putting one back.">The database</button>
@@ -693,6 +696,19 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
         one. Plex reads it only when it starts.</p>
       <div id="plex-state"></div>
       <div id="sect-web"></div>
+    </div>
+    <!-- The system's trusted roots (2.9.0, as otp's): certificate authorities of one's own put
+         into the trust of the operating system, beside the distribution's list. -->
+    <div class="card full" id="osr-card">
+      <h2>Trusted roots of the system</h2>
+      <p class="note">Certificate authorities of your own - your company's root, an intermediate -
+        trusted by the operating system of this server as a whole: curl, dnf, mail, LDAPS,
+        plexmon's own connections - every program that uses the system's trust. The
+        distribution's own list stays as it is and keeps coming with the system's updates; these
+        are added beside it, the way the system itself takes local additions (update-ca-trust on
+        RHEL, AlmaLinux and Rocky, update-ca-certificates on Debian and Ubuntu), and stay there
+        through those updates. Plex Media Server keeps a list of its own and is not touched.</p>
+      <div id="osr-host"></div>
     </div>
   </div>
 
@@ -800,6 +816,15 @@ plexmon --upgrade-status                   # an upgrade started on these pages</
         use it.</p></div>
     <div class="card full"><h2>Settings</h2><div id="sect-proxy"></div></div>
     <div id="px-host"></div>
+  </div>
+  <div class="ctl-pane" id="pane-selinux" hidden>
+    <div class="ctl-head"><h2 class="ctl-title">SELinux</h2>
+      <p class="ctl-lede">What SELinux refuses to nginx, php-fpm and the rest when it is enforcing -
+        and what plexmon needs of it. Nothing changes here unless asked: disabled stays disabled,
+        and plexmon runs as always. The way to enforcing is disabled, permissive (a restart, every
+        file labelled - the data disks left out), a day or two of use, then enforcing once nothing
+        was refused. On the server: plexmon --selinux-check.</p></div>
+    <div id="se-host"></div>
   </div>
   <div class="ctl-pane" id="pane-time" hidden>
     <div class="ctl-head"><h2 class="ctl-title">Time</h2>

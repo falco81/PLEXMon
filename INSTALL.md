@@ -2,7 +2,9 @@
 
 AlmaLinux / Rocky / RHEL 9 (and similar), nginx + php-fpm in front of Plex Media
 Server, Python 3.9 or newer (3.10+ for remote control of televisions, typically
-`python3.12`), openssl. SELinux does not matter (the files are in /var/www and /etc/nginx).
+`python3.12`), openssl. SELinux: a machine where it is disabled stays so; where it is on, the
+installer puts plexmon's module (`plexmon_server`) into the policy, labels its files and switches
+`httpd_can_network_connect` on - Settings → SELinux shows the rest ([docs/selinux.md](docs/selinux.md)).
 
 ## 1. A new installation and moving from the current plexmon
 
