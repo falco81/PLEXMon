@@ -26,3 +26,14 @@
 (optional plexmon_server_systemd_runtime
     (allow init_t httpd_var_run_t (dir (getattr setattr search open read)))
     (allow init_t httpd_var_run_t (file (getattr setattr))))
+
+; plexmon.service may write /etc/selinux and /var/lib/selinux (Settings -> SELinux, 2.9.0):
+; systemd binds them into the service's own view of the files before it starts
+; (ReadWritePaths=) - init_t mounton on selinux_config_t and semanage_store_t, security types
+; the policy does not let it mount on. Under enforcing plexmon would not start (seen permissive:
+; "init_t -> selinux_config_t dir { mounton }", comm "(thon3.14)"). Only mounton on the folder,
+; nothing read or written; each in a block of its own.
+(optional plexmon_server_unit_selinux_config
+    (allow init_t selinux_config_t (dir (mounton))))
+(optional plexmon_server_unit_semanage_store
+    (allow init_t semanage_store_t (dir (mounton))))

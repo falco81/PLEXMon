@@ -4,6 +4,25 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.9.2 - 2026-11-08
+
+- **Fixed: plexmon would not have started under enforcing.** systemd binds `/etc/selinux` and
+  `/var/lib/selinux` into plexmon.service's view (`ReadWritePaths=`, 2.9.0) - `init_t mounton`
+  on two security types the policy refuses. `plexmon_server` allows exactly that (each in an
+  `optional` block); install.sh puts the newer module in by itself where SELinux is on, and the
+  card says when a newer one waits for *Put in what plexmon needs*.
+- **A refusal is counted until the policy loaded now allows it** (audit2why), not only when
+  it came after the needs were last put in: a refusal that comes only when a service starts
+  was hidden until the next restart - enforcing then let through.
+- **Every program counts** before enforcing - the whole system goes enforcing, not plexmon
+  alone; the card shows plexmon with nginx and php-fpm, and the other programs, apart.
+- **A second card, Plex Media Server and nginx**: the domain Plex runs in (unconfined; init_t
+  or a container is refused enforcing), the labels of Plex's program and library and of what
+  nginx reads to publish Plex (the vhost, the TLS settings, the certificate and its key), the
+  ports nginx listens on, the boolean that lets nginx reach 127.0.0.1:32400, and what was
+  refused to Plex or to nginx on its way.
+- Ready for enforcing now says to restart the server once more in permissive first.
+
 ## 2.9.1 - 2026-11-08
 
 - **Fixed: "Let the kernel start SELinux" was shown where it must not be.** A machine switched

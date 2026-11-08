@@ -10015,6 +10015,126 @@
   "xs1252": {
    "source": "SELinux was made ready here (permissive), but the kernel's command line has selinux=0 - it stays off whatever /etc/selinux/config says. Restart the machine afterwards: the first start labels every file (the data disks left out) and takes a long while - up to tens of minutes - then the machine restarts once more by itself.",
    "text": "SELinux je tu připravený (permissive), ale příkazová řádka jádra obsahuje selinux=0 – zůstane vypnutý bez ohledu na /etc/selinux/config. Potom stroj restartujte: první start označí všechny soubory (datové disky se vynechají) a trvá dlouho – až desítky minut – a pak se stroj ještě jednou sám restartuje."
+  },
+  "xs1253": {
+   "source": "Nothing refused to plexmon, nginx, php-fpm and systemd",
+   "text": "Plexmonu, nginxu, php-fpm a systemd nic odmítnuto"
+  },
+  "xs1254": {
+   "source": "Nothing refused to the other programs of the system",
+   "text": "Ostatním programům systému nic odmítnuto"
+  },
+  "xs1255": {
+   "source": "still refused",
+   "text": "pořád odmítáno"
+  },
+  "xs1256": {
+   "source": "Plex Media Server and nginx",
+   "text": "Plex Media Server a nginx"
+  },
+  "xs1257": {
+   "source": "Plex itself and the way it is published: nginx (httpd_t) passes it on from 443 to 127.0.0.1:32400. Everything here has to be right before enforcing - or Plex is not reached from outside.",
+   "text": "Plex samotný a cesta, kudy se publikuje: nginx (httpd_t) ho předává z 443 na 127.0.0.1:32400. Všechno tady musí být v pořádku dřív, než se zapne enforcing – jinak se na Plex zvenku nikdo nedostane."
+  },
+  "xs1258": {
+   "source": "SELinux is disabled - it restricts nothing, Plex and nginx included.",
+   "text": "SELinux je vypnutý – nic neomezuje, Plex ani nginx."
+  },
+  "xs1259": {
+   "source": "Plex Media Server does not run now - its domain cannot be read",
+   "text": "Plex Media Server teď neběží – jeho doménu nejde zjistit"
+  },
+  "xs1260": {
+   "source": "Plex runs unconfined - SELinux does not restrict what it reads, writes or listens on, the data disks included",
+   "text": "Plex běží bez omezení (unconfined) – SELinux neomezuje, co čte, zapisuje ani na čem poslouchá, datové disky taky ne"
+  },
+  "xs1261": {
+   "source": "Plex runs as init_t - under enforcing it would be refused nearly everything",
+   "text": "Plex běží jako init_t – v enforcing by mu bylo odmítnuto skoro všechno"
+  },
+  "xs1262": {
+   "source": "Plex runs in a container - under enforcing it may read only files labelled for containers, and the data disks are not",
+   "text": "Plex běží v kontejneru – v enforcing smí číst jen soubory označené pro kontejnery, a datové disky takové nejsou"
+  },
+  "xs1263": {
+   "source": "Plex runs confined - what is refused to it is listed below",
+   "text": "Plex běží omezeně – co je mu odmítnuto, je níže"
+  },
+  "xs1264": {
+   "source": "nginx may connect to Plex on 127.0.0.1:32400 - without it Plex is not reached through nginx",
+   "text": "nginx se smí připojit na Plex na 127.0.0.1:32400 – bez toho se na Plex přes nginx nikdo nedostane"
+  },
+  "xs1265": {
+   "source": "nginx may listen on every port of the Plex vhost",
+   "text": "nginx smí poslouchat na všech portech Plex vhostu"
+  },
+  "xs1266": {
+   "source": "nginx may not listen on some port of the Plex vhost under enforcing",
+   "text": "nginx by v enforcing nesměl poslouchat na některém portu Plex vhostu"
+  },
+  "xs1267": {
+   "source": "the program of Plex Media Server",
+   "text": "program Plex Media Serveru"
+  },
+  "xs1268": {
+   "source": "its library: the database, the metadata, the posters",
+   "text": "jeho knihovna: databáze, metadata, plakáty"
+  },
+  "xs1269": {
+   "source": "nginx: the Plex vhost",
+   "text": "nginx: Plex vhost"
+  },
+  "xs1270": {
+   "source": "nginx: the TLS settings plexmon keeps",
+   "text": "nginx: nastavení TLS, které spravuje plexmon"
+  },
+  "xs1271": {
+   "source": "nginx: the certificate Plex answers with",
+   "text": "nginx: certifikát, kterým Plex odpovídá"
+  },
+  "xs1272": {
+   "source": "nginx: its key",
+   "text": "nginx: jeho klíč"
+  },
+  "xs1273": {
+   "source": "The data disks are left out of the labelling - Plex reads them as before",
+   "text": "Datové disky jsou vynechané z označování – Plex je čte jako dřív"
+  },
+  "xs1274": {
+   "source": "Nothing refused to Plex or to nginx on its way",
+   "text": "Plexu ani nginxu na cestě k němu nic odmítnuto"
+  },
+  "xs1275": {
+   "source": "Not yet - Plex or its way through nginx would be refused something under enforcing",
+   "text": "Zatím ne – v enforcing by Plexu nebo cestě přes nginx bylo něco odmítnuto"
+  },
+  "xs1276": {
+   "source": "Plex and nginx work under enforcing",
+   "text": "Plex a nginx v enforcing fungují"
+  },
+  "xs1277": {
+   "source": "Plex and nginx have everything they need for enforcing",
+   "text": "Plex a nginx mají vše, co pro enforcing potřebují"
+  },
+  "xs1278": {
+   "source": "A newer plexmon_server came with this version - \"Put in what plexmon needs\" puts it into the policy",
+   "text": "S touto verzí přišel novější plexmon_server – „Doplnit, co plexmon potřebuje“ ho vloží do politiky"
+  },
+  "xs1279": {
+   "source": "Before switching: restart the server once more, still permissive (or at least plexmon, nginx, php-fpm and Plex), then look again - what is refused only when a service starts shows up then.",
+   "text": "Před přepnutím: restartujte server ještě jednou, pořád v permissive (nebo aspoň plexmon, nginx, php-fpm a Plex), a pak se podívejte znovu – co se odmítá jen při startu služby, se ukáže až tehdy."
+  },
+  "xs1280": {
+   "source": "a newer plexmon module (plexmon_server) is waiting to be put in - \"Put in what plexmon needs\"",
+   "text": "na vložení čeká novější modul plexmonu (plexmon_server) – „Doplnit, co plexmon potřebuje“"
+  },
+  "xs1281": {
+   "source": "Plex Media Server runs as init_t - systemd did not give it a domain of its own; under enforcing it would be refused nearly everything",
+   "text": "Plex Media Server běží jako init_t – systemd mu nedal vlastní doménu; v enforcing by mu bylo odmítnuto skoro všechno"
+  },
+  "xs1282": {
+   "source": "Plex Media Server runs in a container (container_t): under enforcing it may read only files labelled for containers - the data disks are not",
+   "text": "Plex Media Server běží v kontejneru (container_t): v enforcing smí číst jen soubory označené pro kontejnery – datové disky takové nejsou"
   }
  },
  "patterns": {
@@ -12577,6 +12697,26 @@
   "xp0257": {
    "source": "nginx listens on it ({0})",
    "text": "nginx na něm poslouchá ({0})"
+  },
+  "xp0258": {
+   "source": "Refused to plexmon, nginx, php-fpm and systemd: {0}",
+   "text": "Odmítnuto plexmonu, nginxu, php-fpm a systemd: {0}"
+  },
+  "xp0259": {
+   "source": "Refused to other programs of the system: {0}",
+   "text": "Odmítnuto ostatním programům systému: {0}"
+  },
+  "xp0260": {
+   "source": "Refused to Plex or to nginx on its way: {0}",
+   "text": "Odmítnuto Plexu nebo nginxu na cestě k němu: {0}"
+  },
+  "xp0261": {
+   "source": "SELinux refused {0} thing(s) the policy loaded now still refuses",
+   "text": "SELinux odmítl {0}×, co aktuální politika pořád odmítá"
+  },
+  "xp0262": {
+   "source": "nginx listens on port {0}, which it may not bind under enforcing",
+   "text": "nginx poslouchá na portu {0}, který v enforcing nesmí obsadit"
   }
  },
  "rich": {

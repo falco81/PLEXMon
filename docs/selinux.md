@@ -44,6 +44,7 @@ separate root helper. `plexmon.service` may write only what they need (`ReadWrit
 | `httpd_can_network_connect` on | **nginx passes Plex on (127.0.0.1:32400)** and the pages ask the daemon on 127.0.0.1 - without it Plex is not reached through nginx at all | boolean |
 | the ports nginx listens on as `http_port_t` | a `listen` port of the Plex vhost that is neither `http_port_t` nor `http_cache_port_t` keeps nginx from starting | `semanage port -a` - never `-m`: a port of another service is refused with "choose another port" |
 | `/var/www/html/smart`, `/var/www/plexmon-acme` | the pages, the answers for the ACME CA | the policy's own labels - `restorecon` |
+| systemd may mount on `/etc/selinux`, `/var/lib/selinux` | `ReadWritePaths=` of plexmon.service binds them into the service's own view before it starts (`init_t mounton` on `selinux_config_t`, `semanage_store_t`) - without it plexmon does not start under enforcing | narrow `allow` in `optional` blocks (2.9.2) |
 
 The module (`deploy/plexmon_server.cil`) is CIL - `semodule -i` needs no compiler on the
 server. It is put in by the installer where SELinux is on and it changed (compared with
@@ -63,6 +64,21 @@ loaded now allows (`audit2why`: *would be allowed by active policy*, not counted
 Buttons: *Make it ready (permissive)* (disabled), *Put in what plexmon needs* and *Switch to
 enforcing* (permissive; enforcing only once ready), *Back to permissive* (enforcing). Each asks
 first and says what will happen. *Look again* and *Download the report* are at the top.
+
+**What counts before enforcing** (2.9.2): every program's refusals - the whole system goes
+enforcing. A refusal from before plexmon's needs were last put in counts until the policy loaded
+now allows it (`audit2why` says *would be allowed by active policy*) - a refusal that comes only
+when a service starts would otherwise hide until the next restart. Without `audit2why` only
+what came after counts. Before switching, restart the server once more in permissive and look
+again.
+
+**Plex Media Server and nginx** - a card of its own: the domain Plex's processes run in (read
+from `/proc`; `unconfined_service_t` means SELinux does not restrict Plex, the data disks
+included; `init_t` or a container keeps enforcing from being switched on), the labels of Plex's
+program and library and of what nginx reads to publish Plex (the vhost, the TLS settings, the
+certificate and its key - `httpd_config_t`, `cert_t` or `etc_t`), the ports nginx listens on,
+`httpd_can_network_connect`, and what was refused to Plex or to nginx on its way to
+127.0.0.1:32400.
 
 When everything plexmon knows it needs is there and something is still refused, the card says
 *plexmon does not know this one yet* - the report is what tells how to put it right.

@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.9.1'
+__version__ = '2.9.2'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -7599,61 +7599,83 @@ def se_applied_at():
         return 0.0
 
 
+SE_PLEX_LINE = re.compile(r'comm="?Plex|plexmediaserver|Plex Media', re.I)
+
+
 def se_denials(since=0.0):
-    """What SELinux refused since the machine started - or since plexmon's needs were last put
-    in (what was refused before is what they put right) - to the programs plexmon works with."""
+    """What SELinux refused to the programs plexmon works with (and to Plex), since the machine
+    started. Those from before plexmon's needs were last put in count only while the policy
+    loaded now still refuses them (2.9.2: audit2why) - a refusal that comes only when a service
+    starts was hidden until the next restart, enforcing then let through and the service down."""
     got = _se_run(['ausearch', '-m', 'AVC,USER_AVC', '-ts', 'boot'], 120, light=True)
     if got is None:
         return {'tool': False, 'total': 0, 'groups': [], 'since': since}
-    groups, lines, total = {}, {}, 0
+    groups, lines = {}, {}
     for line in (got.stdout or '').splitlines():
         if 'avc:' not in line or 'denied' not in line:
             continue
         when = re.search(r'msg=audit\((\d+)(?:\.\d+)?:', line)
-        if since and when and int(when.group(1)) < since:
-            continue
+        old = bool(since and when and int(when.group(1)) < since)
         perms = re.search(r'denied\s+\{([^}]*)\}', line)
         sc = re.search(r'scontext=(\S+)', line)
         tc = re.search(r'tcontext=(\S+)', line)
         cl = re.search(r'tclass=(\S+)', line)
         comm = re.search(r'comm=(\S+)', line)
-        name = re.search(r'\bname=(\S+)', line)
+        name = re.search(r'\bname=(\S+)', line) or re.search(r'\bpath=(\S+)', line)
         if not (perms and sc and tc and cl):
             continue
         st = (sc.group(1).split(':') + ['', '', ''])[2]
         tt = (tc.group(1).split(':') + ['', '', ''])[2]
-        if st not in SE_DOMAINS and 'plex' not in line.lower():
-            continue
+        # Every program counts (2.9.2): enforcing is the whole system's, not plexmon's alone.
+        # Plex's part: its own processes, and nginx reaching it (port 32400).
+        if SE_PLEX_LINE.search(line) or (st == 'httpd_t' and re.search(r'\bdest=32400\b', line)):
+            part = 'plex'
+        elif st in SE_DOMAINS or 'plex' in line.lower():
+            part = 'plexmon'
+        else:
+            part = 'other'
         what = ' '.join(x for x in (comm.group(1) if comm else '', name.group(1) if name else '') if x)
-        total += 1
-        key = (st, tt, cl.group(1), perms.group(1).strip())
+        dest = re.search(r'\bdest=(\d+)', line)
+        if dest:
+            what = (what + ' port ' + dest.group(1)).strip()
+        key = (st, tt, cl.group(1), perms.group(1).strip(), old, part)
         lines[key] = line
         g = groups.setdefault(key, {'source': st, 'target': tt, 'class': cl.group(1),
-                                    'perms': perms.group(1).strip(), 'count': 0, 'what': ''})
+                                    'perms': perms.group(1).strip(), 'count': 0, 'what': '',
+                                    'earlier': old, 'part': part})
         g['count'] += 1
         g['what'] = what.replace('"', '')[:120] or g['what']
+    allowed = se_allowed_now(lines)
     settled = 0
-    for key in se_allowed_now(lines):
-        settled += groups[key]['count']
-        total -= groups.pop(key)['count']
-    out = sorted(groups.values(), key=lambda g: -g['count'])[:30]
-    return {'tool': True, 'total': total, 'groups': out, 'since': since, 'settled': settled}
+    for key in list(groups):
+        if key[4] and allowed is None:
+            groups.pop(key)                 # no audit2why: put right by "Put in", as before
+        elif allowed is not None and key in allowed:
+            g = groups.pop(key)
+            if not key[4]:
+                settled += g['count']
+    total = sum(g['count'] for g in groups.values())
+    parts = {k: sum(g['count'] for g in groups.values() if g['part'] == k) for k in ('plex', 'plexmon', 'other')}
+    out = sorted(groups.values(), key=lambda g: -g['count'])[:40]
+    return {'tool': True, 'total': total, 'groups': out, 'since': since, 'settled': settled,
+            'parts': parts}
 
 
 def se_allowed_now(lines):
-    """Refused once, allowed by the policy loaded now (audit2why: "would be allowed by active
-    policy") - a newer plexmon_server, a boolean switched on since: not counted."""
+    """Which of the refusals (one line for each kind) the policy loaded now allows, as audit2why
+    tells ("would be allowed by active policy") - a newer plexmon_server, a boolean switched on
+    since. None when audit2why is not there or says nothing plain."""
     by_id = {}
     for key, line in lines.items():
         m = re.search(r'msg=audit\(([0-9.]+:\d+)\)', line)
         if m:
             by_id[m.group(1)] = key
     if not by_id:
-        return []
+        return set()
     got = _se_run(['audit2why'], 300, light=True,
                   data=''.join(lines[k] + '\n' for k in by_id.values()))
     if got is None or got.returncode != 0:
-        return []
+        return None
     now, cur = set(), None
     for line in (got.stdout or '').splitlines():
         m = re.search(r'msg=audit\(([0-9.]+:\d+)\)', line)
@@ -7662,7 +7684,71 @@ def se_allowed_now(lines):
             continue
         if cur is not None and 'would be allowed by active policy' in line:
             now.add(cur)
-    return sorted(now)
+    return now
+
+
+def se_plex(on, denials):
+    """Plex Media Server under SELinux (2.9.2): the domain its processes run in (read from
+    /proc), the labels of its program and of its folder on the system's disk, and what was
+    refused to it. The data disks are not touched - only named."""
+    procs = []
+    fake = os.environ.get('PLEXMON_SELINUX_PLEXPROCS')
+    if fake:
+        try:
+            procs = json.load(open(fake)) or []
+        except (OSError, ValueError):
+            procs = []
+    else:
+        try:
+            pids = [p for p in os.listdir('/proc') if p.isdigit()]
+        except OSError:
+            pids = []
+        for pid in pids:
+            try:
+                with open('/proc/%s/comm' % pid) as f:
+                    comm = f.read().strip()
+                if not comm.startswith('Plex'):
+                    continue
+                ctx = ''
+                if on:
+                    with open('/proc/%s/attr/current' % pid) as f:
+                        ctx = f.read().strip().rstrip('\0')
+                procs.append({'comm': comm, 'context': ctx})
+            except OSError:
+                continue
+    doms = {}
+    for p in procs:
+        d = (str(p.get('context') or '').split(':') + ['', '', ''])[2] if on else ''
+        doms.setdefault(d, set()).add(str(p.get('comm') or '?')[:40])
+    labels = []
+    bad = (None, 'unlabeled_t', 'default_t', 'file_t')
+    for path, why, may in (
+            ('/usr/lib/plexmediaserver', 'the program of Plex Media Server', None),
+            ('/var/lib/plexmediaserver', 'its library: the database, the metadata, the posters', None),
+            # What nginx reads to publish Plex (httpd_t may read these types).
+            (str(NGINX_SITE), 'nginx: the Plex vhost', ('httpd_config_t', 'etc_t')),
+            (str(NGINX_TLS_CONF), 'nginx: the TLS settings plexmon keeps', ('httpd_config_t', 'etc_t')),
+            (str(NGINX_CERT), 'nginx: the certificate Plex answers with', ('httpd_config_t', 'cert_t', 'etc_t')),
+            (str(NGINX_KEY), 'nginx: its key', ('httpd_config_t', 'cert_t', 'etc_t'))):
+        if os.path.exists(path):
+            got = se_label(path) if on else None
+            ok = None if not on else (got not in bad if may is None else got in may)
+            labels.append({'path': path, 'why': why, 'label': got, 'ok': ok,
+                           'want': ' / '.join(may) if may else ''})
+    listens = []
+    if on:
+        known = se_ports()
+        for p in nginx_listen_ports():
+            ok = any(lo <= p <= hi for lo, hi in SE_HTTPD_TCP) or (
+                known is not None and (se_port_has(known, 'http_port_t', 'tcp', p) or
+                                       se_port_has(known, 'http_cache_port_t', 'tcp', p)))
+            listens.append({'port': p, 'ok': ok})
+    bools = [{'name': 'httpd_can_network_connect', 'on': se_bool('httpd_can_network_connect') if on else None,
+              'why': 'nginx may connect to Plex on 127.0.0.1:32400 - without it Plex is not reached through nginx'}]
+    return {'running': bool(procs),
+            'domains': [{'domain': d, 'procs': sorted(c)[:8]} for d, c in sorted(doms.items())],
+            'labels': labels, 'listens': listens, 'booleans': bools, 'data_disks': se_data_mounts(),
+            'refused': ((denials or {}).get('parts') or {}).get('plex') or 0}
 
 
 def se_data_mounts():
@@ -7777,6 +7863,10 @@ def se_check(r=None):
         return out
     on = mode in ('Enforcing', 'Permissive')
     out['module'] = se_module_in() if on else None
+    # A newer plexmon_server beside the program than the one in the policy (2.9.2): an upgrade
+    # brought it and SELinux was off, or semodule failed - "Put in what plexmon needs" puts it in.
+    out['module_newer'] = bool(on and os.path.exists(SE_CIL) and
+                               _se_read(SE_CIL) != _se_read(SE_CIL + '.in-policy'))
     for path, want, why in SE_LABELS:
         if not os.path.exists(path):
             continue
@@ -7792,10 +7882,15 @@ def se_check(r=None):
     if on:
         out['denials'] = se_denials(se_applied_at())
         out['auditd'] = se_auditd()
+    if mode != 'absent':
+        out['plex'] = se_plex(on, out['denials'])
     probs = out['problems']
     if on:
         if out['module'] is False:
             probs.append('plexmon\'s module (%s) is not installed' % SE_MODULE)
+        elif out['module_newer']:
+            probs.append('a newer plexmon module (%s) is waiting to be put in - "Put in what plexmon '
+                         'needs"' % SE_MODULE)
         probs.extend('%s is labelled %s, not %s (%s)' % (x['path'], x['label'] or '?', x['want'], x['why'])
                      for x in out['labels'] if x['ok'] is False)
         probs.extend('the boolean %s is off (%s)' % (x['name'], x['why'])
@@ -7806,9 +7901,19 @@ def se_check(r=None):
             probs.append('semanage is not on this machine - the ports cannot be checked '
                          '(dnf install policycoreutils-python-utils)')
         if out['denials']['total']:
-            probs.append(('SELinux refused %d thing(s) since plexmon\'s needs were put in'
-                          if out['denials'].get('since') else
-                          'SELinux refused %d thing(s) since the machine started') % out['denials']['total'])
+            probs.append('SELinux refused %d thing(s) the policy loaded now still refuses'
+                         % out['denials']['total'])
+        dom = [x['domain'] for x in (out.get('plex') or {}).get('domains') or []]
+        probs.extend('%s is labelled %s, not %s (%s)' % (x['path'], x['label'] or '?', x['want'] or 'a label', x['why'])
+                     for x in (out.get('plex') or {}).get('labels') or [] if x['ok'] is False)
+        probs.extend('nginx listens on port %d, which it may not bind under enforcing' % x['port']
+                     for x in (out.get('plex') or {}).get('listens') or [] if x['ok'] is False)
+        if 'init_t' in dom:
+            probs.append('Plex Media Server runs as init_t - systemd did not give it a domain of its own; '
+                         'under enforcing it would be refused nearly everything')
+        if any(x in ('container_t', 'svirt_lxc_net_t') for x in dom):
+            probs.append('Plex Media Server runs in a container (container_t): under enforcing it may '
+                         'read only files labelled for containers - the data disks are not')
         if not out.get('auditd', True):
             probs.append('auditd does not run - what SELinux refuses is not written down '
                          '(systemctl enable --now auditd)')
@@ -8189,8 +8294,19 @@ def se_report_text(c):
         lines.append('  %s port %d/%s %s - %s' % ('ok  ' if x['labelled'] else 'FAIL', x['port'],
                                                  x['proto'], x['type'], x['why']))
     d = c['denials']
-    lines.append('  refused%s: %s' % (' since the needs were put in' if d.get('since') else ' since the start',
-                                      d['total'] if d['tool'] else '? (ausearch is not there)'))
+    pt = d.get('parts') or {}
+    lines.append('  refused, and still refused by the policy now: %s' % (
+        ('%d (plexmon and the pages %d, Plex and nginx on its way %d, other programs %d)' % (
+            d['total'], pt.get('plexmon', 0), pt.get('plex', 0), pt.get('other', 0)))
+        if d['tool'] else '? (ausearch is not there)'))
+    px = c.get('plex') or {}
+    for dm in px.get('domains') or []:
+        lines.append('  Plex Media Server runs as %s (%s)' % (dm['domain'] or '?', ', '.join(dm['procs'])))
+    for x in px.get('labels') or []:
+        lines.append('  %s %s: %s' % ('ok  ' if x['ok'] else 'FAIL', x['path'], x['label'] or '?'))
+    if px.get('listens'):
+        lines.append('  nginx listens on %s' % ', '.join('%d%s' % (x['port'], '' if x['ok'] else ' (not allowed)')
+                                                         for x in px['listens']))
     if d.get('settled'):
         lines.append('  refused before, allowed now (not counted): %d' % d['settled'])
     for g in d['groups'][:15]:

@@ -4459,6 +4459,81 @@ function seRow(list, good, words, more) {
   r.appendChild(t);
   list.appendChild(r);
 }
+function seAvc(groups) {
+  var det = el('details', 'se-avc');
+  det.appendChild(el('summary', '', 'What was refused (' + num(groups.length) + ')'));
+  var t = el('table', 'se-avc-t');
+  groups.forEach(function (g) {
+    var tr = el('tr', '');
+    tr.appendChild(el('td', 'num', num(g.count) + '×'));
+    var w = noI18n(el('td', 'mono small', g.source + ' → ' + g.target + ' ' + g['class'] + ' { ' + g.perms + ' }'));
+    tr.appendChild(w);
+    var m = el('td', 'mono small muted');
+    m.appendChild(noI18n(el('span', '', g.what || '')));
+    if (g.earlier) { m.appendChild(document.createTextNode(' ')); m.appendChild(el('span', 'tag warn', 'still refused')); }
+    tr.appendChild(m);
+    t.appendChild(tr);
+  });
+  det.appendChild(t);
+  return det;
+}
+/* Plex Media Server and its way out through nginx (2.9.2): the domain Plex runs in, the labels
+   of what it and nginx read, the ports nginx listens on, and what was refused on that way. */
+function sePlexCard(s) {
+  var x = s.plex;
+  if (!x) return null;
+  var m = s.mode, on = m === 'Enforcing' || m === 'Permissive';
+  var c = el('div', 'card full se-card');
+  var h = el('h2', 'se-h');
+  h.appendChild(el('span', '', 'Plex Media Server and nginx'));
+  c.appendChild(h);
+  c.appendChild(el('p', 'note', 'Plex itself and the way it is published: nginx (httpd_t) passes it on from 443 to 127.0.0.1:32400. Everything here has to be right before enforcing - or Plex is not reached from outside.'));
+  if (!on) {
+    c.appendChild(el('p', 'note', 'SELinux is disabled - it restricts nothing, Plex and nginx included.'));
+    return c;
+  }
+  var list = el('div', 'se-list');
+  if (!x.running) seRow(list, null, 'Plex Media Server does not run now - its domain cannot be read');
+  (x.domains || []).forEach(function (dm) {
+    var good = dm.domain === 'unconfined_service_t' || dm.domain === 'unconfined_t' || dm.domain === 'spc_t';
+    var badd = dm.domain === 'init_t' || dm.domain === 'container_t' || dm.domain === 'svirt_lxc_net_t';
+    seRow(list, good ? true : badd ? false : null,
+      good ? 'Plex runs unconfined - SELinux does not restrict what it reads, writes or listens on, the data disks included'
+        : dm.domain === 'init_t' ? 'Plex runs as init_t - under enforcing it would be refused nearly everything'
+        : badd ? 'Plex runs in a container - under enforcing it may read only files labelled for containers, and the data disks are not'
+        : 'Plex runs confined - what is refused to it is listed below',
+      noI18n(el('span', 'mono small se-what', dm.domain + '  ' + (dm.procs || []).join(', '))));
+  });
+  (x.booleans || []).forEach(function (b) {
+    seRow(list, b.on, b.why, noI18n(el('span', 'mono small se-what', b.name + ' = ' + (b.on ? 'on' : 'off'))));
+  });
+  if ((x.listens || []).length) {
+    var allOk = x.listens.every(function (p) { return p.ok; });
+    seRow(list, allOk, allOk ? 'nginx may listen on every port of the Plex vhost' : 'nginx may not listen on some port of the Plex vhost under enforcing',
+      noI18n(el('span', 'mono small se-what', x.listens.map(function (p) { return p.port + (p.ok ? '' : ' ✗'); }).join(', '))));
+  }
+  (x.labels || []).forEach(function (l) {
+    seRow(list, l.ok, l.why, noI18n(el('span', 'mono small se-what', l.path + '  ' + (l.label || '?') + (l.ok === false && l.want ? '  →  ' + l.want : ''))));
+  });
+  if ((x.data_disks || []).length) {
+    var dd = el('span', 'mono small se-what');
+    noI18n(dd).textContent = x.data_disks.join(', ');
+    seRow(list, true, 'The data disks are left out of the labelling - Plex reads them as before', dd);
+  }
+  var d = s.denials || {};
+  var pg = (d.groups || []).filter(function (g) { return g.part === 'plex'; });
+  if (d.tool) seRow(list, !x.refused, x.refused ? 'Refused to Plex or to nginx on its way: ' + num(x.refused) : 'Nothing refused to Plex or to nginx on its way');
+  c.appendChild(list);
+  if (pg.length) c.appendChild(seAvc(pg));
+  var bad = (x.domains || []).some(function (dm) { return /^(init_t|container_t|svirt_lxc_net_t)$/.test(dm.domain); }) ||
+    (x.booleans || []).some(function (b) { return b.on === false; }) || (x.listens || []).some(function (p) { return !p.ok; }) ||
+    (x.labels || []).some(function (l) { return l.ok === false; }) || x.refused > 0;
+  var v = el('div', 'se-verdict ' + (bad ? 'bad' : 'good'));
+  v.appendChild(el('b', '', bad ? 'Not yet - Plex or its way through nginx would be refused something under enforcing'
+    : (m === 'Enforcing' ? 'Plex and nginx work under enforcing' : 'Plex and nginx have everything they need for enforcing')));
+  c.appendChild(v);
+  return c;
+}
 function drawSelinux() {
   var host = $('se-host');
   if (!host || !SE.d) return;
@@ -4524,6 +4599,7 @@ function drawSelinux() {
     var list = el('div', 'se-list');
     seRow(list, s.module === true ? true : s.module === false ? false : null,
           s.module === false ? 'plexmon\'s module (plexmon_server) is not installed' : 'plexmon\'s module (plexmon_server) installed');
+    if (s.module === true && s.module_newer) seRow(list, false, 'A newer plexmon_server came with this version - "Put in what plexmon needs" puts it into the policy');
     (s.labels || []).forEach(function (x) {
       seRow(list, x.ok, x.why, noI18n(el('span', 'mono small se-what', x.path + '  ' + (x.label || '?') + (x.ok ? '' : '  →  ' + x.want))));
     });
@@ -4533,29 +4609,22 @@ function drawSelinux() {
     (s.ports || []).forEach(function (x) {
       seRow(list, x.labelled, x.why, noI18n(el('span', 'mono small se-what', x.port + '/' + x.proto + '  ' + x.type)));
     });
-    var d = s.denials || {};
-    seRow(list, d.tool ? !d.total : null, !d.tool ? 'What SELinux refused cannot be read: ausearch is not on this machine (dnf install audit)'
-      : d.since ? (d.total ? 'SELinux refused ' + num(d.total) + ' thing(s) since plexmon\'s needs were put in' : 'Nothing refused since plexmon\'s needs were put in')
-      : d.total ? 'SELinux refused ' + num(d.total) + ' thing(s) since the machine started' : 'Nothing refused since the machine started');
+    var d = s.denials || {}, parts = d.parts || {};
+    /* Every program counts (2.9.2): enforcing is the whole system's. Plex's part is on its own
+       card below; here plexmon with nginx and php-fpm, and every other program. */
+    if (!d.tool) seRow(list, null, 'What SELinux refused cannot be read: ausearch is not on this machine (dnf install audit)');
+    else {
+      var pm = parts.plexmon || 0, ot = parts.other || 0;
+      seRow(list, !pm, pm ? 'Refused to plexmon, nginx, php-fpm and systemd: ' + num(pm) : 'Nothing refused to plexmon, nginx, php-fpm and systemd');
+      seRow(list, !ot, ot ? 'Refused to other programs of the system: ' + num(ot) : 'Nothing refused to the other programs of the system');
+    }
     if (d.tool && d.settled) seRow(list, true, num(d.settled) + ' refused before, allowed now - by a newer plexmon_server or a boolean put in since; not counted');
     if (s.auditd === false) seRow(list, false, 'auditd does not run - what SELinux refuses is not written down (systemctl enable --now auditd)');
     c.appendChild(list);
-    if ((d.groups || []).length) {
-      var det = el('details', 'se-avc');
-      det.appendChild(el('summary', '', 'What was refused (' + num(d.groups.length) + ')'));
-      var t = el('table', 'se-avc-t');
-      d.groups.forEach(function (g) {
-        var tr = el('tr', '');
-        tr.appendChild(el('td', 'num', num(g.count) + '×'));
-        tr.appendChild(noI18n(el('td', 'mono small', g.source + ' → ' + g.target + ' ' + g['class'] + ' { ' + g.perms + ' }')));
-        tr.appendChild(noI18n(el('td', 'mono small muted', g.what || '')));
-        t.appendChild(tr);
-      });
-      det.appendChild(t);
-      c.appendChild(det);
-    }
+    var mine = (d.groups || []).filter(function (g) { return g.part !== 'plex'; });
+    if (mine.length) c.appendChild(seAvc(mine));
     var probs = s.problems || [];
-    var known = s.module !== false && !(s.labels || []).some(function (x) { return x.ok === false; }) &&
+    var known = s.module !== false && !s.module_newer && !(s.labels || []).some(function (x) { return x.ok === false; }) &&
       !(s.booleans || []).some(function (x) { return x.on === false; }) &&
       !(s.ports || []).some(function (x) { return x.labelled === false; });
     if (d.total && known) {
@@ -4567,6 +4636,7 @@ function drawSelinux() {
     var verdict = el('div', 'se-verdict ' + (m === 'Enforcing' && !probs.length ? 'good' : s.ready ? 'ready' : probs.length ? 'bad' : ''));
     verdict.appendChild(el('b', '', m === 'Enforcing' ? (probs.length ? 'Enforcing - but something is not as plexmon needs it' : 'Enforcing - and everything plexmon needs is there')
       : s.ready ? 'Ready for enforcing' : 'Not ready for enforcing yet'));
+    if (m === 'Permissive' && s.ready) verdict.appendChild(el('span', 'small', 'Before switching: restart the server once more, still permissive (or at least plexmon, nginx, php-fpm and Plex), then look again - what is refused only when a service starts shows up then.'));
     if (m === 'Permissive' && !s.ready) verdict.appendChild(el('span', 'small', 'Let it run a day or two as the server is used - Plex played in and out of the house, the dashboard, Settings, a certificate renewed, a backup - then look again.'));
     c.appendChild(verdict);
   }
@@ -4623,6 +4693,8 @@ function drawSelinux() {
   }
   if (row.childNodes.length) c.appendChild(row);
   host.appendChild(c);
+  var pc = sePlexCard(s);
+  if (pc) host.appendChild(pc);
   dressButtons(host);
 }
 
