@@ -78,7 +78,10 @@ included; `init_t` or a container keeps enforcing from being switched on), the l
 program and library and of what nginx reads to publish Plex (the vhost, the TLS settings, the
 certificate and its key - `httpd_config_t`, `cert_t` or `etc_t`), the ports nginx listens on,
 `httpd_can_network_connect`, and what was refused to Plex or to nginx on its way to
-127.0.0.1:32400.
+127.0.0.1:32400. Its buttons: *Look again*, *Put in what Plex and nginx need* (the boolean,
+nginx's ports, `restorecon -R /etc/nginx /usr/lib/plexmediaserver`, and `/var/lib/plexmediaserver`
+itself only) and *Restart Plex Media Server* - in permissive it shows what is refused to Plex only
+when it starts.
 
 When everything plexmon knows it needs is there and something is still refused, the card says
 *plexmon does not know this one yet* - the report is what tells how to put it right.

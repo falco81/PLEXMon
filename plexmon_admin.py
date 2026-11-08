@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.9.2'
+__version__ = '2.9.3'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -7415,7 +7415,7 @@ SE_PORT_TYPES = ('http_port_t',)
 # The programs whose refusals are plexmon's business - and every line that names Plex.
 SE_DOMAINS = ('httpd_t', 'init_t', 'chronyd_t', 'logrotate_t', 'smbd_t', 'nmbd_t', 'nfsd_t',
               'unconfined_service_t')
-SE_ACTIONS = ('check', 'prepare', 'enforce', 'permissive', 'report')
+SE_ACTIONS = ('check', 'prepare', 'enforce', 'permissive', 'report', 'plex', 'plex-restart')
 SE_EVERY = 1800
 SE_REPORT_KEEP_S = 3600
 SE_REPORT_PART = 2 * 1024 * 1024
@@ -8026,6 +8026,31 @@ def se_do(do, by=''):
             raise SeRefused('setenforce 1: %s' % _se_err(got))
         se_config_set('enforcing')
         said.append('SELinux is enforcing, and stays so after a restart')
+    elif do == 'plex':
+        # What Plex and its publishing through nginx need (2.9.3): the boolean, nginx's ports,
+        # the labels of what nginx reads and of Plex's program - Plex's library only its folder
+        # itself (its metadata are millions of files, and Plex runs unconfined anyway).
+        if mode not in ('Enforcing', 'Permissive'):
+            raise SeRefused('SELinux is %s - nothing to put in' % mode.lower())
+        se_apply(bools, ports, said, mark=False)
+        if shutil.which('restorecon'):
+            for args in (['-R', str(NGINX_DIR)], ['-R', '/usr/lib/plexmediaserver'],
+                         ['/var/lib/plexmediaserver']):
+                if not os.path.exists(args[-1]):
+                    continue
+                got = _se_run(['restorecon', '-v'] + args, 600, light=True)
+                if got is not None and 'elabel' in (got.stdout or '') + (got.stderr or ''):
+                    said.append('%s labelled again' % args[-1])
+        if not said:
+            said.append('nothing was missing for Plex and nginx')
+        elif mode == 'Permissive':
+            write_replacing(SE_APPLIED, json.dumps({'at': time.time()}), 0o600)
+    elif do == 'plex-restart':
+        got = _se_run([SYSTEMCTL, 'restart', PLEX_SERVICE], 300)
+        if got is None or got.returncode != 0:
+            raise SeRefused('Plex Media Server would not restart: %s' % _se_err(got))
+        time.sleep(5)
+        said.append('Plex Media Server restarted')
     elif do == 'permissive':
         if mode == 'Disabled':
             raise SeRefused('SELinux is disabled - "Make it ready" makes it permissive')
@@ -8170,7 +8195,8 @@ def selinux_ask(store, action, by):
     if action not in ('check', 'report'):
         store.add_event('settings', '%s asked SELinux: %s' % (by, {
             'prepare': 'made ready (permissive) / plexmon\'s needs put in', 'enforce': 'enforcing',
-            'permissive': 'permissive again'}[action]), 'warn', who=by)
+            'permissive': 'permissive again', 'plex': 'what Plex and nginx need put in',
+            'plex-restart': 'Plex Media Server restarted'}[action]), 'warn', who=by)
     UPGRADE_WAKE.set()
 
 
@@ -8262,7 +8288,9 @@ def _selinux_do(h):
                         'prepare': 'asked: done within seconds',
                         'enforce': 'asked: SELinux switches to enforcing within seconds',
                         'permissive': 'asked: SELinux switches to permissive within seconds',
-                        'report': 'asked: the report is made within a minute'}[action]}
+                        'report': 'asked: the report is made within a minute',
+                        'plex': 'asked: done within seconds',
+                        'plex-restart': 'asked: Plex Media Server restarts within seconds'}[action]}
 
 
 def se_report_text(c):

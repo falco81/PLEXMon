@@ -4,6 +4,15 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.9.3 - 2026-11-08
+
+- The card **Plex Media Server and nginx** has its own buttons: *Look again*, *Put in what
+  Plex and nginx need* (the boolean, nginx's ports, `restorecon` of `/etc/nginx` and of Plex's
+  program - of its library only the folder itself, not the millions of files of its metadata)
+  and *Restart Plex Media Server* (asks first; in permissive it shows what would be refused to
+  Plex only when it starts). Switching to enforcing stays on the card above - it is the whole
+  system's.
+
 ## 2.9.2 - 2026-11-08
 
 - **Fixed: plexmon would not have started under enforcing.** systemd binds `/etc/selinux` and

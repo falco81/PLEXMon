@@ -10135,6 +10135,54 @@
   "xs1282": {
    "source": "Plex Media Server runs in a container (container_t): under enforcing it may read only files labelled for containers - the data disks are not",
    "text": "Plex Media Server běží v kontejneru (container_t): v enforcing smí číst jen soubory označené pro kontejnery – datové disky takové nejsou"
+  },
+  "xs1283": {
+   "source": "Put in what Plex and nginx need",
+   "text": "Doplnit, co Plex a nginx potřebují"
+  },
+  "xs1284": {
+   "source": "Put in what Plex and nginx need?",
+   "text": "Doplnit, co Plex a nginx potřebují?"
+  },
+  "xs1285": {
+   "source": "httpd_can_network_connect on (nginx reaches Plex on 127.0.0.1:32400), the ports nginx listens on, and the SELinux labels of /etc/nginx and of Plex's program put right (restorecon). Plex's library: only its folder itself - not the millions of files of its metadata. Nothing is restarted.",
+   "text": "Zapne se httpd_can_network_connect (nginx se dostane na Plex na 127.0.0.1:32400), porty, na kterých nginx poslouchá, a opraví se SELinux štítky /etc/nginx a programu Plexu (restorecon). Z knihovny Plexu jen samotná složka – ne miliony souborů jeho metadat. Nic se nerestartuje."
+  },
+  "xs1286": {
+   "source": "Restart Plex Media Server",
+   "text": "Restartovat Plex Media Server"
+  },
+  "xs1287": {
+   "source": "Restart Plex Media Server?",
+   "text": "Restartovat Plex Media Server?"
+  },
+  "xs1288": {
+   "source": "Whatever is playing stops for a moment. In permissive this shows what SELinux would refuse to Plex only when it starts - look again afterwards.",
+   "text": "Co právě hraje, se na chvíli zastaví. V permissive se tím ukáže, co by SELinux Plexu odmítl jen při startu – pak se podívejte znovu."
+  },
+  "xs1289": {
+   "source": "Restart Plex",
+   "text": "Restartovat Plex"
+  },
+  "xs1290": {
+   "source": "Switching to enforcing is the whole system's - the card above.",
+   "text": "Přepnutí na enforcing platí pro celý systém – karta výše."
+  },
+  "xs1291": {
+   "source": "restarting Plex Media Server…",
+   "text": "restartuji Plex Media Server…"
+  },
+  "xs1292": {
+   "source": "asked: Plex Media Server restarts within seconds",
+   "text": "požádáno: Plex Media Server se během pár sekund restartuje"
+  },
+  "xs1293": {
+   "source": "Plex Media Server restarted",
+   "text": "Plex Media Server restartován"
+  },
+  "xs1294": {
+   "source": "nothing was missing for Plex and nginx",
+   "text": "Plexu ani nginxu nic nechybělo"
   }
  },
  "patterns": {
@@ -12717,6 +12765,14 @@
   "xp0262": {
    "source": "nginx listens on port {0}, which it may not bind under enforcing",
    "text": "nginx poslouchá na portu {0}, který v enforcing nesmí obsadit"
+  },
+  "xp0263": {
+   "source": "{0} labelled again",
+   "text": "{0} znovu označeno"
+  },
+  "xp0264": {
+   "source": "Plex Media Server would not restart: {0}",
+   "text": "Plex Media Server se nepodařilo restartovat: {0}"
   }
  },
  "rich": {

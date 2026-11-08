@@ -4479,17 +4479,46 @@ function seAvc(groups) {
 }
 /* Plex Media Server and its way out through nginx (2.9.2): the domain Plex runs in, the labels
    of what it and nginx read, the ports nginx listens on, and what was refused on that way. */
-function sePlexCard(s) {
+function sePlexCard(s, n) {
   var x = s.plex;
   if (!x) return null;
   var m = s.mode, on = m === 'Enforcing' || m === 'Permissive';
   var c = el('div', 'card full se-card');
   var h = el('h2', 'se-h');
   h.appendChild(el('span', '', 'Plex Media Server and nginx'));
+  var tl = el('span', 'right se-tools');
+  var look = cmdButton('Look again', 'refresh', 'small');
+  look.disabled = !!n.pending;
+  look.onclick = function () { busy(look, true); seAsk('check').then(function () { busy(look, false); }); };
+  tl.appendChild(look);
+  h.appendChild(tl);
   c.appendChild(h);
+  /* What can be done for Plex here (2.9.3): put in what it and nginx need, and restart Plex -
+     in permissive that shows what is refused only when it starts. Enforcing itself is the
+     whole system's: the card above. */
+  var row = el('div', 'btnrow se-btns');
+  if (ADMIN && on) {
+    var put = cmdButton('Put in what Plex and nginx need', 'shield', '');
+    put.disabled = !!n.pending;
+    put.onclick = function () {
+      confirmThen('Put in what Plex and nginx need?', htmlText('httpd_can_network_connect on (nginx reaches Plex on 127.0.0.1:32400), the ports nginx listens on, and the SELinux labels of /etc/nginx and of Plex\'s program put right (restorecon). Plex\'s library: only its folder itself - not the millions of files of its metadata. Nothing is restarted.'),
+        'Put it in', function () { seAsk('plex'); }, false);
+    };
+    row.appendChild(put);
+  }
+  if (ADMIN) {
+    var rs = cmdButton('Restart Plex Media Server', 'refresh', '');
+    rs.disabled = !!n.pending;
+    rs.onclick = function () {
+      confirmThen('Restart Plex Media Server?', htmlText('Whatever is playing stops for a moment. In permissive this shows what SELinux would refuse to Plex only when it starts - look again afterwards.'),
+        'Restart Plex', function () { seAsk('plex-restart'); }, false);
+    };
+    row.appendChild(rs);
+  }
   c.appendChild(el('p', 'note', 'Plex itself and the way it is published: nginx (httpd_t) passes it on from 443 to 127.0.0.1:32400. Everything here has to be right before enforcing - or Plex is not reached from outside.'));
   if (!on) {
     c.appendChild(el('p', 'note', 'SELinux is disabled - it restricts nothing, Plex and nginx included.'));
+    if (row.childNodes.length) c.appendChild(row);
     return c;
   }
   var list = el('div', 'se-list');
@@ -4531,7 +4560,9 @@ function sePlexCard(s) {
   var v = el('div', 'se-verdict ' + (bad ? 'bad' : 'good'));
   v.appendChild(el('b', '', bad ? 'Not yet - Plex or its way through nginx would be refused something under enforcing'
     : (m === 'Enforcing' ? 'Plex and nginx work under enforcing' : 'Plex and nginx have everything they need for enforcing')));
+  if (m === 'Permissive') v.appendChild(el('span', 'small', 'Switching to enforcing is the whole system\'s - the card above.'));
   c.appendChild(v);
+  if (row.childNodes.length) c.appendChild(row);
   return c;
 }
 function drawSelinux() {
@@ -4572,7 +4603,7 @@ function drawSelinux() {
   if (n.pending) {
     var w = el('div', 'se-wait');
     w.appendChild(el('span', 'spin'));
-    w.appendChild(el('span', '', {check: 'looking…', prepare: 'putting it in…', enforce: 'switching to enforcing…', permissive: 'switching to permissive…', report: 'making the report…'}[n.pending] || 'asked…'));
+    w.appendChild(el('span', '', {plex: 'putting it in…', 'plex-restart': 'restarting Plex Media Server…', check: 'looking…', prepare: 'putting it in…', enforce: 'switching to enforcing…', permissive: 'switching to permissive…', report: 'making the report…'}[n.pending] || 'asked…'));
     c.appendChild(w);
   }
   if (!m) {
@@ -4693,7 +4724,7 @@ function drawSelinux() {
   }
   if (row.childNodes.length) c.appendChild(row);
   host.appendChild(c);
-  var pc = sePlexCard(s);
+  var pc = sePlexCard(s, n);
   if (pc) host.appendChild(pc);
   dressButtons(host);
 }
