@@ -4488,7 +4488,11 @@ function drawSelinux() {
   if (SE.rep) c.appendChild(el('p', 'note small' + (SE.rep.bad ? ' bad' : ''), SE.rep.words));
   if (s.config && m !== 'absent' && s.config.toLowerCase() !== (m || '').toLowerCase() && (m !== 'Disabled' || s.relabel_pending))
     c.appendChild(el('p', 'se-next', 'After the next restart of the machine: ' + seModeWords(s.config.charAt(0).toUpperCase() + s.config.slice(1))));
-  if (s.relabel_pending) c.appendChild(el('p', 'se-next', 'Every file is labelled at the next start - it takes a few minutes before the machine answers. The data disks are left out.'));
+  if (s.relabel_pending) c.appendChild(el('p', 'se-next', 'Every file is labelled at the next start - it takes a long while (up to tens of minutes) and the machine restarts once more by itself before Plex is back. The data disks are left out.'));
+  /* Switched off by selinux=0 alone, the config still saying enforcing (2.9.1): taking selinux=0
+     away there starts SELinux enforcing on files never labelled - Plex does not start. */
+  if (s.cmdline_off && /^enforcing$/i.test(s.config || '') && !s.relabel_pending)
+    c.appendChild(el('p', 'note bad small', 'Do not take selinux=0 off the kernel\'s command line by hand: the configuration says enforcing and no file is labelled - the machine would start enforcing and Plex would not start. "Make it ready (permissive)" first.'));
   if (s.cmdline_off) c.appendChild(el('p', 'note bad small', 'The kernel\'s command line has selinux=0 - it stays off whatever the configuration says. Settings → Upgrades says what to type.'));
   if (n.pending) {
     var w = el('div', 'se-wait');

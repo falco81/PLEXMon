@@ -70,6 +70,14 @@ When everything plexmon knows it needs is there and something is still refused, 
 `selinux=0` on the kernel's command line: `/boot` is not plexmon's to change. It shows up in
 Settings → Upgrades → *To be done by hand* with `grubby --update-kernel ALL --remove-args
 selinux`, and goes by itself once the kernel starts SELinux.
+It is shown only once plexmon made SELinux ready itself (permissive in the config, every file
+to be labelled at the next start). A machine switched off by `selinux=0` alone usually keeps
+`SELINUX=enforcing` in its config: taking `selinux=0` away there starts it enforcing on files
+never labelled, and services - Plex among them - do not start (the card warns about it). The
+way back: `setenforce 0`, then `grubby --update-kernel ALL --args selinux=0`.
+
+The first start with SELinux labels every file (the data disks left out) - a long while, up to
+tens of minutes on a large system disk - and then restarts the machine once more by itself.
 
 ### The report
 

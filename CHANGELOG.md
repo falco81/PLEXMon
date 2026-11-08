@@ -4,6 +4,17 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.9.1 - 2026-11-08
+
+- **Fixed: "Let the kernel start SELinux" was shown where it must not be.** A machine switched
+  off by `selinux=0` on the kernel's command line alone usually keeps `SELINUX=enforcing` in
+  `/etc/selinux/config`; the task told to take `selinux=0` away, and the machine started
+  enforcing on files never labelled - Plex did not start. The task now comes only once plexmon
+  made SELinux ready itself (permissive, every file to be labelled at the next start), and the
+  card warns against taking `selinux=0` away while the config says enforcing.
+- The card and the task say that the first start with SELinux labels every file and takes a
+  long while (up to tens of minutes), then restarts the machine once more.
+
 ## 2.9.0 - 2026-11-08
 
 - **Settings → SELinux** (as otp 1.0.265): the mode now and after a restart, what plexmon

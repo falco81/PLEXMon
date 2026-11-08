@@ -10003,6 +10003,18 @@
   "xs1214": {
    "source": "intermediate CA",
    "text": "mezilehlá CA"
+  },
+  "xs1250": {
+   "source": "Every file is labelled at the next start - it takes a long while (up to tens of minutes) and the machine restarts once more by itself before Plex is back. The data disks are left out.",
+   "text": "Při příštím startu se označí všechny soubory – trvá to dlouho (až desítky minut) a stroj se pak ještě jednou sám restartuje, než se Plex vrátí. Datové disky se vynechají."
+  },
+  "xs1251": {
+   "source": "Do not take selinux=0 off the kernel's command line by hand: the configuration says enforcing and no file is labelled - the machine would start enforcing and Plex would not start. \"Make it ready (permissive)\" first.",
+   "text": "Neodebírejte selinux=0 z příkazové řádky jádra ručně: konfigurace říká enforcing a žádný soubor není označený – stroj by naběhl v režimu enforcing a Plex by se nespustil. Nejdřív „Připravit (permissive)“."
+  },
+  "xs1252": {
+   "source": "SELinux was made ready here (permissive), but the kernel's command line has selinux=0 - it stays off whatever /etc/selinux/config says. Restart the machine afterwards: the first start labels every file (the data disks left out) and takes a long while - up to tens of minutes - then the machine restarts once more by itself.",
+   "text": "SELinux je tu připravený (permissive), ale příkazová řádka jádra obsahuje selinux=0 – zůstane vypnutý bez ohledu na /etc/selinux/config. Potom stroj restartujte: první start označí všechny soubory (datové disky se vynechají) a trvá dlouho – až desítky minut – a pak se stroj ještě jednou sám restartuje."
   }
  },
  "patterns": {

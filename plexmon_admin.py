@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.9.0'
+__version__ = '2.9.1'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -5948,8 +5948,10 @@ SERVER_TASKS = [
     # /boot is the system's, not plexmon's to change - root takes it off.
     {'id': 'selinux-cmdline', 'since': '2.9.0', 'level': 'warn',
      'title': 'Let the kernel start SELinux',
-     'why': 'SELinux was made ready, but the kernel\'s command line has selinux=0 - it stays off '
-            'whatever /etc/selinux/config says. Restart the machine afterwards.',
+     'why': 'SELinux was made ready here (permissive), but the kernel\'s command line has selinux=0 - '
+            'it stays off whatever /etc/selinux/config says. Restart the machine afterwards: the '
+            'first start labels every file (the data disks left out) and takes a long while - '
+            'up to tens of minutes - then the machine restarts once more by itself.',
      'commands': ['grubby --update-kernel ALL --remove-args selinux'],
      'check': lambda store: selinux_cmdline_task(store)},
     # How a later version asks for a step nobody can see from here - kept as an
@@ -8116,9 +8118,14 @@ def selinux_tick(store):
 
 
 def selinux_cmdline_task(store):
-    """For the tasks for the server: SELinux asked for, the kernel started with selinux=0."""
+    """For the tasks for the server: SELinux made ready here (permissive, every file to be labelled
+    at the next start), the kernel started with selinux=0. Only then (2.9.1): a machine switched
+    off by selinux=0 alone keeps SELINUX=enforcing in its config on most installs - taking
+    selinux=0 away there starts it enforcing on files never labelled, and services (Plex among
+    them) do not start."""
     d = (_meta_json(store, 'selinux:now') or {}).get('data') or {}
-    if d.get('cmdline_off') and str(d.get('config') or '').lower() in ('permissive', 'enforcing'):
+    if d.get('cmdline_off') and str(d.get('config') or '').lower() == 'permissive' and \
+            d.get('relabel_pending'):
         return 'the kernel\'s command line has selinux=0 - SELinux stays off whatever %s says' % SE_CONFIG
     return None
 
