@@ -4,6 +4,11 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.9.7 - 2026-11-12
+
+- Certificates and TLS: *Chain* and *Checked* on the card are green when complete and red when
+  not (they were plain text).
+
 ## 2.9.6 - 2026-11-12
 
 - **The whole chain, always.** A certificate that came without its intermediate authority

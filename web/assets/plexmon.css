@@ -3489,3 +3489,5 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .osr-area{width:100%;box-sizing:border-box;font-size:12px}
 .osr-one{margin:8px 0 0}
 .se-probs{margin:4px 0 2px 18px;padding:0;display:flex;flex-direction:column;gap:2px}
+/* The chain and its check on the card of a certificate, in colour (2.9.7) */
+.cert-kv .good{color:var(--ok)} .cert-kv .bad{color:var(--crit)}
