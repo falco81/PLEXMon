@@ -4,6 +4,23 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.9.6 - 2026-11-12
+
+- **The whole chain, always.** A certificate that came without its intermediate authority
+  (only the certificate uploaded, a PFX without its CA certificates, a request signed
+  elsewhere, acme push without `chain_pem`) made nginx send the certificate alone - browsers
+  fetch the missing link themselves and say nothing, the Plex apps, curl and other clients
+  refuse it. Every certificate is now checked against the system's root authorities and, where
+  its chain does not reach one, completed as browsers do it: the intermediate fetched from its
+  *CA Issuers* address (DER, PEM or PKCS#7; at most four steps; trusted only as a link to a
+  root of the system, a root itself never sent). Plex Media Server's own PKCS#12 gets the
+  whole chain too.
+- Certificates and TLS: the line *Chain* says `complete - N certificates up to <root>` (with
+  what was fetched) or why it is incomplete - for the file nginx has now as well; *Complete the
+  chain* / *Check the chain* does it for the certificate already in place.
+- After every reload nginx is asked by plexmon itself as a client that fetches nothing; when
+  it would be refused, an event says so.
+
 ## 2.9.5 - 2026-11-08
 
 - The SELinux report: `processes.txt` was empty (`ps -eZo` is refused by ps) - the domains of

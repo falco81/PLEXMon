@@ -3041,7 +3041,19 @@ function certCard(d, target) {
                  ['Key', (info.key || '–') + (prof && prof.ec && prof.ec.info && prof.ec.info.key ? ' + ' + prof.ec.info.key + ' (a second certificate beside it)' : '')]];
     if (info.san && info.san.length) facts.push(['Names', noI18n(el('span', '', info.san.join(', ')))]);
     if (prof) {
-      facts.push(['Chain', prof.chain_info ? (prof.chain_info.length + ' between it and the root') : '–']);
+      /* The chain as clients that fetch nothing check it (2.9.6): the Plex apps, curl. What
+         nginx sends now first; else what was found when it was put in. */
+      var now = (w && w.cert_now) || {};
+      var cs = prof.chain_state || null;
+      var chainEl = el('span', '');
+      if (info.self_signed) chainEl.textContent = prof.chain_info ? (prof.chain_info.length + ' between it and the root') : '–';
+      else if (now.chain_ok === false || (cs && cs.ok === false)) {
+        chainEl.className = 'bad';
+        chainEl.appendChild(el('span', '', (cs && cs.ok === false) ? cs.words : 'incomplete - what nginx sends does not lead to a root of the system: the Plex apps, curl and other clients refuse it'));
+      } else if (cs && cs.ok) { chainEl.className = 'good'; chainEl.textContent = cs.words; }
+      else if (now.chain_ok === true) { chainEl.className = 'good'; chainEl.textContent = 'complete - ' + (prof.chain_info || []).length + ' between it and the root'; }
+      else chainEl.textContent = prof.chain_info ? (prof.chain_info.length + ' between it and the root') : '–';
+      facts.push(['Chain', chainEl]);
       facts.push(['Root', prof.root_info && prof.root_info.length ? noI18n(el('span', '', prof.root_info[0].cn || 'given')) : 'not given']);
       if (prof.verify) facts.push(['Checked', prof.verify === 'ok' ? el('span', 'good', 'the chain leads to the root') : el('span', 'bad', prof.verify)]);
     }
@@ -3131,6 +3143,20 @@ function certCard(d, target) {
     tools.appendChild(pol);
     var bef = (d.acme && d.acme.before || {})[target];
     if (bef && !bef.ran_out) tools.appendChild(acmePutBackButton(target, bef, function () { loadWeb(); }));
+    if (prof && prof.cert && !(prof.info || {}).self_signed) {
+      /* Complete the chain (2.9.6): checked again against the system's roots, the missing
+         intermediates fetched from their CA Issuers addresses - as browsers do. */
+      var wnow = (w && w.cert_now) || {};
+      var bad = wnow.chain_ok === false || (prof.chain_state && prof.chain_state.ok === false);
+      var ch = cmdButton(bad ? 'Complete the chain' : 'Check the chain', 'refresh', bad ? 'small primary' : 'small');
+      explain(ch, 'Checked against the system\'s root authorities; an intermediate the certificate did not come with is fetched from its CA Issuers address, as browsers do it - so that the Plex apps, curl and other clients that fetch nothing take it too.');
+      ch.onclick = function () {
+        busy(ch, true);
+        api('web', {action: 'tls_chain', target: target}).then(function (x) { toast(x.message, x.complete ? 'good' : 'warn'); loadWeb(); })
+          .catch(oops).then(function () { busy(ch, false); });
+      };
+      tools.appendChild(ch);
+    }
     if (prof && prof.cert) {
       var dl = cmdButton('Download', 'download', 'small');
       dl.title = 'The certificate in the format you choose - PEM, DER, PKCS#7 or PFX, with its private key if you want it';

@@ -115,3 +115,22 @@ choose their own (your name → Language, on the dashboard the EN / CS switch).
 The file can be edited: change only `text`, never `source`; an empty `text` = English.
 `{0:jeden|dva až čtyři|pět a víc}` picks the Czech form by the number. A new language =
 a new file with its own `code`; it appears in the menus by itself.
+
+## The whole chain of the certificate (2.9.6)
+
+nginx sends the certificate followed by every intermediate authority up to a root - never the
+root itself. Whatever way a certificate comes (*Upload* of PEM or PFX, a *Request (CSR)* signed
+elsewhere, *Self-signed*, Automatic certificates, acme push), it is put in order (each the issuer
+of the one before), checked against the system's root authorities
+(`/etc/pki/tls/certs/ca-bundle.crt`), and where it does not reach one it is completed the way
+browsers do it: the intermediate fetched from the *CA Issuers* address of the last certificate
+(at most four steps). A fetched intermediate is trusted only as a link to a root of the system.
+
+The card of the certificate shows *Chain*: complete (with what was fetched), or incomplete and
+why - also for the file nginx has now. *Complete the chain* (or *Check the chain*) does it for
+the certificate already in place. After every reload plexmon connects to nginx itself as a
+client that fetches nothing, as the Plex apps and curl do; when that client would refuse it,
+an event says so.
+
+A private CA: send its root with the certificate (*Root* in *Upload*) - it is never sent by
+nginx, and the clients must trust it.

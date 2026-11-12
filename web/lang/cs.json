@@ -10211,6 +10211,34 @@
   "xs1301": {
    "source": "From now on SELinux refuses what its policy does not allow - on the whole system, and it stays enforcing after a restart. Nothing plexmon or Plex needs is missing and nothing was refused. If something stops working - Plex from outside, the dashboard - \"Back to permissive\" here (or setenforce 0 on the server) undoes it at once.",
    "text": "Od teď SELinux odmítá, co jeho politika nedovoluje – na celém systému, a enforcing zůstane i po restartu. Nic, co plexmon nebo Plex potřebují, nechybí a nic nebylo odmítnuto. Když něco přestane fungovat – Plex zvenku, dashboard –, „Zpět na permissive“ tady (nebo setenforce 0 na serveru) to okamžitě vrátí."
+  },
+  "xs1302": {
+   "source": "Complete the chain",
+   "text": "Doplnit řetěz"
+  },
+  "xs1303": {
+   "source": "Check the chain",
+   "text": "Zkontrolovat řetěz"
+  },
+  "xs1304": {
+   "source": "Checked against the system's root authorities; an intermediate the certificate did not come with is fetched from its CA Issuers address, as browsers do it - so that the Plex apps, curl and other clients that fetch nothing take it too.",
+   "text": "Zkontroluje se proti kořenovým autoritám systému; mezilehlá CA, která s certifikátem nepřišla, se stáhne z jeho adresy CA Issuers, jak to dělají prohlížeče – aby ho vzaly i aplikace Plexu, curl a další klienti, kteří si nic nestahují."
+  },
+  "xs1305": {
+   "source": "incomplete - what nginx sends does not lead to a root of the system: the Plex apps, curl and other clients refuse it",
+   "text": "neúplný – co nginx posílá, nevede ke kořenové CA systému: aplikace Plexu, curl a další klienti ho odmítnou"
+  },
+  "xs1306": {
+   "source": "checked as a client that fetches nothing: the whole chain is sent",
+   "text": "ověřeno jako klient, který si nic nestahuje: posílá se celý řetěz"
+  },
+  "xs1307": {
+   "source": "self-signed - no chain; whoever connects must trust this certificate itself",
+   "text": "self-signed – bez řetězu; kdo se připojuje, musí důvěřovat přímo tomuto certifikátu"
+  },
+  "xs1308": {
+   "source": " - a private root: only clients that trust it take it",
+   "text": " – soukromá kořenová CA: přijmou ho jen klienti, kteří jí důvěřují"
   }
  },
  "patterns": {
@@ -12801,6 +12829,38 @@
   "xp0264": {
    "source": "Plex Media Server would not restart: {0}",
    "text": "Plex Media Server se nepodařilo restartovat: {0}"
+  },
+  "xp0265": {
+   "source": "complete - {0} between it and the root",
+   "text": "úplný – {0} mezi ním a kořenem"
+  },
+  "xp0266": {
+   "source": "complete - {0} certificates up to {1}",
+   "text": "úplný – {0} certifikáty až k {1}"
+  },
+  "xp0267": {
+   "source": "complete - {0} certificate up to {1}",
+   "text": "úplný – {0} certifikát až k {1}"
+  },
+  "xp0268": {
+   "source": "complete - {0} certificates up to {1} (fetched: {2} - it was not sent with the certificate)",
+   "text": "úplný – {0} certifikáty až k {1} (staženo: {2} – s certifikátem nepřišla)"
+  },
+  "xp0269": {
+   "source": "incomplete - the authority {0} is not sent and could not be completed ({1}); the Plex apps, curl and other clients refuse it - only browsers fetch it themselves; send the certificate with its chain, or, for a private CA, its root to the clients",
+   "text": "neúplný – autorita {0} se neposílá a nepodařilo se ji doplnit ({1}); aplikace Plexu, curl a další klienti ho odmítnou – jen prohlížeče si ji stáhnou samy; nahrajte certifikát i s řetězem, nebo u soukromé CA dejte klientům její kořen"
+  },
+  "xp0270": {
+   "source": "it leads to {0}, a root the system does not trust (a private CA?) - the chain is complete; the clients (the Plex apps, curl) must trust that root, or send its root with the certificate here",
+   "text": "vede k {0}, kořenové CA, které systém nedůvěřuje (soukromá CA?) – řetěz je úplný; klienti (aplikace Plexu, curl) musí tomuto kořeni důvěřovat, nebo ho sem nahrajte spolu s certifikátem"
+  },
+  "xp0271": {
+   "source": "a client that fetches nothing (the Plex apps, curl) refuses what nginx sends: {0}",
+   "text": "klient, který si nic nestahuje (aplikace Plexu, curl), odmítne, co nginx posílá: {0}"
+  },
+  "xp0272": {
+   "source": "what nginx sends could not be checked: {0}",
+   "text": "co nginx posílá, nešlo ověřit: {0}"
   }
  },
  "rich": {
