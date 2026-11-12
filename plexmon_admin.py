@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.9.7'
+__version__ = '2.9.8'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -2276,7 +2276,7 @@ def chain_complete(leaf, chain_out, roots=''):
         return chain, {'ok': True, 'words': words, 'fetched': fetched}
     last = cert_info(chain[-1] if chain else leaf)
     if root_seen:
-        return chain, {'ok': False, 'fetched': fetched,
+        return chain, {'ok': False, 'fetched': fetched, 'missing': '', 'private_root': root_seen,
                        'words': 'it leads to %s, a root the system does not trust (a private CA?) - '
                                 'the chain is %s; the clients (the Plex apps, curl) must trust that '
                                 'root, or send its root with the certificate here'
@@ -2285,7 +2285,7 @@ def chain_complete(leaf, chain_out, roots=''):
         chain_keep = chain
     else:
         chain_keep = chain_out
-    return chain_keep, {'ok': False, 'fetched': fetched,
+    return chain_keep, {'ok': False, 'fetched': fetched, 'missing': _cn_of(last.get('issuer')),
                         'words': 'incomplete - the authority %s is not sent and could not be '
                                  'completed (%s); the Plex apps, curl and other clients refuse '
                                  'it - only browsers fetch it themselves; send the certificate '
@@ -10636,6 +10636,58 @@ def _web_do(h):
         tls_save(store, target, prof, who)
         store.add_event('settings', '%s checked the chain of the certificate of %s: %s' % (
             who, words, state['words']), 'info' if state.get('ok') else 'warn', who=who)
+        return {'message': state['words'], 'complete': state.get('ok'), 'tls': tls_view(prof)}
+    if act == 'tls_chain_add':
+        # The missing authority by hand (2.9.8): when it cannot be fetched (no CA Issuers address,
+        # no way out, a private CA) - only certificates of authorities, never a key; a root goes
+        # beside the chain (kept to check with, never sent), the rest into the chain in order.
+        if not prof.get('cert'):
+            raise ApiError(404, 'no certificate is kept for %s' % words)
+        text = str(b.get('text') or '')
+        if re.search(r'PRIVATE KEY', text):
+            raise ApiError(400, 'only the certificates of the authorities - no private key')
+        given = [m.group(0) for m in PEM_CERT.finditer(text)]
+        if not given:
+            raise ApiError(400, 'no certificate in it (-----BEGIN CERTIFICATE-----, or a .cer file)')
+        if len(given) > 8:
+            raise ApiError(400, '%d certificates - the chain of one certificate is a few' % len(given))
+        cur = [m.group(0) for m in PEM_CERT.finditer(prof.get('chain') or '')]
+        roots = [m.group(0) for m in PEM_CERT.finditer(prof.get('root') or '')]
+        have = {cert_info(c)['fingerprint'] for c in cur + roots}
+        leaf = prof['cert'].strip()
+        new_roots, new_inter = [], []
+        for c in given:
+            ci = cert_info(c)
+            if ci.get('fingerprint') in have or ci.get('fingerprint') == (prof.get('info') or {}).get('fingerprint'):
+                continue
+            (new_roots if ci.get('self_signed') else new_inter).append(c)
+        if not new_roots and not new_inter:
+            raise ApiError(400, 'every certificate in it is there already')
+        # In order from the certificate: each the issuer of the one before.
+        pool = cur + new_inter
+        infos = {c: cert_info(c) for c in pool}
+        ordered, at = [], cert_info(leaf)
+        while pool:
+            nxt = next((c for c in pool if infos[c].get('subject') == at.get('issuer')), None)
+            if not nxt:
+                break
+            ordered.append(nxt)
+            pool.remove(nxt)
+            at = infos[nxt]
+        root_now = ''.join(c + '\n' for c in roots + new_roots)
+        useful = [c for c in new_inter if c in ordered] or \
+            [c for c in new_roots if cert_info(c).get('subject') == at.get('issuer')]
+        if not useful:
+            raise ApiError(400, 'none of these is the authority that signed the chain\'s last '
+                                'certificate (%s)' % _cn_of(at.get('issuer')))
+        chain, state = chain_complete(leaf, ordered, root_now)
+        prof.update(chain=''.join(c + '\n' for c in chain), chain_info=[cert_info(c) for c in chain],
+                    root=root_now, root_info=[cert_info(c) for c in roots + new_roots],
+                    chain_state=state)
+        tls_save(store, target, prof, who)
+        store.add_event('settings', '%s added %s to the chain of the certificate of %s: %s' % (
+            who, ', '.join(cert_info(c).get('cn') or '?' for c in useful), words, state['words']),
+            'info' if state.get('ok') else 'warn', who=who)
         return {'message': state['words'], 'complete': state.get('ok'), 'tls': tls_view(prof)}
     if act == 'tls_export':
         return cert_export(h, prof, target, b, who)

@@ -10239,6 +10239,34 @@
   "xs1308": {
    "source": " - a private root: only clients that trust it take it",
    "text": " – soukromá kořenová CA: přijmou ho jen klienti, kteří jí důvěřují"
+  },
+  "xs1309": {
+   "source": "Upload the missing authority",
+   "text": "Nahrát chybějící autoritu"
+  },
+  "xs1310": {
+   "source": "Missing in the chain:",
+   "text": "V řetězu chybí:"
+  },
+  "xs1311": {
+   "source": "The certificate of that authority - the intermediate (or several) your certificate authority gives with the certificate, often called \"CA bundle\", \"intermediate\" or \"chain\" - as PEM or a .cer / .crt file. Only certificates of authorities, never a key; the certificate and its key stay as they are. A root is kept to check with and never sent.",
+   "text": "Certifikát té autority – mezilehlá CA (nebo několik), kterou vaše certifikační autorita dává k certifikátu, často pod názvem „CA bundle“, „intermediate“ nebo „chain“ – jako PEM nebo soubor .cer / .crt. Jen certifikáty autorit, nikdy klíč; certifikát a jeho klíč zůstávají, jak jsou. Kořenová CA se uloží ke kontrole a nikdy se neposílá."
+  },
+  "xs1312": {
+   "source": "Add it to the chain",
+   "text": "Přidat do řetězu"
+  },
+  "xs1313": {
+   "source": "only the certificates of the authorities - no private key",
+   "text": "jen certifikáty autorit – žádný soukromý klíč"
+  },
+  "xs1314": {
+   "source": "no certificate in it (-----BEGIN CERTIFICATE-----, or a .cer file)",
+   "text": "není v tom žádný certifikát (-----BEGIN CERTIFICATE-----, nebo soubor .cer)"
+  },
+  "xs1315": {
+   "source": "every certificate in it is there already",
+   "text": "všechny certifikáty v tom už tam jsou"
   }
  },
  "patterns": {
@@ -12861,6 +12889,22 @@
   "xp0272": {
    "source": "what nginx sends could not be checked: {0}",
    "text": "co nginx posílá, nešlo ověřit: {0}"
+  },
+  "xp0273": {
+   "source": "none of these is the authority that signed the chain's last certificate ({0})",
+   "text": "žádný z nich není autorita, která podepsala poslední certifikát řetězu ({0})"
+  },
+  "xp0274": {
+   "source": "{0} names no CA Issuers address to fetch it from",
+   "text": "{0} neuvádí adresu CA Issuers, odkud by se dala stáhnout"
+  },
+  "xp0275": {
+   "source": "complete - {0} certificate up to {1} - a private root: only clients that trust it take it",
+   "text": "úplný – {0} certifikát až k {1} – soukromá kořenová CA: přijmou ho jen klienti, kteří jí důvěřují"
+  },
+  "xp0276": {
+   "source": "complete - {0} certificates up to {1} - a private root: only clients that trust it take it",
+   "text": "úplný – {0} certifikáty až k {1} – soukromá kořenová CA: přijmou ho jen klienti, kteří jí důvěřují"
   }
  },
  "rich": {

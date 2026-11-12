@@ -132,5 +132,9 @@ the certificate already in place. After every reload plexmon connects to nginx i
 client that fetches nothing, as the Plex apps and curl do; when that client would refuse it,
 an event says so.
 
-A private CA: send its root with the certificate (*Root* in *Upload*) - it is never sent by
-nginx, and the clients must trust it.
+*Upload the missing authority* (2.9.8) - when it cannot be fetched (no CA Issuers address, no
+way out, a private CA): only that authority, as PEM or a .cer / .crt file; the dialog says
+which one is missing. A root goes beside the chain, kept to check with and never sent.
+
+A private CA: send its root with the certificate (*Root* in *Upload*, or *Upload the missing
+authority*) - it is never sent by nginx, and the clients must trust it.

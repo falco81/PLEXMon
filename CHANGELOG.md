@@ -4,6 +4,16 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.9.8 - 2026-11-12
+
+- **Upload the missing authority**: when the chain is incomplete and the intermediate cannot be
+  fetched (no CA Issuers address, no way out, a private CA), only that authority is uploaded -
+  PEM or a .cer / .crt file - the dialog says which one is missing; the certificate and its key
+  stay. A root goes beside the chain (kept to check with, never sent).
+- A private CA with its root given is shown as complete ("a private root: only clients that
+  trust it take it") instead of red.
+- The reason a chain could not be completed is said plainly (no temporary paths).
+
 ## 2.9.7 - 2026-11-12
 
 - Certificates and TLS: *Chain* and *Checked* on the card are green when complete and red when

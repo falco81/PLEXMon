@@ -2992,6 +2992,47 @@ function loadWeb() {
 }
 function daysLeft(ts) { return ts ? Math.floor((ts - Date.now() / 1000) / 86400) : null; }
 function certTone(days) { return days === null ? 'dim' : (days < 0 ? 'crit' : (days < 21 ? 'warn' : 'ok')); }
+function certChainAdd(target, prof, now) {
+  var cs = prof.chain_state || {};
+  var last = (prof.chain_info || []).length ? prof.chain_info[prof.chain_info.length - 1] : (prof.info || {});
+  var missing = cs.missing || cs.private_root || String(last.issuer || '').replace(/^.*?CN=/, '').split(',')[0] || '?';
+  var area;
+  modal('Upload the missing authority', function (body) {
+    var p = el('p', 'note');
+    p.appendChild(el('span', '', 'Missing in the chain:'));
+    p.appendChild(document.createTextNode(' '));
+    p.appendChild(noI18n(el('b', '', missing)));
+    body.appendChild(p);
+    body.appendChild(el('p', 'note', 'The certificate of that authority - the intermediate (or several) your certificate authority gives with the certificate, often called "CA bundle", "intermediate" or "chain" - as PEM or a .cer / .crt file. Only certificates of authorities, never a key; the certificate and its key stay as they are. A root is kept to check with and never sent.'));
+    area = noI18n(el('textarea', 'mono osr-area'));
+    area.rows = 8; area.spellcheck = false; area.placeholder = '-----BEGIN CERTIFICATE-----';
+    body.appendChild(area);
+    var fr = el('div', 'btnrow');
+    fr.style.margin = '8px 0 0';
+    var pick = cmdButton('Read a file…', 'upload', 'small');
+    var input = el('input'); input.type = 'file'; input.hidden = true;
+    input.accept = '.pem,.crt,.cer,.der,.cert,.ca-bundle';
+    pick.onclick = function () { input.click(); };
+    input.onchange = function () {
+      var f = input.files && input.files[0];
+      if (!f) return;
+      if (f.size > 262144) { toast('that file is far bigger than certificates are', 'warn'); return; }
+      var r = new FileReader();
+      r.onload = function () { area.value = osrFileText(r.result); };
+      r.readAsArrayBuffer(f);
+    };
+    fr.appendChild(pick); fr.appendChild(input);
+    body.appendChild(fr);
+    setTimeout(function () { area.focus(); }, 60);
+  }, [{words: 'Cancel', close: true}, {words: 'Add it to the chain', cls: 'primary', icon: 'add', go: function (b) {
+    busy(b, true);
+    api('web', {action: 'tls_chain_add', target: target, text: area.value.trim()}).then(function (x) {
+      closeModal();
+      toast(x.message, x.complete ? 'good' : 'warn');
+      loadWeb();
+    }).catch(function (e) { busy(b, false); oops(e); });
+  }}], 'medium');
+}
 function webTargetWords(t) { return t === 'vip' ? 'the VIP address' : t; }
 
 function certCard(d, target) {
@@ -3045,6 +3086,10 @@ function certCard(d, target) {
          nginx sends now first; else what was found when it was put in. */
       var now = (w && w.cert_now) || {};
       var cs = prof.chain_state || null;
+      /* A private CA whose root was given (2.9.8): the file in place is checked against the
+         system's roots alone - what was found with its root is what counts. */
+      var priv = !!(cs && cs.ok && prof.root_info && prof.root_info.length);
+      if (priv) now = {};
       var chainEl = el('span', '');
       if (info.self_signed) chainEl.textContent = prof.chain_info ? (prof.chain_info.length + ' between it and the root') : '–';
       else if (now.chain_ok === false || (cs && cs.ok === false)) {
@@ -3147,7 +3192,8 @@ function certCard(d, target) {
       /* Complete the chain (2.9.6): checked again against the system's roots, the missing
          intermediates fetched from their CA Issuers addresses - as browsers do. */
       var wnow = (w && w.cert_now) || {};
-      var bad = wnow.chain_ok === false || (prof.chain_state && prof.chain_state.ok === false);
+      var cs2 = prof.chain_state || {};
+      var bad = (wnow.chain_ok === false && !(cs2.ok && prof.root_info && prof.root_info.length)) || cs2.ok === false;
       var ch = cmdButton(bad ? 'Complete the chain' : 'Check the chain', 'refresh', bad ? 'small primary' : 'small');
       explain(ch, 'Checked against the system\'s root authorities; an intermediate the certificate did not come with is fetched from its CA Issuers address, as browsers do it - so that the Plex apps, curl and other clients that fetch nothing take it too.');
       ch.onclick = function () {
@@ -3156,6 +3202,13 @@ function certCard(d, target) {
           .catch(oops).then(function () { busy(ch, false); });
       };
       tools.appendChild(ch);
+      /* Or by hand (2.9.8): when it cannot be fetched - no CA Issuers address, no way out, a
+         private CA - only the missing authority, never the certificate and its key again. */
+      if (bad) {
+        var addc = cmdButton('Upload the missing authority', 'upload', 'small');
+        addc.onclick = function () { certChainAdd(target, prof, wnow); };
+        tools.appendChild(addc);
+      }
     }
     if (prof && prof.cert) {
       var dl = cmdButton('Download', 'download', 'small');
