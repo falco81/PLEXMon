@@ -4822,8 +4822,8 @@ function drawSelinux() {
   var on = m === 'Enforcing' || m === 'Permissive';
   host.appendChild(seCommonCard(n, s, m));
   if (on) {
-    host.appendChild(seFindingsCard(n, s, m));
     host.appendChild(sePlexmonCard(n, s, m));
+    host.appendChild(seFindingsCard(n, s, m));
     var pc = sePlexCard(s, n);
     if (pc) host.appendChild(pc);
   }
@@ -4870,8 +4870,13 @@ function seFindingsCard(n, s, m) {
   }
   if (!groups.length) {
     var ok = el('div', 'se-verdict good se-nothing');
-    ok.appendChild(el('b', '', 'SELinux refused nothing on this server'));
-    ok.appendChild(el('span', 'small', 'Nothing since the machine started - plexmon, Plex, nginx and every other program.'));
+    var oi = el('span', 'se-nothing-i');
+    oi.innerHTML = iconMarkup('check', 18);
+    ok.appendChild(oi);
+    var ot = el('div', 'se-nothing-t');
+    ot.appendChild(el('b', '', 'SELinux refused nothing on this server'));
+    ot.appendChild(el('span', 'small', 'Nothing since the machine started - plexmon, Plex, nginx and every other program.'));
+    ok.appendChild(ot);
     c.appendChild(ok);
   }
   SE_KINDS.forEach(function (k) {

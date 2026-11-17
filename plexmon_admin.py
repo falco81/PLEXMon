@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.10.0'
+__version__ = '2.10.1'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -8517,8 +8517,9 @@ def se_check(r=None):
             if k.get('other'):
                 words.append('%d are other programs\' - enforcing is the whole machine\'s, so they keep '
                              'it locked too' % k['other'])
-            probs.append('SELinux refused %d thing(s) the policy loaded now still refuses%s'
-                         % (out['denials']['total'], (': ' + '; '.join(words)) if words else ''))
+            # One line each (2.10.1): the page translates each whole; joined they stayed English.
+            probs.append('SELinux refused %d thing(s) the policy loaded now still refuses' % out['denials']['total'])
+            probs.extend(words)
         dom = [x['domain'] for x in (out.get('plex') or {}).get('domains') or []]
         probs.extend('%s is labelled %s, not %s (%s)' % (x['path'], x['label'] or '?', x['want'] or 'a label', x['why'])
                      for x in (out.get('plex') or {}).get('labels') or [] if x['ok'] is False)

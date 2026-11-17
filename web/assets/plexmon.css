@@ -3468,7 +3468,7 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .se-next{margin:0;font-size:12.5px;color:var(--warn)}
 .se-wait{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--info)}
 .se-wait .spin{width:13px;height:13px;border:2px solid var(--line);border-top-color:var(--info);border-radius:50%;animation:turn .9s linear infinite}
-.se-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--panel2);overflow:hidden;max-width:900px}
+.se-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--panel2);overflow:hidden}
 .se-row{display:flex;gap:10px;align-items:flex-start;padding:8px 12px;border-bottom:1px solid var(--line);font-size:13px}
 .se-row:last-child{border-bottom:0}
 .se-row .dot{margin-top:5px;flex:0 0 auto}
@@ -3478,7 +3478,7 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .se-avc-t{width:100%;border-collapse:collapse;margin-top:6px}
 .se-avc-t td{padding:4px 6px;border-bottom:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}
 .se-avc-t td.num{white-space:nowrap;text-align:right;color:var(--crit)}
-.se-verdict{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);font-size:13px;max-width:900px}
+.se-verdict{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);font-size:13px}
 .se-verdict.good{border-color:rgba(63,185,80,.5);background:var(--ok-bg)}
 .se-verdict.ready{border-color:rgba(88,166,255,.5);background:var(--info-bg)}
 .se-verdict.bad{border-color:rgba(210,153,34,.5);background:var(--warn-bg)}
@@ -3532,4 +3532,7 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .se-put{align-items:center;gap:12px}
 .se-confirm{margin:0 0 8px 18px;padding:0;display:flex;flex-direction:column;gap:8px}
 .se-confirm code{font-size:12px;overflow-wrap:anywhere}
+.se-nothing{flex-direction:row;align-items:center;gap:14px;padding:16px 18px}
 .se-nothing b{font-size:14px}
+.se-nothing-i{flex:none;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(63,185,80,.18);color:var(--ok)}
+.se-nothing-t{display:flex;flex-direction:column;gap:3px}

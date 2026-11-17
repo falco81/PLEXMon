@@ -4,6 +4,15 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.10.1 - 2026-11-17
+
+- Settings → SELinux looks as the kit does: the lists, verdicts and findings go the whole width of
+  the card, *SELinux refused nothing* is a full-width box with a tick, and *What SELinux refuses*
+  comes after the checklist of plexmon and the rest of the system (as the kit has it).
+- Translated where it stayed English: *once, last ... ago (permissive: let through, written
+  down)*, the reason of each of plexmon's local rules, and the lines of *Not ready for enforcing
+  yet* (each on its own line now).
+
 ## 2.10.0 - 2026-11-17
 
 - **Settings → SELinux finds out everything SELinux refuses and sorts it by what puts it right**
