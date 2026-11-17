@@ -76,6 +76,9 @@ function pm_upgrading(bool $full = false): ?array
     static $got = false;
     if ($got === false) {
         $got = null;
+        /* Nothing of this may ever break a page (2.9.10): any fault and it is as if there were
+           no file. And nothing beyond PHP's core: no mbstring (RHEL ships it apart). */
+        try {
         $f = __DIR__ . '/.plexmon-upgrade.php';
         $raw = (is_file($f) && !is_link($f)) ? (string) @file_get_contents($f, false, null, 0, 8192) : '';
         $nl = strpos($raw, "\n");
@@ -85,8 +88,11 @@ function pm_upgrading(bool $full = false): ?array
             $age = time() - $at;
             $fresh = $age >= -60 && $age <= (($d['state'] === 'running') ? 1800 : 600);
             if ($fresh) {
-                $txt = static fn($v, int $n): string =>
-                    mb_substr((string) preg_replace('/[\x00-\x1f\x7f]/u', ' ', (string) $v), 0, $n);
+                $txt = static function ($v, int $n): string {
+                    $v = (string) preg_replace('/[\x00-\x1f\x7f]/', ' ', (string) $v);
+                    /* At most $n characters, whole UTF-8 ones (PCRE, not mbstring); not UTF-8 at all: nothing. */
+                    return preg_match('/^.{0,' . $n . '}/us', $v, $m) === 1 ? $m[0] : '';
+                };
                 $ver = static fn($v): string => (string) preg_replace('/[^0-9.]/', '', substr((string) $v, 0, 20));
                 $parts = max(1, min(40, (int) ($d['parts'] ?? 1)));
                 $got = [
@@ -98,6 +104,9 @@ function pm_upgrading(bool $full = false): ?array
                     'downgrade' => !empty($d['downgrade']), 'now' => time(),
                 ];
             }
+        }
+        } catch (\Throwable $e) {
+            $got = null;
         }
     }
     if ($got === null) {

@@ -4,6 +4,14 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.9.10 - 2026-11-17
+
+- **Fixed: Settings answered HTTP 500 after an upgrade to 2.9.9** (for ten minutes after it, and
+  during an upgrade) where PHP has no mbstring - RHEL and AlmaLinux ship it as a package of its
+  own (php-mbstring). Reading the upgrade's file used mb_substr; it now uses nothing beyond
+  PHP's core, and any fault while reading it is as if there were no file - it can never break a
+  page again.
+
 ## 2.9.9 - 2026-11-17
 
 - **The pages stay with an upgrade** while plexmon's API, nginx and php-fpm restart under them.
