@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.9.10'
+__version__ = '2.10.0'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -7650,7 +7650,8 @@ SE_PORT_TYPES = ('http_port_t',)
 # The programs whose refusals are plexmon's business - and every line that names Plex.
 SE_DOMAINS = ('httpd_t', 'init_t', 'chronyd_t', 'logrotate_t', 'smbd_t', 'nmbd_t', 'nfsd_t',
               'unconfined_service_t')
-SE_ACTIONS = ('check', 'prepare', 'enforce', 'permissive', 'report', 'plex', 'plex-restart')
+SE_ACTIONS = ('check', 'prepare', 'enforce', 'permissive', 'report', 'plex', 'plex-restart', 'fix',
+              'rule_drop')
 SE_EVERY = 1800
 SE_REPORT_KEEP_S = 3600
 SE_REPORT_PART = 2 * 1024 * 1024
@@ -7834,92 +7835,442 @@ def se_applied_at():
         return 0.0
 
 
-SE_PLEX_LINE = re.compile(r'comm="?Plex|plexmediaserver|Plex Media', re.I)
+SE_PLEX_LINE = re.compile(r'Plex|plexmediaserver', re.I)
+
+# ---- What SELinux refuses, found out and sorted (2.10.0, as otp 1.0.288 / fake-igd) ----------
+# Every AVC, USER_AVC and SELINUX_ERR since the machine started, read with the records of its
+# event (SYSCALL: the program; PATH: the whole path; the port), grouped by what was refused, each
+# group put to audit2why, and sorted by what puts it right: a boolean, a label, a port, a rule of
+# plexmon's own local module - or not for a button (too much to allow from a page), or not
+# plexmon's at all. A finding's id is a hash of what was refused: the same refusal has the same id
+# at every look. The pages send only ids; root works out every fix itself.
+SE_LOCAL = 'plexmon_local'
+SE_LOCAL_CIL = STATE_DIR / 'plexmon_local.cil'
+SE_LOCAL_LIST = STATE_DIR / 'selinux-local.json'
+SE_FIXED = STATE_DIR / 'selinux-fixed.json'
+SE_KINDS = ('fixed', 'boolean', 'label', 'port', 'rule', 'danger', 'other')
+SE_PORT_FOR = {'httpd_t': 'http_port_t', 'sshd_t': 'ssh_port_t', 'chronyd_t': 'ntp_port_t'}
+SE_FREE_PORT_TYPES = ('unreserved_port_t', 'port_t', 'reserved_port_t', 'hi_reserved_port_t',
+                      'ephemeral_port_t')
+SE_BAD_BOOL = re.compile(r'exec|unconfined|manage_all|read_all|write_all|ptrace|^deny_|_all_|'
+                         r'execmem|execstack|execheap|execmod|selinuxuser|secure_mode|domain_can_mmap')
+SE_BAD_TYPES = ('shadow_t', 'passwd_file_t', 'security_t', 'selinux_config_t', 'policy_config_t',
+                'semanage_store_t', 'semanage_read_lock_t', 'semanage_trans_lock_t', 'kernel_t',
+                'kmsg_device_t', 'memory_device_t', 'auditd_log_t', 'auditd_etc_t', 'audit_spool_t',
+                'sudo_exec_t', 'sudo_db_t', 'user_home_t', 'user_home_dir_t', 'admin_home_t',
+                'home_root_t', 'ssh_home_t', 'sshd_key_t', 'cert_t', 'boot_t', 'efivarfs_t',
+                'load_policy_exec_t', 'setfiles_exec_t', 'proc_kcore_t', 'sysctl_kernel_t')
+SE_BAD_PERMS = ('execute', 'execute_no_trans', 'entrypoint', 'execmod', 'execmem', 'execstack',
+                'execheap', 'transition', 'dyntransition', 'ptrace', 'relabelfrom', 'relabelto',
+                'sys_admin', 'sys_module', 'sys_rawio', 'sys_ptrace', 'dac_override',
+                'dac_read_search', 'setuid', 'setgid', 'mac_admin', 'mac_override', 'load_policy',
+                'setenforce', 'setbool', 'module_load', 'module_request')
+SE_BAD_CLASSES = ('security', 'kernel_service', 'key', 'bpf', 'capability2', 'perf_event',
+                  'system', 'cap_userns')
+SE_GENERIC_TYPES = ('etc_t', 'usr_t', 'bin_t', 'lib_t', 'var_t', 'var_lib_t', 'default_t', 'tmp_t',
+                    'root_t', 'device_t', 'file_t', 'unlabeled_t', 'proc_t', 'sysfs_t', 'var_run_t')
+SE_WRITE_PERMS = ('write', 'append', 'create', 'unlink', 'rename', 'setattr', 'add_name',
+                  'remove_name', 'rmdir', 'link', 'reparent', 'mounton')
+# plexmon's (and Plex's) paths: a refusal of a confined program there is plexmon's business.
+SE_OWN_PATHS = ('/usr/local/lib/plexmon', '/var/lib/plexmon', '/etc/plexmon', '/var/log/plexmon',
+                str(WEB_ROOT), '/var/www/plexmon-acme', '/run/plexmon', '/run/plex-status',
+                '/var/run/plexmon', '/var/run/plex-status', '/var/lib/plex-status', '/etc/plex-status',
+                '/etc/nginx/plexmon', '/etc/nginx/certs', str(NGINX_SITE), '/var/cache/plexmon',
+                '/usr/lib/plexmediaserver', '/var/lib/plexmediaserver',
+                '/run/systemd/unit-root/etc/selinux', '/run/systemd/unit-root/var/lib/selinux')
+# Where the daemon may put a label right itself (its unit's ProtectSystem=full: /usr and most
+# of /etc are read-only to it); elsewhere root types it.
+SE_RELABEL_ROOTS = ('/var/', '/run/', '/etc/nginx/', '/etc/plexmon/', '/etc/pki/ca-trust/',
+                    '/srv/', '/opt/')
 
 
-def se_denials(since=0.0):
-    """What SELinux refused to the programs plexmon works with (and to Plex), since the machine
-    started. Those from before plexmon's needs were last put in count only while the policy
-    loaded now still refuses them (2.9.2: audit2why) - a refusal that comes only when a service
-    starts was hidden until the next restart, enforcing then let through and the service down."""
-    got = _se_run(['ausearch', '-m', 'AVC,USER_AVC', '-ts', 'boot'], 120, light=True)
+def se_own_ports():
+    out = {32400}
+    for v in (CONFIG.get('api_port'), CONFIG.get('admin_port')):
+        try:
+            if v:
+                out.add(int(v))
+        except (TypeError, ValueError):
+            pass
+    for f in ('/run/plexmon/api-port', '/run/plex-status/api-port'):
+        try:
+            out.add(int((_se_read(f) or '').strip()))
+        except ValueError:
+            pass
+    out.update(nginx_listen_ports())
+    return out
+
+
+def _se_hex(v):
+    v = str(v or '')
+    if v.startswith('"') and v.endswith('"') and len(v) >= 2:
+        return v[1:-1]
+    if v and len(v) % 2 == 0 and re.match(r'^[0-9A-F]+\Z', v):
+        try:
+            return bytes.fromhex(v).replace(b'\x00', b' ').decode('utf-8', 'replace').strip()
+        except ValueError:
+            return v
+    return v
+
+
+def _se_field(line, name):
+    m = re.search(r'(?:^|\s)%s=("[^"]*"|\S+)' % re.escape(name), line)
+    return m.group(1) if m else ''
+
+
+def se_events():
+    """Every refusal since the start: [{line, at, stype, ttype, class, perms, comm, exe, path,
+    port, permissive}] - None without ausearch."""
+    got = _se_run(['ausearch', '-m', 'AVC,USER_AVC,SELINUX_ERR', '-ts', 'boot'], 180, light=True)
     if got is None:
-        return {'tool': False, 'total': 0, 'groups': [], 'since': since}
-    groups, lines = {}, {}
+        return None
+    blocks, cur = [], []
     for line in (got.stdout or '').splitlines():
-        if 'avc:' not in line or 'denied' not in line:
-            continue
-        when = re.search(r'msg=audit\((\d+)(?:\.\d+)?:', line)
-        old = bool(since and when and int(when.group(1)) < since)
-        perms = re.search(r'denied\s+\{([^}]*)\}', line)
-        sc = re.search(r'scontext=(\S+)', line)
-        tc = re.search(r'tcontext=(\S+)', line)
-        cl = re.search(r'tclass=(\S+)', line)
-        comm = re.search(r'comm=(\S+)', line)
-        name = re.search(r'\bname=(\S+)', line) or re.search(r'\bpath=(\S+)', line)
-        if not (perms and sc and tc and cl):
-            continue
-        st = (sc.group(1).split(':') + ['', '', ''])[2]
-        tt = (tc.group(1).split(':') + ['', '', ''])[2]
-        # Every program counts (2.9.2): enforcing is the whole system's, not plexmon's alone.
-        # Plex's part: its own processes, and nginx reaching it (port 32400).
-        if SE_PLEX_LINE.search(line) or (st == 'httpd_t' and re.search(r'\bdest=32400\b', line)):
-            part = 'plex'
-        elif st in SE_DOMAINS or 'plex' in line.lower():
-            part = 'plexmon'
-        else:
-            part = 'other'
-        what = ' '.join(x for x in (comm.group(1) if comm else '', name.group(1) if name else '') if x)
-        dest = re.search(r'\bdest=(\d+)', line)
-        if dest:
-            what = (what + ' port ' + dest.group(1)).strip()
-        key = (st, tt, cl.group(1), perms.group(1).strip(), old, part)
-        lines[key] = line
-        g = groups.setdefault(key, {'source': st, 'target': tt, 'class': cl.group(1),
-                                    'perms': perms.group(1).strip(), 'count': 0, 'what': '',
-                                    'earlier': old, 'part': part})
-        g['count'] += 1
-        g['what'] = what.replace('"', '')[:120] or g['what']
-    allowed = se_allowed_now(lines)
-    settled = 0
-    for key in list(groups):
-        if key[4] and allowed is None:
-            groups.pop(key)                 # no audit2why: put right by "Put in", as before
-        elif allowed is not None and key in allowed:
-            g = groups.pop(key)
-            if not key[4]:
-                settled += g['count']
-    total = sum(g['count'] for g in groups.values())
-    parts = {k: sum(g['count'] for g in groups.values() if g['part'] == k) for k in ('plex', 'plexmon', 'other')}
-    out = sorted(groups.values(), key=lambda g: -g['count'])[:40]
-    return {'tool': True, 'total': total, 'groups': out, 'since': since, 'settled': settled,
-            'parts': parts}
+        if line.startswith('----'):
+            if cur:
+                blocks.append(cur)
+            cur = []
+        elif line.strip():
+            cur.append(line)
+    if cur:
+        blocks.append(cur)
+    out = []
+    for b in blocks:
+        sysc = next((x for x in b if x.startswith('type=SYSCALL')), '')
+        paths = [_se_hex(_se_field(x, 'name')) for x in b if x.startswith('type=PATH')]
+        cwd = next((_se_hex(_se_field(x, 'cwd')) for x in b if x.startswith('type=CWD')), '')
+        title = next((_se_hex(_se_field(x, 'proctitle')) for x in b if x.startswith('type=PROCTITLE')), '')
+        for line in b:
+            if not re.match(r'^type=(AVC|USER_AVC)\b', line) or 'denied' not in line:
+                continue
+            perms = re.search(r'denied\s+\{([^}]*)\}', line)
+            sc, tc, cl = _se_field(line, 'scontext'), _se_field(line, 'tcontext'), _se_field(line, 'tclass')
+            if not (perms and sc and tc and cl):
+                continue
+            when = re.search(r'msg=audit\((\d+)(?:\.\d+)?:', line)
+            path = _se_hex(_se_field(line, 'path')) or next((p for p in paths if p.startswith('/')), '')
+            name = _se_hex(_se_field(line, 'name'))
+            if not path.startswith('/') and name.startswith('/'):
+                path = name
+            elif not path and name:
+                path = name
+            if path and not path.startswith('/') and cwd.startswith('/') and '/' not in path and \
+                    not re.match(r'^[a-z]+:\[', path):
+                path = cwd.rstrip('/') + '/' + path
+            port = _se_field(line, 'dest') or _se_field(line, 'src')
+            out.append({'line': line, 'at': int(when.group(1)) if when else 0,
+                        'stype': (sc.split(':') + ['', '', ''])[2], 'ttype': (tc.split(':') + ['', '', ''])[2],
+                        'class': cl.strip('"'), 'perms': ' '.join(sorted(perms.group(1).split())),
+                        'comm': _se_hex(_se_field(line, 'comm') or _se_field(sysc, 'comm'))[:60],
+                        'exe': _se_hex(_se_field(line, 'exe') or _se_field(sysc, 'exe'))[:200],
+                        'title': title[:300], 'path': path[:400],
+                        'port': int(port) if port.isdigit() else 0,
+                        'permissive': 'permissive=1' in line})
+    return out
 
 
-def se_allowed_now(lines):
-    """Which of the refusals (one line for each kind) the policy loaded now allows, as audit2why
-    tells ("would be allowed by active policy") - a newer plexmon_server, a boolean switched on
-    since. None when audit2why is not there or says nothing plain."""
+def se_audit2why(lines):
+    """audit2why for one line of each kind: {key: {'allowed': bool, 'booleans': [...]}}, or None
+    when audit2why is not there."""
     by_id = {}
     for key, line in lines.items():
         m = re.search(r'msg=audit\(([0-9.]+:\d+)\)', line)
         if m:
             by_id[m.group(1)] = key
     if not by_id:
-        return set()
+        return {}
     got = _se_run(['audit2why'], 300, light=True,
                   data=''.join(lines[k] + '\n' for k in by_id.values()))
     if got is None or got.returncode != 0:
         return None
-    now, cur = set(), None
+    out, cur = {}, None
     for line in (got.stdout or '').splitlines():
         m = re.search(r'msg=audit\(([0-9.]+:\d+)\)', line)
         if m and 'avc:' in line:
             cur = by_id.get(m.group(1))
+            if cur is not None:
+                out.setdefault(cur, {'allowed': False, 'booleans': []})
             continue
-        if cur is not None and 'would be allowed by active policy' in line:
-            now.add(cur)
-    return now
+        if cur is None:
+            continue
+        if 'would be allowed by active policy' in line:
+            out[cur]['allowed'] = True
+        b = re.search(r'setsebool\s+-P\s+([a-z0-9_]+)\s+1', line) or \
+            re.search(r'The boolean ([a-z0-9_]+) was set incorrectly', line)
+        if b and b.group(1) not in out[cur]['booleans']:
+            out[cur]['booleans'].append(b.group(1))
+    return out
+
+
+def _se_json(path):
+    try:
+        return json.loads(path.read_text()) or {}
+    except (OSError, ValueError):
+        return {}
+
+
+def se_fixed():
+    got = _se_json(SE_FIXED)
+    return {k: float(v) for k, v in got.items() if isinstance(k, str) and isinstance(v, (int, float))}
+
+
+def se_local_rules():
+    got = _se_json(SE_LOCAL_LIST)
+    return [r for r in got.get('rules') or [] if isinstance(r, dict) and r.get('id')]
+
+
+def _se_whose(e, own_ports):
+    blob = ' '.join((e['comm'], e['exe'], e['title'], e['path']))
+    if SE_PLEX_LINE.search(blob) or (e['stype'] == 'httpd_t' and e['port'] == 32400):
+        return 'plex'
+    if 'plexmon' in blob or 'plex-status' in blob:
+        return 'plexmon'
+    if e['path'] and any(e['path'] == p or e['path'].startswith(p.rstrip('/') + '/') for p in SE_OWN_PATHS):
+        return 'plexmon'
+    if e['port'] and e['port'] in own_ports and e['stype'] in ('httpd_t', 'init_t'):
+        return 'plexmon'
+    return 'other'
+
+
+def _se_matchpath(path):
+    got = _se_run(['matchpathcon', '-n', path], 20)
+    if got is None or got.returncode != 0:
+        return ''
+    parts = (got.stdout or '').strip().split(':')
+    return parts[2] if len(parts) >= 3 else ''
+
+
+def _se_sort(g, why2, data_disks):
+    """The kind of a finding of plexmon's and what puts it right: (kind, fix, why)."""
+    st, tt, cl, perms = g['source'], g['target'], g['class'], g['perms'].split()
+    path, port = g['path'], g['port']
+    bools = [b for b in (why2 or {}).get('booleans') or []]
+    safe = [b for b in bools if not SE_BAD_BOOL.search(b)]
+    if safe:
+        return 'boolean', 'setsebool -P %s 1' % safe[0], 'the boolean %s is off - it allows this' % safe[0], [safe[0]]
+    if bools:
+        return 'danger', '', 'only the boolean %s would allow it, and it allows far more - never from here' % bools[0], []
+    if path and any(path == d or path.startswith(d.rstrip('/') + '/') for d in data_disks):
+        return 'danger', '', '%s is on a data disk, left unlabelled on purpose (relabelling would wake ' \
+                             'and read the whole disk) - never from here' % path, []
+    if path.startswith('/') and cl in ('file', 'dir', 'lnk_file', 'sock_file', 'fifo_file') and \
+            os.path.exists(path):
+        want = _se_matchpath(path)
+        if want and want != tt and want not in SE_BAD_TYPES:
+            target = path if os.path.isdir(path) and not path.startswith('/var/lib/plexmediaserver') \
+                else os.path.dirname(path)
+            if not any(target.startswith(r) for r in SE_RELABEL_ROOTS) or target.count('/') < 2:
+                return 'danger', '', '%s is labelled %s - the policy says %s; the service may not change ' \
+                                     'it there - as root: restorecon -v %s' % (path, tt, want, path), []
+            deep = not target.startswith('/var/lib/plexmediaserver')
+            return 'label', 'restorecon %s-v %s' % ('-R ' if deep else '', target), \
+                '%s is labelled %s - the policy says %s' % (path, tt, want), \
+                (['-R', '-v', target] if deep else ['-v', target])
+    if cl in ('tcp_socket', 'udp_socket') and port and tt in SE_FREE_PORT_TYPES and \
+            any(p in ('name_bind', 'name_connect') for p in perms) and st in SE_PORT_FOR:
+        proto = 'tcp' if cl == 'tcp_socket' else 'udp'
+        typ = SE_PORT_FOR[st]
+        return 'port', 'semanage port -a -t %s -p %s %d' % (typ, proto, port), \
+            'port %d/%s has no type of its own - %s may use it once it is %s' % (port, proto, st, typ), \
+            [typ, proto, str(port)]
+    if cl in ('tcp_socket', 'udp_socket') and port and tt not in SE_FREE_PORT_TYPES:
+        return 'danger', '', 'port %d is %s - another service\'s; never taken from it here' % (port, tt), []
+    if tt in SE_BAD_TYPES:
+        return 'danger', '', '%s is security-sensitive (%s) - never allowed from here' % (tt, cl), []
+    bad = [p for p in perms if p in SE_BAD_PERMS]
+    if bad:
+        return 'danger', '', '%s { %s } would let it run, change or reach far more than this - never ' \
+                             'allowed from here' % (cl, ' '.join(bad)), []
+    if cl in SE_BAD_CLASSES:
+        return 'danger', '', 'the class %s is about the kernel and the policy themselves - never ' \
+                             'allowed from here' % cl, []
+    if tt in SE_GENERIC_TYPES and any(p in SE_WRITE_PERMS for p in perms):
+        return 'danger', '', 'writing %s (%s) would let it change far more than this - a label of its ' \
+                             'own is the way; never allowed from here' % (tt, cl), []
+    if not all(re.match(r'^[a-z0-9_]+\Z', x) for x in [st, tt, cl] + perms):
+        return 'danger', '', 'not a plain rule - never allowed from here', []
+    return 'rule', '(allow %s %s (%s (%s)))' % (st, tt, cl, ' '.join(perms)), \
+        'nothing of the policy allows it: a rule of plexmon\'s own local module allows exactly this', []
+
+
+def se_denials(since=0.0):
+    """What SELinux refuses, found out and sorted (2.10.0). The same shape as before - total,
+    groups, parts, settled - with each group's id, kind, fix and why. A refusal from before
+    plexmon's needs were last put in counts only while the policy loaded now still refuses it."""
+    events = se_events()
+    if events is None:
+        return {'tool': False, 'total': 0, 'groups': [], 'since': since, 'settled': 0,
+                'parts': {}, 'kinds': {}}
+    own_ports = se_own_ports()
+    groups, lines = {}, {}
+    for e in events:
+        loc = ('port %d' % e['port']) if e['port'] else e['path']
+        key = (e['stype'], e['ttype'], e['class'], e['perms'], e['comm'], loc)
+        gid = hashlib.sha256('|'.join(str(x) for x in key).encode()).hexdigest()[:12]
+        g = groups.get(gid)
+        if g is None:
+            g = groups[gid] = {'id': gid, 'source': e['stype'], 'target': e['ttype'], 'class': e['class'],
+                               'perms': e['perms'], 'comm': e['comm'], 'exe': e['exe'], 'path': e['path'],
+                               'port': e['port'], 'count': 0, 'first': e['at'], 'last': e['at'],
+                               'permissive': e['permissive'], 'part': _se_whose(e, own_ports)}
+            lines[gid] = e['line']
+        g['count'] += 1
+        g['first'] = min(g['first'], e['at']) if e['at'] else g['first']
+        if e['at'] >= g['last']:
+            g['last'] = e['at']
+            lines[gid] = e['line']
+    why = se_audit2why(lines)
+    fixed = se_fixed()
+    try:
+        data_disks = se_data_mounts()
+    except Exception:                                   # noqa: BLE001
+        data_disks = []
+    settled = 0
+    for gid in list(groups):
+        g = groups[gid]
+        w = (why or {}).get(gid) or {}
+        old = bool(since and g['last'] and g['last'] < since)
+        if w.get('allowed'):
+            groups.pop(gid)
+            if not old:
+                settled += g['count']
+            continue
+        if old and why is None:
+            groups.pop(gid)                 # no audit2why: put right by "Put in", as before
+            continue
+        g['earlier'] = old
+        if gid in fixed and g['last'] and g['last'] <= fixed[gid]:
+            g.update(kind='fixed', fix='', why='put right %s - it goes at the next look' % stamp(fixed[gid]))
+            continue
+        if g['part'] == 'other':
+            g.update(kind='other', fix='', why='not plexmon\'s: %s (%s) is another program of this machine - '
+                                               'look at it with whoever looks after it' % (g['comm'] or '?', g['source']))
+            continue
+        kind, fix, words, args = _se_sort(g, w, data_disks)
+        g.update(kind=kind, fix=fix, why=words, args=args)
+    live = [g for g in groups.values() if g['kind'] != 'fixed']
+    total = sum(g['count'] for g in live)
+    parts = {k: sum(g['count'] for g in live if g['part'] == k) for k in ('plex', 'plexmon', 'other')}
+    kinds = {k: sum(1 for g in groups.values() if g['kind'] == k) for k in SE_KINDS}
+    order = {k: i for i, k in enumerate(SE_KINDS)}
+    out = sorted(groups.values(), key=lambda g: (order.get(g['kind'], 9), -g['count']))[:80]
+    return {'tool': True, 'total': total, 'groups': out, 'since': since, 'settled': settled,
+            'parts': parts, 'kinds': kinds}
+
+
+def se_allowed_now(lines):
+    """Kept for what calls it: which of these the policy loaded now allows."""
+    got = se_audit2why(lines)
+    if got is None:
+        return None
+    return {k for k, v in got.items() if v.get('allowed')}
+
+
+def se_local_write(rules, said):
+    """plexmon's local module written again from its list and put into the policy - or taken
+    away when the list is empty."""
+    if not rules:
+        if shutil.which('semodule'):
+            got = _se_run(['semodule', '-l'], 120)
+            if got is not None and any(x.split()[:1] == [SE_LOCAL] for x in (got.stdout or '').splitlines()):
+                got = _se_run(['semodule', '-r', SE_LOCAL], 300)
+                if got is None or got.returncode != 0:
+                    raise SeRefused('semodule -r %s: %s' % (SE_LOCAL, _se_err(got)))
+                said.append('plexmon\'s local module (%s) taken out of the policy' % SE_LOCAL)
+        for p in (SE_LOCAL_CIL, Path(str(SE_LOCAL_CIL) + '.in-policy')):
+            try:
+                p.unlink()
+            except OSError:
+                pass
+        return
+    text = ['; plexmon\'s local rules (%s) - put in from Settings -> SELinux ("Put in what is selected")'
+            % SE_LOCAL,
+            '; or plexmon --selinux-fix, each exactly what SELinux refused here and nothing more. Taken away',
+            '; one by one on the same card (or plexmon --selinux-take-away ID); install.sh --uninstall takes',
+            '; the module away. Written by root again from its list at every change - never edit it by hand.', '']
+    for r in rules:
+        text.append('; %s - %s (%s)' % (r['id'], str(r.get('why') or '')[:160].replace('\n', ' '),
+                                        time.strftime('%Y-%m-%d %H:%M', time.localtime(r.get('at') or 0))))
+        text.append('(optional %s_%s\n    %s)' % (SE_LOCAL, r['id'], r['rule']))
+    write_replacing(SE_LOCAL_CIL, '\n'.join(text) + '\n', 0o600)
+    got = _se_run(['semodule', '-i', str(SE_LOCAL_CIL)], 300)
+    if got is None or got.returncode != 0:
+        raise SeRefused('semodule -i %s: %s' % (SE_LOCAL_CIL, _se_err(got)))
+    shutil.copyfile(str(SE_LOCAL_CIL), str(SE_LOCAL_CIL) + '.in-policy')
+    said.append('plexmon\'s local module (%s) put into the policy - %d rule(s) in it' % (SE_LOCAL, len(rules)))
+
+
+def se_fix(ids, by=''):
+    """The findings named by their ids put right - every fix worked out here again from the audit
+    log; nothing of the request is a rule, a path or a command. (said list)."""
+    if se_mode() not in ('Enforcing', 'Permissive'):
+        raise SeRefused('SELinux is not on - nothing to put right')
+    ids = [i for i in (ids or []) if isinstance(i, str) and re.match(r'^[0-9a-f]{12}\Z', i)]
+    d = se_denials(se_applied_at())
+    found = {g['id']: g for g in d['groups']}
+    if ids == ['all']:
+        ids = []
+    want = [found[i] for i in ids if i in found] if ids else \
+        [g for g in d['groups'] if g['kind'] in ('boolean', 'label', 'port', 'rule')]
+    if not want:
+        raise SeRefused('none of these is something to put right any more - look again')
+    said, fixed = [], se_fixed()
+    rules = se_local_rules()
+    rule_new = False
+    for g in want:
+        k, fix = g['kind'], g['fix']
+        args = g.get('args') or []
+        if k == 'boolean':
+            name = args[0]
+            got = _se_run(['setsebool', '-P', name, 'on'], 300)
+            if got is None or got.returncode != 0:
+                raise SeRefused('setsebool -P %s on: %s' % (name, _se_err(got)))
+            said.append('%s: %s on' % (g['id'], name))
+        elif k == 'label':
+            target = args[-1]
+            if not os.path.exists(target):
+                said.append('%s: %s is not there any more' % (g['id'], target))
+            else:
+                got = _se_run(['restorecon'] + args, 600)
+                if got is None or got.returncode != 0:
+                    raise SeRefused('restorecon %s: %s' % (target, _se_err(got)))
+                said.append('%s: %s labelled again' % (g['id'], target))
+        elif k == 'port':
+            typ, proto, port = args
+            got = _se_run(['semanage', 'port', '-a', '-t', typ, '-p', proto, port], 300)
+            if got is not None and got.returncode != 0 and 'already defined' in (got.stderr or ''):
+                raise SeRefused('port %s/%s is another service\'s in the policy - not taken from it' % (port, proto))
+            if got is None or got.returncode != 0:
+                raise SeRefused('semanage port %s/%s: %s' % (port, proto, _se_err(got)))
+            said.append('%s: port %s/%s labelled %s' % (g['id'], port, proto, typ))
+        elif k == 'rule':
+            if not any(r['rule'] == fix for r in rules):
+                rules.append({'id': g['id'], 'rule': fix, 'why': '%s: %s' % (g['comm'] or g['source'], g['why']),
+                              'who': g['comm'] or g['source'], 'what': g['why'], 'at': time.time(), 'by': by or ''})
+                rule_new = True
+            said.append('%s: rule %s' % (g['id'], fix))
+        else:
+            continue
+        fixed[g['id']] = time.time()
+    if rule_new:
+        se_local_write(rules, said)
+        write_replacing(SE_LOCAL_LIST, json.dumps({'rules': rules}), 0o600)
+    write_replacing(SE_FIXED, json.dumps({k: v for k, v in fixed.items() if time.time() - v < 30 * 86400}), 0o600)
+    return said
+
+
+def se_rule_drop(rid, by=''):
+    rules = se_local_rules()
+    keep = [r for r in rules if r['id'] != rid]
+    if len(keep) == len(rules):
+        raise SeRefused('plexmon\'s local module has no rule %s' % rid)
+    said = ['rule %s taken away: %s' % (rid, next(r['rule'] for r in rules if r['id'] == rid))]
+    se_local_write(keep, said)
+    write_replacing(SE_LOCAL_LIST, json.dumps({'rules': keep}), 0o600)
+    fixed = se_fixed()
+    fixed.pop(rid, None)
+    write_replacing(SE_FIXED, json.dumps(fixed), 0o600)
+    return said
 
 
 SE_UNCONFINED_KNOWN = ('unconfined_service_t', 'unconfined_t', 'initrc_t', 'spc_t', 'unconfined_cronjob_t')
@@ -8156,8 +8507,18 @@ def se_check(r=None):
             probs.append('semanage is not on this machine - the ports cannot be checked '
                          '(dnf install policycoreutils-python-utils)')
         if out['denials']['total']:
-            probs.append('SELinux refused %d thing(s) the policy loaded now still refuses'
-                         % out['denials']['total'])
+            k = out['denials'].get('kinds') or {}
+            fixable = sum(k.get(x, 0) for x in ('boolean', 'label', 'port', 'rule'))
+            words = []
+            if fixable:
+                words.append('%d can be put right here ("Put in what is selected")' % fixable)
+            if k.get('danger'):
+                words.append('%d are not for a button - each says why' % k['danger'])
+            if k.get('other'):
+                words.append('%d are other programs\' - enforcing is the whole machine\'s, so they keep '
+                             'it locked too' % k['other'])
+            probs.append('SELinux refused %d thing(s) the policy loaded now still refuses%s'
+                         % (out['denials']['total'], (': ' + '; '.join(words)) if words else ''))
         dom = [x['domain'] for x in (out.get('plex') or {}).get('domains') or []]
         probs.extend('%s is labelled %s, not %s (%s)' % (x['path'], x['label'] or '?', x['want'] or 'a label', x['why'])
                      for x in (out.get('plex') or {}).get('labels') or [] if x['ok'] is False)
@@ -8238,7 +8599,7 @@ def se_apply(bools, ports, said, mark=True):
         write_replacing(SE_APPLIED, json.dumps({'at': time.time()}), 0o600)
 
 
-def se_do(do, by=''):
+def se_do(do, by='', want=None):
     """One step, as root: check, prepare, enforce or permissive - what it did and how it is."""
     bools, ports = se_want_checked(selinux_want())
     said = []
@@ -8281,6 +8642,10 @@ def se_do(do, by=''):
             raise SeRefused('setenforce 1: %s' % _se_err(got))
         se_config_set('enforcing')
         said.append('SELinux is enforcing, and stays so after a restart')
+    elif do == 'fix':
+        said.extend(se_fix((want or {}).get('ids') or [], by))
+    elif do == 'rule_drop':
+        said.extend(se_rule_drop(str((want or {}).get('rule') or ''), by))
     elif do == 'plex':
         # What Plex and its publishing through nginx need (2.9.3): the boolean, nginx's ports,
         # the labels of what nginx reads and of Plex's program - Plex's library only its folder
@@ -8395,6 +8760,22 @@ def se_report_bytes():
     parts['modules.txt'] = '==== plexmon\n' + '\n'.join(x for x in mods.splitlines() if 'plex' in x.lower()) + \
         '\n\n==== %s\n%s\n==== in the policy\n%s\n' % (SE_CIL, _se_read(SE_CIL) or '(not there)',
                                                      _se_read(SE_CIL + '.in-policy') or '(none put in yet)')
+    # The whole machine (2.10.0, as otp 1.0.288): every process, boolean, port type, module, and
+    # what was changed on this machine - for whoever looks at a refusal that is not plexmon's.
+    parts['findings.json'] = json.dumps(se_denials(se_applied_at()), indent=1, sort_keys=True, default=str)
+    parts['local-module.txt'] = '==== %s\n%s\n==== its list\n%s\n' % (
+        SE_LOCAL_CIL, _se_read(str(SE_LOCAL_CIL)) or '(no local rules)',
+        json.dumps(se_local_rules(), indent=1))
+    parts['os/processes.txt'] = _se_out(['ps', '-eo', 'label,user,pid,ppid,comm,args'], 60, light=False)
+    parts['os/booleans.txt'] = bools
+    parts['os/ports.txt'] = ports
+    parts['os/modules.txt'] = _se_out(['semodule', '-lfull'], 300)
+    parts['os/local-changes.txt'] = '\n'.join(
+        '==== semanage %s -l -C\n%s' % (what, _se_out(['semanage', what, '-l', '-C'], 300))
+        for what in ('boolean', 'port', 'fcontext', 'login', 'user', 'module')) + \
+        '\n==== semanage permissive -l\n' + _se_out(['semanage', 'permissive', '-l'], 300)
+    parts['os/semanage-export.txt'] = _se_out(['semanage', 'export'], 300)
+    parts['os/listening.txt'] = _se_out(['ss', '-lntupZ'], 60, light=False)
     parts['README.txt'] = (
         'plexmon - what SELinux says on this server, for whoever writes plexmon\'s module (%s).\n'
         'Made %s. Nothing was changed to make it.\n\n'
@@ -8403,7 +8784,10 @@ def se_report_bytes():
         'audit2why.txt   why; audit2allow.te: what would allow it - a hint, not to be loaded\n'
         'labels.txt      the labels of plexmon\'s files and what the policy says they should be\n'
         'processes.txt   the domains the programs run in; ports.txt, booleans.txt, modules.txt\n'
-        'system.txt      the system, the policy and the packages; plexmon.json: what plexmon needs\n\n'
+        'system.txt      the system, the policy and the packages; plexmon.json: what plexmon needs\n'
+        'findings.json   what SELinux refuses, sorted by what puts it right; local-module.txt\n'
+        'os/             the whole machine: every process, boolean, port type and module, what was\n'
+        '                changed here (semanage -C, semanage export), every listening socket\n\n'
         'No password, key or token of plexmon is in it. The audit log holds the command lines of the\n'
         'programs refused something: other programs on this machine may put a secret on one.\n'
         'Look through avc*.txt before sending it on.\n' % (SE_MODULE, time.strftime('%Y-%m-%d %H:%M:%S')))
@@ -8430,28 +8814,41 @@ def selinux_view(store):
             'action': now.get('action') or '',
             'pending': want.get('do') if want and want.get('id') != now.get('done') else '',
             'report': {k: rep.get(k) for k in ('at', 'bytes', 'error')} if rep else None,
-            'data_disks': se_data_mounts()}
+            'data_disks': se_data_mounts(), 'local_rules': se_local_rules()}
 
 
-def selinux_ask(store, action, by):
+def selinux_ask(store, action, by, extra=None):
     if action not in SE_ACTIONS:
         raise ApiError(400, 'check, prepare, enforce, permissive or report')
     was = _meta_json(store, 'selinux:want') or {}
     now = _meta_json(store, 'selinux:now') or {}
     # A step asked and not done yet is not put aside by a look or a report.
-    if action in ('check', 'report') and was.get('do') in ('prepare', 'enforce', 'permissive') and \
+    if action in ('check', 'report') and was.get('do') in ('prepare', 'enforce', 'permissive', 'fix', 'rule_drop') and \
             was.get('id') != now.get('done') and time.time() - float(was.get('at') or 0) < 3600:
         if action == 'check':
             return
         raise ApiError(409, 'a step asked of SELinux is not done yet (%s) - ask for the report after it'
                        % was.get('do'))
-    store.set_meta('selinux:want', json.dumps({'id': secrets.token_hex(6), 'do': action, 'by': by,
-                                               'at': time.time()}))
+    row = {'id': secrets.token_hex(6), 'do': action, 'by': by, 'at': time.time()}
+    # Only ids (2.10.0): root finds them again in the audit log and works out every fix itself.
+    if action == 'fix':
+        ids = [i for i in ((extra or {}).get('ids') or []) if isinstance(i, str) and re.match(r'^[0-9a-f]{12}\Z', i)]
+        if not ids:
+            raise ApiError(400, 'nothing is selected')
+        row['ids'] = ids[:100]
+    if action == 'rule_drop':
+        rid = str((extra or {}).get('rule') or '')
+        if not re.match(r'^[0-9a-f]{12}\Z', rid):
+            raise ApiError(400, 'which rule?')
+        row['rule'] = rid
+    store.set_meta('selinux:want', json.dumps(row))
     if action not in ('check', 'report'):
         store.add_event('settings', '%s asked SELinux: %s' % (by, {
             'prepare': 'made ready (permissive) / plexmon\'s needs put in', 'enforce': 'enforcing',
             'permissive': 'permissive again', 'plex': 'what Plex and nginx need put in',
-            'plex-restart': 'Plex Media Server restarted'}[action]), 'warn', who=by)
+            'plex-restart': 'Plex Media Server restarted',
+            'fix': 'put right what was selected (%s)' % ', '.join(row.get('ids') or []),
+            'rule_drop': 'take the local rule %s away' % row.get('rule', '')}[action]), 'warn', who=by)
     UPGRADE_WAKE.set()
 
 
@@ -8480,7 +8877,7 @@ def selinux_tick(store):
                     store.set_meta('selinux:report', json.dumps({'at': time.time(), 'bytes': len(raw),
                                                                  'error': ''}))
                 else:
-                    data = se_do(do, want.get('by') or '')
+                    data = se_do(do, want.get('by') or '', want)
                     said = data.pop('said', []) if isinstance(data, dict) else []
             except SeRefused as e:
                 err = str(e)[:400]
@@ -8538,12 +8935,14 @@ def _selinux_do(h):
         h.store.add_event('settings', '%s took the SELinux report' % s['name'], 'info', who=s['name'])
         return {'name': 'plexmon-selinux-report-%s.tar.gz' % time.strftime('%Y%m%d-%H%M'),
                 'file': base64.b64encode(raw).decode('ascii'), 'mime': 'application/gzip'}
-    selinux_ask(h.store, action, s['name'])
+    selinux_ask(h.store, action, s['name'], b)
     return {'message': {'check': 'asked: looked at within seconds',
                         'prepare': 'asked: done within seconds',
                         'enforce': 'asked: SELinux switches to enforcing within seconds',
                         'permissive': 'asked: SELinux switches to permissive within seconds',
                         'report': 'asked: the report is made within a minute',
+                        'fix': 'asked: put right within seconds, then looked at again',
+                        'rule_drop': 'asked: the rule goes within seconds',
                         'plex': 'asked: done within seconds',
                         'plex-restart': 'asked: Plex Media Server restarts within seconds'}[action]}
 
@@ -8594,11 +8993,63 @@ def se_report_text(c):
         lines.append('  refused before, allowed now (not counted): %d' % d['settled'])
     for g in d['groups'][:15]:
         lines.append('    %4dx %s -> %s %s { %s } %s' % (g['count'], g['source'], g['target'],
-                                                         g['class'], g['perms'], g['what']))
+                                                         g['class'], g['perms'],
+                                                         ' '.join(x for x in (g.get('comm') or '', g.get('path') or (
+                                                             ('port %d' % g['port']) if g.get('port') else '')) if x)))
     lines.append('ready for enforcing' if c.get('ready') else
                  ('enforcing' if c['mode'] == 'Enforcing' and not c['problems'] else
                   'not ready: ' + '; '.join(c['problems'][:6]) if c['problems'] else ''))
     return '\n'.join(x for x in lines if x)
+
+
+SE_KIND_WORDS = {'fixed': 'put right just now', 'boolean': 'a boolean', 'label': 'a label', 'port': 'a port',
+                 'rule': 'a rule of plexmon\'s', 'danger': 'not for a button', 'other': 'not plexmon\'s'}
+
+
+def cli_selinux_look(store, args, pal):
+    if args.selinux_rules:
+        rules = se_local_rules()
+        if args.json:
+            out_json({'rules': rules})
+            return 0
+        print(pal.head('plexmon\'s local rules (%s): %d' % (SE_LOCAL, len(rules))))
+        for r in rules:
+            print('  %s  %s' % (pal.dim(r['id']), r['rule']))
+            print(pal.dim('      %s - %s%s' % (r.get('why') or '', stamp(r.get('at') or 0),
+                                               (' by %s' % r['by']) if r.get('by') else '')))
+        if rules:
+            print(pal.dim('  plexmon --selinux-take-away ID'))
+        return 0
+    if se_mode() not in ('Enforcing', 'Permissive'):
+        print('SELinux is %s - nothing is refused' % se_mode().lower())
+        return 0
+    d = se_denials(se_applied_at())
+    if args.json:
+        out_json(d)
+        return 0
+    if not d['tool']:
+        raise SystemExit('plexmon: ausearch is not on this machine (dnf install audit)')
+    print(pal.head('what SELinux refuses since the machine started: %d' % d['total']))
+    for kind in SE_KINDS:
+        gs = [g for g in d['groups'] if g['kind'] == kind]
+        if not gs:
+            continue
+        line = pal.ok_line if kind in ('fixed',) else pal.warn_line if kind in ('boolean', 'label', 'port', 'rule') \
+            else pal.bad_line if kind == 'danger' else (lambda x: pal.dim(x))
+        print(line('%s (%d)' % (SE_KIND_WORDS[kind], len(gs))))
+        for g in gs:
+            print('  %s  %s %s -> %s %s { %s }  %dx' % (pal.dim(g['id']), g['comm'] or '?', g['source'],
+                                                       g['target'], g['class'], g['perms'], g['count']))
+            where = g['path'] or (('port %d' % g['port']) if g['port'] else '')
+            if where:
+                print(pal.dim('      ' + where))
+            if g.get('fix'):
+                print('      -> ' + g['fix'])
+            print(pal.dim('      ' + (g.get('why') or '')))
+    fixable = [g['id'] for g in d['groups'] if g['kind'] in ('boolean', 'label', 'port', 'rule')]
+    if fixable:
+        print(pal.dim('  plexmon --selinux-fix %s   (or: plexmon --selinux-fix all)' % ' '.join(fixable[:6])))
+    return 0
 
 
 def cli_selinux(store, args, pal):
@@ -8617,6 +9068,42 @@ def cli_selinux(store, args, pal):
         print(pal.ok_line('the report is in %s (%d kB)' % (out, len(raw) >> 10)))
         print('  look through avc*.txt in it before sending it on: the audit log holds the command '
               'lines of the programs SELinux refused something to')
+        return 0
+    if args.selinux_look or args.selinux_rules:
+        return cli_selinux_look(store, args, pal)
+    if args.selinux_fix or args.selinux_take_away:
+        if args.selinux_fix:
+            ids = ['all'] if [x.lower() for x in args.selinux_fix] == ['all'] else \
+                [x.lower() for x in args.selinux_fix]
+            d = se_denials(se_applied_at())
+            pick = [g for g in d['groups'] if g['kind'] in ('boolean', 'label', 'port', 'rule') and
+                    (ids == ['all'] or g['id'] in ids)]
+            if not pick:
+                raise SystemExit('plexmon: nothing of these can be put right here (plexmon --selinux-look)')
+            print(pal.head('root does exactly this - nothing else - and looks again:'))
+            for g in pick:
+                print('  %s %-8s %s' % (pal.dim(g['id']), g['kind'], g['fix']))
+                print(pal.dim('      %s: %s -> %s %s { %s }' % (g['comm'] or '?', g['source'], g['target'],
+                                                               g['class'], g['perms'])))
+            words = 'put these right'
+        else:
+            words = 'take the local rule %s away' % args.selinux_take_away
+        if not args.yes:
+            if not sys.stdin.isatty():
+                raise SystemExit('plexmon: %s - add --yes to do it without a terminal' % words)
+            if input('%s? [y/N] ' % words.capitalize()).strip().lower() not in ('y', 'yes'):
+                print('nothing done')
+                return 1
+        try:
+            said = se_fix([g['id'] for g in pick], 'root') if args.selinux_fix else \
+                se_rule_drop(args.selinux_take_away.strip().lower(), 'root')
+        except SeRefused as e:
+            store.add_event('settings', 'SELinux (root, on the command line): %s' % e, 'bad', who='root')
+            raise SystemExit('plexmon: %s' % e)
+        store.add_event('settings', 'SELinux (root, on the command line): %s' % '; '.join(said),
+                        'warn', who='root')
+        for x in said:
+            print(pal.ok_line(x))
         return 0
     step = args.selinux or 'check'
     if step == 'check':
@@ -12665,6 +13152,13 @@ def build_parser():
                    help='a step of SELinux: check, prepare, enforce, permissive (root; asks first)')
     g.add_argument('--selinux-report', nargs='?', const='*', default=None, metavar='FILE',
                    help='everything SELinux says here, in one tar.gz (root; nothing is changed)')
+    g.add_argument('--selinux-look', action='store_true',
+                   help='what SELinux refuses here, sorted by what puts it right, with ids (root)')
+    g.add_argument('--selinux-fix', nargs='+', metavar='ID',
+                   help='put right these findings (ids from --selinux-look, or all); asks first (--yes)')
+    g.add_argument('--selinux-rules', action='store_true',
+                   help='plexmon\'s local SELinux rules (plexmon_local)')
+    g.add_argument('--selinux-take-away', metavar='ID', help='...one of them taken away')
     g.add_argument('--os-roots', action='store_true',
                    help='certificate authorities of your own in the system\'s trust')
     g.add_argument('--os-roots-add', metavar='FILE', help='...one more (PEM or DER; asks first)')
@@ -13929,7 +14423,8 @@ def cli_main(argv=None, mon=None):
         return 0
     if args.tasks:
         return cli_tasks(store, pal, args.json)
-    if args.selinux_check or args.selinux or args.selinux_report is not None:
+    if args.selinux_check or args.selinux or args.selinux_report is not None or args.selinux_look or \
+            args.selinux_fix or args.selinux_rules or args.selinux_take_away:
         return cli_selinux(store, args, pal)
     if args.os_roots or args.os_roots_add or args.os_roots_remove:
         return cli_os_roots(store, args, pal)

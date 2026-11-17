@@ -10351,6 +10351,170 @@
   "xs1336": {
    "source": "did not go through",
    "text": "se nezdařila"
+  },
+  "xs1337": {
+   "source": "What SELinux refuses",
+   "text": "Co SELinux odmítá"
+  },
+  "xs1338": {
+   "source": "since the machine started",
+   "text": "od startu stroje"
+  },
+  "xs1339": {
+   "source": "Put right just now",
+   "text": "Právě opraveno"
+  },
+  "xs1340": {
+   "source": "Put right a moment ago - it goes at the next look.",
+   "text": "Opraveno před chvílí – při příští kontrole zmizí."
+  },
+  "xs1341": {
+   "source": "A boolean",
+   "text": "Boolean"
+  },
+  "xs1342": {
+   "source": "A switch of the policy that allows exactly this - setsebool puts it on.",
+   "text": "Přepínač politiky, který povoluje právě tohle – setsebool ho zapne."
+  },
+  "xs1343": {
+   "source": "A label",
+   "text": "Štítek"
+  },
+  "xs1344": {
+   "source": "The file is not labelled as the policy says it should be - restorecon puts it right.",
+   "text": "Soubor nemá štítek, jaký podle politiky mít má – restorecon ho opraví."
+  },
+  "xs1345": {
+   "source": "A port",
+   "text": "Port"
+  },
+  "xs1346": {
+   "source": "A port with no type of its own - given the type of the program that uses it.",
+   "text": "Port bez vlastního typu – dostane typ programu, který ho používá."
+  },
+  "xs1347": {
+   "source": "A rule of plexmon's",
+   "text": "Pravidlo plexmonu"
+  },
+  "xs1348": {
+   "source": "Nothing of the policy allows it: exactly this, and nothing more, goes into plexmon's own local module (plexmon_local).",
+   "text": "Politika to nijak nepovoluje: právě tohle a nic víc přijde do vlastního lokálního modulu plexmonu (plexmon_local)."
+  },
+  "xs1349": {
+   "source": "Not for a button",
+   "text": "Ne pro tlačítko"
+  },
+  "xs1350": {
+   "source": "plexmon's or Plex's, but what it would take is too much to allow from here - each says why, and what an admin could look at.",
+   "text": "Patří plexmonu nebo Plexu, ale povolit to odsud by bylo příliš – u každého je proč a na co se může podívat správce."
+  },
+  "xs1351": {
+   "source": "Not plexmon's",
+   "text": "Nepatří plexmonu"
+  },
+  "xs1352": {
+   "source": "Other programs of this machine - shown, never put right here. Enforcing is the whole machine's, so they keep it locked until whoever looks after them has.",
+   "text": "Jiné programy tohoto stroje – jen se ukazují, tady se nikdy neopravují. Enforcing platí pro celý stroj, takže ho drží zamčený, dokud je nevyřeší ten, kdo se o ně stará."
+  },
+  "xs1353": {
+   "source": "SELinux refused nothing on this server",
+   "text": "SELinux na tomto serveru nic neodmítl"
+  },
+  "xs1354": {
+   "source": "Nothing since the machine started - plexmon, Plex, nginx and every other program.",
+   "text": "Nic od startu stroje – plexmon, Plex, nginx ani žádný jiný program."
+  },
+  "xs1355": {
+   "source": "What SELinux refused cannot be read: ausearch is not on this machine (dnf install audit).",
+   "text": "Co SELinux odmítl, nejde přečíst: na stroji chybí ausearch (dnf install audit)."
+  },
+  "xs1356": {
+   "source": "Under enforcing too - nothing has to be switched off for it. What was put right is looked at again at once.",
+   "text": "Funguje i v režimu enforcing – nic se kvůli tomu nevypíná. Co se opraví, se hned znovu zkontroluje."
+  },
+  "xs1357": {
+   "source": "plexmon's local rules",
+   "text": "Lokální pravidla plexmonu"
+  },
+  "xs1358": {
+   "source": "plexmon_local, in the policy",
+   "text": "plexmon_local, v politice"
+  },
+  "xs1359": {
+   "source": "Take the rule away?",
+   "text": "Odebrat pravidlo?"
+  },
+  "xs1360": {
+   "source": "What it allowed is refused again - under enforcing at once.",
+   "text": "Co povolovalo, se zase odmítá – v režimu enforcing okamžitě."
+  },
+  "xs1361": {
+   "source": "Put in what is selected?",
+   "text": "Doplnit vybrané?"
+  },
+  "xs1362": {
+   "source": "Root does exactly this - nothing else - and looks again at once:",
+   "text": "Root udělá přesně tohle – nic jiného – a hned se podívá znovu:"
+  },
+  "xs1363": {
+   "source": "The rules go into plexmon's own local module plexmon_local - each can be taken away again on this card. Every step is written in Events. It works under enforcing too.",
+   "text": "Pravidla jdou do vlastního lokálního modulu plexmonu plexmon_local – každé jde na této kartě zase odebrat. Každý krok se zapíše do Událostí. Funguje to i v režimu enforcing."
+  },
+  "xs1364": {
+   "source": "boolean",
+   "text": "boolean"
+  },
+  "xs1365": {
+   "source": "label",
+   "text": "štítek"
+  },
+  "xs1366": {
+   "source": "port",
+   "text": "port"
+  },
+  "xs1367": {
+   "source": "rule",
+   "text": "pravidlo"
+  },
+  "xs1368": {
+   "source": "once",
+   "text": "jednou"
+  },
+  "xs1369": {
+   "source": " (permissive: let through, written down)",
+   "text": " (permissive: propuštěno, zapsáno)"
+  },
+  "xs1370": {
+   "source": "asked: put right within seconds, then looked at again",
+   "text": "požádáno: opraví se během pár sekund a pak se zkontroluje znovu"
+  },
+  "xs1371": {
+   "source": "asked: the rule goes within seconds",
+   "text": "požádáno: pravidlo zmizí během pár sekund"
+  },
+  "xs1372": {
+   "source": "nothing is selected",
+   "text": "nic není vybráno"
+  },
+  "xs1373": {
+   "source": "the boolean httpd_can_network_connect is off - it allows this",
+   "text": "boolean httpd_can_network_connect je vypnutý – ten to povoluje"
+  },
+  "xs1374": {
+   "source": "nothing of the policy allows it: a rule of plexmon's own local module allows exactly this",
+   "text": "politika to nijak nepovoluje: právě tohle povolí pravidlo vlastního lokálního modulu plexmonu"
+  },
+  "xs1375": {
+   "source": "not a plain rule - never allowed from here",
+   "text": "není to jednoduché pravidlo – odsud se nikdy nepovolí"
+  },
+  "xs1376": {
+   "source": "none of these is something to put right any more - look again",
+   "text": "nic z toho už není co opravit – zkontrolujte znovu"
+  },
+  "xs1377": {
+   "source": "SELinux is not on - nothing to put right",
+   "text": "SELinux není zapnutý – není co opravit"
   }
  },
  "patterns": {
@@ -12993,6 +13157,122 @@
   "xp0277": {
    "source": "plexmon and these pages are restarting with the new version - {0} % · {1} · step {2} of {3} - asking again…",
    "text": "plexmon a tyto stránky se restartují s novou verzí – {0} % · {1} · krok {2} z {3} – ptám se znovu…"
+  },
+  "xp0278": {
+   "source": "Put in what is selected ({0})",
+   "text": "Doplnit vybrané ({0})"
+  },
+  "xp0279": {
+   "source": "{0} times",
+   "text": "{0}×"
+  },
+  "xp0280": {
+   "source": "{0}, last {1}",
+   "text": "{0}, naposledy {1}"
+  },
+  "xp0281": {
+   "source": "the boolean {0} is off - it allows this",
+   "text": "boolean {0} je vypnutý – ten to povoluje"
+  },
+  "xp0282": {
+   "source": "{0} is labelled {1} - the policy says {2}",
+   "text": "{0} má štítek {1} – politika říká {2}"
+  },
+  "xp0283": {
+   "source": "port {0}/{1} has no type of its own - {2} may use it once it is {3}",
+   "text": "port {0}/{1} nemá vlastní typ – {2} ho smí použít, až bude {3}"
+  },
+  "xp0284": {
+   "source": "port {0} is {1} - another service's; never taken from it here",
+   "text": "port {0} je {1} – patří jiné službě; tady se mu nikdy nebere"
+  },
+  "xp0285": {
+   "source": "{0} is security-sensitive ({1}) - never allowed from here",
+   "text": "{0} je citlivý z hlediska bezpečnosti ({1}) – odsud se nikdy nepovolí"
+  },
+  "xp0286": {
+   "source": "{0} { {1} } would let it run, change or reach far more than this - never allowed from here",
+   "text": "{0} { {1} } by mu dovolilo spouštět, měnit nebo dosáhnout mnohem víc než tohle – odsud se nikdy nepovolí"
+  },
+  "xp0287": {
+   "source": "the class {0} is about the kernel and the policy themselves - never allowed from here",
+   "text": "třída {0} se týká samotného jádra a politiky – odsud se nikdy nepovolí"
+  },
+  "xp0288": {
+   "source": "writing {0} ({1}) would let it change far more than this - a label of its own is the way; never allowed from here",
+   "text": "zápis do {0} ({1}) by mu dovolil měnit mnohem víc než tohle – cesta je vlastní štítek; odsud se nikdy nepovolí"
+  },
+  "xp0289": {
+   "source": "{0} is on a data disk, left unlabelled on purpose (relabelling would wake and read the whole disk) - never from here",
+   "text": "{0} je na datovém disku, záměrně bez štítku (označování by disk probudilo a přečetlo celý) – odsud nikdy"
+  },
+  "xp0290": {
+   "source": "only the boolean {0} would allow it, and it allows far more - never from here",
+   "text": "povolil by to jen boolean {0}, a ten povoluje mnohem víc – odsud nikdy"
+  },
+  "xp0291": {
+   "source": "{0} is labelled {1} - the policy says {2}; the service may not change it there - as root: restorecon -v {3}",
+   "text": "{0} má štítek {1} – politika říká {2}; služba ho tam měnit nesmí – jako root: restorecon -v {3}"
+  },
+  "xp0292": {
+   "source": "not plexmon's: {0} ({1}) is another program of this machine - look at it with whoever looks after it",
+   "text": "nepatří plexmonu: {0} ({1}) je jiný program tohoto stroje – vyřešte to s tím, kdo se o něj stará"
+  },
+  "xp0293": {
+   "source": "put right {0} - it goes at the next look",
+   "text": "opraveno {0} – při příští kontrole zmizí"
+  },
+  "xp0294": {
+   "source": "SELinux refused {0} thing(s) the policy loaded now still refuses: {1}",
+   "text": "SELinux odmítl {0}×, co aktuální politika pořád odmítá: {1}"
+  },
+  "xp0295": {
+   "source": "{0} can be put right here (\"Put in what is selected\")",
+   "text": "{0} jde opravit tady („Doplnit vybrané“)"
+  },
+  "xp0296": {
+   "source": "{0} are not for a button - each says why",
+   "text": "{0} není pro tlačítko – u každého je proč"
+  },
+  "xp0297": {
+   "source": "{0} are other programs' - enforcing is the whole machine's, so they keep it locked too",
+   "text": "{0} patří jiným programům – enforcing platí pro celý stroj, takže ho drží zamčený taky"
+  },
+  "xp0298": {
+   "source": "{0}: {1} on",
+   "text": "{0}: {1} zapnut"
+  },
+  "xp0299": {
+   "source": "{0}: {1} labelled again",
+   "text": "{0}: {1} znovu označeno"
+  },
+  "xp0300": {
+   "source": "{0}: port {1}/{2} labelled {3}",
+   "text": "{0}: port {1}/{2} označen {3}"
+  },
+  "xp0301": {
+   "source": "{0}: rule {1}",
+   "text": "{0}: pravidlo {1}"
+  },
+  "xp0302": {
+   "source": "plexmon's local module (plexmon_local) put into the policy - {0} rule(s) in it",
+   "text": "lokální modul plexmonu (plexmon_local) vložen do politiky – pravidel: {0}"
+  },
+  "xp0303": {
+   "source": "rule {0} taken away: {1}",
+   "text": "pravidlo {0} odebráno: {1}"
+  },
+  "xp0304": {
+   "source": "once, last {0}",
+   "text": "jednou, naposledy {0}"
+  },
+  "xp0305": {
+   "source": "{0} times, last {1}",
+   "text": "{0}×, naposledy {1}"
+  },
+  "xp0306": {
+   "source": "{0} (permissive: let through, written down)",
+   "text": "{0} (permissive: propuštěno, zapsáno)"
   }
  },
  "rich": {

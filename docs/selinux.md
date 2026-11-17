@@ -106,6 +106,40 @@ way back: `setenforce 0`, then `grubby --update-kernel ALL --args selinux=0`.
 The first start with SELinux labels every file (the data disks left out) - a long while, up to
 tens of minutes on a large system disk - and then restarts the machine once more by itself.
 
+### What SELinux refuses, sorted (2.10.0)
+
+*Look again* reads every refusal since the machine started (`ausearch -m AVC,USER_AVC,SELINUX_ERR
+-ts boot`) with the records of its event - the program (SYSCALL), the whole path (PATH), the port -
+groups them by *(source, target, class, permissions, program, path or port)*, puts each group to
+`audit2why`, and sorts it:
+
+| Kind | Put right by |
+|---|---|
+| allowed now | nothing - the policy loaded now allows it (not counted) |
+| a boolean | `setsebool -P NAME 1` - never one that allows far more (`*exec*`, `unconfined`, `*_all*`, `ptrace`, `deny_*`...) |
+| a label | `restorecon` of the folder - only where the service may write (`/var`, `/run`, `/etc/nginx`, `/etc/plexmon`...); never on a data disk; under `/var/lib/plexmediaserver` the file alone |
+| a port | `semanage port -a -t http_port_t / ssh_port_t / ntp_port_t` - never a port another service's type has |
+| a rule of plexmon's | one rule in plexmon's own local module `plexmon_local` (`/var/lib/plexmon/plexmon_local.cil`), each in an `optional` block |
+| not for a button | never from here, with why: a security-sensitive target (`shadow_t`, the policy, keys, audit, home...), running, transitions, relabelling, capabilities, kernel classes, writes to generic types, a file on a data disk |
+| not plexmon's | another program of the machine - shown, never put right here |
+
+Whose: plexmon's and Plex's own processes, and the confined programs plexmon works with (nginx and
+php-fpm, systemd) where the path is one of plexmon's or Plex's or the port one of theirs (32400,
+the API, nginx's ports). A finding's id is a hash of what was refused - the same at every look.
+
+*Put in what is selected (N)* sends only the ids; root finds them again and works out every fix
+itself, then looks again - under enforcing too. What was put right is noted with its time (a
+refusal of it from before no longer counts, one after it comes back). *plexmon's local rules*
+lists each rule with *Take it away* (the last one: `semodule -r plexmon_local`). Enforcing stays
+locked while anything is refused, other programs' too.
+
+```bash
+plexmon --selinux-look                 # the findings, sorted, with ids and fixes
+plexmon --selinux-fix ID... | all      # what root will do, asked first (--yes)
+plexmon --selinux-rules                # plexmon's local rules
+plexmon --selinux-take-away ID
+```
+
 ### The report
 
 *Download the report* / `plexmon --selinux-report [FILE]`: nothing is changed to make it. The
@@ -113,7 +147,9 @@ refusals (raw, readable, `audit2why`, an `audit2allow` suggestion - a hint, neve
 card's state, the labels of plexmon's files against what `matchpathcon` says, the domains of
 the processes, ports, booleans, the system and its packages, what plexmon needs. No password,
 key or token of plexmon is in it - but the audit log holds the command lines of other programs:
-look through `avc*.txt` before sending it on. From the pages it is kept for an hour
+look through `avc*.txt` before sending it on. Since 2.10.0 also `findings.json`, the local module,
+and `os/`: every process with its domain, every boolean, port type and module, what was changed on
+this machine (`semanage ... -l -C`, `semanage export`) and every listening socket. From the pages it is kept for an hour
 (`/var/lib/plexmon/selinux-report.tar.gz`, root's alone).
 
 ### Command line

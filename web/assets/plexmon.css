@@ -3512,3 +3512,24 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .upband-signin{display:flex;flex-direction:column;gap:6px;margin:12px 0;padding:12px 14px;border-radius:10px;
   background:var(--info-bg);border:1px solid rgba(88,166,255,.45);font-size:13px}
 .upband-signin b{font-size:14px}
+/* What SELinux refuses, sorted (2.10.0) */
+.se-findings .se-h .muted{font-weight:400;font-size:12.5px}
+.se-kind{border:1px solid var(--line);border-left:3px solid var(--line);border-radius:10px;background:var(--panel2);overflow:hidden}
+.se-kind-fix{border-left-color:var(--ok)} .se-kind-rule{border-left-color:var(--warn)}
+.se-kind-bad{border-left-color:var(--crit)} .se-kind-ok{border-left-color:var(--ok);background:var(--ok-bg)}
+.se-kind-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line)}
+.se-kind-h .count{font-size:11px;font-weight:700;padding:1px 7px;border-radius:9px;background:var(--panel);color:var(--tx-dim)}
+.se-find{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-bottom:1px solid var(--line)}
+.se-find:last-child{border-bottom:0}
+.se-find-lead{line-height:0;padding-top:3px;color:var(--tx-dim);flex:none}
+.se-kind-bad .se-find-lead{color:var(--crit)} .se-kind-ok .se-find-lead{color:var(--ok)}
+.se-find-b{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+.se-find-t{font-size:13px;overflow-wrap:anywhere} .se-find-t .mono{color:var(--tx)}
+.se-find.done .se-find-t .mono{text-decoration:line-through;color:var(--tx-dim)}
+.se-find-fix code{font-size:12px;color:var(--info);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:1px 6px;overflow-wrap:anywhere}
+.se-find-n{font-size:12px;color:var(--tx-dim);flex:none}
+.se-find .small.bad{color:var(--crit)} .se-find .small.good{color:var(--ok)}
+.se-put{align-items:center;gap:12px}
+.se-confirm{margin:0 0 8px 18px;padding:0;display:flex;flex-direction:column;gap:8px}
+.se-confirm code{font-size:12px;overflow-wrap:anywhere}
+.se-nothing b{font-size:14px}

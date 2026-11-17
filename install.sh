@@ -148,9 +148,11 @@ if [ "$MODE" = uninstall ]; then
           /etc/logrotate.d/plexmon /etc/sysctl.d/80-plexmon-console.conf
     # SELinux (2.9.0): plexmon's module goes with it; the mode, the booleans and the ports are
     # the machine's and stay.
-    if command -v semodule >/dev/null 2>&1 && semodule -l 2>/dev/null | awk '$1=="plexmon_server"{f=1} END{exit !f}'; then
-        semodule -r plexmon_server >/dev/null 2>&1 && ok "SELinux: plexmon's module (plexmon_server) taken out of the policy"
-    fi
+    for m in plexmon_local plexmon_server; do
+        if command -v semodule >/dev/null 2>&1 && semodule -l 2>/dev/null | awk -v m="$m" '$1==m{f=1} END{exit !f}'; then
+            semodule -r "$m" >/dev/null 2>&1 && ok "SELinux: plexmon's module ($m) taken out of the policy"
+        fi
+    done
     rm -rf "$LIB"
     rm -rf "$WEB/settings" "$WEB/assets" "$WEB/lang" "$WEB/plexmon-page.php" "$WEB/plexmon-admin-api.php"
     systemctl daemon-reload

@@ -4,6 +4,28 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.10.0 - 2026-11-17
+
+- **Settings → SELinux finds out everything SELinux refuses and sorts it by what puts it right**
+  (as otp 1.0.288): every refusal since the start, read with the records of its event (the
+  program, the whole path, the port), grouped, put to audit2why and sorted - *a boolean*, *a
+  label*, *a port*, *a rule of plexmon's* (into its own local module `plexmon_local`), *not for a
+  button* (too much to allow from a page - a security-sensitive target, running or relabelling,
+  writes to generic types, a file on a data disk; each says why), *not plexmon's* (other
+  programs). A finding's id is a hash of what was refused.
+- **Put in what is selected (N)**: everything that can be put right comes ticked; the page sends
+  only ids - root finds them again in the audit log and works out every fix itself; a confirm
+  lists exactly what will be done; works under enforcing too; every step in Events; what was put
+  right is shown as such until the next look. *plexmon's local rules* lists each rule with *Take
+  it away*.
+- Enforcing stays locked while anything is refused - other programs' too (the whole machine
+  goes enforcing).
+- The report has the whole machine in it too: every process, boolean, port type and module,
+  what was changed here (`semanage -C`, `semanage export`), every listening socket; and the
+  findings and the local module.
+- Command line: `plexmon --selinux-look`, `--selinux-fix ID... | all`, `--selinux-rules`,
+  `--selinux-take-away ID`. `install.sh --uninstall` takes `plexmon_local` away too.
+
 ## 2.9.10 - 2026-11-17
 
 - **Fixed: Settings answered HTTP 500 after an upgrade to 2.9.9** (for ten minutes after it, and

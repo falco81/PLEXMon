@@ -4799,7 +4799,7 @@ function sePlexCard(s, n) {
   var pg = (d.groups || []).filter(function (g) { return g.part === 'plex'; });
   if (d.tool) seRow(list, !x.refused, x.refused ? 'Refused to Plex or to nginx on its way: ' + num(x.refused) : 'Nothing refused to Plex or to nginx on its way');
   c.appendChild(list);
-  if (pg.length) c.appendChild(seAvc(pg));
+
   var bad = (x.domains || []).some(function (dm) { return /^(init_t|container_t|svirt_lxc_net_t)$/.test(dm.domain); }) ||
     (x.booleans || []).some(function (b) { return b.on === false; }) || (x.listens || []).some(function (p) { return !p.ok; }) ||
     (x.labels || []).some(function (l) { return l.ok === false; }) || x.refused > 0;
@@ -4822,6 +4822,7 @@ function drawSelinux() {
   var on = m === 'Enforcing' || m === 'Permissive';
   host.appendChild(seCommonCard(n, s, m));
   if (on) {
+    host.appendChild(seFindingsCard(n, s, m));
     host.appendChild(sePlexmonCard(n, s, m));
     var pc = sePlexCard(s, n);
     if (pc) host.appendChild(pc);
@@ -4836,6 +4837,158 @@ function seWait(c, n, mine) {
   w.appendChild(el('span', 'spin'));
   w.appendChild(el('span', '', {plex: 'putting it in…', 'plex-restart': 'restarting Plex Media Server…', check: 'looking…', prepare: 'putting it in…', enforce: 'switching to enforcing…', permissive: 'switching to permissive…', report: 'making the report…'}[n.pending] || 'asked…'));
   c.appendChild(w);
+}
+/* What SELinux refuses, sorted by what puts it right (2.10.0, as otp 1.0.288). Every finding
+   of plexmon's that can be put right comes ticked; the page sends only their ids - root finds
+   them again in the audit log and works out every fix itself. */
+var SE_KINDS = [
+  ['fixed', 'Put right just now', 'Put right a moment ago - it goes at the next look.', 'ok'],
+  ['boolean', 'A boolean', 'A switch of the policy that allows exactly this - setsebool puts it on.', 'fix'],
+  ['label', 'A label', 'The file is not labelled as the policy says it should be - restorecon puts it right.', 'fix'],
+  ['port', 'A port', 'A port with no type of its own - given the type of the program that uses it.', 'fix'],
+  ['rule', 'A rule of plexmon\'s', 'Nothing of the policy allows it: exactly this, and nothing more, goes into plexmon\'s own local module (plexmon_local).', 'rule'],
+  ['danger', 'Not for a button', 'plexmon\'s or Plex\'s, but what it would take is too much to allow from here - each says why, and what an admin could look at.', 'bad'],
+  ['other', 'Not plexmon\'s', 'Other programs of this machine - shown, never put right here. Enforcing is the whole machine\'s, so they keep it locked until whoever looks after them has.', 'dim']];
+function seFixable(g) { return /^(boolean|label|port|rule)$/.test(g.kind || ''); }
+function seWhen(g) {
+  var n = g.count || 1;
+  var t = (n === 1 ? 'once' : n + ' times') + (g.last ? ', last ' + ago(g.last) : '');
+  return t + (g.permissive ? ' (permissive: let through, written down)' : '');
+}
+function seFindingsCard(n, s, m) {
+  SE.off = SE.off || {};
+  var d = s.denials || {}, groups = d.groups || [];
+  var c = el('div', 'card full se-card se-findings');
+  var h = el('h2', 'se-h');
+  h.appendChild(el('span', '', 'What SELinux refuses'));
+  h.appendChild(el('span', 'muted small', 'since the machine started'));
+  c.appendChild(h);
+  seWait(c, n, ['fix', 'rule_drop']);
+  if (!d.tool) {
+    c.appendChild(el('p', 'note', 'What SELinux refused cannot be read: ausearch is not on this machine (dnf install audit).'));
+    return c;
+  }
+  if (!groups.length) {
+    var ok = el('div', 'se-verdict good se-nothing');
+    ok.appendChild(el('b', '', 'SELinux refused nothing on this server'));
+    ok.appendChild(el('span', 'small', 'Nothing since the machine started - plexmon, Plex, nginx and every other program.'));
+    c.appendChild(ok);
+  }
+  SE_KINDS.forEach(function (k) {
+    var gs = groups.filter(function (g) { return g.kind === k[0]; });
+    if (!gs.length) return;
+    var box = el('div', 'se-kind se-kind-' + k[3]);
+    var hd = el('div', 'se-kind-h');
+    var fixable = k[3] === 'fix' || k[3] === 'rule';
+    if (fixable && ADMIN) {
+      var all = el('input'); all.type = 'checkbox';
+      all.checked = gs.every(function (g) { return !SE.off[g.id]; });
+      all.onchange = function () { gs.forEach(function (g) { if (all.checked) delete SE.off[g.id]; else SE.off[g.id] = 1; }); drawSelinux(); };
+      hd.appendChild(all);
+    } else hd.appendChild(el('span', 'dot ' + (k[3] === 'ok' ? 'ok' : k[3] === 'bad' ? 'bad' : '')));
+    hd.appendChild(el('b', '', k[1]));
+    hd.appendChild(noI18n(el('span', 'count', String(gs.length))));
+    hd.appendChild(el('span', 'muted small', k[2]));
+    box.appendChild(hd);
+    gs.forEach(function (g) {
+      var row = el('div', 'se-find' + (g.kind === 'fixed' ? ' done' : ''));
+      var lead = el('span', 'se-find-lead');
+      if (fixable && ADMIN) {
+        var cb = el('input'); cb.type = 'checkbox'; cb.checked = !SE.off[g.id];
+        cb.onchange = function () { if (cb.checked) delete SE.off[g.id]; else SE.off[g.id] = 1; drawSelinux(); };
+        lead.appendChild(cb);
+      } else lead.innerHTML = iconMarkup(g.kind === 'fixed' ? 'check' : g.kind === 'danger' ? 'cancel' : 'ban', 14);
+      row.appendChild(lead);
+      var body = el('div', 'se-find-b');
+      var t = el('div', 'se-find-t');
+      t.appendChild(noI18n(el('b', '', g.comm || '?')));
+      t.appendChild(noI18n(el('span', 'mono', ' ' + g.source + ' → ' + g.target + ' ' + g['class'] + ' { ' + g.perms + ' }')));
+      body.appendChild(t);
+      var sub = el('div', 'small muted');
+      var where = g.path || (g.port ? 'port ' + g.port + '/' + (g['class'] === 'udp_socket' ? 'udp' : 'tcp') : '');
+      if (where) { sub.appendChild(noI18n(el('span', 'mono', where))); sub.appendChild(document.createTextNode('  ')); }
+      sub.appendChild(el('span', '', seWhen(g)));
+      body.appendChild(sub);
+      if (g.fix) {
+        var fx = el('div', 'se-find-fix');
+        fx.appendChild(el('span', 'muted', '→ '));
+        fx.appendChild(noI18n(el('code', '', g.fix)));
+        body.appendChild(fx);
+      }
+      if (g.why) body.appendChild(el('div', 'small ' + (g.kind === 'danger' ? 'bad' : g.kind === 'fixed' ? 'good' : 'muted'), g.why));
+      row.appendChild(body);
+      row.appendChild(noI18n(el('span', 'se-find-n', (g.count || 1) + '×')));
+      box.appendChild(row);
+    });
+    c.appendChild(box);
+  });
+  var pick = groups.filter(function (g) { return seFixable(g) && !SE.off[g.id]; });
+  if (ADMIN && groups.some(seFixable)) {
+    var bar = el('div', 'btnrow se-put');
+    var put = cmdButton('Put in what is selected (' + pick.length + ')', 'shield', 'primary');
+    put.disabled = !!n.pending || !pick.length;
+    put.onclick = function () { seFixConfirm(pick); };
+    bar.appendChild(put);
+    bar.appendChild(el('span', 'muted small', 'Under enforcing too - nothing has to be switched off for it. What was put right is looked at again at once.'));
+    c.appendChild(bar);
+  }
+  var rules = n.local_rules || [];
+  if (rules.length) {
+    var lr = el('div', 'se-kind se-rules');
+    var lh = el('div', 'se-kind-h');
+    lh.appendChild(el('b', '', 'plexmon\'s local rules'));
+    lh.appendChild(noI18n(el('span', 'count', String(rules.length))));
+    lh.appendChild(el('span', 'muted small', 'plexmon_local, in the policy'));
+    lr.appendChild(lh);
+    rules.forEach(function (r) {
+      var row = el('div', 'se-find');
+      var body = el('div', 'se-find-b');
+      body.appendChild(noI18n(el('div', 'mono', r.rule)));
+      var sub = el('div', 'small muted');
+      if (r.who && r.what) {
+        sub.appendChild(noI18n(el('span', '', r.who + ': ')));
+        sub.appendChild(el('span', '', r.what));
+      } else sub.appendChild(noI18n(el('span', '', r.why || '')));
+      sub.appendChild(noI18n(el('span', '', ' · ' + stamp(r.at) + (r.by ? ' · ' + r.by : ''))));
+      body.appendChild(sub);
+      row.appendChild(body);
+      if (ADMIN) {
+        var tk = cmdButton('Take it away', 'cancel', 'small');
+        tk.disabled = !!n.pending;
+        tk.onclick = function () {
+          confirmThen('Take the rule away?', '<code>' + htmlText(r.rule) + '</code><br><br>' + htmlText('What it allowed is refused again - under enforcing at once.'),
+            'Take it away', function () {
+              api('selinux', {action: 'rule_drop', rule: r.id}).then(function (x) { toast(x.message, 'good'); setTimeout(loadSelinux, 600); }).catch(oops);
+            }, false);
+        };
+        row.appendChild(tk);
+      }
+      lr.appendChild(row);
+    });
+    c.appendChild(lr);
+  }
+  return c;
+}
+function seFixConfirm(pick) {
+  modal('Put in what is selected?', function (body) {
+    body.appendChild(el('p', 'note', 'Root does exactly this - nothing else - and looks again at once:'));
+    var ul = el('ul', 'se-confirm');
+    pick.forEach(function (g) {
+      var li = el('li');
+      li.appendChild(el('b', '', {boolean: 'boolean', label: 'label', port: 'port', rule: 'rule'}[g.kind] || g.kind));
+      li.appendChild(document.createTextNode(' '));
+      li.appendChild(noI18n(el('code', '', g.fix)));
+      li.appendChild(noI18n(el('div', 'small muted', (g.comm || '?') + ': ' + g.source + ' → ' + g.target + ' ' + g['class'] + ' { ' + g.perms + ' }')));
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+    body.appendChild(el('p', 'note small', 'The rules go into plexmon\'s own local module plexmon_local - each can be taken away again on this card. Every step is written in Events. It works under enforcing too.'));
+  }, [{words: 'No, leave it', close: true}, {words: 'Put it in', cls: 'primary', icon: 'check', close: true, go: function () {
+    api('selinux', {action: 'fix', ids: pick.map(function (g) { return g.id; })}).then(function (x) {
+      toast(x.message, 'good');
+      setTimeout(loadSelinux, 600);
+    }).catch(oops);
+  }}], 'medium');
 }
 function seCommonCard(n, s, m) {
   var c = el('div', 'card full se-card se-' + (m || 'unknown').toLowerCase());
@@ -4978,17 +5131,10 @@ function sePlexmonCard(n, s, m) {
   if (d.tool && d.settled) seRow(list, true, num(d.settled) + ' refused before, allowed now - by a newer plexmon_server or a boolean put in since; not counted');
   if (s.auditd === false) seRow(list, false, 'auditd does not run - what SELinux refuses is not written down (systemctl enable --now auditd)');
   c.appendChild(list);
-  var mine = (d.groups || []).filter(function (g) { return g.part !== 'plex'; });
-  if (mine.length) c.appendChild(seAvc(mine));
+
   var known = s.module !== false && !s.module_newer && !(s.labels || []).some(function (x) { return x.ok === false; }) &&
     !(s.booleans || []).some(function (x) { return x.on === false; }) &&
     !(s.ports || []).some(function (x) { return x.labelled === false; });
-  if (((parts.plexmon || 0) + (parts.other || 0)) && known) {
-    var hint = el('div', 'se-verdict bad');
-    hint.appendChild(el('b', '', 'plexmon does not know this one yet'));
-    hint.appendChild(el('span', 'small', 'Everything plexmon knows it needs is in place - what was refused is something its module does not cover yet. "Put in what plexmon needs" changes nothing for it: download the report (top right) and send it, so that the module learns it.'));
-    c.appendChild(hint);
-  }
   if (ADMIN && m === 'Permissive') {
     var row = el('div', 'btnrow se-btns');
     var prep = cmdButton('Put in what plexmon needs', 'shield', '');
