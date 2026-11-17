@@ -4740,7 +4740,7 @@ function sePlexCard(s, n) {
   seWait(c, n, ['plex', 'plex-restart']);
   /* What can be done for Plex here (2.9.3): put in what it and nginx need, and restart Plex -
      in permissive that shows what is refused only when it starts. Enforcing itself is the
-     whole system's: the card above. */
+     whole system's: the last card. */
   var row = el('div', 'btnrow se-btns');
   if (ADMIN && on) {
     var put = cmdButton('Put in what Plex and nginx need', 'shield', '');
@@ -4806,7 +4806,7 @@ function sePlexCard(s, n) {
   var v = el('div', 'se-verdict ' + (bad ? 'bad' : 'good'));
   v.appendChild(el('b', '', bad ? 'Not yet - Plex or its way through nginx would be refused something under enforcing'
     : (m === 'Enforcing' ? 'Plex and nginx work under enforcing' : 'Plex and nginx have everything they need for enforcing')));
-  if (m === 'Permissive') v.appendChild(el('span', 'small', 'Switching to enforcing is the whole system\'s - the card above.'));
+  if (m === 'Permissive') v.appendChild(el('span', 'small', 'Switching to enforcing is the whole system\'s - the last card, below.'));
   c.appendChild(v);
   if (row.childNodes.length) c.appendChild(row);
   return c;
@@ -4820,12 +4820,15 @@ function drawSelinux() {
   clear(host);
   var n = SE.d, s = n.state || {}, m = s.mode || '';
   var on = m === 'Enforcing' || m === 'Permissive';
-  host.appendChild(seCommonCard(n, s, m));
+  /* In the order one reads it (2.10.2): how it stands, what plexmon needs, what Plex and nginx
+     need, what SELinux refuses - and last the decision, enforcing, made on all of it. */
+  host.appendChild(seCommonCard(n, s, m, on ? 'head' : 'all'));
   if (on) {
     host.appendChild(sePlexmonCard(n, s, m));
-    host.appendChild(seFindingsCard(n, s, m));
     var pc = sePlexCard(s, n);
     if (pc) host.appendChild(pc);
+    host.appendChild(seFindingsCard(n, s, m));
+    host.appendChild(seCommonCard(n, s, m, 'gate'));
   }
   dressButtons(host);
 }
@@ -4995,7 +4998,8 @@ function seFixConfirm(pick) {
     }).catch(oops);
   }}], 'medium');
 }
-function seCommonCard(n, s, m) {
+function seCommonCard(n, s, m, part) {
+  if (part === 'gate') return seGateCard(n, s, m);
   var c = el('div', 'card full se-card se-' + (m || 'unknown').toLowerCase());
   var h = el('h2', 'se-h');
   var nm = el('span', 'se-name');
@@ -5024,7 +5028,11 @@ function seCommonCard(n, s, m) {
   if (s.cmdline_off && /^enforcing$/i.test(s.config || '') && !s.relabel_pending)
     c.appendChild(el('p', 'note bad small', 'Do not take selinux=0 off the kernel\'s command line by hand: the configuration says enforcing and no file is labelled - the machine would start enforcing and Plex would not start. "Make it ready (permissive)" first.'));
   else if (s.cmdline_off) c.appendChild(el('p', 'note bad small', 'The kernel\'s command line has selinux=0 - it stays off whatever the configuration says. Settings → Upgrades says what to type.'));
-  seWait(c, n, m === 'Permissive' ? ['check', 'enforce', 'permissive', 'report'] : ['check', 'prepare', 'enforce', 'permissive', 'report']);
+  seWait(c, n, part === 'head' ? ['check', 'report'] : m === 'Permissive' ? ['check', 'enforce', 'permissive', 'report'] : ['check', 'prepare', 'enforce', 'permissive', 'report']);
+  if (part === 'head') {
+    seSaid(c, n);
+    return c;
+  }
   if (!m) { c.appendChild(el('p', 'muted small', 'Not said yet - looked at within a minute.')); return c; }
   if (m === 'absent') { c.appendChild(el('p', 'note', 'There is no SELinux on this machine - nothing to do.')); return c; }
   var made = m === 'Disabled' && /^(permissive|enforcing)$/i.test(s.config || '') && !!s.relabel_pending;
@@ -5056,12 +5064,22 @@ function seCommonCard(n, s, m) {
     }
     c.appendChild(verdict);
   }
+  seExcluded(c, s);
+  seSaid(c, n);
+  seButtons(c, n, s, m, made);
+  return c;
+}
+/* The data disks left out of the relabelling. */
+function seExcluded(c, s) {
   if ((s.excluded || []).length) {
     var ex = el('p', 'muted small');
     ex.appendChild(el('span', '', 'Left out of the relabelling (the data disks):'));
     ex.appendChild(noI18n(el('span', 'mono', ' ' + s.excluded.join(', '))));
     c.appendChild(ex);
   }
+}
+/* What the last step said, and when it was looked at. */
+function seSaid(c, n) {
   if (n.error) c.appendChild(el('p', 'note bad', n.error));
   else if ((n.said || []).length && n.action !== 'check') {
     var sd = el('ul', 'note good small se-said');
@@ -5074,6 +5092,32 @@ function seCommonCard(n, s, m) {
     la.appendChild(noI18n(el('span', '', ' ' + stamp(n.at))));
     c.appendChild(la);
   }
+}
+/* The last card while SELinux is on (2.10.2): the decision, made on everything above it. */
+function seGateCard(n, s, m) {
+  var c = el('div', 'card full se-card se-gate');
+  var h = el('h2', 'se-h');
+  h.appendChild(el('span', '', m === 'Enforcing' ? 'Enforcing' : 'Switching to enforcing'));
+  h.appendChild(el('span', 'muted small', 'the whole system - plexmon, Plex and every other program'));
+  c.appendChild(h);
+  seWait(c, n, ['enforce', 'permissive']);
+  var probs = s.problems || [];
+  var verdict = el('div', 'se-verdict ' + (m === 'Enforcing' && !probs.length ? 'good' : s.ready ? 'ready' : probs.length ? 'bad' : ''));
+  verdict.appendChild(el('b', '', m === 'Enforcing' ? (probs.length ? 'Enforcing - but something is not as plexmon or Plex needs it' : 'Enforcing - and everything plexmon and Plex need is there')
+    : s.ready ? 'Ready for enforcing' : 'Not ready for enforcing yet'));
+  if (m === 'Permissive' && s.ready) verdict.appendChild(el('span', 'small', 'Before switching: restart the server once more, still permissive (or at least plexmon, nginx, php-fpm and Plex), then look again - what is refused only when a service starts shows up then.'));
+  if (probs.length) {
+    var ul = el('ul', 'small se-probs');
+    probs.forEach(function (p) { ul.appendChild(el('li', '', p)); });
+    verdict.appendChild(ul);
+  }
+  if (m === 'Permissive' && !s.ready) verdict.appendChild(el('span', 'small', 'Let it run a day or two as the server is used - Plex played in and out of the house, the dashboard, Settings, a certificate renewed, a backup - then look again.'));
+  c.appendChild(verdict);
+  seExcluded(c, s);
+  seButtons(c, n, s, m, false);
+  return c;
+}
+function seButtons(c, n, s, m, made) {
   var row = el('div', 'btnrow se-btns');
   if (ADMIN && m === 'Disabled' && !made) {
     var prep = cmdButton('Make it ready (permissive)', 'shield', 'primary');

@@ -4,6 +4,14 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.10.2 - 2026-11-17
+
+- Settings → SELinux in the order one reads it: how SELinux stands (mode, *Look again*, the
+  report), what plexmon needs, what Plex and nginx need, what SELinux refuses - and last a card
+  of its own, *Switching to enforcing*, with the verdict and the switch, made on everything above
+  it. The verdict and *Switch to enforcing* used to sit at the top, before what they rest on.
+- Less empty space between the lines of the cards.
+
 ## 2.10.1 - 2026-11-17
 
 - Settings → SELinux looks as the kit does: the lists, verdicts and findings go the whole width of

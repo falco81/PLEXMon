@@ -106,6 +106,13 @@ way back: `setenforce 0`, then `grubby --update-kernel ALL --args selinux=0`.
 The first start with SELinux labels every file (the data disks left out) - a long while, up to
 tens of minutes on a large system disk - and then restarts the machine once more by itself.
 
+### The order of the pane (2.10.2)
+
+How SELinux stands (mode, *Look again*, *Download the report*) → *plexmon and the rest of the
+system* → *Plex Media Server and nginx* → *What SELinux refuses* → *Switching to enforcing* (the
+verdict and the switch, last, made on everything above it). While SELinux is disabled there is
+only the first card, with *Make it ready (permissive)*.
+
 ### What SELinux refuses, sorted (2.10.0)
 
 *Look again* reads every refusal since the machine started (`ausearch -m AVC,USER_AVC,SELINUX_ERR

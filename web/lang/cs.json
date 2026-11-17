@@ -10515,6 +10515,22 @@
   "xs1377": {
    "source": "SELinux is not on - nothing to put right",
    "text": "SELinux není zapnutý – není co opravit"
+  },
+  "xs1378": {
+   "source": "Switching to enforcing",
+   "text": "Přepnutí na enforcing"
+  },
+  "xs1379": {
+   "source": "Enforcing",
+   "text": "Enforcing"
+  },
+  "xs1380": {
+   "source": "the whole system - plexmon, Plex and every other program",
+   "text": "celý systém – plexmon, Plex i všechny ostatní programy"
+  },
+  "xs1381": {
+   "source": "Switching to enforcing is the whole system's - the last card, below.",
+   "text": "Přepnutí na enforcing platí pro celý systém – poslední karta níže."
   }
  },
  "patterns": {
