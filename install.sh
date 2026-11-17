@@ -80,6 +80,64 @@ ask()  {
 [ "$(id -u)" = 0 ] || die "run it as root (sudo ./install.sh)"
 [ -n "$VERSION" ] || die "this is not a plexmon package: plexmon_admin.py has no version"
 
+# How far an upgrade is, for the pages (2.9.9): a file beside them that their PHP reads straight
+# from the disk - plexmon's API, nginx and php-fpm restart during an upgrade, and the pages show
+# the step all the same. Named .php and starting with exit, so the web server never shows it;
+# written whole (a new file renamed over it), 0644, nothing secret in it. Each step() is a step;
+# the end - done, or failed with the exit code, also when stopped by a signal - from the trap.
+# Never a reason for the upgrade to fail: every write is best effort.
+UP_TELL=""
+if [ "$MODE" = upgrade ] && [ -d "$WEB" ] && [ ! -L "$WEB" ]; then
+    UP_TELL=1
+    UP_PART=0; UP_PARTS=12
+    if [ "${PLEXMON_UPGRADE_FROM_PAGES:-}" = 1 ]; then UP_PART=1; UP_PARTS=13; fi
+    UP_ID="$(printf '%s' "${PLEXMON_UPGRADE_ID:-sh$(date +%s)}" | tr -cd 'A-Za-z0-9._-' | cut -c1-64)"
+    UP_STARTED="${PLEXMON_UPGRADE_STARTED:-}"
+    [[ "$UP_STARTED" =~ ^[0-9]+$ ]] || UP_STARTED="$(date +%s)"
+    UP_FROM="${PLEXMON_UPGRADE_FROM:-$(sed -n "s/^__version__ = '\([0-9.]*\)'.*/\1/p" "$LIB/plexmon_admin.py" 2>/dev/null | head -1)}"
+    UP_BY="${PLEXMON_UPGRADE_BY:-root on the command line}"
+    UP_DOWN=false
+    [ -n "${PLEXMON_UPGRADE_DOWN:-}" ] && UP_DOWN=true
+    UP_ENDED=""
+fi
+up_esc() { printf '%s' "$1" | tr -d '\000-\037\177' | sed 's/\\/\\\\/g; s/"/\\"/g' | cut -c1-"$2"; }
+upgrade_tell() {        # upgrade_tell STATE WORDS [SAID]
+    [ -n "$UP_TELL" ] || return 0
+    local tmp="$WEB/.plexmon-upgrade.$$.tmp.php"
+    {
+        printf '<?php exit; ?>\n'
+        printf '{"state": "%s", "id": "%s", "version": "%s", "from": "%s", "by": "%s", "part": %d, "parts": %d, "words": "%s", "started": %d, "at": %d, "said": "%s", "downgrade": %s}\n' \
+            "$1" "$UP_ID" "$(printf '%s' "$VERSION" | tr -cd '0-9.')" "$(printf '%s' "$UP_FROM" | tr -cd '0-9.')" \
+            "$(up_esc "$UP_BY" 100)" "$UP_PART" "$UP_PARTS" "$(up_esc "$2" 160)" "$UP_STARTED" "$(date +%s)" \
+            "$(up_esc "${3:-}" 300)" "$UP_DOWN"
+    } > "$tmp" 2>/dev/null && chmod 0644 "$tmp" 2>/dev/null && mv -f "$tmp" "$WEB/.plexmon-upgrade.php" 2>/dev/null \
+        || rm -f "$tmp" 2>/dev/null
+    return 0
+}
+step() {
+    echo; echo "==> $*"
+    if [ -n "$UP_TELL" ]; then
+        UP_PART=$((UP_PART + 1)); [ "$UP_PART" -gt "$UP_PARTS" ] && UP_PART=$UP_PARTS
+        upgrade_tell running "$*"
+    fi
+    return 0
+}
+upgrade_end() {
+    local rc=$?
+    [ -n "$UP_TELL" ] && [ -z "$UP_ENDED" ] || return 0
+    UP_ENDED=1
+    if [ "$rc" = 0 ]; then
+        UP_PART=$UP_PARTS; upgrade_tell done "plexmon $VERSION runs"
+    else
+        upgrade_tell failed "" "install.sh --upgrade stopped (exit $rc)"
+    fi
+    return 0
+}
+if [ -n "$UP_TELL" ]; then
+    trap upgrade_end EXIT
+    trap 'exit 130' INT; trap 'exit 129' HUP; trap 'exit 143' TERM
+fi
+
 # ---------------------------------------------------------------------------
 if [ "$MODE" = uninstall ]; then
     step "Taking plexmon away"

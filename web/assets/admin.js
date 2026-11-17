@@ -278,7 +278,7 @@ function paintHeader(s) {
   var kind = overall === 'crit' ? 'crit' : (overall === 'warn' || (s.problems && s.problems.length) ? 'warn'
     : (overall ? 'ok' : 'unknown'));
   /* In maintenance (2.3.0, as otp): said first, whatever else. */
-  var inMaint = !!(s.maintenance && s.maintenance.on);
+  var inMaint = !!(s.maintenance && s.maintenance.on) || upgradeExpected();
   if (inMaint) kind = 'warn';
   pill.className = 'pill ' + kind;
   pill.lastChild.textContent = inMaint ? 'in maintenance' : !overall ? 'the dashboard has not said yet'
@@ -296,12 +296,174 @@ function paintHeader(s) {
   $('updated-at').textContent = clockWords(new Date());
 }
 
+/* ---- An upgrade, as the pages live through it (2.9.9) -----------------------------------
+   Root's helper and install.sh write how far it is into a file beside the pages, which PHP
+   reads straight from the disk - while plexmon's API, nginx and php-fpm restart under the page.
+   PHP merges it into the status, answers 503 {upgrading} instead of "not answering", and
+   ?api=upgrade-state works with no API at all. Here: one band under the header, asked every
+   2 s, no red anywhere while it is expected; at "done" (having seen it run) the page loads the
+   new version once; a failure is a red band with the way to the log. */
+var UPG = {u: null, heard: Date.now(), away: 0, pagesAway: false, sawRunning: false, reloading: false,
+           timer: null, misses: 0};
+function upgradeHeard(u) {
+  if (!u || !u.state) return;
+  UPG.u = u;
+  if (u.state === 'running') UPG.sawRunning = true;
+  upgradeDraw();
+  if (u.state === 'running') upgradeTickOn();
+  else upgradeTickOff();
+  if (u.state === 'done') upgradeEnd();
+}
+function upgradeExpected() { return !!(UPG.u && UPG.u.state === 'running') || UPG.reloading; }
+function upgradeTickOn() {
+  if (UPG.timer) return;
+  UPG.timer = setInterval(upgradeTick, 2000);
+}
+function upgradeTickOff() {
+  if (UPG.timer) { clearInterval(UPG.timer); UPG.timer = null; }
+}
+function upgradeTick() {
+  api('status', undefined, 6).then(function (s) {
+    UPG.heard = Date.now(); UPG.away = 0; UPG.pagesAway = false;
+    $('offline').hidden = true;
+    paintHeader(s);
+    if (s.upgrading) upgradeHeard(s.upgrading);
+    else if (UPG.u && UPG.u.state === 'running') {
+      /* The file no longer believed (old), and the API answers: over, one way or the other -
+         a version other than these pages' means the new one runs. */
+      if (s.version && VERSION_LOADED && s.version !== VERSION_LOADED) upgradeHeard(Object.assign({}, UPG.u, {state: 'done'}));
+      else { UPG.u = null; upgradeTickOff(); upgradeDraw(); }
+    }
+  }).catch(function () {
+    if (!UPG.away) UPG.away = Date.now();
+    api('upgrade-state', undefined, 4).then(function (d) {
+      UPG.pagesAway = false;
+      if (d.upgrading) upgradeHeard(d.upgrading); else upgradeDraw();
+    }).catch(function () { UPG.pagesAway = true; upgradeDraw(); });
+  });
+}
+function upgradePercent(u) {
+  if (!u) return 0;
+  if (u.state !== 'running') return 100;
+  return Math.max(2, Math.min(99, Math.round(100 * Math.max(0, (u.part || 1) - 1) / Math.max(1, u.parts || 1))));
+}
+function upgradeAgo(sec) {
+  sec = Math.max(0, Math.round(sec));
+  return sec < 60 ? sec + ' s' : Math.floor(sec / 60) + ' min ' + (sec % 60) + ' s';
+}
+function upgradeUnsaved() {
+  return (typeof DIRTY === 'object' && DIRTY && Object.keys(DIRTY).length) ||
+         (typeof PENDING === 'object' && PENDING && Object.keys(PENDING).length);
+}
+function upgradeEnd() {
+  var u = UPG.u;
+  if (!u || u.state !== 'done' || !UPG.sawRunning || UPG.reloading) return;
+  var key = 'plexmon-upg-reloaded:' + (u.id || u.version || '');
+  var done = false;
+  try { done = sessionStorage.getItem(key) === '1'; } catch (e) { }
+  if (done) return;
+  if (upgradeUnsaved()) { upgradeDraw(); return; }       /* "Load it again" in the band */
+  UPG.reloading = true;
+  try { sessionStorage.setItem(key, '1'); } catch (e) { }
+  upgradeDraw();
+  setTimeout(function () { location.reload(); }, 1500);
+}
+function upgradeHidden(u) {
+  try { return localStorage.getItem('plexmon-upg-hide:' + (u.id || u.version || '')) === '1'; } catch (e) { return false; }
+}
+function upgradeDraw() {
+  var b = $('upband');
+  if (!b) return;
+  var u = UPG.u;
+  var show = u && (u.state === 'running' || (u.state === 'failed' && !upgradeHidden(u)) ||
+                   (u.state === 'done' && UPG.sawRunning));
+  if (!show) { b.hidden = true; clear(b); return; }
+  clear(b);
+  b.hidden = false;
+  b.className = 'offline upband' + (u.state === 'failed' ? ' failed' : u.state === 'done' ? ' done' : '');
+  var head = el('div', 'upband-head');
+  var ver = noI18n(el('span', '', u.version || ''));
+  var t = el('b', '');
+  if (u.state === 'failed') { t.appendChild(el('span', '', u.downgrade ? 'Going back to plexmon' : 'The upgrade to plexmon')); t.appendChild(document.createTextNode(' ')); t.appendChild(ver); t.appendChild(document.createTextNode(' ')); t.appendChild(el('span', '', 'did not go through')); }
+  else if (u.state === 'done') { t.appendChild(el('span', '', u.downgrade ? 'plexmon was taken back to' : 'plexmon was upgraded to')); t.appendChild(document.createTextNode(' ')); t.appendChild(ver); }
+  else { t.appendChild(el('span', '', u.downgrade ? 'plexmon is being taken back to' : 'plexmon is being upgraded to')); t.appendChild(document.createTextNode(' ')); t.appendChild(ver); }
+  head.appendChild(t);
+  var sub = el('span', 'upband-sub');
+  if (u.from) { sub.appendChild(el('span', '', 'from')); sub.appendChild(noI18n(el('span', '', ' ' + u.from))); }
+  if (u.by) { sub.appendChild(document.createTextNode(' · ')); sub.appendChild(el('span', '', 'asked by')); sub.appendChild(noI18n(el('span', '', ' ' + u.by))); }
+  if (u.state === 'running' && u.started) {
+    var now = (u.now || u.at || 0) + (Date.now() - UPG.heard) / 1000;
+    sub.appendChild(document.createTextNode(' · '));
+    sub.appendChild(noI18n(el('span', '', upgradeAgo(Math.max(now, Date.now() / 1000) - u.started))));
+    sub.appendChild(el('span', '', ' so far'));
+  }
+  head.appendChild(sub);
+  if (u.state === 'failed') {
+    var x = el('button', 'upband-x');
+    x.type = 'button';
+    x.innerHTML = iconMarkup('close', 14);
+    x.setAttribute('aria-label', 'Hide it');
+    x.onclick = function () { try { localStorage.setItem('plexmon-upg-hide:' + (u.id || u.version || ''), '1'); } catch (e) { } upgradeDraw(); };
+    head.appendChild(x);
+  }
+  b.appendChild(head);
+  var bar = el('div', 'upb-bar');
+  var fill = el('span', '');
+  fill.style.width = upgradePercent(u) + '%';
+  bar.appendChild(fill);
+  b.appendChild(bar);
+  var line = el('div', 'upband-line');
+  if (u.state === 'failed') {
+    line.appendChild(noI18n(el('span', '', u.said || '')));
+  } else {
+    line.appendChild(noI18n(el('span', '', upgradePercent(u) + ' %')));
+    if (u.words) { line.appendChild(document.createTextNode(' · ')); line.appendChild(noI18n(el('span', '', u.words))); }
+    if (u.state === 'running') {
+      line.appendChild(document.createTextNode(' · '));
+      line.appendChild(el('span', '', 'step'));
+      line.appendChild(noI18n(el('span', '', ' ' + (u.part || 1) + ' ')));
+      line.appendChild(el('span', '', 'of'));
+      line.appendChild(noI18n(el('span', '', ' ' + (u.parts || 1))));
+    }
+  }
+  b.appendChild(line);
+  var what = el('div', 'upband-what');
+  if (u.state === 'failed') {
+    what.appendChild(el('span', '', 'What install.sh said is in Settings → Upgrades.'));
+    what.appendChild(document.createTextNode(' '));
+    var a = el('a', '', 'Open Upgrades');
+    a.href = '#settings/upgrade';
+    a.onclick = function (e) { e.preventDefault(); if (typeof showTab === 'function') showTab('settings'); showPane('upgrade'); };
+    what.appendChild(a);
+  } else if (u.state === 'done') {
+    if (UPG.reloading) what.appendChild(el('span', '', 'Loading the pages of the new version…'));
+    else {
+      what.appendChild(el('span', '', 'Changes on this page are not saved yet - the new pages load when you say so.'));
+      what.appendChild(document.createTextNode(' '));
+      var r = el('a', '', 'Load it again');
+      r.href = '#';
+      r.onclick = function (e) { e.preventDefault(); location.reload(); };
+      what.appendChild(r);
+    }
+  } else if (UPG.pagesAway) {
+    what.appendChild(el('span', '', 'nginx and the pages themselves are restarting - asked again every two seconds; the page comes back by itself.'));
+  } else if (UPG.away) {
+    what.appendChild(el('span', '', 'plexmon\'s API is restarting with the new version - not answering for'));
+    what.appendChild(noI18n(el('span', '', ' ' + upgradeAgo((Date.now() - UPG.away) / 1000))));
+    what.appendChild(el('span', '', ', asked again every two seconds; the page comes back by itself.'));
+  } else {
+    what.appendChild(el('span', '', 'plexmon.service and these pages restart once - the dashboard and Plex Media Server go on. This page follows it and loads the new version by itself.'));
+  }
+  b.appendChild(what);
+}
+
 var REDRAW_OWED = false;
 function tick() {
   if (!LIVE || document.hidden) return;
   api('status').then(function (s) {
     $('offline').hidden = true;
     $('offline').className = 'offline';
+    if (s.upgrading) upgradeHeard(s.upgrading);
     var moved = s.serial !== SERIAL || REDRAW_OWED;
     SERIAL = s.serial;
     paintHeader(s);
@@ -320,6 +482,9 @@ function tick() {
        waits; otherwise only two misses in a row are an error, not one blip. */
     TICK_MISSES += 1;
     var o = $('offline');
+    /* An upgrade the file says runs (2.9.9): its band says it all, and its own tick asks. */
+    if (e && e.upgrading) upgradeHeard(e.upgrading);
+    if (upgradeExpected()) { o.hidden = true; upgradeTickOn(); return; }
     var st = STATUS || {};
     var m = st.maintenance || {};
     var up = (typeof UP !== 'undefined' && UP.last && UP.last.plan) || null;
@@ -2894,7 +3059,12 @@ function loadUpgrade(live) {
        a limit. Said once, in a line of its own that is always there. */
     UP.misses = (UP.misses || 0) + 1;
     if (running || e.unreachable || UP.misses <= 3) {
-      if ($('up-retry')) $('up-retry').textContent = ('A node is restarting or the VIP address is moving to the other node - asking again…');
+      if ($('up-retry')) {
+        var uu = UPG.u;
+        $('up-retry').textContent = uu && uu.state === 'running'
+          ? ('plexmon and these pages are restarting with the new version - ' + upgradePercent(uu) + ' % · ' + (uu.words || '') + ' · step ' + (uu.part || 1) + ' of ' + (uu.parts || 1) + ' - asking again…')
+          : ('A node is restarting or the VIP address is moving to the other node - asking again…');
+      }
       upgradeAgain(Math.min(2000 * UP.misses, 6000));
       return;
     }
@@ -4290,6 +4460,7 @@ function drawPush(d) {
   var h = (location.hash || '#library').slice(1).split('/');
   if (h[0] === 'settings' && h[1]) PANE = h[1];
   if (STATUS) paintHeader(STATUS);
+  if (STATUS && STATUS.upgrading) upgradeHeard(STATUS.upgrading);
   /* The Plex library's script comes after this one: the first tab is shown
      once it is there (it says what part of the library the address names). */
   var first = function () {

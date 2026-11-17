@@ -77,6 +77,34 @@ if (isset($_GET['api'])) {
     if ($what === 'lang' && !$post) {
         pm_serve_lang();
     }
+    /* How far an upgrade is (2.9.9), with no API at all: read from the file beside the pages -
+       while plexmon's API is restarting the pages still know what goes on, and when it answers
+       again. Who asked and the reason only for a page with a session. */
+    if ($what === 'upgrade-state' && !$post) {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        echo json_encode(['ok' => true, 'upgrading' => pm_upgrading(pm_session() !== ''),
+                          'pages' => PM_VERSION, 'api' => pm_token() !== null && is_array(pm_get('/api/health', 3.0))]);
+        exit;
+    }
+    /* The status with the upgrade in it (2.9.9): the band is there at once, before anything
+       restarts. */
+    if ($what === 'status' && !$post) {
+        $u = pm_upgrading(pm_session() !== '');
+        if ($u !== null && pm_token() !== null) {
+            $q = $_GET;
+            unset($q['api']);
+            [$status, $body] = pm_call('/api/status' . ($q ? '?' . http_build_query($q) : ''), 'GET', null, 60.0);
+            $data = $status === 200 ? json_decode((string) $body, true) : null;
+            if (is_array($data)) {
+                header('Content-Type: application/json; charset=utf-8');
+                header('Cache-Control: no-store');
+                $data['upgrading'] = $u;
+                echo json_encode($data);
+                exit;
+            }
+        }
+    }
     if ($what === 'software' && !$post) {
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-store');
@@ -369,6 +397,9 @@ if (!$me && !pm_local()) {
                'users' => 1];
 }
 $initial = $me ? (pm_get('/api/status?perf=1', 8.0) ?: null) : null;   /* with the meter's last state (2.7.9) */
+if (is_array($initial) && ($pm_up0 = pm_upgrading(true)) !== null) {
+    $initial['upgrading'] = $pm_up0;       /* an upgrade under way: its band at once (2.9.9) */
+}
 $host    = (string) ($_SERVER['HTTP_HOST'] ?? php_uname('n'));
 $site    = (string) ($initial['site'] ?? '');
 $title   = $site !== '' ? $site . ' · plexmon' : 'plexmon';
@@ -402,6 +433,26 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
         <span class="mono">chgrp <?= h($web_user) ?> /run/plexmon /run/plexmon/api-token</span><br>
         <span class="mono">systemctl restart plexmon</span>
       </div>
+    <?php elseif (!$alive && ($pm_up = pm_upgrading()) !== null && $pm_up['state'] === 'running'): ?>
+      <!-- An upgrade under way (2.9.9): said as such, and this page loads again by itself once
+           plexmon answers. -->
+      <div class="upband-signin" id="upband-signin">
+        <b>plexmon is being upgraded<?= $pm_up['version'] !== '' ? ' to <span data-no-i18n>' . h($pm_up['version']) . '</span>' : '' ?></b>
+        <div class="upb-bar"><span style="width:<?= (int) round(100 * max(0, $pm_up['part'] - 1) / max(1, $pm_up['parts'])) ?>%"></span></div>
+        <div class="small muted"><span data-no-i18n><?= h($pm_up['words']) ?></span> · <span>step</span> <span data-no-i18n><?= (int) $pm_up['part'] ?></span> <span>of</span> <span data-no-i18n><?= (int) $pm_up['parts'] ?></span></div>
+        <div class="small">plexmon and these pages restart once - this page loads again by itself when they are back.</div>
+      </div>
+      <script nonce="<?= h($nonce) ?>">
+      (function () {
+        function ask() {
+          fetch('?api=upgrade-state', {credentials: 'same-origin', cache: 'no-store'})
+            .then(function (r) { return r.json(); })
+            .then(function (d) { if (d && d.api) location.reload(); else setTimeout(ask, 2000); })
+            .catch(function () { setTimeout(ask, 2000); });
+        }
+        setTimeout(ask, 2000);
+      })();
+      </script>
     <?php elseif (!$alive): ?>
       <div class="offline">The daemon is not answering. Nobody can sign in until
         <span class="mono">plexmon.service</span> is running:<br>
@@ -545,6 +596,7 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
     <b>live</b><br><span id="updated-at">…</span></div>
 </header>
 
+<div id="upband" class="offline upband" hidden></div>
 <div id="offline" class="offline" hidden></div>
 <div id="phpsafety" class="offline" hidden></div>
 <div id="problems" class="offline warnish" hidden></div>

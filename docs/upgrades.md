@@ -71,3 +71,32 @@ For a developer: a task is one entry in `SERVER_TASKS` in `plexmon_admin.py` - `
 what it found while there is something to do, else `None`) or none (a step said done by hand);
 `when(store)` limits it to the machines it concerns (e.g. only where SELinux is enforcing).
 
+## The pages during an upgrade (2.9.9)
+
+An upgrade restarts what serves the pages: plexmon's API (`systemctl stop` in *The program*,
+started again in *Starting*), php-fpm and nginx. So that the pages say what goes on instead of
+"the daemon is not answering", root's helper (`plexmon_upgrade.py`) and `install.sh --upgrade`
+write how far it is into `/var/www/html/smart/.plexmon-upgrade.php`:
+
+```
+<?php exit; ?>
+{"state": "running", "id": "...", "version": "2.9.9", "from": "2.9.8", "by": "admin",
+ "part": 7, "parts": 13, "words": "The pages", "started": 1794900000, "at": 1794900042,
+ "said": "", "downgrade": false}
+```
+
+- Beside the pages, so their PHP may read it (and under SELinux it is `httpd_sys_content_t` like
+  them); named `.php` and starting with `exit`, so nginx and php-fpm never show it. Root's, 0644,
+  written whole (a new file renamed over it). Nothing secret in it; *who asked* and the reason
+  are given only to a page with a session.
+- `state` is `running`, `done` or `failed`; `part` / `parts`: the helper's step (the package
+  checked) and install.sh's twelve. `running` is believed for 30 minutes after it was written,
+  `done` / `failed` for 10. install.sh's EXIT trap writes done, or failed with its exit code -
+  also when it is stopped (INT, HUP, TERM); every write is best effort.
+- PHP: `503 {"upgrading": {...}}` from every relayed call while plexmon does not answer;
+  `?api=status` with `upgrading` in it; `?api=upgrade-state` without the API at all
+  (`{upgrading, pages, api}`).
+- The page: a band under the header, a tick every 2 s (`status`, else `upgrade-state`), the pill
+  *in maintenance*, no red bar or toast while it is expected; at `done` (having seen it run) it
+  loads the new version once; at `failed` a red band with the reason and a link to Upgrades.
+  The sign-in page shows the band too and loads again when plexmon answers.

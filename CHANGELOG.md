@@ -4,6 +4,26 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.9.9 - 2026-11-17
+
+- **The pages stay with an upgrade** while plexmon's API, nginx and php-fpm restart under them.
+  Root's helper and `install.sh --upgrade` write how far it is (step N of 13, its words) into
+  `/var/www/html/smart/.plexmon-upgrade.php` - beside the pages, named `.php` and starting with
+  `exit`, so the web server never shows it; the pages' PHP reads it straight from the disk.
+  `install.sh` ends it as done, or failed with its exit code - also when it is stopped by a
+  signal; every write is best effort and never stops an upgrade.
+- PHP answers `503 {upgrading}` instead of "the daemon is not answering" while an upgrade runs,
+  merges it into the status, and `?api=upgrade-state` answers with no API at all.
+- Settings: one band under the header - the version, from what, who asked, how long, a bar,
+  the step, and what is happening now (the API restarting, nginx and the pages restarting);
+  asked every 2 s; no red bar and no red toast while it is expected; the pill says "in
+  maintenance". When it is done the page loads the new version once by itself (not with
+  changes not saved: then a link). A failure is a red band with the reason and the way to
+  Settings → Upgrades, which can be hidden.
+- The sign-in page during an upgrade shows the band and loads again by itself when plexmon
+  answers.
+- "Restart plexmon" in *To be done by hand* is not looked at while an upgrade runs.
+
 ## 2.9.8 - 2026-11-12
 
 - **Upload the missing authority**: when the chain is incomplete and the intermediate cannot be

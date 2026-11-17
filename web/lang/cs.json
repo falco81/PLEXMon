@@ -10267,6 +10267,90 @@
   "xs1315": {
    "source": "every certificate in it is there already",
    "text": "všechny certifikáty v tom už tam jsou"
+  },
+  "xs1316": {
+   "source": "plexmon is being upgraded to",
+   "text": "plexmon se aktualizuje na"
+  },
+  "xs1317": {
+   "source": "plexmon is being taken back to",
+   "text": "plexmon se vrací na"
+  },
+  "xs1318": {
+   "source": "plexmon was upgraded to",
+   "text": "plexmon byl aktualizován na"
+  },
+  "xs1319": {
+   "source": "plexmon was taken back to",
+   "text": "plexmon byl vrácen na"
+  },
+  "xs1320": {
+   "source": "The upgrade to plexmon",
+   "text": "Aktualizace plexmonu na"
+  },
+  "xs1321": {
+   "source": "Going back to plexmon",
+   "text": "Návrat plexmonu na"
+  },
+  "xs1322": {
+   "source": "asked by",
+   "text": "spustil"
+  },
+  "xs1323": {
+   "source": " so far",
+   "text": " zatím"
+  },
+  "xs1324": {
+   "source": "step",
+   "text": "krok"
+  },
+  "xs1325": {
+   "source": "of",
+   "text": "z"
+  },
+  "xs1326": {
+   "source": "What install.sh said is in Settings → Upgrades.",
+   "text": "Co vypsal install.sh, je v Nastavení → Aktualizace."
+  },
+  "xs1327": {
+   "source": "Loading the pages of the new version…",
+   "text": "Načítám stránky nové verze…"
+  },
+  "xs1328": {
+   "source": "Changes on this page are not saved yet - the new pages load when you say so.",
+   "text": "Změny na této stránce ještě nejsou uložené – nové stránky se načtou, až řeknete."
+  },
+  "xs1329": {
+   "source": "nginx and the pages themselves are restarting - asked again every two seconds; the page comes back by itself.",
+   "text": "nginx a samotné stránky se restartují – ptám se znovu každé dvě sekundy; stránka se vrátí sama."
+  },
+  "xs1330": {
+   "source": "plexmon's API is restarting with the new version - not answering for",
+   "text": "API plexmonu se restartuje s novou verzí – neodpovídá už"
+  },
+  "xs1331": {
+   "source": ", asked again every two seconds; the page comes back by itself.",
+   "text": ", ptám se znovu každé dvě sekundy; stránka se vrátí sama."
+  },
+  "xs1332": {
+   "source": "plexmon.service and these pages restart once - the dashboard and Plex Media Server go on. This page follows it and loads the new version by itself.",
+   "text": "plexmon.service a tyto stránky se jednou restartují – dashboard a Plex Media Server běží dál. Tato stránka vše sleduje a novou verzi si načte sama."
+  },
+  "xs1333": {
+   "source": "plexmon is being upgraded",
+   "text": "plexmon se aktualizuje"
+  },
+  "xs1334": {
+   "source": "plexmon and these pages restart once - this page loads again by itself when they are back.",
+   "text": "plexmon a tyto stránky se jednou restartují – tato stránka se načte znovu sama, až budou zpátky."
+  },
+  "xs1335": {
+   "source": "being upgraded",
+   "text": "probíhá aktualizace"
+  },
+  "xs1336": {
+   "source": "did not go through",
+   "text": "se nezdařila"
   }
  },
  "patterns": {
@@ -12905,6 +12989,10 @@
   "xp0276": {
    "source": "complete - {0} certificates up to {1} - a private root: only clients that trust it take it",
    "text": "úplný – {0} certifikáty až k {1} – soukromá kořenová CA: přijmou ho jen klienti, kteří jí důvěřují"
+  },
+  "xp0277": {
+   "source": "plexmon and these pages are restarting with the new version - {0} % · {1} · step {2} of {3} - asking again…",
+   "text": "plexmon a tyto stránky se restartují s novou verzí – {0} % · {1} · krok {2} z {3} – ptám se znovu…"
   }
  },
  "rich": {

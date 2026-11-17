@@ -202,6 +202,8 @@ function oops(e) {
   /* An account that must set its own password first: every page answers
      "change your password first" - said once, by its own form (1.0.103). */
   if (typeof ME === 'object' && ME && ME.must_change && e && e.status === 403) return;
+  /* While an upgrade is expected (2.9.9) a page that cannot be reached is no fault. */
+  if (e && (e.upgrading || e.unreachable) && typeof upgradeExpected === 'function' && upgradeExpected()) return;
   toast(String(e && e.message || e), 'bad');
 }
 
@@ -1305,6 +1307,13 @@ function api(what, body, wait) {
         var err = new Error(data.error || ('HTTP ' + r.status));
         err.status = r.status;
         err.detail = data.detail || '';
+        /* An upgrade under way (2.9.9): the API restarts on purpose - expected, said in the
+           band, never a red toast. */
+        if (r.status === 503 && data.upgrading) {
+          err.unreachable = true;
+          err.upgrading = data.upgrading;
+          if (typeof upgradeHeard === 'function') upgradeHeard(data.upgrading);
+        }
         throw err;
       }
       return data;

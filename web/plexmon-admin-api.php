@@ -63,6 +63,53 @@ function pm_local(): bool
     return in_array((string) ($_SERVER['REMOTE_ADDR'] ?? ''), ['127.0.0.1', '::1'], true);
 }
 
+/**
+ * How far an upgrade is (2.9.9) - from the file root's helper and install.sh write beside the
+ * pages, read straight from the disk: plexmon's API, nginx and php-fpm restart during an
+ * upgrade, and the pages say so instead of "the daemon is not answering". Believed only while
+ * fresh - "running" 30 minutes after it was last written, "done" / "failed" 10 - and only with
+ * the fields as they should be. Who asked, the reason and the id only for a page with a
+ * session ($full).
+ */
+function pm_upgrading(bool $full = false): ?array
+{
+    static $got = false;
+    if ($got === false) {
+        $got = null;
+        $f = __DIR__ . '/.plexmon-upgrade.php';
+        $raw = (is_file($f) && !is_link($f)) ? (string) @file_get_contents($f, false, null, 0, 8192) : '';
+        $nl = strpos($raw, "\n");
+        $d = $nl === false ? null : json_decode(substr($raw, $nl + 1), true);
+        if (is_array($d) && in_array($d['state'] ?? '', ['running', 'done', 'failed'], true)) {
+            $at = (int) ($d['at'] ?? 0);
+            $age = time() - $at;
+            $fresh = $age >= -60 && $age <= (($d['state'] === 'running') ? 1800 : 600);
+            if ($fresh) {
+                $txt = static fn($v, int $n): string =>
+                    mb_substr((string) preg_replace('/[\x00-\x1f\x7f]/u', ' ', (string) $v), 0, $n);
+                $ver = static fn($v): string => (string) preg_replace('/[^0-9.]/', '', substr((string) $v, 0, 20));
+                $parts = max(1, min(40, (int) ($d['parts'] ?? 1)));
+                $got = [
+                    'state' => $d['state'], 'id' => (string) preg_replace('/[^A-Za-z0-9._-]/', '', substr((string) ($d['id'] ?? ''), 0, 64)),
+                    'version' => $ver($d['version'] ?? ''), 'from' => $ver($d['from'] ?? ''),
+                    'by' => $txt($d['by'] ?? '', 100), 'part' => max(0, min($parts, (int) ($d['part'] ?? 0))),
+                    'parts' => $parts, 'words' => $txt($d['words'] ?? '', 160),
+                    'started' => (int) ($d['started'] ?? $at), 'at' => $at, 'said' => $txt($d['said'] ?? '', 300),
+                    'downgrade' => !empty($d['downgrade']), 'now' => time(),
+                ];
+            }
+        }
+    }
+    if ($got === null) {
+        return null;
+    }
+    $out = $got;
+    if (!$full) {
+        unset($out['by'], $out['said'], $out['id']);
+    }
+    return $out;
+}
+
 /** Read the API token the daemon wrote for us, or null if we can't. */
 function pm_token(): ?string
 {
@@ -234,6 +281,11 @@ function pm_relay(string $path, string $method = 'GET', array|object|null $paylo
 
     if (pm_token() === null) {
         http_response_code(503);
+        /* An upgrade under way (2.9.9): said as such - expected, not "down". */
+        if (($u = pm_upgrading(pm_session() !== '')) !== null) {
+            echo json_encode(['ok' => false, 'upgrading' => $u, 'error' => 'being upgraded']);
+            return;
+        }
         /* Where the token lives is for whoever is on the machine; from
            anywhere else it is a daemon that is not answering. */
         echo json_encode(['ok' => false, 'error' => pm_local()
@@ -245,6 +297,10 @@ function pm_relay(string $path, string $method = 'GET', array|object|null $paylo
     [$status, $body] = pm_call($path, $method, $payload, $timeout);
     if ($status === 0) {
         http_response_code(503);
+        if (($u = pm_upgrading(pm_session() !== '')) !== null) {
+            echo json_encode(['ok' => false, 'upgrading' => $u, 'error' => 'being upgraded']);
+            return;
+        }
         echo json_encode(['ok' => false, 'error' =>
             'the daemon is not answering — is plexmon.service running?']);
         return;

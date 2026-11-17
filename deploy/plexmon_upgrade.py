@@ -53,6 +53,14 @@ MOST_FILES = 5000
 INSTALL_LIMIT_S = 20 * 60      # under TimeoutStartSec=25min and the daemon's 30 (1.0.59)
 TOP = re.compile(r'^plexmon-([0-9]+(?:\.[0-9]+){2,3})\Z')
 FLOOR_FILE = os.path.join(LIB_DIR, 'downgrade-floor')
+# How far an upgrade is, for the pages (2.9.9): a file the pages' PHP reads straight from the
+# disk - while plexmon's API, nginx and php-fpm restart under them. Beside the pages, named
+# .php and starting with exit, so the web server never shows it; root's, 0644, written whole
+# (a new file renamed over it). Nothing secret in it. install.sh --upgrade writes it too, a step
+# at a time; this writes the step before it (the package checked) and the end.
+WEB_DIR = os.environ.get('PLEXMON_WEB', '/var/www/html/smart')
+PAGES_FILE = os.path.join(WEB_DIR, '.plexmon-upgrade.php')
+PAGES_PARTS = 13               # this one step + install.sh's twelve
 
 
 class Refused(Exception):
@@ -314,6 +322,29 @@ def read_small(path, most=65536):
         return f.read(most + 1)[:most]
 
 
+def pages_tell(state, ident='', version='', frm='', by='', part=1, words='', said='',
+               downgrade=False, started=None):
+    """How far the upgrade is, into the pages' file - never a reason for it to fail."""
+    try:
+        if not os.path.isdir(WEB_DIR) or os.path.islink(WEB_DIR):
+            return
+        clean = lambda v, n: re.sub(r'[\x00-\x1f\x7f]', ' ', str(v or ''))[:n]
+        row = {'state': state, 'id': re.sub(r'[^A-Za-z0-9._-]', '', str(ident or ''))[:64],
+               'version': re.sub(r'[^0-9.]', '', str(version or ''))[:20],
+               'from': re.sub(r'[^0-9.]', '', str(frm or ''))[:20], 'by': clean(by, 100),
+               'part': int(part), 'parts': PAGES_PARTS, 'words': clean(words, 160),
+               'started': int(started or time.time()), 'at': int(time.time()),
+               'said': clean(said, 300), 'downgrade': bool(downgrade)}
+        tmp = os.path.join(WEB_DIR, '.plexmon-upgrade.%d.tmp.php' % os.getpid())
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o644)
+        with os.fdopen(fd, 'w') as f:
+            f.write('<?php exit; ?>\n' + json.dumps(row) + '\n')
+        os.chmod(tmp, 0o644)
+        os.replace(tmp, PAGES_FILE)
+    except (OSError, ValueError):
+        pass
+
+
 def status(**fields):
     fields['at'] = time.time()
     write_safely(os.path.join(UPGRADE_DIR, 'status.json'), json.dumps(fields))
@@ -391,7 +422,11 @@ def put_in(package, ident='', want_sha='', by='the command line', log_to=None,
         src = os.path.join(unpacked, info['top'])
         env = {'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
                'LANG': 'C.UTF-8', 'PLEXMON_UPGRADE_FROM_PAGES': '1', 'TERM': 'dumb',
-               'PLEXMON_UPGRADE_BY': str(by)[:100]}
+               'PLEXMON_UPGRADE_BY': str(by)[:100],
+               'PLEXMON_UPGRADE_ID': os.environ.get('PLEXMON_UPGRADE_ID', ''),
+               'PLEXMON_UPGRADE_STARTED': os.environ.get('PLEXMON_UPGRADE_STARTED', ''),
+               'PLEXMON_UPGRADE_FROM': installed_version(),
+               'PLEXMON_UPGRADE_DOWN': '1' if downgrade else ''}
         say('running %s/install.sh --upgrade --yes' % info['top'])
         p = subprocess.Popen(['bash', os.path.join(src, 'install.sh'), '--upgrade', '--yes'],
                              cwd=src, env=env, stdin=subprocess.DEVNULL,
@@ -498,6 +533,8 @@ def serve_request():
                     pass
         return 1
     ident = ''
+    tell = {'ident': '', 'version': '', 'frm': installed_version(), 'by': 'the pages',
+            'downgrade': False, 'started': int(time.time())}
     log_path = os.path.join(UPGRADE_DIR, 'last.log')
     log_lines = []
     last_flush = [0.0]
@@ -520,18 +557,30 @@ def serve_request():
         if not re.match(r'^plexmon-[0-9.]+\.tar\.gz\Z', name):
             raise Refused('the request names no package')
         status(id=ident, state='running', version=r.get('version'), pid=os.getpid())
+        tell.update(ident=ident, version=r.get('version') or '', frm=installed_version(),
+                    by=r.get('by') or 'the pages', downgrade=r.get('downgrade') is True)
+        pages_tell('running', part=1, words='root checks the package', **tell)
+        os.environ['PLEXMON_UPGRADE_STARTED'] = str(tell['started'])
+        os.environ['PLEXMON_UPGRADE_ID'] = tell['ident']
         rc, info, _ = put_in(os.path.join(UPGRADE_DIR, name), ident,
                              str(r.get('sha') or ''), r.get('by') or 'the pages', log_to,
                              downgrade=r.get('downgrade') is True)
         status(id=ident, state='done' if rc == 0 else 'failed', rc=rc,
                version=info['version'], tail=log_lines[-40:])
+        if rc == 0:
+            pages_tell('done', part=PAGES_PARTS, words='plexmon %s runs' % info['version'], **tell)
+        else:
+            pages_tell('failed', part=PAGES_PARTS,
+                       said='install.sh --upgrade stopped (exit %d)' % rc, **tell)
     except Refused as e:
         log_to('refused: %s' % e)
         status(id=ident, state='failed', rc=-1, said=str(e), tail=log_lines[-40:])
+        pages_tell('failed', part=1, said=str(e), **tell)
     except Exception as e:                       # noqa: BLE001 - said, never lost
         log_to('broke: %s' % e)
         status(id=ident, state='failed', rc=-2, said='the upgrade broke: %s' % e,
                tail=log_lines[-40:])
+        pages_tell('failed', part=1, said='the upgrade broke: %s' % e, **tell)
     finally:
         last_flush[0] = 0
         try:

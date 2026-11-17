@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.9.8'
+__version__ = '2.9.9'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -6128,7 +6128,22 @@ def _login(h):
 # every 15 s, or at once with Check again); one that is said done can be
 # shown again ("Not done after all").
 
+def upgrade_pages_running():
+    """Whether the pages' upgrade file (root's helper, install.sh) says an upgrade runs now -
+    fresh, 30 minutes at most (2.9.9)."""
+    try:
+        raw = (WEB_ROOT / '.plexmon-upgrade.php').read_text(errors='replace')[:8192]
+        d = json.loads(raw.split('\n', 1)[1])
+        return d.get('state') == 'running' and -60 <= time.time() - float(d.get('at') or 0) <= 1800
+    except (OSError, ValueError, IndexError, AttributeError, TypeError):
+        return False
+
+
 def _task_restart(store):
+    # Not while an upgrade runs (2.9.9): the new files are on the disk before install.sh
+    # restarts the service - "restart plexmon" then is no task, only the moment between.
+    if upgrade_pages_running():
+        return None
     try:
         text = (LIB_DIR / 'plexmon_admin.py').read_text(errors='replace')
     except OSError:
