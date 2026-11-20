@@ -4,6 +4,16 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.11.11 - 2026-11-20
+
+- **P6 in an empty folder: the placeholder of 2.11.8 is back - it worked.** The logs of the real
+  server show it: with `plexmon-placeholder.txt` in /data2/Bonus there was no "Marking media not
+  available" any more but "Removing 4 media items that were left ... Destroying metadata item
+  13275 (Winters Bone_Bonus01)" - Plex takes what is gone out of its database at once, without
+  its trash. plexmon looked only into the trash, found nothing there and said "not done"; 2.11.9
+  then took the placeholder away. Now what Plex has taken away counts as done as much as what is
+  in its trash; `DELETE /library/metadata/{id}` (2.11.9) stays only for what is left after that.
+
 ## 2.11.10 - 2026-11-20
 
 - **The band of an upgrade, every time**: an upgrade of ten seconds was often over between two

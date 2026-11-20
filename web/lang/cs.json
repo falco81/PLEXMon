@@ -11925,8 +11925,8 @@
    "text": "nic z toho se neprovedlo – u každého je proč v řádcích výše"
   },
   "xs1730": {
-   "source": "is empty: Plex keeps what was in an empty folder as \"not available\" and never puts it into its trash (its guard against a disk not mounted). Its disk is mounted, so what Plex leaves there is taken away through Plex itself - only items none of whose files is on the disk; Plex has to allow media deletion (Settings → Library).",
-   "text": "je prázdná: co bylo v prázdné složce, Plex drží jako „nedostupné“ a nikdy to nedá do koše (jeho ochrana proti nepřipojenému disku). Její disk je připojený, takže co tam Plex nechá, se odebere přes Plex samotný – jen položky, z jejichž souborů na disku není žádný; Plex musí mít povolené mazání médií (Nastavení → Knihovna)."
+   "source": "is empty: Plex keeps what was in an empty folder as \"not available\" (its guard against a disk not mounted). Its disk is mounted, so plexmon puts a small file plexmon-placeholder.txt into it for the scan - Plex then takes what is gone away itself - and takes the file away again.",
+   "text": "je prázdná: co bylo v prázdné složce, Plex drží jako „nedostupné“ (jeho ochrana proti nepřipojenému disku). Její disk je připojený, takže plexmon do ní na dobu skenu vloží malý soubor plexmon-placeholder.txt – Plex pak chybějící položky odebere sám – a soubor zase odstraní."
   },
   "xs1731": {
    "source": "Plex asked",
@@ -14977,6 +14977,10 @@
   "xp0375": {
    "source": "after the scan - waiting for Plex to begin",
    "text": "po skenu – čeká se, až Plex začne"
+  },
+  "xp0376": {
+   "source": "{0} of the {1} files gone: {2} taken away by Plex, {3} in its trash",
+   "text": "{0} z {1} chybějících souborů: {2} odebral Plex, {3} je v jeho koši"
   }
  },
  "rich": {

@@ -102,15 +102,17 @@ A P6 folder that is gone altogether is put right by a scan of the whole library 
 folder above it does not see what was inside - and the trash is emptied only once a fresh copy
 of the database shows the files gone in it.
 
-### An empty folder (2.11.9)
+### An empty folder (2.11.11)
 
-Plex's scanner does not put into its trash what was in an empty folder of a library: "Marking
-media not available in /data2/Bonus ... Taking 4 items out of the map for being unavailable" -
-an empty folder looks to it like a disk not mounted, and it counts only media files (a placeholder
-file does not help). When the empty folder is on a disk of its own that is mounted, what Plex
-leaves there is taken away through Plex itself - `DELETE /library/metadata/{id}`, as Plex Web's
-Delete of an unavailable item - only for items none of whose files is on the disk, each looked for
-once more just before. Plex must allow media deletion (Settings → Library).
+Plex's scanner does not take away what was in an empty folder of a library: "Marking media not
+available in /data2/Bonus ... Taking 4 items out of the map for being unavailable" - an empty
+folder looks to it like a disk not mounted. When the empty folder is on a disk of its own that is
+mounted, plexmon puts `plexmon-placeholder.txt` into it for the scan and takes it away again
+whatever happens. With it there, Plex says "Removing 4 media items that were left" and destroys
+them at once - they never go through its trash, and that counts as done. Whatever is still left is
+taken away through Plex (`DELETE /library/metadata/{id}`, only for items none of whose files is on
+the disk; Plex must allow media deletion). A folder on the system disk is never given a
+placeholder.
 
 ## Plex's own Optimize and Clean Bundles
 

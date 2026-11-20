@@ -1806,10 +1806,10 @@ def fix_scan(store, by, kind, section=None, dirs=None, trash=False, monitor=None
                 continue
             st0 = root_state(r['path'], monitor)
             if empty and st0['state'] == 'awake' and st0.get('mount') not in ('', '/'):
-                # 2.11.8 put a placeholder file here; Plex counts only media files, so the
-                # folder stayed "empty" to it (a real server, 2.11.9) - not done any more: what
-                # Plex does not put into its trash is taken away through Plex below.
-                line('%s is empty - Plex keeps what was in it as "not available"' % r['path'])
+                # It works (a real server's scanner, 2.11.11): with the placeholder in, no
+                # "Marking media not available" - "Removing 4 media items that were left",
+                # Plex destroys them itself (they never go through its trash).
+                holders.append(os.path.join(r['path'], PLACEHOLDER))
     # A scan and the trash need no quiet Plex before them (it queues a scan); only a merge
     # or a split does (2.11.9).
     phase('idle', 'Plex is asked', 0, 5)
@@ -1879,11 +1879,17 @@ def _fix_scan_go(store, by, kind, section, want, trash, secs, rep, monitor, wake
     if trash:
         # Looked at again now, after the scan: what is in the trash.
         says('how much is in the trash now - a fresh copy of the database', 3, 5)
-        tr, fl, in_trash = trash_now(section)
+        tr, fl, in_trash, present = trash_now(section)
         if kind == 'P6':
             gone = {m['file'] for m in rep['problems']['P6']['missing'] if m['section'] == section}
-            got = gone & in_trash
-            line('%d of the %d files gone are in Plex\'s trash now' % (len(got), len(gone)))
+            # Plex's scanner either puts what is gone into its trash or - more often - takes
+            # it out of its database at once ("Removing N media items that were left",
+            # "Destroying metadata item"): both are what was wanted (2.11.11; 2.11.8 counted
+            # only the trash and said "not done" of what Plex had already taken away).
+            away = gone - present
+            got = (gone & in_trash) | away
+            line('%d of the %d files gone: %d taken away by Plex, %d in its trash' % (
+                len(got), len(gone), len(away), len(gone & in_trash)))
             if gone - got:
                 # What Plex's scanner leaves "not available" (an empty folder of a library -
                 # its guard against a disk not mounted): taken away through Plex itself, the
@@ -1893,7 +1899,7 @@ def _fix_scan_go(store, by, kind, section, want, trash, secs, rep, monitor, wake
                     raise ValueError('none of the files gone could be taken away - each says why '
                                      'above; the trash is NOT emptied')
                 got = got | set(removed)
-                tr, fl, in_trash = trash_now(section)
+                tr, fl, in_trash, present = trash_now(section)
         for root, n in fl.items():
             if too_much(tr.get(root, 0), n):
                 raise ValueError('the trash is NOT emptied: %d of the %d files of %s are in '
@@ -2093,12 +2099,13 @@ def trash_now(section):
             secs = sections(c)
             roots = (secs.get(section) or {}).get('roots') or []
             dl = _has(c, 'media_parts', 'deleted_at')
-            tr, fl, files = Counter(), Counter(), set()
+            tr, fl, files, present = Counter(), Counter(), set(), set()
             for r in _rows(c, 'SELECT mp.file AS file, %s AS gone FROM media_parts mp JOIN '
                               'media_items mi ON mi.id = mp.media_item_id WHERE '
                               'mi.library_section_id = ?' % (
                                   '(mp.deleted_at IS NOT NULL OR mi.deleted_at IS NOT NULL)'
                                   if dl else '0'), (section,)):
+                present.add(r['file'])
                 rt = root_of(r['file'] or '', roots)
                 if rt:
                     fl[rt['path']] += 1
@@ -2107,7 +2114,7 @@ def trash_now(section):
                         files.add(r['file'])
         finally:
             c.close()
-    return tr, fl, files
+    return tr, fl, files, present
 
 
 # ---------------------------------------------------------------------------
