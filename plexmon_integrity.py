@@ -1042,8 +1042,13 @@ def scan(store, by, disks=False, monitor=None, wake=None):
                         empty = not any(True for _ in os.scandir(r['path']))
                     except OSError:
                         empty = True
+                    # An empty folder on a disk of its own, mounted, is a folder made ready
+                    # and not filled yet (2.11.3) - its few rows in Plex are files gone (P6).
+                    # Empty on the system disk is what a disk not mounted leaves behind.
+                    own_disk = bool(st.get('mount')) and st['mount'] != '/'
                     ro['mount_problem'] = bool(mine) and (too_much(len(gone), len(mine)) or
-                                                          (empty and share >= 1))
+                                                          (empty and share >= 1 and not own_disk))
+                    ro['empty'] = empty
                     if gone and not ro['mount_problem']:
                         for f in gone[:ROW_CAP]:
                             _, d = show_dir(f, s['roots'])

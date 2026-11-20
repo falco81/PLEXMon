@@ -4,6 +4,13 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.11.3 - 2026-11-20
+
+- An empty library folder on a disk of its own that is mounted (`/data4/Youtube` made ready, not
+  filled yet) is no longer "a disk not mounted?": the few rows Plex still has there are files
+  gone (P6), and the library's trash can be emptied. Empty on the system disk - what a disk not
+  mounted leaves behind under its mount point - is still taken for one.
+
 ## 2.11.2 - 2026-11-20
 
 - **A package for analysis** (Library integrity): instead of putting anything right, everything

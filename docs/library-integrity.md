@@ -16,8 +16,10 @@ puts right what can be put right safely. The problems are P1 to P8 below.
   its probe file returns only then (2.11.2; five minutes at most) - and reads them all. *The database only* reads no disk. plexmon knows
   that from its own disk monitor; it is asked again just before each folder is read. A disk
   asleep, or one plexmon cannot tell about, is left out and named. A library folder that is
-  not there, is empty, or misses more than 5 % (and at least ten) of its files is taken for a
-  disk not mounted, never for deleted files.
+  not there, is empty while it sits on the system disk (what an unmounted disk leaves under its
+  mount point), or misses more than 5 % (and at least ten) of its files is taken for a disk not
+  mounted, never for deleted files. An empty folder on a disk of its own that is mounted is a
+  folder made ready and not filled yet.
 - **One write into Plex's database: P1.** Everything else goes through Plex's own HTTP API.
 - **A checked copy before anything is changed.** Before P1, P2 and Plex's own Optimize, a copy
   of Plex's database is made and checked (Settings → The database lists it, and it can be put
