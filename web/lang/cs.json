@@ -11923,6 +11923,10 @@
   "xs1729": {
    "source": "nothing of it was done - each says why in the lines above",
    "text": "nic z toho se neprovedlo – u každého je proč v řádcích výše"
+  },
+  "xs1730": {
+   "source": "is empty: Plex keeps what was in an empty folder as \"not available\" and never puts it into its trash (its guard against a disk not mounted). Its disk is mounted, so plexmon puts a small file plexmon-placeholder.txt into it for the scan and takes it away again.",
+   "text": "je prázdná: co bylo v prázdné složce, Plex drží jako „nedostupné“ a nikdy to nedá do koše (jeho ochrana proti nepřipojenému disku). Její disk je připojený, takže plexmon do ní na dobu skenu vloží malý soubor plexmon-placeholder.txt a pak ho zase odstraní."
   }
  },
  "patterns": {

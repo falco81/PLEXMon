@@ -4,6 +4,17 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.11.8 - 2026-11-20
+
+- **P6 in an empty folder put right**: Plex's scanner says "Marking media not available in
+  /data2/Bonus ... Taking 4 items out of the map for being unavailable" - an empty folder of a
+  library is, to Plex, a disk not mounted, and what was in it is never put into its trash (the
+  4 Bonus files and the one of /data4/Youtube, from the logs of a real server). When the empty
+  folder is on a disk of its own that is mounted, plexmon puts a small file
+  `plexmon-placeholder.txt` into it for the scan and the trash, and takes it away again
+  whatever happens; the P6 card says so. Never on a folder that lies on the system disk - there
+  Plex's guard is right.
+
 ## 2.11.7 - 2026-11-20
 
 - The package for analysis says how Plex holds each file gone (P6): its row in media_parts,

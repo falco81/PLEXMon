@@ -728,6 +728,13 @@ function ixP6(body, p, r) {
     var list = el('div', 'ix-list');
     bysec[sid].forEach(function (m) { list.appendChild(ixRow(ixIcon('trash', 14), ixFile(m.file, m.root))); });
     box.appendChild(list);
+    var empties = (sec.roots || []).filter(function (x) { return x.empty && !x.mount_problem && bysec[sid].some(function (m) { return m.root === x.path; }); });
+    if (empties.length) {
+      var en = el('p', 'note small');
+      en.appendChild(noI18n(el('span', 'mono', empties.map(function (x) { return x.path; }).join(', ') + ' ')));
+      en.appendChild(el('span', '', 'is empty: Plex keeps what was in an empty folder as "not available" and never puts it into its trash (its guard against a disk not mounted). Its disk is mounted, so plexmon puts a small file plexmon-placeholder.txt into it for the scan and takes it away again.'));
+      box.appendChild(en);
+    }
     if (ADMIN) {
       var row = ixActions(box);
       var b = cmdButton('Scan and empty the trash', 'broom', 'primary');

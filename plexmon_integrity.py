@@ -1775,9 +1775,52 @@ def fix_scan(store, by, kind, section=None, dirs=None, trash=False, monitor=None
         if why:
             raise ValueError('the trash of "%s" is not emptied: %s' % (s.get('name'),
                                                                        '; '.join(why)))
+    # An empty folder of a library (2.11.8): Plex's scanner says "Marking media not available
+    # in /data2/Bonus ... Taking 4 items out of the map for being unavailable" - its own guard
+    # against a disk not mounted - and never puts them into its trash. On a disk of its own
+    # that IS mounted, a small file plexmon-placeholder.txt is put into the folder for the
+    # scan, and taken away again whatever happens.
+    holders = []
+    if kind == 'P6':
+        for r in (secs.get(section) or {}).get('roots') or []:
+            if not any(m['root'] == r['path'] for m in rep['problems']['P6']['missing']
+                       if m['section'] == section):
+                continue
+            try:
+                empty = not any(True for _ in os.scandir(r['path']))
+            except OSError:
+                continue
+            st0 = root_state(r['path'], monitor)
+            if empty and st0['state'] == 'awake' and st0.get('mount') not in ('', '/'):
+                holders.append(os.path.join(r['path'], PLACEHOLDER))
     phase('idle', 'waiting until Plex has nothing running', 0, 5)
     if not wait_idle(timeout=1800, quiet=20, why='before the scan'):
         raise ValueError('Plex did not stop working for half an hour - nothing done')
+    try:
+        return _fix_scan_go(store, by, kind, section, want, trash, secs, rep, monitor, wake,
+                            final, mode, holders)
+    finally:
+        for hp in holders:
+            try:
+                if os.path.isfile(hp):
+                    os.unlink(hp)
+                    line('%s taken away again' % hp)
+            except OSError as e:
+                line('%s could NOT be taken away: %s - delete it by hand' % (hp, e))
+
+
+PLACEHOLDER = 'plexmon-placeholder.txt'
+
+
+def _fix_scan_go(store, by, kind, section, want, trash, secs, rep, monitor, wake, final, mode,
+                 holders):
+    for hp in holders:
+        with open(hp, 'w') as f:
+            f.write('Put here by plexmon for a moment (Library integrity, P6): Plex does not put '
+                    'into its trash what was in an empty folder - it takes the folder for a disk '
+                    'not mounted. plexmon takes this file away again after the scan.\n')
+        line('%s put in - the folder is empty, and Plex keeps what was in an empty folder as '
+             '"not available" instead of putting it into its trash' % hp)
     phase('scan', 'the folders are scanned', 1, 5)
     done, asleep = [], []
     whole_sec = set()

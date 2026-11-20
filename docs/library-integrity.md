@@ -102,6 +102,14 @@ A P6 folder that is gone altogether is put right by a scan of the whole library 
 folder above it does not see what was inside - and the trash is emptied only once a fresh copy
 of the database shows the files gone in it.
 
+### An empty folder (2.11.8)
+
+Plex's scanner does not put into its trash what was in an empty folder of a library: "Marking
+media not available in /data2/Bonus ... Taking 4 items out of the map for being unavailable" -
+an empty folder looks to it like a disk not mounted. When the empty folder is on a disk of its
+own that is mounted, plexmon puts `plexmon-placeholder.txt` into it for the scan and the trash
+and takes it away again whatever happens. A folder on the system disk is never given one.
+
 ## Plex's own Optimize and Clean Bundles
 
 Settings → The database runs them as a job followed to the end. Optimize makes a checked copy of
