@@ -3712,3 +3712,16 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .ix-wz-row.off{opacity:.6;cursor:default}
 .ix-wz-t{display:flex;flex-direction:column;gap:2px;min-width:0;overflow-wrap:anywhere}
 .ix-wz-why{color:var(--warn)}
+/* 2.11.6: the top of Library integrity laid out evenly */
+.ix-hero{align-items:start;row-gap:18px;margin-bottom:14px}
+.ix-hero .ix-ring{align-self:center}
+.ix-hero-t{align-self:center}
+.ix-hero-foot{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  padding-top:14px;border-top:1px solid var(--line)}
+.ix-hero-foot-l,.ix-hero-foot-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ix-hero-foot .ix-packs{flex-direction:row;gap:10px;padding:4px 10px}
+.ix-hero-foot .ix-pack{gap:6px}
+.ix-jobhost:empty{display:none}
+.ix-jobhost>.ix-job{margin:0 0 14px}
+.ix-tiles{margin:0 0 14px}
+#tab-integrity>.card,#ix-host>.card{margin-bottom:14px}

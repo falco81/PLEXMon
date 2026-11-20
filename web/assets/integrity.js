@@ -212,19 +212,26 @@ function ixHero(d, r) {
     modes.appendChild(lab);
   });
   tools.appendChild(modes);
+  /* The other things to do in a bar of their own along the bottom (2.11.6) - the column
+     at the right made the card twice as tall as what it says. */
+  var foot = el('div', 'ix-hero-foot');
+  var fl = el('div', 'ix-hero-foot-l');
+  var fr = el('div', 'ix-hero-foot-r');
+  foot.appendChild(fl);
+  foot.appendChild(fr);
   if (r && ADMIN && (r.summary.safe + r.summary.confirm) > 0) {
     var all = cmdButton('Put everything right…', 'shield', '');
     all.classList.add('ix-all');
     explain(all, 'Everything that can be put right here, in one run - each problem ticked or not, P1 first, then each P2, the trash of each library, the folders of P5, and a look at the end.');
     all.disabled = ixRunning() || ixBusyDb();
     all.onclick = function () { ixAllWizard(d, r); };
-    tools.appendChild(all);
+    fl.appendChild(all);
   }
   var pk = cmdButton('A package for analysis', 'archive', 'small');
   explain(pk, 'Everything found, in full, packed as a ZIP to send on for analysis - instead of putting anything right. Nothing of Plex\'s is changed to make it.');
   pk.disabled = ixRunning() || ixBusyDb();
   pk.onclick = ixPackageAsk;
-  tools.appendChild(pk);
+  fr.appendChild(pk);
   if ((d.packages || []).length) {
     var pl = el('div', 'ix-packs');
     d.packages.forEach(function (x) {
@@ -240,14 +247,15 @@ function ixHero(d, r) {
       row.appendChild(del);
       pl.appendChild(row);
     });
-    tools.appendChild(pl);
+    fr.appendChild(pl);
   }
   if (r) {
     var dl = cmdButton('Download the report', 'download', 'small');
     dl.onclick = function () { api('integrity', {action: 'report-text'}).then(function (x) { saveText(x.text, x.name); }).catch(oops); };
-    tools.appendChild(dl);
+    fr.appendChild(dl);
   }
   c.appendChild(tools);
+  c.appendChild(foot);
   return c;
 }
 

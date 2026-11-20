@@ -4,6 +4,13 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.11.6 - 2026-11-20
+
+- Library integrity, the top laid out evenly: *Put everything right…*, the package for analysis
+  and the report in a bar along the bottom of the card, so the column at the right no longer
+  makes the card twice as tall as what it says; the same gap between the top, a running job and
+  the tiles (the job's card stuck to the top one).
+
 ## 2.11.5 - 2026-11-20
 
 - **Put everything right…** (Library integrity): one run for everything that can be put right -
