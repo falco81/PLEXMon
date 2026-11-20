@@ -924,8 +924,17 @@ def db_job(what, by, fn):
     return dict(DB_JOB)
 
 
+SAYS_SCALE = []      # [(lo, hi)]: a step of a bigger job, its 0..whole put into lo..hi of 100
+
+
 def says(words, done=None, whole=None):
     DB_JOB['says'] = words
+    if SAYS_SCALE and done is not None:
+        lo, hi = SAYS_SCALE[-1]
+        w = whole if whole is not None else (DB_JOB.get('whole') or 1)
+        DB_JOB['done'] = lo + int((hi - lo) * done / max(1, w))
+        DB_JOB['whole'] = 100
+        return
     if done is not None:
         DB_JOB['done'] = done
     if whole is not None:
@@ -1295,6 +1304,7 @@ def plex_api(path):
 def db_view(store):
     own = {'where': store.db.where(), 'bytes': store.db.size(), 'tables': own_tables(store),
            'copies': _files(own_dir(), 'plexmon-', '.db.gz'), 'dir': str(own_dir()),
+           'keep': int(cfg('backup_keep', 14) or 14),
            'key': str(A.sealing_key_path()) if hasattr(A, 'sealing_key_path') else ''}
     try:
         du = shutil.disk_usage(str(STATE_DIR))
@@ -1304,7 +1314,9 @@ def db_view(store):
     pdb = {'dir': str(PLEX_DB_DIR), 'files': plex_db_files(), 'own_backups': plex_own_backups(),
            'copies': plex_copies(), 'copies_dir': str(plex_dir()),
            'last': meta(store, 'plexdb:last', {}) or {}, 'running': plex_running(),
-           'plex_sqlite': os.path.exists(PLEX_SQLITE), 'timers': user_timer()}
+           'plex_sqlite': os.path.exists(PLEX_SQLITE), 'timers': user_timer(),
+           'tasks': {k: meta(store, 'plexdb:task:%s' % k, {}) or {} for k in ('optimize', 'clean')},
+           'keep': int(cfg('plex_db_keep', 7) or 7)}
     try:
         du = shutil.disk_usage(str(plex_dir()))
         pdb['disk'] = {'total': du.total, 'free': du.free}

@@ -1777,17 +1777,20 @@ function dbWatch() {
   var step = function () {
     api('db', {action: 'job'}).then(function (x) {
       var j = x.job || {};
-      var g = $('db-going');
-      if (g) {
+      ['db-going', 'pdb-going'].forEach(function (id) {
+        var g = $(id);
+        if (!g) return;
+        if (id === 'pdb-going' && !/^Plex (optimizes|cleans)/.test(j.what || '')) { g.hidden = true; return; }
         g.hidden = !j.running;
         var f = g.querySelector('span');
         if (f) f.style.width = (j.whole ? Math.round(100 * j.done / j.whole) : 6) + '%';
         var sy = g.querySelector('.says');
-        if (sy) sy.textContent = (j.what ? txT(j.what) + ' - ' : '') + txT(j.says || '');
-      }
+        if (sy) sy.textContent = (j.what ? txT(j.what) + ' - ' : '') + txT(j.says || '') + (j.whole ? ' (' + Math.round(100 * j.done / j.whole) + ' %)' : '');
+      });
       if (j.running) { DBV.poll = setTimeout(step, 1000); return; }
       DBV.poll = null;
       if (j.error) toast(j.error, 'bad');
+      else if (j.result && j.result.kind === 'optimize') toast(txT('Plex optimized its database') + ': ' + bytes(j.result.before) + ' → ' + bytes(j.result.after), 'good');
       else if (j.result) toast(txT(j.what || 'done') + ': ' + txT('done'), 'good');
       if (TAB === 'settings' && PANE === 'db') loadDb();
     }).catch(function () { DBV.poll = setTimeout(step, 3000); });
@@ -1867,16 +1870,39 @@ function drawDb() {
   if (last.check && last.check.ok === false) ph.appendChild(el('p', 'note bad', 'The last copy is NOT whole: ' + (last.check.said || []).join('; ')));
   var pr = el('div', 'btnrow');
   var opt = cmdButton('Optimize it (Plex\'s own)', 'db', '');
-  explain(opt, 'Plex Media Server\'s own Optimize Database (as in Plex: Troubleshooting) - asked of Plex, done by Plex. A copy first is wise.');
+  explain(opt, 'Plex Media Server\'s own Optimize Database (as in Plex: Troubleshooting) - asked of Plex, done by Plex, followed here to the end. A checked copy of the database is made first, by itself.');
+  opt.disabled = running;
   opt.onclick = function () {
-    confirmThen('Let Plex optimize its database?', htmlText('Plex rebuilds its database file to give the room back and tidy its indexes. While it does, the library may answer slowly. Make a copy first if there is none of today.'), 'Optimize', function () { dbDo({action: 'plex-optimize'}); }, false);
+    confirmThen('Let Plex optimize its database?', htmlText('First a checked copy of the database is made here (Plex goes on) - kept with the copies below, to put back if anything goes wrong. Then Plex rebuilds its database file to give the room back and tidy its indexes; while it does, the library may answer slowly. Its progress is shown here until it is done.'), 'Copy, then optimize', function () { dbDo({action: 'plex-optimize'}, 'a copy first, then Plex optimizes'); }, false);
   };
   var cln = cmdButton('Clean the bundles (Plex\'s own)', 'broom', '');
-  explain(cln, 'Plex Media Server\'s own Clean Bundles: metadata bundles of what is no longer in the library deleted by Plex.');
-  cln.onclick = function () { dbDo({action: 'plex-clean'}); };
+  explain(cln, 'Plex Media Server\'s own Clean Bundles: metadata bundles of what is no longer in the library deleted by Plex - followed here to the end. Plex\'s database is not changed by it.');
+  cln.disabled = running;
+  cln.onclick = function () { dbDo({action: 'plex-clean'}, 'Plex cleans its bundles'); };
   pr.appendChild(opt); pr.appendChild(cln);
   ph.appendChild(pr);
-  ph.appendChild(el('h4', '', 'Copies made here'));
+  var pg = el('div', 'going wide');
+  pg.id = 'pdb-going';
+  pg.hidden = !(running && /^Plex (optimizes|cleans)/.test(d.job.what || ''));
+  pg.innerHTML = '<div class="bar"><span></span></div><div class="says"></div>';
+  ph.appendChild(pg);
+  var tk = p.tasks || {};
+  var tl = el('div', 'pdb-tasks');
+  [['optimize', 'Optimized'], ['clean', 'Bundles cleaned']].forEach(function (x) {
+    var t = tk[x[0]] || {};
+    if (!t.at) return;
+    var line = el('div', 'pdb-task');
+    line.appendChild(el('span', 'tag ok', x[1]));
+    line.appendChild(el('span', 'muted', ' ' + ago(t.at)));
+    line.appendChild(noI18n(el('span', 'muted', ' · ' + (t.by || '') + ' · ' + (t.took || 0) + ' s')));
+    if (x[0] === 'optimize') line.appendChild(noI18n(el('span', '', ' · ' + bytes(t.before || 0) + ' → ' + bytes(t.after || 0))));
+    if (t.copy) { line.appendChild(el('span', 'muted', ' · a copy before:')); line.appendChild(noI18n(el('span', 'mono small', ' ' + t.copy))); }
+    tl.appendChild(line);
+  });
+  if (tl.childNodes.length) ph.appendChild(tl);
+  var ch4 = el('h4', '', 'Copies made here');
+  ch4.appendChild(noI18n(el('span', 'muted small', ' · ' + (p.copies || []).length + ' / ' + (p.keep || 7))));
+  ph.appendChild(ch4);
   ph.appendChild(dbCopies(p.copies || [], 'plex', function (c) {
     var dl = iconButton('download', 'Download it');
     dl.onclick = function () { window.location.href = '?api=db-file&kind=plex&name=' + encodeURIComponent(c.name); };
@@ -1958,7 +1984,10 @@ function drawDb() {
   };
   [ck, gb, td, er].forEach(function (b) { orow.appendChild(b); });
   oh.appendChild(orow);
-  oh.appendChild(el('h4', '', 'Copies'));
+  var oh4 = el('h4', '', 'Copies');
+  oh4.appendChild(noI18n(el('span', 'muted small', ' · ' + (own.copies || []).length + ' / ' + (own.keep || 14))));
+  oh.appendChild(oh4);
+  oh.appendChild(el('p', 'muted small', 'How many are kept is set below, in "Copies of plexmon\'s database, and what is kept" - apart from the copies of Plex\'s database.'));
   oh.appendChild(dbCopies(own.copies || [], 'own', function (c) {
     var dl = iconButton('download', 'Download it');
     dl.onclick = function () { window.location.href = '?api=db-file&kind=own&name=' + encodeURIComponent(c.name); };

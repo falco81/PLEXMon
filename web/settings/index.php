@@ -341,7 +341,7 @@ if (isset($_GET['api'])) {
         'rbackup' => '/api/rbackup', 'acme-push' => '/api/acme-push',
         'passkey-state' => '/api/auth/passkey/state', 'passkeys' => '/api/auth/passkeys',
         'load' => '/api/load', 'tasks' => '/api/tasks', 'selinux' => '/api/selinux',
-        'osroots' => '/api/osroots',
+        'osroots' => '/api/osroots', 'integrity' => '/api/integrity',
     ];
     $writes = [
         'settings' => '/api/settings', 'users' => '/api/users', 'sessions' => '/api/sessions',
@@ -354,7 +354,7 @@ if (isset($_GET['api'])) {
         'rbackup' => '/api/rbackup', 'proxy' => '/api/proxy', 'acme-push' => '/api/acme-push',
         'passkey-begin' => '/api/auth/passkey/begin', 'passkey-register' => '/api/auth/passkey/register',
         'passkeys' => '/api/auth/passkeys', 'tasks' => '/api/tasks', 'selinux' => '/api/selinux',
-        'osroots' => '/api/osroots',
+        'osroots' => '/api/osroots', 'integrity' => '/api/integrity',
     ];
     if ($post) {
         if (!isset($writes[$what])) {
@@ -664,6 +664,7 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
     <button type="button" class="fulladmin-only" data-pane="osup" data-icon="download" title="The operating system's packages updated by dnf; a restart offered when one is needed.">System updates</button>
     <div class="ctl-group">Data</div>
     <button type="button" class="fulladmin-only" data-pane="db" data-icon="db" title="plexmon's database and Plex Media Server's own: copies, a check, putting one back.">The database</button>
+    <button type="button" class="fulladmin-only" data-pane="integrity" data-icon="search" title="Where Plex's library no longer agrees with itself or with the disks - found on a copy of its database, put right safely.">Library integrity</button>
     <button type="button" class="fulladmin-only" data-pane="backup" data-icon="archive" title="Backups of everything to another machine - FTP, FTPS, SFTP, SCP, SMB or a folder - locked with a password, on a schedule, Plex's database in them too.">Backups</button>
     <div class="ctl-group">The server</div>
     <button type="button" class="fulladmin-only" data-pane="upgrade" data-icon="up" title="A new version, put in from here - from the web or as a file.">Upgrades</button>
@@ -916,6 +917,14 @@ plexmon --upgrade-status                   # an upgrade started on these pages</
       <div id="odb-host"></div></div>
     <div class="card full"><h2>Copies of plexmon's database, and what is kept</h2><div id="sect-db"></div></div>
   </div>
+  <div class="ctl-pane" id="pane-integrity" hidden>
+    <div class="ctl-head"><h2 class="ctl-title">Library integrity</h2>
+      <p class="ctl-lede">Where Plex Media Server's library no longer agrees with itself or with the disks: a
+        file Plex shows nowhere, a file under another show, a file on the disk Plex has not taken in, a file
+        Plex has that is gone. Found on a copy of its database - Plex goes on; put right only after a checked
+        copy of the database, and a sleeping disk is never woken.</p></div>
+    <div id="ix-host"></div>
+  </div>
   <div class="ctl-pane" id="pane-backup" hidden>
     <div class="ctl-head"><h2 class="ctl-title">Backups</h2>
       <p class="ctl-lede">A backup is everything plexmon is: its database (accounts, settings, the
@@ -980,6 +989,7 @@ var PHP_SAFETY = <?= ($me['role'] ?? '') === 'fulladmin' ? json_encode(pm_php_sa
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/cols.js?v=<?= h(PM_VERSION) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/admin.js?v=<?= h(PM_VERSION) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/host.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/host.js')) ?>"></script>
+<script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/integrity.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/integrity.js')) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/plexlib.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/plexlib.js')) ?>"></script>
 <?php if (!empty($pm_meter)): ?>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/hload.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/hload.js')) ?>"></script>

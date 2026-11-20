@@ -10531,6 +10531,1110 @@
   "xs1381": {
    "source": "Switching to enforcing is the whole system's - the last card, below.",
    "text": "Přepnutí na enforcing platí pro celý systém – poslední karta níže."
+  },
+  "xs1382": {
+   "source": "Library integrity",
+   "text": "Integrita knihovny"
+  },
+  "xs1383": {
+   "source": "Where Plex's library no longer agrees with itself or with the disks - found on a copy of its database, put right safely.",
+   "text": "Kde knihovna Plexu nesedí sama se sebou nebo s disky – zjištěno na kopii její databáze, bezpečně opraveno."
+  },
+  "xs1384": {
+   "source": "Where Plex Media Server's library no longer agrees with itself or with the disks: a file Plex shows nowhere, a file under another show, a file on the disk Plex has not taken in, a file Plex has that is gone. Found on a copy of its database - Plex goes on; put right only after a checked copy of the database, and a sleeping disk is never woken.",
+   "text": "Kde knihovna Plex Media Serveru nesedí sama se sebou nebo s disky: soubor, který Plex nikde neukazuje, soubor u jiného seriálu, soubor na disku, který Plex nenačetl, soubor, který Plex má, ale už neexistuje. Zjišťuje se na kopii jeho databáze – Plex běží dál; opravuje se až po zkontrolované kopii databáze a spící disk se nikdy neprobudí."
+  },
+  "xs1385": {
+   "source": "Files Plex shows nowhere",
+   "text": "Soubory, které Plex nikde neukazuje"
+  },
+  "xs1386": {
+   "source": "Files under another show",
+   "text": "Soubory u jiného seriálu"
+  },
+  "xs1387": {
+   "source": "Several shows on one match",
+   "text": "Více seriálů na jedné shodě"
+  },
+  "xs1388": {
+   "source": "A merge or a split while Plex was busy",
+   "text": "Sloučení nebo rozdělení, když Plex pracoval"
+  },
+  "xs1389": {
+   "source": "On the disk, but not taken in by Plex",
+   "text": "Na disku, ale Plex je nenačetl"
+  },
+  "xs1390": {
+   "source": "In the database, but not on the disk",
+   "text": "V databázi, ale ne na disku"
+  },
+  "xs1391": {
+   "source": "Empty or without a parent",
+   "text": "Prázdné nebo bez rodiče"
+  },
+  "xs1392": {
+   "source": "Gaps in the numbering of episodes",
+   "text": "Mezery v číslování epizod"
+  },
+  "xs1393": {
+   "source": "A file in the database that Plex shows nowhere",
+   "text": "Soubor v databázi, který Plex nikde neukazuje"
+  },
+  "xs1394": {
+   "source": "A file under another show",
+   "text": "Soubor u jiného seriálu"
+  },
+  "xs1395": {
+   "source": "A merge or split while Plex was busy",
+   "text": "Sloučení nebo rozdělení, když Plex pracoval"
+  },
+  "xs1396": {
+   "source": "A file on the disk Plex has not taken in",
+   "text": "Soubor na disku, který Plex nenačetl"
+  },
+  "xs1397": {
+   "source": "Seasons and shows left empty or without a parent",
+   "text": "Prázdné sezóny a seriály nebo bez rodiče"
+  },
+  "xs1398": {
+   "source": "The file is on the disk and in the database, but its media item points at an episode that is not there any more - Plex shows it nowhere, and a scan does not help: it knows the file.",
+   "text": "Soubor je na disku i v databázi, ale jeho media item ukazuje na epizodu, která už neexistuje – Plex ho nikde neukáže a sken nepomůže: soubor už zná."
+  },
+  "xs1399": {
+   "source": "Most often a merge or a split while Plex was analysing (loudness, intros, credits): the analysis wrote the old episode back after the merge had destroyed it (P4). A crash of Plex while it wrote, or a hand in the database, can do it too.",
+   "text": "Nejčastěji sloučení nebo rozdělení, zatímco Plex analyzoval (hlasitost, úvody, titulky): analýza zapsala starou epizodu zpět poté, co ji sloučení zrušilo (P4). Může to způsobit i pád Plexu během zápisu nebo ruční zásah do databáze."
+  },
+  "xs1400": {
+   "source": "Plex is stopped, a checked copy of its database made, its files copied aside; the orphan media items are taken out in one transaction through Plex's own SQLite as Plex's own user, the finding itself as its guard; integrity_check; Plex started; their folders scanned - Plex takes the files in as new.",
+   "text": "Plex se zastaví, udělá se zkontrolovaná kopie jeho databáze a jeho soubory se odloží stranou; osiřelé media items se odeberou v jedné transakci přes vlastní SQLite Plexu pod jeho vlastním uživatelem, s nálezem samotným jako pojistkou; integrity_check; Plex se spustí; jejich složky se naskenují – Plex soubory načte jako nové."
+  },
+  "xs1401": {
+   "source": "A file from the folder of one show is attached to an episode of another show on the same match - one show misses the episode, the other has it twice.",
+   "text": "Soubor ze složky jednoho seriálu je navázaný na epizodu jiného seriálu na stejné shodě – jednomu seriálu epizoda chybí, druhý ji má dvakrát."
+  },
+  "xs1402": {
+   "source": "Several shows on one match (P3): Plex gives a new file to the FIRST show with the match, not to the show whose folder it is in - after P1 is put right, a new episode added, or a Plex dance of one of them.",
+   "text": "Více seriálů na jedné shodě (P3): Plex dá nový soubor PRVNÍMU seriálu s touto shodou, ne seriálu, v jehož složce je – po opravě P1, po přidání nového dílu nebo po „Plex dance“ jednoho z nich."
+  },
+  "xs1403": {
+   "source": "Through Plex's own API, nothing in its database: once Plex has nothing running, a checked copy of the database, a Split of the show the files went to, the new small show found by its folder and merged into the folder's owner; the show's own folders merged together again, the titles chosen by hand put back, looked at again. It stops at anything unexpected.",
+   "text": "Přes vlastní API Plexu, nic v jeho databázi: jakmile Plex nic nedělá, zkontrolovaná kopie databáze, Split seriálu, ke kterému se soubory dostaly, nový malý seriál nalezený podle složky a sloučený do vlastníka složky; vlastní složky seriálu znovu sloučené, ručně zvolené názvy vrácené, nová kontrola. Při čemkoli nečekaném se zastaví."
+  },
+  "xs1404": {
+   "source": "One show more than once in a library - a version, a dubbing - all on the same Plex match. Wanted, often; but Plex only half supports it.",
+   "text": "Jeden seriál víckrát v jedné knihovně – verze, dabing – všechny na stejné shodě Plexu. Často záměr; Plex to ale podporuje jen napůl."
+  },
+  "xs1405": {
+   "source": "New files go to the first show of the match (P2); a refresh, Fix Match or Plex dance of one of them can merge them by itself; a merge and a split by hand risk P4 and then P1.",
+   "text": "Nové soubory jdou k prvnímu seriálu shody (P2); obnovení, Fix Match nebo Plex dance jednoho z nich je může sám sloučit; ruční sloučení a rozdělení riskuje P4 a pak P1."
+  },
+  "xs1406": {
+   "source": "Nothing to put right here. To be rid of P2 and P3 for good: each version in a library of its own (Plex matches only within one library), e.g. \"TV Shows - iPrima\" with that one folder.",
+   "text": "Tady není co opravit. Natrvalo se zbavíte P2 i P3, když dáte každou verzi do vlastní knihovny (Plex páruje jen v rámci jedné knihovny), např. „TV Shows – iPrima“ jen s tou jednou složkou."
+  },
+  "xs1407": {
+   "source": "Found in Plex's logs: an analysis wrote an episode back after a merge had destroyed it, or a merge or split was asked while analyses were scheduled.",
+   "text": "Nalezeno v logech Plexu: analýza zapsala epizodu zpět poté, co ji sloučení zrušilo, nebo bylo vyžádáno sloučení či rozdělení, zatímco byly naplánované analýzy."
+  },
+  "xs1408": {
+   "source": "A fault of Plex Media Server itself: a job in the background holds on to the old episode. This is how P1 is born.",
+   "text": "Chyba samotného Plex Media Serveru: úloha na pozadí si drží starou epizodu. Takhle vzniká P1."
+  },
+  "xs1409": {
+   "source": "Nothing can be put right in the log - P1 is what to put right. Before any merge or split: wait until Plex has nothing running (Settings → Plex library shows it), and look here again after.",
+   "text": "V logu se nic opravit nedá – opravuje se P1. Před každým sloučením nebo rozdělením počkejte, až Plex nic nedělá (ukáže to Nastavení → Knihovna Plexu), a pak se sem znovu podívejte."
+  },
+  "xs1410": {
+   "source": "A video file in a library folder that Plex has no record of - with what most likely keeps it out.",
+   "text": "Video soubor ve složce knihovny, o kterém Plex nemá záznam – s tím, co ho nejspíš drží venku."
+  },
+  "xs1411": {
+   "source": "Still being downloaded, a name Plex does not understand, outside a season folder, a file Plex's user may not read, a broken file - or Plex simply has not scanned that folder.",
+   "text": "Ještě se stahuje, má název, kterému Plex nerozumí, leží mimo složku sezóny, uživatel Plexu ho nesmí číst, je poškozený – nebo Plex tu složku prostě ještě neskenoval."
+  },
+  "xs1412": {
+   "source": "Only a scan of the folder is asked of Plex (only where nothing else is in the way, only on a disk that is awake). Names and permissions are for you - what to do is said beside each.",
+   "text": "Po Plexu se chce jen sken složky (jen tam, kde nic jiného nebrání, a jen na disku, který je vzhůru). Názvy a oprávnění jsou na vás – co udělat, je napsané u každého."
+  },
+  "xs1413": {
+   "source": "Plex has a file that is not on the disk any more - moved, deleted - or a whole folder is not there: a disk not mounted.",
+   "text": "Plex má soubor, který už na disku není – přesunutý, smazaný – nebo chybí celá složka: nepřipojený disk."
+  },
+  "xs1414": {
+   "source": "A file deleted or moved outside Plex. A folder with more than 5 % missing is taken for a disk not mounted - and then nothing is done.",
+   "text": "Soubor smazaný nebo přesunutý mimo Plex. Složka, ve které chybí víc než 5 %, se bere jako nepřipojený disk – a pak se nedělá nic."
+  },
+  "xs1415": {
+   "source": "Its folders scanned (Plex puts them into its trash) and the library's trash emptied - only when every folder of the library is there and awake, and no more than 5 % of it is missing or in the trash.",
+   "text": "Jejich složky se naskenují (Plex je dá do koše) a koš knihovny se vysype – jen když jsou všechny složky knihovny na místě a vzhůru a chybí nebo v koši je nejvýš 5 %."
+  },
+  "xs1416": {
+   "source": "Seasons and shows with nothing in them, episodes with no file, and seasons or episodes whose show or season is not there.",
+   "text": "Sezóny a seriály bez obsahu, epizody bez souboru a sezóny či epizody, jejichž seriál nebo sezóna neexistuje."
+  },
+  "xs1417": {
+   "source": "What is left after files were deleted or moved, or after a merge.",
+   "text": "To, co zbylo po smazání nebo přesunu souborů nebo po sloučení."
+  },
+  "xs1418": {
+   "source": "The empty ones go with the library's trash (same guards as P6). Those without a parent are only shown: deleting from Plex's database by hand touches many tables.",
+   "text": "Prázdné odejdou s košem knihovny (stejné pojistky jako u P6). Ty bez rodiče se jen ukazují: ruční mazání z databáze Plexu sahá do mnoha tabulek."
+  },
+  "xs1419": {
+   "source": "A season with episodes missing in the middle - 1, 2, 4, 6. Maybe never downloaded; but where the file is there, it says which problem holds it.",
+   "text": "Sezóna, které uprostřed chybí epizody – 1, 2, 4, 6. Možná nebyly nikdy stažené; ale kde soubor je, řekne, který problém ho drží."
+  },
+  "xs1420": {
+   "source": "A gap is where to look for P1, P2 and P5.",
+   "text": "Mezera je místo, kde hledat P1, P2 a P5."
+  },
+  "xs1421": {
+   "source": "Nothing on its own. A missing number found on the disk is marked with the problem that holds it.",
+   "text": "Samo o sobě nic. Chybějící číslo nalezené na disku je označené problémem, který ho drží."
+  },
+  "xs1422": {
+   "source": "Put right safely",
+   "text": "Bezpečně opravitelné"
+  },
+  "xs1423": {
+   "source": "Needs your yes",
+   "text": "Potřebuje váš souhlas"
+  },
+  "xs1424": {
+   "source": "For your information",
+   "text": "Pro informaci"
+  },
+  "xs1425": {
+   "source": "not scanned yet",
+   "text": "zatím neskenováno"
+  },
+  "xs1426": {
+   "source": "still being written",
+   "text": "ještě se zapisuje"
+  },
+  "xs1427": {
+   "source": "permissions",
+   "text": "oprávnění"
+  },
+  "xs1428": {
+   "source": "its name",
+   "text": "název"
+  },
+  "xs1429": {
+   "source": "where it is",
+   "text": "umístění"
+  },
+  "xs1430": {
+   "source": "damaged",
+   "text": "poškozený"
+  },
+  "xs1431": {
+   "source": "unreadable",
+   "text": "nečitelný"
+  },
+  "xs1432": {
+   "source": "awake",
+   "text": "vzhůru"
+  },
+  "xs1433": {
+   "source": "asleep - left alone",
+   "text": "spí – nechán být"
+  },
+  "xs1434": {
+   "source": "not known if it sleeps",
+   "text": "nevíme, zda spí"
+  },
+  "xs1435": {
+   "source": "Not looked through yet",
+   "text": "Zatím neprověřeno"
+  },
+  "xs1436": {
+   "source": "Plex's database needs a hand",
+   "text": "Databáze Plexu potřebuje ruku"
+  },
+  "xs1437": {
+   "source": "The library agrees with itself",
+   "text": "Knihovna sedí sama se sebou"
+  },
+  "xs1438": {
+   "source": "The library needs putting right",
+   "text": "Knihovnu je potřeba opravit"
+  },
+  "xs1439": {
+   "source": "Nothing to put right - a few things to know",
+   "text": "Nic k opravě – jen pár věcí k vědomí"
+  },
+  "xs1440": {
+   "source": "to put right",
+   "text": "k opravě"
+  },
+  "xs1441": {
+   "source": "to know",
+   "text": "k vědomí"
+  },
+  "xs1442": {
+   "source": "Looked through",
+   "text": "Prověřeno"
+  },
+  "xs1443": {
+   "source": "The disks were looked at too (only those awake).",
+   "text": "Prověřeny i disky (jen ty, které jsou vzhůru)."
+  },
+  "xs1444": {
+   "source": "From the database alone - the disks were not looked at.",
+   "text": "Jen z databáze – disky se neprověřovaly."
+  },
+  "xs1445": {
+   "source": "A copy of Plex's database is read - Plex goes on, nothing of its own file is written. The disks only when asked, and only those awake: a sleeping disk is never woken.",
+   "text": "Čte se kopie databáze Plexu – Plex běží dál, do jeho souboru se nic nezapisuje. Disky jen na požádání a jen ty, které jsou vzhůru: spící disk se nikdy neprobudí."
+  },
+  "xs1446": {
+   "source": "Plex runs",
+   "text": "Plex běží"
+  },
+  "xs1447": {
+   "source": "1 person watches",
+   "text": "1 člověk se dívá"
+  },
+  "xs1448": {
+   "source": "Plex is busy:",
+   "text": "Plex pracuje:"
+  },
+  "xs1449": {
+   "source": "no Plex SQLite",
+   "text": "chybí Plex SQLite"
+  },
+  "xs1450": {
+   "source": "Plex's own SQLite (/usr/lib/plexmediaserver/Plex SQLite) is not on this machine: everything is found, but P1 - the only change in Plex's database - is not put right without it.",
+   "text": "Vlastní SQLite Plexu (/usr/lib/plexmediaserver/Plex SQLite) na tomto stroji není: všechno se najde, ale P1 – jediná změna v databázi Plexu – se bez něj neopraví."
+  },
+  "xs1451": {
+   "source": "Look through again",
+   "text": "Prověřit znovu"
+  },
+  "xs1452": {
+   "source": "Look through the library",
+   "text": "Prověřit knihovnu"
+  },
+  "xs1453": {
+   "source": "The disks too (only those awake)",
+   "text": "I disky (jen ty, které jsou vzhůru)"
+  },
+  "xs1454": {
+   "source": "Is every file of the database on the disk (P6), and every video file on the disk in the database (P5)? Only the folders of disks that are awake now are read - a sleeping disk is left out and named, never woken.",
+   "text": "Je každý soubor z databáze na disku (P6) a každé video z disku v databázi (P5)? Čtou se jen složky disků, které jsou právě vzhůru – spící disk se vynechá a jmenovitě uvede, nikdy se neprobudí."
+  },
+  "xs1455": {
+   "source": "under way",
+   "text": "probíhá"
+  },
+  "xs1456": {
+   "source": "Stops at the next safe point - never in the middle of a change: a change already begun is finished, or put back.",
+   "text": "Zastaví se v nejbližším bezpečném bodě – nikdy uprostřed změny: rozběhnutá změna se dokončí, nebo vrátí."
+  },
+  "xs1457": {
+   "source": "Folders left out",
+   "text": "Vynechané složky"
+  },
+  "xs1458": {
+   "source": "Can be put right here, a copy of the database first",
+   "text": "Dá se opravit tady, nejdřív kopie databáze"
+  },
+  "xs1459": {
+   "source": "Changes how the library looks - each asked first",
+   "text": "Mění podobu knihovny – u každého se nejdřív zeptá"
+  },
+  "xs1460": {
+   "source": "Shown with what to do - nothing to press",
+   "text": "Ukázáno, co udělat – nic k mačkání"
+  },
+  "xs1461": {
+   "source": "Folders not looked at: a disk asleep, not known, or not there",
+   "text": "Neprověřené složky: disk spí, neznámý stav nebo chybí"
+  },
+  "xs1462": {
+   "source": "An index of Plex's database does not agree with its table",
+   "text": "Index databáze Plexu nesedí s její tabulkou"
+  },
+  "xs1463": {
+   "source": "Rows Plex cannot find by their number would look like P1 - nothing is put right here. On the server, with Plex stopped: Plex SQLite, REINDEX; or put back a copy (Settings → The database).",
+   "text": "Řádky, které Plex nenajde podle čísla, by vypadaly jako P1 – nic se tu neopravuje. Na serveru se zastaveným Plexem: Plex SQLite, REINDEX; nebo vraťte kopii (Nastavení → Databáze)."
+  },
+  "xs1464": {
+   "source": "Everything agrees",
+   "text": "Všechno sedí"
+  },
+  "xs1465": {
+   "source": "The folders of the libraries",
+   "text": "Složky knihoven"
+  },
+  "xs1466": {
+   "source": "and their disks, as they are now",
+   "text": "a jejich disky, jak jsou teď"
+  },
+  "xs1467": {
+   "source": "files in Plex",
+   "text": "souborů v Plexu"
+  },
+  "xs1468": {
+   "source": "not on the disk",
+   "text": "není na disku"
+  },
+  "xs1469": {
+   "source": "Too much of it is missing - a disk not mounted? Nothing is done for it.",
+   "text": "Chybí z ní příliš mnoho – nepřipojený disk? Nic se pro ni nedělá."
+  },
+  "xs1470": {
+   "source": "the folder is not there - a disk not mounted?",
+   "text": "složka chybí – nepřipojený disk?"
+  },
+  "xs1471": {
+   "source": "Why it happens, and what is done",
+   "text": "Proč se to děje a co se udělá"
+  },
+  "xs1472": {
+   "source": "Why: ",
+   "text": "Proč: "
+  },
+  "xs1473": {
+   "source": "Here: ",
+   "text": "Tady: "
+  },
+  "xs1474": {
+   "source": "media item",
+   "text": "media item"
+  },
+  "xs1475": {
+   "source": "media part",
+   "text": "media part"
+  },
+  "xs1476": {
+   "source": "(an episode that is not there)",
+   "text": "(epizoda, která neexistuje)"
+  },
+  "xs1477": {
+   "source": "(a media item that is not there)",
+   "text": "(media item, který neexistuje)"
+  },
+  "xs1478": {
+   "source": "Plex is stopped for a minute or two. A checked copy of its database comes first.",
+   "text": "Plex se na minutu či dvě zastaví. Nejdřív se udělá zkontrolovaná kopie jeho databáze."
+  },
+  "xs1479": {
+   "source": "Plex SQLite is not on this machine - Plex's database is written only with it.",
+   "text": "Na tomto stroji chybí Plex SQLite – do databáze Plexu se zapisuje jen jím."
+  },
+  "xs1480": {
+   "source": "An index of the database does not agree - this is not P1.",
+   "text": "Index databáze nesedí – tohle není P1."
+  },
+  "xs1481": {
+   "source": "Something is under way - once it is done.",
+   "text": "Něco právě probíhá – až skončí."
+  },
+  "xs1482": {
+   "source": "Settings → The database is busy - once it is done.",
+   "text": "Nastavení → Databáze pracuje – až skončí."
+  },
+  "xs1483": {
+   "source": "Root does exactly this - nothing else:",
+   "text": "Root udělá přesně tohle – nic jiného:"
+  },
+  "xs1484": {
+   "source": "A fresh copy of the database looked at",
+   "text": "Prověří se čerstvá kopie databáze"
+  },
+  "xs1485": {
+   "source": "only what is an orphan still is touched",
+   "text": "sáhne se jen na to, co je stále osiřelé"
+  },
+  "xs1486": {
+   "source": "A checked copy of Plex's database",
+   "text": "Zkontrolovaná kopie databáze Plexu"
+  },
+  "xs1487": {
+   "source": "packed, kept in Settings → The database - it can be put back from there",
+   "text": "zabalená, uložená v Nastavení → Databáze – odtud se dá vrátit"
+  },
+  "xs1488": {
+   "source": "Plex Media Server stopped",
+   "text": "Plex Media Server zastaven"
+  },
+  "xs1489": {
+   "source": "nobody watches now",
+   "text": "teď se nikdo nedívá"
+  },
+  "xs1490": {
+   "source": "1 person watches now - it stops for them",
+   "text": "teď se dívá 1 člověk – přehrávání se mu zastaví"
+  },
+  "xs1491": {
+   "source": "Its database files copied aside",
+   "text": "Jeho soubory databáze se odloží stranou"
+  },
+  "xs1492": {
+   "source": "as they are, to put back at once if anything is not right",
+   "text": "tak, jak jsou, aby se daly hned vrátit, kdyby něco nesedělo"
+  },
+  "xs1493": {
+   "source": "one transaction, Plex SQLite as Plex's own user, the finding itself as its guard - media streams, parts, items; nothing else",
+   "text": "jedna transakce, Plex SQLite pod vlastním uživatelem Plexu, nález samotný jako pojistka – media streams, parts, items; nic jiného"
+  },
+  "xs1494": {
+   "source": "integrity_check",
+   "text": "integrity_check"
+  },
+  "xs1495": {
+   "source": "not \"ok\": Plex's files are put back as they were",
+   "text": "když nevrátí „ok“: soubory Plexu se vrátí, jak byly"
+  },
+  "xs1496": {
+   "source": "Plex Media Server started",
+   "text": "Plex Media Server se spustí"
+  },
+  "xs1497": {
+   "source": "whatever happened before",
+   "text": "ať se předtím stalo cokoli"
+  },
+  "xs1498": {
+   "source": "Their folders scanned",
+   "text": "Jejich složky se naskenují"
+  },
+  "xs1499": {
+   "source": "Plex takes the files in as new - only folders on disks awake; asleep ones at Plex's next scan",
+   "text": "Plex soubory načte jako nové – jen složky na discích, které jsou vzhůru; spící při příštím skenu Plexu"
+  },
+  "xs1500": {
+   "source": "Looked at again",
+   "text": "Nová kontrola"
+  },
+  "xs1501": {
+   "source": "once Plex has nothing running",
+   "text": "jakmile Plex nic nedělá"
+  },
+  "xs1502": {
+   "source": "Put P1 right?",
+   "text": "Opravit P1?"
+  },
+  "xs1503": {
+   "source": "Someone is watching: their film stops when Plex stops.",
+   "text": "Někdo se dívá: když se Plex zastaví, přehrávání mu skončí."
+  },
+  "xs1504": {
+   "source": "If the show is one of several on one match (P3), Plex may put the file under another show when it scans it - P2. Look here again after.",
+   "text": "Pokud je seriál jedním z několika na jedné shodě (P3), Plex může soubor při skenu dát k jinému seriálu – P2. Potom se sem podívejte znovu."
+  },
+  "xs1505": {
+   "source": "Stop Plex and put it right",
+   "text": "Zastavit Plex a opravit"
+  },
+  "xs1506": {
+   "source": "Put it right",
+   "text": "Opravit"
+  },
+  "xs1507": {
+   "source": "Someone is watching",
+   "text": "Někdo se dívá"
+  },
+  "xs1508": {
+   "source": "Stop it anyway",
+   "text": "Přesto zastavit"
+  },
+  "xs1509": {
+   "source": "attached to",
+   "text": "navázáno na"
+  },
+  "xs1510": {
+   "source": "belongs to",
+   "text": "patří k"
+  },
+  "xs1511": {
+   "source": "the folder:",
+   "text": "složka:"
+  },
+  "xs1512": {
+   "source": "Put right through Plex",
+   "text": "Opravit přes Plex"
+  },
+  "xs1513": {
+   "source": "For good: each version in a library of its own (P3) - then Plex cannot put a file under the other show again.",
+   "text": "Natrvalo: každou verzi do vlastní knihovny (P3) – pak Plex nemůže dát soubor znovu k jinému seriálu."
+  },
+  "xs1514": {
+   "source": "the two shows are not on one match",
+   "text": "ty dva seriály nejsou na jedné shodě"
+  },
+  "xs1515": {
+   "source": "the two shows are not on one match - put it right in Plex (Fix Match)",
+   "text": "ty dva seriály nejsou na jedné shodě – opravte to v Plexu (Fix Match)"
+  },
+  "xs1516": {
+   "source": "the folder's files are split evenly between the shows - which one owns it is not clear",
+   "text": "soubory složky jsou rozdělené mezi seriály napůl – není jasné, kterému patří"
+  },
+  "xs1517": {
+   "source": "Put P2 right through Plex?",
+   "text": "Opravit P2 přes Plex?"
+  },
+  "xs1518": {
+   "source": "Only Plex's own API - its database is not written by plexmon:",
+   "text": "Jen vlastní API Plexu – plexmon do jeho databáze nezapisuje:"
+  },
+  "xs1519": {
+   "source": "Wait until Plex has nothing running",
+   "text": "Počkat, až Plex nic nedělá"
+  },
+  "xs1520": {
+   "source": "analyses, scans - otherwise a merge risks P4 and P1; not quiet within half an hour: nothing is done",
+   "text": "analýzy, skeny – jinak sloučení riskuje P4 a P1; když se do půl hodiny neutiší, nic se neudělá"
+  },
+  "xs1521": {
+   "source": "kept in Settings → The database",
+   "text": "uložená v Nastavení → Databáze"
+  },
+  "xs1522": {
+   "source": "Plex makes a show of each of its folders",
+   "text": "Plex udělá z každé jeho složky samostatný seriál"
+  },
+  "xs1523": {
+   "source": "never by its number - anything unexpected: STOP, nothing merged",
+   "text": "nikdy podle čísla – při čemkoli nečekaném STOP, nic se nesloučí"
+  },
+  "xs1524": {
+   "source": "the owner keeps its title, poster and locked fields",
+   "text": "vlastník si ponechá název, plakát a zamčená pole"
+  },
+  "xs1525": {
+   "source": "when it had more than one",
+   "text": "pokud jich měl víc"
+  },
+  "xs1526": {
+   "source": "The titles chosen by hand put back",
+   "text": "Ručně zvolené názvy se vrátí"
+  },
+  "xs1527": {
+   "source": "a split gives the pieces the agent's title",
+   "text": "rozdělení dá kouskům název od agenta"
+  },
+  "xs1528": {
+   "source": "the episodes counted against what was expected",
+   "text": "epizody se spočítají proti očekávání"
+  },
+  "xs1529": {
+   "source": "A split and a merge change how the library looks; if a step goes wrong, plexmon stops there and says what is left - nothing is undone by itself.",
+   "text": "Rozdělení a sloučení mění podobu knihovny; když se nějaký krok nepovede, plexmon se tam zastaví a řekne, co zbývá – nic se samo nevrací."
+  },
+  "xs1530": {
+   "source": "Written back after it was destroyed",
+   "text": "Zapsáno zpět po zrušení"
+  },
+  "xs1531": {
+   "source": "destroyed",
+   "text": "zrušeno"
+  },
+  "xs1532": {
+   "source": "still an orphan - P1",
+   "text": "stále osiřelé – P1"
+  },
+  "xs1533": {
+   "source": "A merge while analyses were scheduled",
+   "text": "Sloučení, zatímco byly naplánované analýzy"
+  },
+  "xs1534": {
+   "source": "A split while analyses were scheduled",
+   "text": "Rozdělení, zatímco byly naplánované analýzy"
+  },
+  "xs1535": {
+   "source": "Left out on purpose, as Plex does:",
+   "text": "Záměrně vynecháno, jako to dělá Plex:"
+  },
+  "xs1536": {
+   "source": "Ask Plex to scan these folders?",
+   "text": "Požádat Plex o sken těchto složek?"
+  },
+  "xs1537": {
+   "source": "A scan of each folder asked of Plex",
+   "text": "Plex se požádá o sken každé složky"
+  },
+  "xs1538": {
+   "source": "Scan them",
+   "text": "Naskenovat"
+  },
+  "xs1539": {
+   "source": ": a disk not mounted?",
+   "text": ": nepřipojený disk?"
+  },
+  "xs1540": {
+   "source": "of its files are not there. Nothing is done for this folder - and the trash of its library is not emptied - until it is there again.",
+   "text": "jejích souborů chybí. Pro tuto složku se nic nedělá – a koš její knihovny se nevysype – dokud nebude zase na místě."
+  },
+  "xs1541": {
+   "source": "Scan and empty the trash",
+   "text": "Naskenovat a vysypat koš"
+  },
+  "xs1542": {
+   "source": "Only the folders of a disk not mounted - the files were not looked for: look through again with \"The disks too\".",
+   "text": "Jen složky nepřipojeného disku – soubory se nehledaly: prověřte znovu se zaškrtnutým „I disky“."
+  },
+  "xs1543": {
+   "source": "a disk not mounted?",
+   "text": "nepřipojený disk?"
+  },
+  "xs1544": {
+   "source": "Every folder of the library has to be there and awake",
+   "text": "Všechny složky knihovny musí být na místě a vzhůru"
+  },
+  "xs1545": {
+   "source": "Its folders with files gone scanned",
+   "text": "Naskenují se jeho složky s chybějícími soubory"
+  },
+  "xs1546": {
+   "source": "Plex puts what is not there into its trash",
+   "text": "Plex dá, co chybí, do koše"
+  },
+  "xs1547": {
+   "source": "How much is in the trash looked at again",
+   "text": "Znovu se zjistí, kolik je v koši"
+  },
+  "xs1548": {
+   "source": "a fresh copy of the database - more than 5 % of a folder in the trash: STOP, nothing emptied",
+   "text": "čerstvá kopie databáze – víc než 5 % složky v koši: STOP, nic se nevysype"
+  },
+  "xs1549": {
+   "source": "The trash emptied",
+   "text": "Koš se vysype"
+  },
+  "xs1550": {
+   "source": "Plex forgets what is not there - and what was watched of it",
+   "text": "Plex zapomene, co chybí – i co z toho bylo zhlédnuto"
+  },
+  "xs1551": {
+   "source": "What Plex forgets cannot be brought back without a copy of the database (Settings → The database).",
+   "text": "Co Plex zapomene, se bez kopie databáze nevrátí (Nastavení → Databáze)."
+  },
+  "xs1552": {
+   "source": "Empty the trash",
+   "text": "Vysypat koš"
+  },
+  "xs1553": {
+   "source": "Empty - nothing in it",
+   "text": "Prázdné – nic v nich"
+  },
+  "xs1554": {
+   "source": "An episode with no file",
+   "text": "Epizoda bez souboru"
+  },
+  "xs1555": {
+   "source": "Its show or season is not there",
+   "text": "Jejich seriál nebo sezóna chybí"
+  },
+  "xs1556": {
+   "source": "A number marked P1, P2 or P5 is on the disk - the card of that problem puts it right.",
+   "text": "Číslo označené P1, P2 nebo P5 je na disku – opraví ho karta toho problému."
+  },
+  "xs1557": {
+   "source": "What was put right here",
+   "text": "Co se tu opravilo"
+  },
+  "xs1558": {
+   "source": "Nothing yet.",
+   "text": "Zatím nic."
+  },
+  "xs1559": {
+   "source": "How it went",
+   "text": "Jak to dopadlo"
+  },
+  "xs1560": {
+   "source": "Kept",
+   "text": "Uloženo"
+  },
+  "xs1561": {
+   "source": "not done",
+   "text": "neprovedeno"
+  },
+  "xs1562": {
+   "source": "The database agrees with itself",
+   "text": "Databáze sedí sama se sebou"
+  },
+  "xs1563": {
+   "source": ". The disks were not looked at this time.",
+   "text": ". Disky se tentokrát neprověřovaly."
+  },
+  "xs1564": {
+   "source": " and with the disks that are awake.",
+   "text": " a s disky, které jsou vzhůru."
+  },
+  "xs1565": {
+   "source": "A copy of the database",
+   "text": "Kopie databáze"
+  },
+  "xs1566": {
+   "source": "The database read",
+   "text": "Databáze přečtena"
+  },
+  "xs1567": {
+   "source": "Plex's logs read",
+   "text": "Logy Plexu přečteny"
+  },
+  "xs1568": {
+   "source": "The report",
+   "text": "Report"
+  },
+  "xs1569": {
+   "source": "A checked copy of the database",
+   "text": "Zkontrolovaná kopie databáze"
+  },
+  "xs1570": {
+   "source": "Plex stopped",
+   "text": "Plex zastaven"
+  },
+  "xs1571": {
+   "source": "Its files copied aside",
+   "text": "Jeho soubory odloženy"
+  },
+  "xs1572": {
+   "source": "The orphans taken out",
+   "text": "Osiřelé odebrány"
+  },
+  "xs1573": {
+   "source": "Plex started",
+   "text": "Plex spuštěn"
+  },
+  "xs1574": {
+   "source": "The folders scanned",
+   "text": "Složky naskenovány"
+  },
+  "xs1575": {
+   "source": "Plex has nothing running",
+   "text": "Plex nic nedělá"
+  },
+  "xs1576": {
+   "source": "The shows as they are now",
+   "text": "Seriály, jak jsou teď"
+  },
+  "xs1577": {
+   "source": "Split",
+   "text": "Rozdělení"
+  },
+  "xs1578": {
+   "source": "The new shows found by their folders",
+   "text": "Nové seriály nalezeny podle složek"
+  },
+  "xs1579": {
+   "source": "Merged into the folder's owner",
+   "text": "Sloučeno do vlastníka složky"
+  },
+  "xs1580": {
+   "source": "Its own folders together again",
+   "text": "Jeho složky zase dohromady"
+  },
+  "xs1581": {
+   "source": "The titles back",
+   "text": "Názvy zpět"
+  },
+  "xs1582": {
+   "source": "Plex done",
+   "text": "Plex hotov"
+  },
+  "xs1583": {
+   "source": "the library looked through",
+   "text": "prověření knihovny"
+  },
+  "xs1584": {
+   "source": "P1 put right",
+   "text": "oprava P1"
+  },
+  "xs1585": {
+   "source": "P2 put right",
+   "text": "oprava P2"
+  },
+  "xs1586": {
+   "source": "P5 put right",
+   "text": "oprava P5"
+  },
+  "xs1587": {
+   "source": "P6 put right",
+   "text": "oprava P6"
+  },
+  "xs1588": {
+   "source": "P7 put right",
+   "text": "oprava P7"
+  },
+  "xs1589": {
+   "source": "the library is looked through",
+   "text": "knihovna se prověřuje"
+  },
+  "xs1590": {
+   "source": "P1 is being put right",
+   "text": "P1 se opravuje"
+  },
+  "xs1591": {
+   "source": "P2 is being put right",
+   "text": "P2 se opravuje"
+  },
+  "xs1592": {
+   "source": "the library database is copied (Plex goes on)",
+   "text": "kopíruje se databáze knihovny (Plex běží dál)"
+  },
+  "xs1593": {
+   "source": "the database is read",
+   "text": "čte se databáze"
+  },
+  "xs1594": {
+   "source": "P1 - files Plex shows nowhere",
+   "text": "P1 – soubory, které Plex nikde neukazuje"
+  },
+  "xs1595": {
+   "source": "P2, P3 - files under another show",
+   "text": "P2, P3 – soubory u jiného seriálu"
+  },
+  "xs1596": {
+   "source": "P7, P8 - empty items, gaps in the numbering",
+   "text": "P7, P8 – prázdné položky, mezery v číslování"
+  },
+  "xs1597": {
+   "source": "Plex's logs are read",
+   "text": "čtou se logy Plexu"
+  },
+  "xs1598": {
+   "source": "the disks",
+   "text": "disky"
+  },
+  "xs1599": {
+   "source": "the report",
+   "text": "report"
+  },
+  "xs1600": {
+   "source": "the database is looked at again (a fresh copy)",
+   "text": "databáze se prověřuje znovu (čerstvá kopie)"
+  },
+  "xs1601": {
+   "source": "a checked copy of Plex's database (Plex goes on)",
+   "text": "zkontrolovaná kopie databáze Plexu (Plex běží dál)"
+  },
+  "xs1602": {
+   "source": "Plex Media Server is stopped",
+   "text": "Plex Media Server se zastavuje"
+  },
+  "xs1603": {
+   "source": "its database files are copied aside",
+   "text": "jeho soubory databáze se odkládají stranou"
+  },
+  "xs1604": {
+   "source": "the orphans are taken out (Plex SQLite, one transaction)",
+   "text": "osiřelé se odebírají (Plex SQLite, jedna transakce)"
+  },
+  "xs1605": {
+   "source": "Plex SQLite: integrity_check",
+   "text": "Plex SQLite: integrity_check"
+  },
+  "xs1606": {
+   "source": "Plex Media Server is started",
+   "text": "Plex Media Server se spouští"
+  },
+  "xs1607": {
+   "source": "Plex scans their folders",
+   "text": "Plex skenuje jejich složky"
+  },
+  "xs1608": {
+   "source": "looked at again, once Plex is done",
+   "text": "nová kontrola, až bude Plex hotov"
+  },
+  "xs1609": {
+   "source": "waiting until Plex has nothing running",
+   "text": "čeká se, až Plex nic nedělá"
+  },
+  "xs1610": {
+   "source": "the shows of this match as they are now",
+   "text": "seriály této shody, jak jsou teď"
+  },
+  "xs1611": {
+   "source": "the new shows found by their folders",
+   "text": "nové seriály se hledají podle složek"
+  },
+  "xs1612": {
+   "source": "merged into the folder's owner",
+   "text": "slučuje se do vlastníka složky"
+  },
+  "xs1613": {
+   "source": "the show's own folders together again",
+   "text": "vlastní složky seriálu zase dohromady"
+  },
+  "xs1614": {
+   "source": "the titles chosen by hand put back",
+   "text": "vracejí se ručně zvolené názvy"
+  },
+  "xs1615": {
+   "source": "the folders are scanned",
+   "text": "složky se skenují"
+  },
+  "xs1616": {
+   "source": "until Plex is done",
+   "text": "až bude Plex hotov"
+  },
+  "xs1617": {
+   "source": "the trash is emptied",
+   "text": "koš se vysypává"
+  },
+  "xs1618": {
+   "source": "Plex Media Server started again",
+   "text": "Plex Media Server znovu spuštěn"
+  },
+  "xs1619": {
+   "source": "integrity_check: ok",
+   "text": "integrity_check: ok"
+  },
+  "xs1620": {
+   "source": "Plex's database files put back as they were",
+   "text": "soubory databáze Plexu vráceny, jak byly"
+  },
+  "xs1621": {
+   "source": "it stops at the next safe point",
+   "text": "zastaví se v nejbližším bezpečném bodě"
+  },
+  "xs1622": {
+   "source": "nothing is running",
+   "text": "nic neběží"
+  },
+  "xs1623": {
+   "source": "nothing chosen",
+   "text": "nic nevybráno"
+  },
+  "xs1624": {
+   "source": "none of these is an orphan any more - nothing to do",
+   "text": "nic z toho už není osiřelé – není co dělat"
+  },
+  "xs1625": {
+   "source": "that case is not in the last look - look again",
+   "text": "tento případ v poslední kontrole není – prověřte znovu"
+  },
+  "xs1626": {
+   "source": "which library?",
+   "text": "která knihovna?"
+  },
+  "xs1627": {
+   "source": "Plex did not stop working for half an hour - nothing done; try at night",
+   "text": "Plex za půl hodiny nepřestal pracovat – nic se neudělalo; zkuste to v noci"
+  },
+  "xs1628": {
+   "source": "Plex did not stop working for half an hour - nothing done",
+   "text": "Plex za půl hodiny nepřestal pracovat – nic se neudělalo"
+  },
+  "xs1629": {
+   "source": "Plex optimizes its database",
+   "text": "Plex optimalizuje svou databázi"
+  },
+  "xs1630": {
+   "source": "Plex cleans its bundles",
+   "text": "Plex čistí své bundly"
+  },
+  "xs1631": {
+   "source": "Plex optimized its database",
+   "text": "Plex zoptimalizoval svou databázi"
+  },
+  "xs1632": {
+   "source": "a checked copy of the database first (Plex goes on)",
+   "text": "nejdřív zkontrolovaná kopie databáze (Plex běží dál)"
+  },
+  "xs1633": {
+   "source": "Plex is asked to optimize its database",
+   "text": "Plex se žádá o optimalizaci databáze"
+  },
+  "xs1634": {
+   "source": "Plex is asked to clean its bundles",
+   "text": "Plex se žádá o vyčištění bundlů"
+  },
+  "xs1635": {
+   "source": "Plex is done - its files settle",
+   "text": "Plex je hotov – jeho soubory se ustalují"
+  },
+  "xs1636": {
+   "source": "Plex works on it (it says nothing of it as it goes)",
+   "text": "Plex na tom pracuje (průběh nehlásí)"
+  },
+  "xs1637": {
+   "source": "a copy first, then Plex optimizes",
+   "text": "nejdřív kopie, pak Plex optimalizuje"
+  },
+  "xs1638": {
+   "source": "Optimized",
+   "text": "Optimalizováno"
+  },
+  "xs1639": {
+   "source": "Bundles cleaned",
+   "text": "Bundly vyčištěny"
+  },
+  "xs1640": {
+   "source": " · a copy before:",
+   "text": " · kopie předtím:"
+  },
+  "xs1641": {
+   "source": "Copy, then optimize",
+   "text": "Zkopírovat a optimalizovat"
+  },
+  "xs1642": {
+   "source": "Plex Media Server's own Optimize Database (as in Plex: Troubleshooting) - asked of Plex, done by Plex, followed here to the end. A checked copy of the database is made first, by itself.",
+   "text": "Vlastní Optimalizace databáze Plex Media Serveru (jako v Plexu: Řešení potíží) – žádá se po Plexu, dělá ji Plex, tady se sleduje až do konce. Nejdřív se sama udělá zkontrolovaná kopie databáze."
+  },
+  "xs1643": {
+   "source": "First a checked copy of the database is made here (Plex goes on) - kept with the copies below, to put back if anything goes wrong. Then Plex rebuilds its database file to give the room back and tidy its indexes; while it does, the library may answer slowly. Its progress is shown here until it is done.",
+   "text": "Nejdřív se tady udělá zkontrolovaná kopie databáze (Plex běží dál) – uloží se ke kopiím níže, aby se dala vrátit, kdyby se něco pokazilo. Pak Plex přestaví soubor databáze, aby uvolnil místo a uklidil indexy; mezitím může knihovna odpovídat pomaleji. Průběh se tu ukazuje až do konce."
+  },
+  "xs1644": {
+   "source": "Plex Media Server's own Clean Bundles: metadata bundles of what is no longer in the library deleted by Plex - followed here to the end. Plex's database is not changed by it.",
+   "text": "Vlastní Vyčištění bundlů Plex Media Serveru: Plex smaže balíčky metadat toho, co už v knihovně není – tady se sleduje až do konce. Databázi Plexu to nemění."
+  },
+  "xs1645": {
+   "source": "Copies of plexmon's database kept",
+   "text": "Ponechaných kopií databáze plexmonu"
+  },
+  "xs1646": {
+   "source": "Copies of Plex's database kept",
+   "text": "Ponechaných kopií databáze Plexu"
+  },
+  "xs1647": {
+   "source": "How many are kept is set below, in \"Copies of plexmon's database, and what is kept\" - apart from the copies of Plex's database.",
+   "text": "Kolik se jich ponechává, se nastavuje níže v „Kopie databáze plexmonu a co se ponechává“ – odděleně od kopií databáze Plexu."
+  },
+  "xs1648": {
+   "source": "a scan of its folder",
+   "text": "sken jeho složky"
+  },
+  "xs1649": {
+   "source": "still being written or downloaded - wait",
+   "text": "ještě se zapisuje nebo stahuje – počkejte"
+  },
+  "xs1650": {
+   "source": "Plex's user may not read it: chown plex:plex the file and chmod 644",
+   "text": "uživatel Plexu ho nesmí číst: chown plex:plex na soubor a chmod 644"
+  },
+  "xs1651": {
+   "source": "no S01E05 (or a date) in the name - name it \"Show (Year) - S01E05.ext\"",
+   "text": "v názvu chybí S01E05 (nebo datum) – pojmenujte ho „Seriál (Rok) - S01E05.ext“"
+  },
+  "xs1652": {
+   "source": "straight in the library folder - put it into a folder of its show",
+   "text": "leží přímo ve složce knihovny – dejte ho do složky jeho seriálu"
+  },
+  "xs1653": {
+   "source": "deeper than Show/Season XX/ - Plex may not look there",
+   "text": "hlouběji než Seriál/Season XX/ – Plex tam nemusí hledat"
+  },
+  "xs1654": {
+   "source": "extras (not episodes)",
+   "text": "bonusy (ne epizody)"
+  },
+  "xs1655": {
+   "source": "a sample",
+   "text": "ukázka (sample)"
+  },
+  "xs1656": {
+   "source": "hidden or system folder",
+   "text": "skrytá nebo systémová složka"
+  },
+  "xs1657": {
+   "source": ".plexignore",
+   "text": ".plexignore"
   }
  },
  "patterns": {
@@ -13289,6 +14393,186 @@
   "xp0306": {
    "source": "{0} (permissive: let through, written down)",
    "text": "{0} (permissive: propuštěno, zapsáno)"
+  },
+  "xp0307": {
+   "source": "{0} - waiting until Plex has nothing running ({1} s more)",
+   "text": "{0} – čeká se, až Plex nic nedělá (ještě {1} s)"
+  },
+  "xp0308": {
+   "source": "waiting until Plex has nothing running ({0} s more)",
+   "text": "čeká se, až Plex nic nedělá (ještě {0} s)"
+  },
+  "xp0309": {
+   "source": "{0} - waiting for Plex: {1}",
+   "text": "{0} – čeká se na Plex: {1}"
+  },
+  "xp0310": {
+   "source": "waiting for Plex: {0}",
+   "text": "čeká se na Plex: {0}"
+  },
+  "xp0311": {
+   "source": "P5 - {0}: what Plex has not taken in",
+   "text": "P5 – {0}: co Plex nenačetl"
+  },
+  "xp0312": {
+   "source": "P6 - {0}: is every file there?",
+   "text": "P6 – {0}: je tam každý soubor?"
+  },
+  "xp0313": {
+   "source": "a scan of {0} asked of Plex",
+   "text": "Plex požádán o sken {0}"
+  },
+  "xp0314": {
+   "source": "the copy {0}: checked, whole",
+   "text": "kopie {0}: zkontrolovaná, celá"
+  },
+  "xp0315": {
+   "source": "copied aside: {0} → {1}",
+   "text": "odloženo stranou: {0} → {1}"
+  },
+  "xp0316": {
+   "source": "taken out: {0} media item(s), {1} part(s); left: {2}",
+   "text": "odebráno: {0} media item(s), {1} part(s); zbývá: {2}"
+  },
+  "xp0317": {
+   "source": "{0} media item(s), {1} part(s) without a media item: still orphans",
+   "text": "{0} media item(s), {1} part(s) bez media item: stále osiřelé"
+  },
+  "xp0318": {
+   "source": "{0}: its disk sleeps - not woken",
+   "text": "{0}: jeho disk spí – nebudí se"
+  },
+  "xp0319": {
+   "source": "{0}: its disk sleeps - not woken; Plex takes the files in at its next scan of the library",
+   "text": "{0}: jeho disk spí – nebudí se; Plex soubory načte při příštím skenu knihovny"
+  },
+  "xp0320": {
+   "source": "Split of \"{0}\"",
+   "text": "Rozdělení „{0}“"
+  },
+  "xp0321": {
+   "source": "the title of {0} back to \"{1}\"",
+   "text": "název {0} vrácen na „{1}“"
+  },
+  "xp0322": {
+   "source": "a checked copy: {0}",
+   "text": "zkontrolovaná kopie: {0}"
+  },
+  "xp0323": {
+   "source": "Put right ({0})",
+   "text": "Opravit ({0})"
+  },
+  "xp0324": {
+   "source": "Scan these folders ({0})",
+   "text": "Naskenovat tyto složky ({0})"
+  },
+  "xp0325": {
+   "source": "Empty the trash of \"{0}\"",
+   "text": "Vysypat koš „{0}“"
+  },
+  "xp0326": {
+   "source": "Empty the trash of \"{0}\"?",
+   "text": "Vysypat koš „{0}“?"
+  },
+  "xp0327": {
+   "source": "{0} people watch",
+   "text": "dívá se {0} lidí"
+  },
+  "xp0328": {
+   "source": "{0} people watch now - it stops for them",
+   "text": "teď se dívá {0} lidí – přehrávání se jim zastaví"
+  },
+  "xp0329": {
+   "source": "The {0} orphan(s) taken out",
+   "text": "Odebere se {0} osiřelých"
+  },
+  "xp0330": {
+   "source": "\"{0}\" split",
+   "text": "Rozdělí se „{0}“"
+  },
+  "xp0331": {
+   "source": "The new show of {0} found by its folder",
+   "text": "Nový seriál ze složky {0} se najde podle složky"
+  },
+  "xp0332": {
+   "source": "Merged into \"{0}\"",
+   "text": "Sloučí se do „{0}“"
+  },
+  "xp0333": {
+   "source": "\"{0}\"'s own folders merged together again",
+   "text": "Vlastní složky „{0}“ se znovu sloučí"
+  },
+  "xp0334": {
+   "source": "\"{0}\" has folders on several disks - they are merged together again after the split.",
+   "text": "„{0}“ má složky na více discích – po rozdělení se znovu sloučí."
+  },
+  "xp0335": {
+   "source": "Not for a button: {0}",
+   "text": "Ne pro tlačítko: {0}"
+  },
+  "xp0336": {
+   "source": "and {0} more - all of them in the report",
+   "text": "a dalších {0} – všechny jsou v reportu"
+  },
+  "xp0337": {
+   "source": "Read: {0} logs of Plex (they hold the last few days; Plex writes these lines at its debug level).",
+   "text": "Přečteno: {0} logů Plexu (obsahují posledních pár dní; tyto řádky Plex zapisuje na úrovni debug)."
+  },
+  "xp0338": {
+   "source": "{0} audio, video or subtitle streams belong to no media item - harmless leftovers, left as they are.",
+   "text": "{0} zvukových, obrazových či titulkových stop nepatří k žádnému media item – neškodné zbytky, nechávají se být."
+  },
+  "xp0339": {
+   "source": "Settings → The database is busy ({0}) - once it is done.",
+   "text": "Nastavení → Databáze pracuje ({0}) – až skončí."
+  },
+  "xp0340": {
+   "source": "{0} sleeps - never woken by this",
+   "text": "{0} spí – tímhle se nikdy neprobudí"
+  },
+  "xp0341": {
+   "source": "plexmon cannot tell whether {0} sleeps - left out",
+   "text": "plexmon nedokáže říct, zda {0} spí – vynecháno"
+  },
+  "xp0342": {
+   "source": "Plex: {0}",
+   "text": "Plex: {0}"
+  },
+  "xp0343": {
+   "source": "{0} person is watching now - Plex is stopped for this; ask again with \"stop it anyway\"",
+   "text": "{0} člověk se teď dívá – Plex se kvůli tomu zastaví; požádejte znovu s „Přesto zastavit“"
+  },
+  "xp0344": {
+   "source": "{0} people are watching now - Plex is stopped for this; ask again with \"stop it anyway\"",
+   "text": "{0} lidí se teď dívá – Plex se kvůli tomu zastaví; požádejte znovu s „Přesto zastavit“"
+  },
+  "xp0345": {
+   "source": "the trash of \"{0}\" is not emptied: {1}",
+   "text": "koš „{0}“ se nevysype: {1}"
+  },
+  "xp0346": {
+   "source": "{0}: too much of it is missing - a disk not mounted?",
+   "text": "{0}: chybí z ní příliš mnoho – nepřipojený disk?"
+  },
+  "xp0347": {
+   "source": "this one is not for a button: {0}",
+   "text": "tohle není pro tlačítko: {0}"
+  },
+  "xp0348": {
+   "source": "{0} is under way - wait for it",
+   "text": "{0} právě probíhá – počkejte na to"
+  },
+  "xp0349": {
+   "source": "library integrity: {0}",
+   "text": "integrita knihovny: {0}"
+  },
+  "xp0350": {
+   "source": "the file cannot be read ({0}) - download it again",
+   "text": "soubor nejde přečíst ({0}) – stáhněte ho znovu"
+  },
+  "xp0351": {
+   "source": "Plex's user may not go into {0}: chmod 755 the folder",
+   "text": "uživatel Plexu nesmí do {0}: chmod 755 na složku"
   }
  },
  "rich": {

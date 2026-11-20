@@ -959,6 +959,7 @@ function showPane(name) {
   if (name === 'power' && typeof loadPower === 'function') loadPower();
   if (name === 'osup' && typeof loadOsup === 'function') loadOsup();
   if (name === 'db' && typeof loadDb === 'function') loadDb();
+  if (name === 'integrity' && typeof loadIntegrity === 'function') loadIntegrity();
   if (name === 'backup' && typeof loadRbackup === 'function') loadRbackup();
   if (name === 'web') { loadWeb(); osrLoad(); }
   if (name === 'selinux') loadSelinux(); else if (typeof sePoll === 'function') sePoll(false);

@@ -4,6 +4,35 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.11.0 - 2026-11-20
+
+- **Settings → Library integrity** (new; docs/library-integrity.md): where Plex's library no
+  longer agrees with itself or with the disks - P1 a file Plex shows nowhere (an orphan media
+  item), P2 a file under another show, P3 several shows on one match, P4 a merge or split while
+  Plex was busy (from its logs), P5 a file on the disk Plex has not taken in (with its likely
+  cause), P6 a file Plex has that is gone, P7 empty items and children without a parent, P8
+  gaps in the numbering (a missing number found on the disk is marked with the problem that
+  holds it). Found on a copy of the database; the disks only when asked and only those awake -
+  a sleeping disk is never woken, a folder that is not there is a disk not mounted.
+- Put right where it can be safely: **P1** with Plex stopped (who watches is told first), a
+  checked copy of the database before, Plex's files copied aside, one transaction through Plex
+  SQLite as Plex's own user with the finding as its guard, integrity_check after - the files put
+  back if anything is not right, Plex started whatever happens (and by plexmon as it starts, if
+  it did not live to); **P2** through Plex's own API only - once Plex is quiet, a checked copy, a
+  split, the new show found by its folder and merged into the folder's owner, the titles put
+  back, looked at again, STOP at anything unexpected; **P5** a scan of the folder; **P6/P7** a
+  scan and the trash emptied only when every folder of the library is there and awake and no
+  more than 5 % is in the trash.
+- The page: a ring of how it stands, four tiles, every folder with its disk as it is now, a card
+  per problem with why it happens and what is done, the steps of a job as stations with a bar
+  and what it did line by line, a Stop at the next safe point, a confirm listing exactly what
+  root will do, what was put right here, a text report.
+- **Settings → The database:** Plex's own Optimize and Clean Bundles are followed to the end -
+  their progress from Plex beside the buttons, the last run of each with the size before and
+  after; Optimize makes a checked copy of the database first.
+- "Copies kept" is named for which database it is (plexmon's or Plex's), and each list of copies
+  says how many there are of how many kept.
+
 ## 2.10.2 - 2026-11-17
 
 - Settings → SELinux in the order one reads it: how SELinux stands (mode, *Look again*, the

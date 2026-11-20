@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.10.2'
+__version__ = '2.11.0'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -365,11 +365,11 @@ NAMES = {
     'plex_omdb_key': 'OMDb API key (IMDb, Rotten Tomatoes)',
     'plex_trakt_id': 'Trakt client id',
     'plex_tvmaze': 'TVmaze (no key needed)',
-    'backup_daily': 'A copy of the database every day', 'backup_keep': 'Copies kept',
+    'backup_daily': 'A copy of the database every day', 'backup_keep': 'Copies of plexmon\'s database kept',
     'backup_at': 'At',
     'plex_db_daily': 'A copy of Plex Media Server\'s database on a schedule',
     'plex_db_every': 'How often', 'plex_db_day': 'On the day', 'plex_db_at': 'At',
-    'plex_db_keep': 'Copies kept', 'plex_db_check': 'Check every copy',
+    'plex_db_keep': 'Copies of Plex\'s database kept', 'plex_db_check': 'Check every copy',
     'plex_db_dir': 'Where the copies are kept',
     'rbackup': 'Backups to the destinations on a schedule', 'rbackup_at': 'At',
     'rbackup_every': 'How often', 'rbackup_day': 'On (1 Monday - 7 Sunday)',
@@ -10249,15 +10249,14 @@ def _db_do(h):
         st.add_event('database', '%s deleted the copy %s of Plex\'s database' % (by, name), 'warn',
                      who=by)
         return {'message': 'deleted'}
+    # Followed to the end (2.11.0): Plex's own task, its progress on the pages;
+    # Optimize only after a checked copy of the database.
     if act == 'plex-optimize':
-        HX.plex_api('/library/optimize?async=1')
-        st.add_event('database', '%s asked Plex Media Server to optimize its database' % by,
-                     who=by)
-        return {'message': 'Plex Media Server optimizes its database now (its own task)'}
+        return {'job': HX.db_job('Plex optimizes its database', by,
+                                 lambda: IX.plex_task(st, by, 'optimize'))}
     if act == 'plex-clean':
-        HX.plex_api('/library/clean/bundles?async=1')
-        st.add_event('database', '%s asked Plex Media Server to clean its bundles' % by, who=by)
-        return {'message': 'Plex Media Server cleans its bundles now'}
+        return {'job': HX.db_job('Plex cleans its bundles', by,
+                                 lambda: IX.plex_task(st, by, 'clean'))}
     if act == 'timer':
         unit = str(b.get('unit') or '')
         if unit not in [t['unit'] for t in HX.user_timer()]:
@@ -10269,6 +10268,62 @@ def _db_do(h):
         st.add_event('database', '%s switched %s %s' % (by, 'on' if on else 'off', unit), 'warn',
                      who=by)
         return {'message': '%s is %s' % (unit, 'on' if on else 'off')}
+    raise ApiError(400, 'no such thing to do')
+
+
+@route('GET', '/api/integrity')
+def _integrity(h):
+    h.me('fulladmin')
+    return IX.view(h.store, h.d.monitor)
+
+
+@route('POST', '/api/integrity')
+def _integrity_do(h):
+    s = h.me('fulladmin')
+    by = s['name']
+    b = h.body()
+    act = str(b.get('action') or '')
+    st = h.store
+    mon = h.d.monitor
+    try:
+        if act == 'job':
+            return {'job': IX.job_view()}
+        if act == 'stop':
+            return {'message': 'it stops at the next safe point' if IX.job_stop() else
+                    'nothing is running'}
+        if act == 'report-text':
+            return {'text': IX.report_text(IX.last_report()),
+                    'name': 'plex-integrity-%s.txt' % HX._stamp()}
+        if act == 'scan':
+            disks = bool(b.get('disks'))
+            IX.job_start('scan', 'the library looked through', by, IX.SCAN_STEPS,
+                         lambda: IX.scan(st, by, disks=disks, monitor=mon))
+            return {'message': 'the library is looked through', 'job': IX.job_view()}
+        if act == 'fix-p1':
+            if not b.get('force'):
+                n = PX.now_playing()
+                if n:
+                    raise ApiError(409, '%d %s watching now - Plex is stopped for this; ask again '
+                                   'with "stop it anyway"' % (n, 'person is' if n == 1 else
+                                                              'people are'))
+            ids, parts = b.get('ids') or [], b.get('parts') or []
+            IX.job_start('P1', 'P1 put right', by, IX.FIX_P1_STEPS,
+                         lambda: IX.fix_p1(st, by, ids, parts, monitor=mon))
+            return {'message': 'P1 is being put right', 'job': IX.job_view()}
+        if act == 'fix-p2':
+            key = str(b.get('key') or '')
+            IX.job_start('P2', 'P2 put right', by, IX.FIX_P2_STEPS,
+                         lambda: IX.fix_p2(st, by, key, monitor=mon))
+            return {'message': 'P2 is being put right', 'job': IX.job_view()}
+        if act in ('fix-p5', 'fix-p6', 'fix-p7'):
+            kind = act[-2:].upper()
+            dirs = [str(x) for x in (b.get('dirs') or [])][:500]
+            sec = b.get('section')
+            IX.job_start(kind, '%s put right' % kind, by, IX.FIX_SCAN_STEPS,
+                         lambda: IX.fix_scan(st, by, kind, section=sec, dirs=dirs, monitor=mon))
+            return {'message': '%s is being put right' % kind, 'job': IX.job_view()}
+    except ValueError as e:
+        raise ApiError(400, str(e))
     raise ApiError(400, 'no such thing to do')
 
 
@@ -13076,6 +13131,8 @@ import plexmon_plex as PX  # noqa: E402
 PX.bind(sys.modules[__name__])
 import plexmon_host as HX  # noqa: E402
 HX.bind(sys.modules[__name__])
+import plexmon_integrity as IX  # noqa: E402
+IX.bind(sys.modules[__name__], HX, PX)
 
 
 def build_parser():

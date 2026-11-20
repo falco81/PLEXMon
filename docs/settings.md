@@ -138,3 +138,11 @@ which one is missing. A root goes beside the chain, kept to check with and never
 
 A private CA: send its root with the certificate (*Root* in *Upload*, or *Upload the missing
 authority*) - it is never sent by nginx, and the clients must trust it.
+
+## Library integrity (2.11.0)
+
+Settings → Library integrity finds where Plex's library no longer agrees with itself or with
+the disks (P1 to P8), on a copy of its database, and puts right what can be put right safely -
+see [library-integrity.md](library-integrity.md). Settings → The database follows Plex's own
+Optimize and Clean Bundles to the end, with their progress beside the buttons; Optimize makes a
+checked copy of the database first.
