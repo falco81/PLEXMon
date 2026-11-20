@@ -1943,7 +1943,7 @@ def fix_all(store, by, plan, monitor=None, wake=None):
         if s_['state'] == 'run':
             s_['state'] = 'done'
     if bad and not [r for r in results if r['ok']]:
-        raise ValueError('nothing of it was done: %s' % '; '.join(r['error'] for r in bad)[:400])
+        raise ValueError('nothing of it was done - each says why in the lines above')
     return {'results': results, 'after': (last_report() or {}).get('summary')}
 
 
@@ -2169,6 +2169,34 @@ def bundle(store, by, monitor=None):
                    'ON mp.media_item_id = mi.id WHERE mi.metadata_item_id IS NOT NULL AND NOT EXISTS '
                    '(SELECT 1 FROM metadata_items m WHERE m.id = mi.metadata_item_id)' + dl +
                    ' ORDER BY mp.file'))
+            # P6 as Plex has it (2.11.7): every row of each file gone, in all three tables,
+            # every deleted_at - to see where Plex marks what it no longer finds.
+            p6files = [m['file'] for m in (((last_report() or {}).get('problems') or {})
+                                           .get('P6') or {}).get('missing') or []][:400]
+            p6rows = []
+            if p6files:
+                cols_md = [c_[1] for c_ in c.execute('PRAGMA table_info(metadata_items)')]
+                want_md = [x for x in ('id', 'parent_id', 'metadata_type', 'title', 'deleted_at',
+                                       'updated_at', 'added_at', 'library_section_id')
+                           if x in cols_md]
+                for f in p6files:
+                    for r in _rows(c, 'SELECT mp.id AS part, mp.deleted_at AS part_deleted, '
+                                      'mp.updated_at AS part_updated, mi.id AS media_item, '
+                                      'mi.deleted_at AS item_deleted, mi.metadata_item_id AS '
+                                      'metadata FROM media_parts mp LEFT JOIN media_items mi ON '
+                                      'mi.id = mp.media_item_id WHERE mp.file = ?' if
+                                   _has(c, 'media_parts', 'updated_at') else
+                                   'SELECT mp.id AS part, mp.deleted_at AS part_deleted, mi.id AS '
+                                   'media_item, mi.deleted_at AS item_deleted, mi.metadata_item_id '
+                                   'AS metadata FROM media_parts mp LEFT JOIN media_items mi ON '
+                                   'mi.id = mp.media_item_id WHERE mp.file = ?', (f,)):
+                        md = _rows(c, 'SELECT %s FROM metadata_items WHERE id = ?' % ', '.join(
+                            want_md), (r.get('metadata'),)) if r.get('metadata') else []
+                        for k, v in (md[0] if md else {}).items():
+                            r['md_' + k] = v
+                        r['file'] = f
+                        p6rows.append(r)
+            files['p6-rows-in-plex-db.json'] = json.dumps(p6rows, indent=1, ensure_ascii=False)
             files['p1-parts-without-item.csv'] = _csv(_rows(
                 c, 'SELECT mp.id AS part, mp.media_item_id AS media_item, mp.file, mp.size FROM '
                    'media_parts mp WHERE NOT EXISTS (SELECT 1 FROM media_items mi WHERE mi.id = '
@@ -2240,6 +2268,26 @@ def bundle(store, by, monitor=None):
         except OSError:
             continue
     files['logs/plex-media-scanner-selected.txt'] = '\n'.join(kept2[-30000:]) + '\n'
+    # Every line of every log that names a folder or a file of P6 (2.11.7).
+    p6dirs = sorted({m.get('dir') or os.path.dirname(m['file']) for m in (
+        ((last_report() or {}).get('problems') or {}).get('P6') or {}).get('missing') or []})
+    p6names = [os.path.basename(x) for x in p6dirs if x] + [x for x in p6dirs if x]
+    hits = []
+    if p6names:
+        try:
+            allnames = sorted((n for n in os.listdir(str(d)) if n.endswith('.log')),
+                              key=lambda n: os.path.getmtime(str(d / n)))
+        except OSError:
+            allnames = []
+        for n in allnames:
+            try:
+                with open(str(d / n), 'r', encoding='utf-8', errors='replace') as f:
+                    for ln in f:
+                        if any(x in ln for x in p6names):
+                            hits.append('%s: %s' % (n, _scrub(ln.rstrip('\n'))[:800]))
+            except OSError:
+                continue
+    files['logs/p6-lines.txt'] = '\n'.join(hits[-20000:]) + '\n'
     files['p4.json'] = json.dumps(detect_p4(set()), indent=1, default=str)
     check_stop()
     phase('env', 'Plex, the disks, plexmon', 3, 5)

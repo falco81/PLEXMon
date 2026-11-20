@@ -4,6 +4,14 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.11.7 - 2026-11-20
+
+- The package for analysis says how Plex holds each file gone (P6): its row in media_parts,
+  media_items and metadata_items with every `deleted_at`, and every line of every log of Plex
+  that names its folder - to find out why a scan of the whole library put nothing into the trash.
+- When nothing of *Put everything right* was done, it says so in one line - each step says why
+  in the lines above (the whole text was repeated for each).
+
 ## 2.11.6 - 2026-11-20
 
 - Library integrity, the top laid out evenly: *Put everything right…*, the package for analysis
