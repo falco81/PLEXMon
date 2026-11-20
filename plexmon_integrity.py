@@ -1212,8 +1212,22 @@ def wait_idle(timeout=3600, quiet=30, why=''):
                                              a.get('type'), (' %d %%' % int(a['progress']))
                                              if isinstance(a.get('progress'), (int, float)) and
                                              a['progress'] >= 0 else ''))
-        time.sleep(2 if os.environ.get('PLEXMON_TEST') else 5)
+        time.sleep(1 if os.environ.get('PLEXMON_TEST') else 2)
     return False
+
+
+def wait_scan_done(why='after the scan', timeout=3600):
+    """A scan just asked for (2.11.9): first until Plex shows it among its activities (it is
+    queued - twenty seconds at most), then until nothing runs for ten seconds. A long quiet
+    period instead only made every step wait."""
+    t0 = time.time()
+    while time.time() - t0 < 20:
+        check_stop()
+        if busy_now():
+            break
+        says('%s - waiting for Plex to begin' % why)
+        time.sleep(1)
+    return wait_idle(timeout=timeout, quiet=10, why=why)
 
 
 def plex_answers(timeout=180):
@@ -1494,7 +1508,7 @@ def fix_p1(store, by, ids, part_ids, monitor=None, wake=None, final=True):
     dirs = sorted({(r.get('section'), r.get('dir') or os.path.dirname(r.get('file') or ''))
                    for r in rows if r.get('file')})
     scanned, asleep = [], []
-    if dirs and wait_idle(timeout=600, quiet=20, why='before the scan'):
+    if dirs and wait_idle(timeout=600, quiet=10, why='before the scan'):
         for sec, d in dirs:
             if not sec or not d:
                 continue
@@ -1508,7 +1522,7 @@ def fix_p1(store, by, ids, part_ids, monitor=None, wake=None, final=True):
     result.update(scanned=scanned, asleep=asleep)
     phase('verify', 'looked at again, once Plex is done', 8, 9)
     if scanned:
-        wait_idle(timeout=1800, quiet=45, why='after the scan')
+        wait_scan_done(timeout=1800)
     remember({'kind': 'P1', 'by': by, 'ok': True, 'copy': cp['name'], 'aside': str(aside),
               'items': result['deleted_items'], 'parts': result['deleted_parts'],
               'scanned': len(scanned)})
@@ -1696,7 +1710,7 @@ def fix_p2(store, by, key, monitor=None, wake=None, final=True):
     else:
         skip('remerge')
     phase('titles', 'the titles chosen by hand put back', 7, 9)
-    wait_idle(timeout=1800, quiet=30, why='before the titles')
+    wait_idle(timeout=1800, quiet=10, why='before the titles')
     final_ids = api_group(sec, guid)
     final = api_inventory(final_ids, roots)
     for sid in final_ids:
@@ -1714,7 +1728,7 @@ def fix_p2(store, by, key, monitor=None, wake=None, final=True):
                         'type': 2, 'id': sid, 'titleSort.value': old['titleSort'],
                         'titleSort.locked': 1})
     phase('verify', 'looked at again, once Plex is done', 8, 9)
-    wait_idle(timeout=1800, quiet=60, why='before looking again')
+    wait_idle(timeout=1800, quiet=30, why='before looking again')
     check_ids = api_group(sec, guid)
     check = api_inventory(check_ids, roots)
     left = [k for k in api_detect(check) if k[2] in bad_dirs]
@@ -1738,7 +1752,7 @@ def fix_p2(store, by, key, monitor=None, wake=None, final=True):
 # ---------------------------------------------------------------------------
 # P5: a scan of the folder; P6 and P7: a scan and the trash emptied
 # ---------------------------------------------------------------------------
-FIX_SCAN_STEPS = [('idle', 'Plex has nothing running'), ('scan', 'The folders scanned'),
+FIX_SCAN_STEPS = [('idle', 'Plex asked'), ('scan', 'The folders scanned'),
                   ('wait', 'Plex done'), ('trash', 'The trash emptied'), ('verify', 'Looked at again')]
 
 
@@ -1792,10 +1806,13 @@ def fix_scan(store, by, kind, section=None, dirs=None, trash=False, monitor=None
                 continue
             st0 = root_state(r['path'], monitor)
             if empty and st0['state'] == 'awake' and st0.get('mount') not in ('', '/'):
-                holders.append(os.path.join(r['path'], PLACEHOLDER))
-    phase('idle', 'waiting until Plex has nothing running', 0, 5)
-    if not wait_idle(timeout=1800, quiet=20, why='before the scan'):
-        raise ValueError('Plex did not stop working for half an hour - nothing done')
+                # 2.11.8 put a placeholder file here; Plex counts only media files, so the
+                # folder stayed "empty" to it (a real server, 2.11.9) - not done any more: what
+                # Plex does not put into its trash is taken away through Plex below.
+                line('%s is empty - Plex keeps what was in it as "not available"' % r['path'])
+    # A scan and the trash need no quiet Plex before them (it queues a scan); only a merge
+    # or a split does (2.11.9).
+    phase('idle', 'Plex is asked', 0, 5)
     try:
         return _fix_scan_go(store, by, kind, section, want, trash, secs, rep, monitor, wake,
                             final, mode, holders)
@@ -1857,7 +1874,7 @@ def _fix_scan_go(store, by, kind, section, want, trash, secs, rep, monitor, wake
         skip('scan')
     phase('wait', 'until Plex is done', 2, 5)
     if done:
-        wait_idle(timeout=3600, quiet=45, why='after the scan')
+        wait_scan_done(timeout=3600)
     phase('trash', 'the trash is emptied', 3, 5)
     if trash:
         # Looked at again now, after the scan: what is in the trash.
@@ -1867,10 +1884,16 @@ def _fix_scan_go(store, by, kind, section, want, trash, secs, rep, monitor, wake
             gone = {m['file'] for m in rep['problems']['P6']['missing'] if m['section'] == section}
             got = gone & in_trash
             line('%d of the %d files gone are in Plex\'s trash now' % (len(got), len(gone)))
-            if gone and not got:
-                raise ValueError('Plex did not put the files that are gone into its trash - its '
-                                 'scanner did not see them gone; the trash is NOT emptied. A scan '
-                                 'of the whole library in Plex, then look again')
+            if gone - got:
+                # What Plex's scanner leaves "not available" (an empty folder of a library -
+                # its guard against a disk not mounted): taken away through Plex itself, the
+                # way Plex Web's Delete of an unavailable item does (2.11.9).
+                removed = remove_unavailable(section, sorted(gone - got), monitor)
+                if not removed and not got:
+                    raise ValueError('none of the files gone could be taken away - each says why '
+                                     'above; the trash is NOT emptied')
+                got = got | set(removed)
+                tr, fl, in_trash = trash_now(section)
         for root, n in fl.items():
             if too_much(tr.get(root, 0), n):
                 raise ValueError('the trash is NOT emptied: %d of the %d files of %s are in '
@@ -1880,7 +1903,7 @@ def _fix_scan_go(store, by, kind, section, want, trash, secs, rep, monitor, wake
                 raise ValueError('the trash is NOT emptied: %s has nothing but trash' % root)
         PX.put('/library/sections/%s/emptyTrash' % section)
         line('PUT /library/sections/%s/emptyTrash' % section)
-        wait_idle(timeout=1800, quiet=30, why='after the trash')
+        wait_scan_done(why='after the trash', timeout=1800)
     else:
         skip('trash')
     HX.event(store, 'plex', '%s: %s - %d folder(s) scanned%s%s' % (
@@ -1988,6 +2011,78 @@ def fix_all(store, by, plan, monitor=None, wake=None):
     if bad and not [r for r in results if r['ok']]:
         raise ValueError('nothing of it was done - each says why in the lines above')
     return {'results': results, 'after': (last_report() or {}).get('summary')}
+
+
+def plex_allows_deletion():
+    try:
+        for x in PX.mc(PX.get('/:/prefs')).get('Setting') or []:
+            if x.get('id') == 'allowMediaDeletion':
+                return x.get('value') in (True, 1, '1', 'true')
+    except Exception:                                   # noqa: BLE001
+        return None
+    return None
+
+
+def remove_unavailable(section, files, monitor):
+    """DELETE /library/metadata/{id} of the items whose every file is gone - asked only after
+    each of their files is looked for once more, on a disk that is awake, under a library
+    folder that is there: nothing on a disk can go with it. Plex removes them from its
+    database itself, with everything that hangs on them."""
+    with tempfile.TemporaryDirectory(dir=str(HX.plex_dir()), prefix='integrity-') as tmp:
+        path, _ = snapshot(tmp)
+        c = _open(path)
+        try:
+            secs = sections(c)
+            roots = (secs.get(section) or {}).get('roots') or []
+            items = {}
+            for f in files:
+                for r in _rows(c, 'SELECT mi.metadata_item_id AS md FROM media_parts mp JOIN '
+                                  'media_items mi ON mi.id = mp.media_item_id WHERE mp.file = ? '
+                                  'AND mi.library_section_id = ?', (f, section)):
+                    if r['md']:
+                        items.setdefault(r['md'], set())
+            for md in list(items):
+                for r in _rows(c, 'SELECT mp.file FROM media_items mi JOIN media_parts mp ON '
+                                  'mp.media_item_id = mi.id WHERE mi.metadata_item_id = ?', (md,)):
+                    items[md].add(r['file'])
+            titles = {r['id']: r['title'] for r in _rows(
+                c, 'SELECT id, title FROM metadata_items WHERE id IN (%s)' % (
+                    ','.join(str(int(x)) for x in items) or '-1'))}
+        finally:
+            c.close()
+    if not items:
+        return []
+    if plex_allows_deletion() is False:
+        raise ValueError('Plex keeps these as "not available" (the folder is empty - its guard '
+                         'against a disk not mounted), and only Plex can take them away: switch on '
+                         'Plex Web → Settings → Library → "Allow media deletion", then put P6 right '
+                         'again (it can be switched off after)')
+    done = []
+    for md, fs in sorted(items.items()):
+        check_stop()
+        bad = []
+        for f in fs:
+            rt = root_of(f, roots)
+            if not rt or not os.path.isdir(rt['path']) or root_state(rt['path'], monitor)['state'] \
+                    != 'awake':
+                bad.append('%s: its library folder is not there or not awake' % f)
+            elif os.path.exists(f):
+                bad.append('%s is on the disk' % f)
+        if bad:
+            line('"%s" left alone: %s' % (titles.get(md, md), '; '.join(bad)[:300]))
+            continue
+        st_, text_ = PX.raw('DELETE', '/library/metadata/%s' % md)
+        if st_ in (401, 403):
+            raise ValueError('Plex refused to take "%s" away (%s): switch on Plex Web → Settings → '
+                             'Library → "Allow media deletion", then put P6 right again' % (
+                                 titles.get(md, md), st_))
+        if st_ >= 400:
+            line('"%s": Plex said %s' % (titles.get(md, md), st_))
+            continue
+        line('"%s" taken away through Plex (DELETE /library/metadata/%s) - none of its files is on '
+             'the disk' % (titles.get(md, md), md))
+        done.extend(sorted(fs))
+    return done
 
 
 def trash_now(section):

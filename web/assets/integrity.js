@@ -732,7 +732,7 @@ function ixP6(body, p, r) {
     if (empties.length) {
       var en = el('p', 'note small');
       en.appendChild(noI18n(el('span', 'mono', empties.map(function (x) { return x.path; }).join(', ') + ' ')));
-      en.appendChild(el('span', '', 'is empty: Plex keeps what was in an empty folder as "not available" and never puts it into its trash (its guard against a disk not mounted). Its disk is mounted, so plexmon puts a small file plexmon-placeholder.txt into it for the scan and takes it away again.'));
+      en.appendChild(el('span', '', 'is empty: Plex keeps what was in an empty folder as "not available" and never puts it into its trash (its guard against a disk not mounted). Its disk is mounted, so what Plex leaves there is taken away through Plex itself - only items none of whose files is on the disk; Plex has to allow media deletion (Settings → Library).'));
       box.appendChild(en);
     }
     if (ADMIN) {

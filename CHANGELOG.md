@@ -4,6 +4,20 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.11.9 - 2026-11-20
+
+- **P6 in an empty folder put right - for real**: the placeholder of 2.11.8 did not help (Plex
+  counts only media files, so the folder stayed "empty" to it). What Plex's scanner leaves "not
+  available" is now taken away through Plex itself - `DELETE /library/metadata/{id}`, what Plex
+  Web's Delete of an unavailable item does - only for items none of whose files is on the disk,
+  each looked for once more just before, under a library folder that is there on a disk that is
+  awake; nothing on a disk can go with it. Plex must allow media deletion (Settings → Library);
+  if it does not, the page says so and nothing is done.
+- **Shorter waits**: a scan and the trash no longer wait for Plex to be quiet before them (Plex
+  queues a scan), and after them only until Plex has begun and finished, then ten seconds (was 45
+  and 30); Plex is asked every two seconds (was five). P1 10/15 s (was 20/45), the last look of P2
+  30 s (was 60). The quiet before a split or a merge stays.
+
 ## 2.11.8 - 2026-11-20
 
 - **P6 in an empty folder put right**: Plex's scanner says "Marking media not available in

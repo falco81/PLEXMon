@@ -11925,8 +11925,20 @@
    "text": "nic z toho se neprovedlo – u každého je proč v řádcích výše"
   },
   "xs1730": {
-   "source": "is empty: Plex keeps what was in an empty folder as \"not available\" and never puts it into its trash (its guard against a disk not mounted). Its disk is mounted, so plexmon puts a small file plexmon-placeholder.txt into it for the scan and takes it away again.",
-   "text": "je prázdná: co bylo v prázdné složce, Plex drží jako „nedostupné“ a nikdy to nedá do koše (jeho ochrana proti nepřipojenému disku). Její disk je připojený, takže plexmon do ní na dobu skenu vloží malý soubor plexmon-placeholder.txt a pak ho zase odstraní."
+   "source": "is empty: Plex keeps what was in an empty folder as \"not available\" and never puts it into its trash (its guard against a disk not mounted). Its disk is mounted, so what Plex leaves there is taken away through Plex itself - only items none of whose files is on the disk; Plex has to allow media deletion (Settings → Library).",
+   "text": "je prázdná: co bylo v prázdné složce, Plex drží jako „nedostupné“ a nikdy to nedá do koše (jeho ochrana proti nepřipojenému disku). Její disk je připojený, takže co tam Plex nechá, se odebere přes Plex samotný – jen položky, z jejichž souborů na disku není žádný; Plex musí mít povolené mazání médií (Nastavení → Knihovna)."
+  },
+  "xs1731": {
+   "source": "Plex asked",
+   "text": "Plex požádán"
+  },
+  "xs1732": {
+   "source": "Plex keeps these as \"not available\" (the folder is empty - its guard against a disk not mounted), and only Plex can take them away: switch on Plex Web → Settings → Library → \"Allow media deletion\", then put P6 right again (it can be switched off after)",
+   "text": "Plex je drží jako „nedostupné“ (složka je prázdná – jeho ochrana proti nepřipojenému disku) a odebrat je může jen Plex: zapněte v Plex Web → Nastavení → Knihovna → „Povolit mazání médií“ a pak opravte P6 znovu (potom to jde zase vypnout)"
+  },
+  "xs1733": {
+   "source": "none of the files gone could be taken away - each says why above; the trash is NOT emptied",
+   "text": "žádný z chybějících souborů nešel odebrat – u každého je proč výše; koš se NEVYSYPAL"
   }
  },
  "patterns": {
@@ -14941,6 +14953,26 @@
   "xp0370": {
    "source": "nothing of it was done: {0}",
    "text": "nic z toho se neprovedlo: {0}"
+  },
+  "xp0371": {
+   "source": "\"{0}\" taken away through Plex (DELETE /library/metadata/{1}) - none of its files is on the disk",
+   "text": "„{0}“ odebráno přes Plex (DELETE /library/metadata/{1}) – žádný jeho soubor na disku není"
+  },
+  "xp0372": {
+   "source": "\"{0}\" left alone: {1}",
+   "text": "„{0}“ ponecháno: {1}"
+  },
+  "xp0373": {
+   "source": "{0} is empty - Plex keeps what was in it as \"not available\"",
+   "text": "{0} je prázdná – Plex drží, co v ní bylo, jako „nedostupné“"
+  },
+  "xp0374": {
+   "source": "after the trash - waiting for Plex to begin",
+   "text": "po vysypání koše – čeká se, až Plex začne"
+  },
+  "xp0375": {
+   "source": "after the scan - waiting for Plex to begin",
+   "text": "po skenu – čeká se, až Plex začne"
   }
  },
  "rich": {
