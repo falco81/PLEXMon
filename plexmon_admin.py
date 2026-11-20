@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.11.4'
+__version__ = '2.11.5'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -10336,19 +10336,34 @@ def _integrity_do(h):
                                                               'people are'))
             ids, parts = b.get('ids') or [], b.get('parts') or []
             IX.job_start('P1', 'P1 put right', by, IX.FIX_P1_STEPS,
-                         lambda: IX.fix_p1(st, by, ids, parts, monitor=mon))
+                         lambda: IX.fix_p1(st, by, ids, parts, monitor=mon, wake=h.d.wake))
             return {'message': 'P1 is being put right', 'job': IX.job_view()}
+        if act == 'fix-all':
+            plan = IX.all_plan(b.get('plan'))
+            if (plan['p1_ids'] or plan['p1_parts']) and not b.get('force'):
+                n = PX.now_playing()
+                if n:
+                    raise ApiError(409, '%d %s watching now - Plex is stopped for this; ask again '
+                                   'with "stop it anyway"' % (n, 'person is' if n == 1 else
+                                                              'people are'))
+            steps = IX.all_steps(plan)
+            if len(steps) < 2:
+                raise ApiError(400, 'nothing chosen')
+            IX.job_start('all', 'everything chosen put right', by, steps,
+                         lambda: IX.fix_all(st, by, plan, monitor=mon, wake=h.d.wake))
+            return {'message': 'everything chosen is being put right', 'job': IX.job_view()}
         if act == 'fix-p2':
             key = str(b.get('key') or '')
             IX.job_start('P2', 'P2 put right', by, IX.FIX_P2_STEPS,
-                         lambda: IX.fix_p2(st, by, key, monitor=mon))
+                         lambda: IX.fix_p2(st, by, key, monitor=mon, wake=h.d.wake))
             return {'message': 'P2 is being put right', 'job': IX.job_view()}
         if act in ('fix-p5', 'fix-p6', 'fix-p7'):
             kind = act[-2:].upper()
             dirs = [str(x) for x in (b.get('dirs') or [])][:500]
             sec = b.get('section')
             IX.job_start(kind, '%s put right' % kind, by, IX.FIX_SCAN_STEPS,
-                         lambda: IX.fix_scan(st, by, kind, section=sec, dirs=dirs, monitor=mon))
+                         lambda: IX.fix_scan(st, by, kind, section=sec, dirs=dirs, monitor=mon,
+                                             wake=h.d.wake))
             return {'message': '%s is being put right' % kind, 'job': IX.job_view()}
     except ValueError as e:
         raise ApiError(400, str(e))

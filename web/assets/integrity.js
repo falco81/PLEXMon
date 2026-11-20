@@ -212,6 +212,14 @@ function ixHero(d, r) {
     modes.appendChild(lab);
   });
   tools.appendChild(modes);
+  if (r && ADMIN && (r.summary.safe + r.summary.confirm) > 0) {
+    var all = cmdButton('Put everything right…', 'shield', '');
+    all.classList.add('ix-all');
+    explain(all, 'Everything that can be put right here, in one run - each problem ticked or not, P1 first, then each P2, the trash of each library, the folders of P5, and a look at the end.');
+    all.disabled = ixRunning() || ixBusyDb();
+    all.onclick = function () { ixAllWizard(d, r); };
+    tools.appendChild(all);
+  }
   var pk = cmdButton('A package for analysis', 'archive', 'small');
   explain(pk, 'Everything found, in full, packed as a ZIP to send on for analysis - instead of putting anything right. Nothing of Plex\'s is changed to make it.');
   pk.disabled = ixRunning() || ixBusyDb();
@@ -850,4 +858,106 @@ function ixPackageAsk() {
     ['What a fix of each case would do', 'its steps, nothing done']],
     ['It holds the names and the paths of your library - no password, no token, not the database.'],
     'Make it and download it', function () { IX.fetchWhenDone = true; ixDo({action: 'bundle'}); }, false);
+}
+
+/* Put everything right (2.11.5): every problem that can be put right, ticked or not, in one run.
+   The buttons of each card stay as they are. */
+function ixAllWizard(d, r) {
+  var p = r.problems || {};
+  var pick = {p1: {}, p1p: {}, p2: {}, p6: {}, p7: {}, p5: {}};
+  var names = {};
+  (r.sections || []).forEach(function (s) { names[s.id] = s; });
+  var go;
+  var count = function () {
+    var n = 0;
+    Object.keys(pick).forEach(function (k) { Object.keys(pick[k]).forEach(function (x) { if (pick[k][x]) n++; }); });
+    return n;
+  };
+  var refresh = function () {
+    var b = document.querySelector('#modal-foot .btn.primary');
+    if (b) {
+      var n = count();
+      var t = b.querySelector('span') || b;
+      t.textContent = txT('Put the chosen right') + ' (' + n + ')';
+      b.disabled = !n;
+    }
+    var w = $('ix-all-watch');
+    if (w) w.hidden = !(Object.keys(pick.p1).some(function (k) { return pick.p1[k]; }) || Object.keys(pick.p1p).some(function (k) { return pick.p1p[k]; }));
+  };
+  var group = function (body, code, title, rows) {
+    if (!rows.length) return;
+    var g = el('div', 'ix-wz-g');
+    var h = el('div', 'ix-wz-h');
+    h.appendChild(noI18n(el('span', 'ix-code small', code)));
+    h.appendChild(el('b', '', title));
+    g.appendChild(h);
+    rows.forEach(function (x) {
+      var lab = el('label', 'ix-wz-row' + (x.blocked ? ' off' : ''));
+      var cb = el('input');
+      cb.type = 'checkbox';
+      cb.disabled = !!x.blocked;
+      cb.checked = !x.blocked;
+      pick[x.kind][x.key] = cb.checked;
+      cb.onchange = function () { pick[x.kind][x.key] = cb.checked; refresh(); };
+      lab.appendChild(cb);
+      var t = el('div', 'ix-wz-t');
+      t.appendChild(noI18n(el('span', '', x.words)));
+      if (x.sub) t.appendChild(noI18n(el('span', 'muted small mono', x.sub)));
+      if (x.blocked) t.appendChild(el('span', 'small ix-wz-why', x.blocked));
+      lab.appendChild(t);
+      g.appendChild(lab);
+    });
+    body.appendChild(g);
+  };
+  modal('Put everything right', function (body) {
+    body.appendChild(el('p', 'note', 'Everything ticked is put right in one run, one after another, each the way its own button does it - a checked copy of the database before P1 and P2, Plex stopped only for P1. Whatever goes wrong with one is said and the rest goes on. At the end the library is looked through again, the way it was last time.'));
+    var p1rows = [];
+    var p1block = !d.plex.plex_sqlite ? txT('Plex SQLite is not on this machine - Plex\'s database is written only with it.') : r.index_ok === false ? txT('An index of the database does not agree - this is not P1.') : '';
+    (p.P1 && p.P1.items || []).forEach(function (x) { p1rows.push({kind: 'p1', key: x.media_item, words: (x.show || '?') + ' · ' + (x.file || '').split('/').pop(), sub: 'media item ' + x.media_item, blocked: p1block}); });
+    (p.P1 && p.P1.parts || []).forEach(function (x) { p1rows.push({kind: 'p1p', key: x.part, words: (x.show || '?') + ' · ' + (x.file || '').split('/').pop(), sub: 'media part ' + x.part, blocked: p1block}); });
+    group(body, 'P1', txT(IX_P.P1.title), p1rows);
+    group(body, 'P2', txT(IX_P.P2.title), ((p.P2 && p.P2.cases) || []).map(function (c) {
+      return {kind: 'p2', key: c.key, words: c.attached.title + ' → ' + c.owner.title, sub: c.files.map(function (f) { return ixEp(f.s, f.e); }).join(' ') + ' · ' + c.dir,
+        blocked: c.fixable ? '' : txT('Not for a button: ') + txT(c.why || 'the two shows are not on one match')};
+    }));
+    var p6 = {};
+    ((p.P6 && p.P6.missing) || []).forEach(function (m) { p6[m.section] = (p6[m.section] || 0) + 1; });
+    group(body, 'P6', txT(IX_P.P6.title), Object.keys(p6).map(function (sid) {
+      var sec = names[sid] || {name: sid, roots: []};
+      return {kind: 'p6', key: sid, words: sec.name + ' - ' + p6[sid] + ' ' + txT('file(s) gone: scanned, the trash emptied'), blocked: ixSecBlocked(sec)};
+    }));
+    var p7 = {};
+    [].concat((p.P7 && p.P7.empty) || [], (p.P7 && p.P7.no_media) || []).forEach(function (m) { if (m.section) p7[m.section] = (p7[m.section] || 0) + 1; });
+    group(body, 'P7', txT(IX_P.P7.title), Object.keys(p7).map(function (sid) {
+      var sec = names[sid] || {name: sid, roots: []};
+      return {kind: 'p7', key: sid, words: sec.name + ' - ' + p7[sid] + ' ' + txT('empty item(s): the trash emptied'), blocked: ixSecBlocked(sec)};
+    }));
+    var dirs = [];
+    ((p.P5 && p.P5.missing) || []).forEach(function (m) { if (m.reason === 'unseen' && dirs.indexOf(m.dir) < 0) dirs.push(m.dir); });
+    group(body, 'P5', txT(IX_P.P5.title), dirs.map(function (x) { return {kind: 'p5', key: x, words: x.split('/').pop(), sub: x}; }));
+    if (!body.querySelector('.ix-wz-g')) body.appendChild(el('p', 'note', 'Nothing here can be put right with a button.'));
+    var w = el('p', 'note warn', (d.plex.watching ? txT('Someone is watching: their film stops when Plex stops.') + ' ' : '') + txT('P1 stops Plex Media Server for a minute or two.'));
+    w.id = 'ix-all-watch';
+    body.appendChild(w);
+    var mode = r.woken ? 'All disks - wake them first' : r.disks_looked ? 'The disks that are awake' : 'The database only';
+    var last = el('p', 'muted small');
+    last.appendChild(el('span', '', 'At the end, looked through again:'));
+    last.appendChild(el('span', '', ' ' + txT(mode)));
+    body.appendChild(last);
+  }, [{words: 'No, leave it', close: true},
+      {words: 'Put the chosen right', cls: 'primary', icon: 'shield', close: true, go: function () { go(false); }}], 'medium');
+  go = function (force) {
+    var plan = {p1: {ids: [], parts: []}, p2: [], p6: [], p7: [], p5: []};
+    Object.keys(pick.p1).forEach(function (k) { if (pick.p1[k]) plan.p1.ids.push(+k); });
+    Object.keys(pick.p1p).forEach(function (k) { if (pick.p1p[k]) plan.p1.parts.push(+k); });
+    ['p2', 'p6', 'p7', 'p5'].forEach(function (g) { Object.keys(pick[g]).forEach(function (k) { if (pick[g][k]) plan[g].push(g === 'p6' || g === 'p7' ? +k : k); }); });
+    api('integrity', {action: 'fix-all', plan: plan, force: force ? 1 : 0}).then(function (x) {
+      if (x.job) { IX.d.job = x.job; toast(x.message, 'good'); drawIntegrity(); ixWatch(); }
+    }).catch(function (e) {
+      if (/watching now/.test(String(e && e.message))) {
+        confirmThen('Someone is watching', htmlText(String(e.message)), 'Stop it anyway', function () { go(true); });
+      } else oops(e);
+    });
+  };
+  refresh();
 }

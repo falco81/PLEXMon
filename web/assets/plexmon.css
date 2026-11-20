@@ -3703,3 +3703,12 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .ix-pack a{color:var(--info);text-decoration:none;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .ix-pack a:hover{text-decoration:underline}
 .ix-pack .ix-ic{color:var(--tx-dim)}
+.ix-all{background:linear-gradient(135deg,rgba(63,185,80,.18),rgba(88,166,255,.14));border-color:rgba(63,185,80,.5)!important;color:var(--tx)}
+.ix-wz-g{border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:8px 10px;margin:0 0 10px;display:flex;flex-direction:column;gap:2px}
+.ix-wz-h{display:flex;gap:8px;align-items:center;padding:2px 4px 6px;font-size:13px}
+.ix-wz-row{display:flex;gap:10px;align-items:flex-start;padding:6px 6px;border-radius:8px;cursor:pointer;font-size:13px}
+.ix-wz-row:hover{background:rgba(255,255,255,.03)}
+.ix-wz-row input{accent-color:var(--info);width:15px;height:15px;margin:2px 0 0;flex:none}
+.ix-wz-row.off{opacity:.6;cursor:default}
+.ix-wz-t{display:flex;flex-direction:column;gap:2px;min-width:0;overflow-wrap:anywhere}
+.ix-wz-why{color:var(--warn)}

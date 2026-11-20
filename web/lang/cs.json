@@ -11827,6 +11827,98 @@
   "xs1705": {
    "source": "Plex did not stop working for four hours - nothing done; try at night",
    "text": "Plex za čtyři hodiny nepřestal pracovat – nic se neudělalo; zkuste to v noci"
+  },
+  "xs1706": {
+   "source": "Put everything right…",
+   "text": "Opravit vše…"
+  },
+  "xs1707": {
+   "source": "Everything that can be put right here, in one run - each problem ticked or not, P1 first, then each P2, the trash of each library, the folders of P5, and a look at the end.",
+   "text": "Všechno, co se tu dá opravit, v jednom běhu – každý problém zaškrtnutý nebo ne, nejdřív P1, pak každé P2, koš každé knihovny, složky P5 a na konci nová kontrola."
+  },
+  "xs1708": {
+   "source": "Put everything right",
+   "text": "Opravit vše"
+  },
+  "xs1709": {
+   "source": "Put the chosen right",
+   "text": "Opravit vybrané"
+  },
+  "xs1710": {
+   "source": "Everything ticked is put right in one run, one after another, each the way its own button does it - a checked copy of the database before P1 and P2, Plex stopped only for P1. Whatever goes wrong with one is said and the rest goes on. At the end the library is looked through again, the way it was last time.",
+   "text": "Všechno zaškrtnuté se opraví v jednom běhu, jedno po druhém, každé stejně jako jeho vlastní tlačítko – před P1 a P2 zkontrolovaná kopie databáze, Plex se zastaví jen kvůli P1. Když se něco nepovede, řekne se to a pokračuje se dál. Na konci se knihovna prověří znovu, stejně jako minule."
+  },
+  "xs1711": {
+   "source": "file(s) gone: scanned, the trash emptied",
+   "text": "chybějících souborů: sken a vysypání koše"
+  },
+  "xs1712": {
+   "source": "empty item(s): the trash emptied",
+   "text": "prázdných položek: vysypání koše"
+  },
+  "xs1713": {
+   "source": "Nothing here can be put right with a button.",
+   "text": "Nic z toho nejde opravit tlačítkem."
+  },
+  "xs1714": {
+   "source": "P1 stops Plex Media Server for a minute or two.",
+   "text": "P1 zastaví Plex Media Server na minutu či dvě."
+  },
+  "xs1715": {
+   "source": "At the end, looked through again:",
+   "text": "Na konci se znovu prověří:"
+  },
+  "xs1716": {
+   "source": "everything chosen put right",
+   "text": "oprava všeho vybraného"
+  },
+  "xs1717": {
+   "source": "everything chosen is being put right",
+   "text": "všechno vybrané se opravuje"
+  },
+  "xs1718": {
+   "source": "looked at again, as the last look was made",
+   "text": "nová kontrola, stejně jako minulá"
+  },
+  "xs1719": {
+   "source": "Plex did not put the files that are gone into its trash - its scanner did not see them gone; the trash is NOT emptied. A scan of the whole library in Plex, then look again",
+   "text": "Plex nedal chybějící soubory do koše – jeho skener nepoznal, že chybí; koš se NEVYSYPAL. Spusťte v Plexu sken celé knihovny a pak prověřte znovu"
+  },
+  "xs1720": {
+   "source": "after the scan",
+   "text": "po skenu"
+  },
+  "xs1721": {
+   "source": "before the scan",
+   "text": "před skenem"
+  },
+  "xs1722": {
+   "source": "before the split",
+   "text": "před rozdělením"
+  },
+  "xs1723": {
+   "source": "after the split",
+   "text": "po rozdělení"
+  },
+  "xs1724": {
+   "source": "before the merge",
+   "text": "před sloučením"
+  },
+  "xs1725": {
+   "source": "before the titles",
+   "text": "před vrácením názvů"
+  },
+  "xs1726": {
+   "source": "before looking again",
+   "text": "před novou kontrolou"
+  },
+  "xs1727": {
+   "source": "after the trash",
+   "text": "po vysypání koše"
+  },
+  "xs1728": {
+   "source": "before trying the merge again",
+   "text": "před dalším pokusem o sloučení"
   }
  },
  "patterns": {
@@ -14797,6 +14889,50 @@
   "xp0359": {
    "source": "every disk turns: {0} of them in {1} s",
    "text": "všechny disky se točí: {0} za {1} s"
+  },
+  "xp0360": {
+   "source": "Put the chosen right ({0})",
+   "text": "Opravit vybrané ({0})"
+  },
+  "xp0361": {
+   "source": "P1: {0} orphan(s)",
+   "text": "P1: {0} osiřelých"
+  },
+  "xp0362": {
+   "source": "P2: \"{0}\"",
+   "text": "P2: „{0}“"
+  },
+  "xp0363": {
+   "source": "P6: \"{0}\"",
+   "text": "P6: „{0}“"
+  },
+  "xp0364": {
+   "source": "P7: \"{0}\"",
+   "text": "P7: „{0}“"
+  },
+  "xp0365": {
+   "source": "P5: {0} folder(s)",
+   "text": "P5: {0} složek"
+  },
+  "xp0366": {
+   "source": "{0}: NOT done - {1}",
+   "text": "{0}: NEPROVEDENO – {1}"
+  },
+  "xp0367": {
+   "source": "{0} of {1} not done - see above",
+   "text": "{0} z {1} neprovedeno – viz výše"
+  },
+  "xp0368": {
+   "source": "a scan of the whole library \"{0}\" asked of Plex - a folder of it is gone",
+   "text": "Plex požádán o sken celé knihovny „{0}“ – jedna její složka chybí"
+  },
+  "xp0369": {
+   "source": "{0} of the {1} files gone are in Plex's trash now",
+   "text": "{0} z {1} chybějících souborů je teď v koši Plexu"
+  },
+  "xp0370": {
+   "source": "nothing of it was done: {0}",
+   "text": "nic z toho se neprovedlo: {0}"
   }
  },
  "rich": {

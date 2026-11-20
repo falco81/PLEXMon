@@ -4,6 +4,24 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.11.5 - 2026-11-20
+
+- **Put everything right…** (Library integrity): one run for everything that can be put right -
+  every orphan of P1, every case of P2, the trash of each library (P6, P7), the folders of P5,
+  each ticked or not; a reason beside what cannot be chosen. One after another, each the way its
+  own button does it; whatever goes wrong with one is said and the rest goes on; a look at the
+  end. The buttons of each card stay.
+- **Every fix ends with a look made as the last one was** - the database only, the disks awake,
+  or all disks woken - so the page below is what is true now (after P2 it looked from the
+  database alone).
+- **P6 put right for real**: a folder gone altogether (a film's own folder) was asked a scan of
+  the folder above - Plex's scanner was done in 0.2 s and put nothing into its trash, the empty
+  trash was emptied and it said "done". Now a folder gone means a scan of the whole library
+  (every folder of it is there and awake - checked), and before the trash is emptied a fresh copy
+  of the database must show the files gone in it; otherwise nothing is emptied and it says so.
+- The package for analysis has the lines of Plex Media Scanner's logs that matter too.
+- Lists asked of Plex give their page size (Plex warns it will refuse them without it).
+
 ## 2.11.4 - 2026-11-20
 
 - P2 waits for Plex to be quiet for up to **four hours** (was half an hour): after merges, splits

@@ -90,6 +90,18 @@ and after its folders were scanned a fresh copy of the database shows **no more 
 folder in the trash (fewer than ten files always pass: a few files gone from a small folder are
 files gone, not a disk). Otherwise nothing is emptied, and the page says why.
 
+## Everything at once (2.11.5)
+
+*Put everything right…* lists every problem that can be put right - each orphan of P1, each case
+of P2, the trash of each library (P6 with P7), the folders of P5 - ticked; what cannot be chosen
+says why. One run does them one after another, each exactly as its own button does, then looks
+through the library again the way the last look was made. A failure of one is said and the rest
+goes on. Every single fix also ends with that look (2.11.5).
+
+A P6 folder that is gone altogether is put right by a scan of the whole library - a scan of the
+folder above it does not see what was inside - and the trash is emptied only once a fresh copy
+of the database shows the files gone in it.
+
 ## Plex's own Optimize and Clean Bundles
 
 Settings → The database runs them as a job followed to the end. Optimize makes a checked copy of

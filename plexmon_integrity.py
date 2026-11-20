@@ -192,6 +192,7 @@ def job_start(kind, what, by, steps, fn):
         if JOB['running']:
             raise ValueError('%s is under way - wait for it' % (JOB['what'] or 'something'))
         JOB.update(running=True, id=os.urandom(5).hex(), kind=kind, what=what, nostop=False,
+                   scale=[], _inner_whole=None,
                    steps=[{'key': k, 'title': t, 'state': 'wait'} for k, t in steps],
                    step='', says='starting', done=0, whole=0, error='', result=None,
                    began=time.time(), ended=0.0, by=by, stop=False, lines=[])
@@ -228,20 +229,54 @@ def job_start(kind, what, by, steps, fn):
     return JOB['id']
 
 
-def phase(key, says=None, done=None, whole=None):
-    for s in JOB['steps']:
-        if s['key'] == key:
-            s['state'] = 'run'
-            JOB['step'] = s['title']
-        elif s['state'] == 'run':
-            s['state'] = 'done'
-    if says is not None:
-        JOB['says'] = says
-        HX.DB_JOB['says'] = says
+def _progress(done, whole):
+    """A step inside a bigger job (2.11.5): its 0..whole put into its part of the bar."""
+    sc = JOB.get('scale') or []
+    if sc and done is not None:
+        lo, hi, outer = sc[-1]
+        w = whole if whole else (JOB.get('_inner_whole') or 1)
+        if whole:
+            JOB['_inner_whole'] = whole
+        JOB['done'] = lo + (hi - lo) * min(1.0, float(done) / max(1, w))
+        JOB['whole'] = outer
+        return
     if done is not None:
         JOB['done'] = done
     if whole is not None:
         JOB['whole'] = whole
+
+
+class scaled(object):
+    """with scaled(lo, hi, outer): what runs inside fills lo..hi of the bar."""
+    def __init__(self, lo, hi, outer):
+        self.v = (lo, hi, outer)
+
+    def __enter__(self):
+        JOB.setdefault('scale', []).append(self.v)
+        JOB['_inner_whole'] = None
+
+    def __exit__(self, *a):
+        try:
+            JOB['scale'].pop()
+        except (KeyError, IndexError):
+            pass
+        return False
+
+
+def phase(key, says=None, done=None, whole=None):
+    keys = [s['key'] for s in JOB['steps']]
+    if key in keys:
+        for s in JOB['steps']:
+            if s['key'] == key:
+                s['state'] = 'run'
+                JOB['step'] = s['title']
+            elif s['state'] == 'run':
+                s['state'] = 'done'
+    # A key the job has no step for: a part of a step (a look inside a fix) - words only.
+    if says is not None:
+        JOB['says'] = says
+        HX.DB_JOB['says'] = says
+    _progress(done, whole)
 
 
 def skip(key):
@@ -253,10 +288,7 @@ def skip(key):
 def says(words, done=None, whole=None):
     JOB['says'] = words
     HX.DB_JOB['says'] = words
-    if done is not None:
-        JOB['done'] = done
-    if whole is not None:
-        JOB['whole'] = whole
+    _progress(done, whole)
 
 
 def line(words):
@@ -1311,6 +1343,25 @@ def owners_right():
             os.chown(str(p), st.st_uid, st.st_gid)
 
 
+def look_mode():
+    """How the last look was made - the look after a fix is made the same way (2.11.5)."""
+    rep = last_report() or {}
+    return {'disks': bool(rep.get('disks_looked')), 'wake': bool(rep.get('woken'))}
+
+
+def look_again(store, by, monitor, wake, mode, lo=None, hi=None, outer=None):
+    try:
+        if lo is not None:
+            with scaled(lo, hi, outer):
+                scan(store, by, disks=mode['disks'], monitor=monitor,
+                     wake=wake if mode['wake'] and wake else None)
+        else:
+            scan(store, by, disks=mode['disks'], monitor=monitor,
+                 wake=wake if mode['wake'] and wake else None)
+    except Stopped:
+        pass
+
+
 FIX_P1_STEPS = [('look', 'Looked at again'), ('copy', 'A checked copy of the database'),
                 ('stop', 'Plex stopped'), ('aside', 'Its files copied aside'),
                 ('write', 'The orphans taken out'), ('check', 'integrity_check'),
@@ -1318,7 +1369,8 @@ FIX_P1_STEPS = [('look', 'Looked at again'), ('copy', 'A checked copy of the dat
                 ('verify', 'Looked at again')]
 
 
-def fix_p1(store, by, ids, part_ids, monitor=None):
+def fix_p1(store, by, ids, part_ids, monitor=None, wake=None, final=True):
+    mode = look_mode()
     ids = sorted({int(i) for i in ids or []})
     part_ids = sorted({int(i) for i in part_ids or []})
     if not ids and not part_ids:
@@ -1460,11 +1512,9 @@ def fix_p1(store, by, ids, part_ids, monitor=None):
     remember({'kind': 'P1', 'by': by, 'ok': True, 'copy': cp['name'], 'aside': str(aside),
               'items': result['deleted_items'], 'parts': result['deleted_parts'],
               'scanned': len(scanned)})
-    try:
-        scan(store, by + ' (after P1)', disks=False, monitor=monitor)
-        result['after'] = last_report()['summary']
-    except Stopped:
-        pass
+    if final:
+        look_again(store, by + ' (after P1)', monitor, wake, mode, 8, 9, 9)
+        result['after'] = (last_report() or {}).get('summary')
     says('done', 9, 9)
     return result
 
@@ -1472,6 +1522,11 @@ def fix_p1(store, by, ids, part_ids, monitor=None):
 # ---------------------------------------------------------------------------
 # P2: through Plex's own API - split, merge into the folder's owner
 # ---------------------------------------------------------------------------
+# Plex warns that lists asked for without a page size will be refused ("Missing
+# X-Plex-Container-Size header") - asked for in one page, as large as it gets.
+PAGE = {'X-Plex-Container-Start': 0, 'X-Plex-Container-Size': 100000}
+
+
 def api_sections():
     out = {}
     for d in PX.mc(PX.get('/library/sections')).get('Directory') or []:
@@ -1482,14 +1537,14 @@ def api_sections():
 
 
 def api_group(sec, guid):
-    got = PX.mc(PX.get('/library/sections/%s/all' % sec, {'type': 2, 'includeGuids': 1}))
+    got = PX.mc(PX.get('/library/sections/%s/all' % sec, dict(PAGE, type=2, includeGuids=1)))
     return [str(s.get('ratingKey')) for s in got.get('Metadata') or [] if s.get('guid') == guid]
 
 
 def api_inventory(ids, roots):
     rows = []
     for sid in ids:
-        got = PX.mc(PX.get('/library/metadata/%s/allLeaves' % sid, timeout=120))
+        got = PX.mc(PX.get('/library/metadata/%s/allLeaves' % sid, dict(PAGE), timeout=120))
         for ep in got.get('Metadata') or []:
             for m in ep.get('Media') or []:
                 for p in m.get('Part') or []:
@@ -1532,7 +1587,8 @@ FIX_P2_STEPS = [('idle', 'Plex has nothing running'), ('copy', 'A checked copy o
                 ('titles', 'The titles back'), ('verify', 'Looked at again')]
 
 
-def fix_p2(store, by, key, monitor=None):
+def fix_p2(store, by, key, monitor=None, wake=None, final=True):
+    mode = look_mode()
     rep = last_report() or {}
     cs = next((x for x in (rep.get('problems') or {}).get('P2', {}).get('cases') or []
                if x['key'] == key), None)
@@ -1673,10 +1729,8 @@ def fix_p2(store, by, key, monitor=None):
         'warn' if ok else 'bad', who=by)
     remember({'kind': 'P2', 'by': by, 'ok': ok, 'copy': cp['name'], 'show': snap[attached]['title'],
               'dirs': sorted(bad_dirs), 'got': got, 'expected': expected})
-    try:
-        scan(store, by + ' (after P2)', disks=False, monitor=monitor)
-    except Stopped:
-        pass
+    if final:
+        look_again(store, by + ' (after P2)', monitor, wake, mode, 8, 9, 9)
     says('done', 9, 9)
     return res
 
@@ -1688,7 +1742,9 @@ FIX_SCAN_STEPS = [('idle', 'Plex has nothing running'), ('scan', 'The folders sc
                   ('wait', 'Plex done'), ('trash', 'The trash emptied'), ('verify', 'Looked at again')]
 
 
-def fix_scan(store, by, kind, section=None, dirs=None, trash=False, monitor=None):
+def fix_scan(store, by, kind, section=None, dirs=None, trash=False, monitor=None, wake=None,
+             final=True):
+    mode = look_mode()
     rep = last_report() or {}
     secs = {s['id']: s for s in rep.get('sections') or []}
     want = []
@@ -1724,19 +1780,36 @@ def fix_scan(store, by, kind, section=None, dirs=None, trash=False, monitor=None
         raise ValueError('Plex did not stop working for half an hour - nothing done')
     phase('scan', 'the folders are scanned', 1, 5)
     done, asleep = [], []
+    whole_sec = set()
     for sec, d in want:
         check_stop()
         if awake_now(d, monitor):
             roots = [r['path'] for r in (secs.get(sec) or {}).get('roots') or []]
             d2 = existing_dir(d, roots)
+            if trash and d2 != d:
+                # The folder itself is gone (2.11.5): a scan of the folder above does not
+                # see what was in it - Plex's scanner was done in 0.2 s and put nothing into
+                # its trash. The whole library is scanned instead (every folder of it is
+                # there and awake - checked above).
+                whole_sec.add(sec)
+                continue
             if not d2:
                 line('%s: no folder of it is there - left alone' % d)
+                continue
+            if sec in whole_sec:
                 continue
             refresh_dir(sec, d2)
             done.append(d2)
         else:
             asleep.append(d)
             line('%s: its disk sleeps - not woken' % d)
+    for sec in sorted(whole_sec):
+        st_, text_ = PX.raw('GET', '/library/sections/%s/refresh' % sec)
+        if st_ >= 400:
+            raise ValueError('Plex said %s to a scan of the library' % st_)
+        line('a scan of the whole library "%s" asked of Plex - a folder of it is gone' %
+             (secs.get(sec) or {}).get('name', sec))
+        done.append('library %s' % sec)
     if not want:
         skip('scan')
     phase('wait', 'until Plex is done', 2, 5)
@@ -1746,7 +1819,15 @@ def fix_scan(store, by, kind, section=None, dirs=None, trash=False, monitor=None
     if trash:
         # Looked at again now, after the scan: what is in the trash.
         says('how much is in the trash now - a fresh copy of the database', 3, 5)
-        tr, fl = trash_now(section)
+        tr, fl, in_trash = trash_now(section)
+        if kind == 'P6':
+            gone = {m['file'] for m in rep['problems']['P6']['missing'] if m['section'] == section}
+            got = gone & in_trash
+            line('%d of the %d files gone are in Plex\'s trash now' % (len(got), len(gone)))
+            if gone and not got:
+                raise ValueError('Plex did not put the files that are gone into its trash - its '
+                                 'scanner did not see them gone; the trash is NOT emptied. A scan '
+                                 'of the whole library in Plex, then look again')
         for root, n in fl.items():
             if too_much(tr.get(root, 0), n):
                 raise ValueError('the trash is NOT emptied: %d of the %d files of %s are in '
@@ -1766,12 +1847,104 @@ def fix_scan(store, by, kind, section=None, dirs=None, trash=False, monitor=None
     remember({'kind': kind, 'by': by, 'ok': True, 'scanned': len(done), 'asleep': len(asleep),
               'trash': bool(trash)})
     phase('verify', 'looked at again', 4, 5)
-    try:
-        scan(store, by + ' (after %s)' % kind, disks=kind in ('P5', 'P6'), monitor=monitor)
-    except Stopped:
-        pass
+    if final:
+        look_again(store, by + ' (after %s)' % kind, monitor, wake, mode, 4, 5, 5)
     says('done', 5, 5)
     return {'scanned': done, 'asleep': asleep, 'trash': bool(trash)}
+
+
+# ---------------------------------------------------------------------------
+# Everything chosen, in one run (2.11.5): P1, then each P2, the trash of each
+# library (P6 with P7), the folders of P5 - and one look at the end
+# ---------------------------------------------------------------------------
+def all_plan(plan):
+    plan = plan if isinstance(plan, dict) else {}
+    p1 = plan.get('p1') or {}
+    out = {'p1_ids': sorted({int(x) for x in p1.get('ids') or []}),
+           'p1_parts': sorted({int(x) for x in p1.get('parts') or []}),
+           'p2': [str(x) for x in plan.get('p2') or []][:50],
+           'p6': sorted({int(x) for x in plan.get('p6') or []}),
+           'p7': sorted({int(x) for x in plan.get('p7') or []}),
+           'p5': [str(x) for x in plan.get('p5') or []][:500]}
+    out['p7'] = [x for x in out['p7'] if x not in out['p6']]   # the trash once per library
+    return out
+
+
+def all_steps(plan):
+    rep = last_report() or {}
+    secs = {x['id']: x['name'] for x in rep.get('sections') or []}
+    cases = {c['key']: c for c in ((rep.get('problems') or {}).get('P2') or {}).get('cases') or []}
+    st = []
+    if plan['p1_ids'] or plan['p1_parts']:
+        st.append(('p1', 'P1: %d orphan(s)' % (len(plan['p1_ids']) + len(plan['p1_parts']))))
+    for k in plan['p2']:
+        st.append(('p2:' + k, 'P2: "%s"' % ((cases.get(k) or {}).get('attached') or {}).get('title', k)))
+    for x in plan['p6']:
+        st.append(('p6:%d' % x, 'P6: "%s"' % secs.get(x, x)))
+    for x in plan['p7']:
+        st.append(('p7:%d' % x, 'P7: "%s"' % secs.get(x, x)))
+    if plan['p5']:
+        st.append(('p5', 'P5: %d folder(s)' % len(plan['p5'])))
+    st.append(('again', 'Looked at again'))
+    return st
+
+
+def fix_all(store, by, plan, monitor=None, wake=None):
+    mode = look_mode()
+    steps = [s_['key'] for s_ in JOB['steps']]
+    n = len(steps)
+    results = []
+
+    def run(i, key, fn):
+        phase(key, None, i, n)
+        try:
+            with scaled(i, i + 1, n):
+                fn()
+            results.append({'step': key, 'ok': True})
+            line('%s: done' % key)
+        except Stopped:
+            raise
+        except Exception as e:                          # noqa: BLE001
+            results.append({'step': key, 'ok': False, 'error': str(e)[:300]})
+            line('%s: NOT done - %s' % (key, e))
+            for s_ in JOB['steps']:
+                if s_['key'] == key:
+                    s_['state'] = 'failed'
+    i = 0
+    if plan['p1_ids'] or plan['p1_parts']:
+        run(i, 'p1', lambda: fix_p1(store, by, plan['p1_ids'], plan['p1_parts'], monitor, wake,
+                                    final=False))
+        i += 1
+    for k in plan['p2']:
+        run(i, 'p2:' + k, lambda k=k: fix_p2(store, by, k, monitor, wake, final=False))
+        JOB['nostop'] = False       # the next case has not begun: Stop is a Stop again
+        i += 1
+    for x in plan['p6']:
+        run(i, 'p6:%d' % x, lambda x=x: fix_scan(store, by, 'P6', section=x, monitor=monitor,
+                                                  wake=wake, final=False))
+        i += 1
+    for x in plan['p7']:
+        run(i, 'p7:%d' % x, lambda x=x: fix_scan(store, by, 'P7', section=x, monitor=monitor,
+                                                  wake=wake, final=False))
+        i += 1
+    if plan['p5']:
+        run(i, 'p5', lambda: fix_scan(store, by, 'P5', dirs=plan['p5'], monitor=monitor,
+                                      wake=wake, final=False))
+        i += 1
+    phase('again', 'looked at again, as the last look was made', i, n)
+    look_again(store, by + ' (after putting everything right)', monitor, wake, mode, i, n, n)
+    bad = [r for r in results if not r['ok']]
+    HX.event(store, 'plex', '%s: everything chosen put right - %d done, %d not%s' % (
+        by, len(results) - len(bad), len(bad), (': ' + '; '.join('%s %s' % (r['step'], r['error'])
+                                                               for r in bad))[:600] if bad else ''),
+        'warn' if bad else 'info', who=by)
+    says('done' if not bad else '%d of %d not done - see above' % (len(bad), len(results)), n, n)
+    for s_ in JOB['steps']:
+        if s_['state'] == 'run':
+            s_['state'] = 'done'
+    if bad and not [r for r in results if r['ok']]:
+        raise ValueError('nothing of it was done: %s' % '; '.join(r['error'] for r in bad)[:400])
+    return {'results': results, 'after': (last_report() or {}).get('summary')}
 
 
 def trash_now(section):
@@ -1782,7 +1955,7 @@ def trash_now(section):
             secs = sections(c)
             roots = (secs.get(section) or {}).get('roots') or []
             dl = _has(c, 'media_parts', 'deleted_at')
-            tr, fl = Counter(), Counter()
+            tr, fl, files = Counter(), Counter(), set()
             for r in _rows(c, 'SELECT mp.file AS file, %s AS gone FROM media_parts mp JOIN '
                               'media_items mi ON mi.id = mp.media_item_id WHERE '
                               'mi.library_section_id = ?' % (
@@ -1793,9 +1966,10 @@ def trash_now(section):
                     fl[rt['path']] += 1
                     if r['gone']:
                         tr[rt['path']] += 1
+                        files.add(r['file'])
         finally:
             c.close()
-    return tr, fl
+    return tr, fl, files
 
 
 # ---------------------------------------------------------------------------
@@ -2047,6 +2221,25 @@ def bundle(store, by, monitor=None):
         except OSError:
             continue
     files['logs/plex-media-server-selected.txt'] = '\n'.join(kept[-30000:]) + '\n'
+    # The scanner's own logs (2.11.5): what it saw gone, skipped, matched - where P5 and P6 begin.
+    scan_keep = re.compile(r'missing|deleted|removing|marking|Skipping|ignor|found agent match|'
+                           r'match for file|ERROR|WARN|Scanning|Processing directory', re.I)
+    kept2 = []
+    d = HX.PLEX_DATA / 'Logs'
+    try:
+        names = sorted((n for n in os.listdir(str(d)) if n.startswith('Plex Media Scanner') and
+                        n.endswith('.log')), key=lambda n: os.path.getmtime(str(d / n)))
+    except OSError:
+        names = []
+    for n in names:
+        try:
+            with open(str(d / n), 'r', encoding='utf-8', errors='replace') as f:
+                for ln in f:
+                    if scan_keep.search(ln):
+                        kept2.append('%s: %s' % (n, _scrub(ln.rstrip('\n'))[:600]))
+        except OSError:
+            continue
+    files['logs/plex-media-scanner-selected.txt'] = '\n'.join(kept2[-30000:]) + '\n'
     files['p4.json'] = json.dumps(detect_p4(set()), indent=1, default=str)
     check_stop()
     phase('env', 'Plex, the disks, plexmon', 3, 5)
