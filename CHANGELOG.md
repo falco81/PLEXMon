@@ -4,6 +4,25 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.11.2 - 2026-11-20
+
+- **A package for analysis** (Library integrity): instead of putting anything right, everything
+  found, in full, as a ZIP to download and send on - P1 to P8 without the page's limit, every
+  episode and file of the shows on one match, the tables and their rows, the schema and the
+  index check, the lines of Plex's logs that matter (merges, splits, scans, background jobs,
+  errors; tokens taken out), Plex, plexmon and every library folder with its disk, what was put
+  right before, and the steps a fix of each P2 case would take. Not in it: the database itself,
+  a token, a password. The last three are kept to download again.
+- **All disks - wake them first waits for real now**: it came back after a few seconds, as soon
+  as the disk monitor said "spinning up", and the disks were then woken by the reading itself.
+  Now every data disk is read with O_DIRECT (its probe file, as the dashboard's Wake), which
+  returns only once its platters turn - one after another behind a USB bridge, a couple of
+  minutes for a set - each one said on the page as it answers (five minutes at most).
+- **"A disk not mounted?" only where it is one**: a small folder with a few files gone (1 of 1,
+  4 of 4) was taken for a disk not mounted, and its trash could never be emptied. Now: the folder
+  not there or empty, or more than 5 % and at least ten files missing (the same for the trash).
+- P4: a split or merge Plex wrote into its log twice is shown once.
+
 ## 2.11.1 - 2026-11-20
 
 - **Library integrity is a tab of its own** at the top, after Plex library (full administrators);

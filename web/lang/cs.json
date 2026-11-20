@@ -10661,12 +10661,12 @@
    "text": "Plex má soubor, který už na disku není – přesunutý, smazaný – nebo chybí celá složka: nepřipojený disk."
   },
   "xs1414": {
-   "source": "A file deleted or moved outside Plex. A folder with more than 5 % missing is taken for a disk not mounted - and then nothing is done.",
-   "text": "Soubor smazaný nebo přesunutý mimo Plex. Složka, ve které chybí víc než 5 %, se bere jako nepřipojený disk – a pak se nedělá nic."
+   "source": "A file deleted or moved outside Plex. A folder that is not there or empty, or with more than 5 % (and at least ten files) missing, is taken for a disk not mounted - and then nothing is done.",
+   "text": "Soubor smazaný nebo přesunutý mimo Plex. Složka, která chybí nebo je prázdná, nebo ve které chybí víc než 5 % (a aspoň deset souborů), se bere jako nepřipojený disk – a pak se nedělá nic."
   },
   "xs1415": {
-   "source": "Its folders scanned (Plex puts them into its trash) and the library's trash emptied - only when every folder of the library is there and awake, and no more than 5 % of it is missing or in the trash.",
-   "text": "Jejich složky se naskenují (Plex je dá do koše) a koš knihovny se vysype – jen když jsou všechny složky knihovny na místě a vzhůru a chybí nebo v koši je nejvýš 5 %."
+   "source": "Its folders scanned (Plex puts them into its trash) and the library's trash emptied - only when every folder of the library is there and awake, and no more than 5 % of it (or fewer than ten files) is missing or in the trash.",
+   "text": "Jejich složky se naskenují (Plex je dá do koše) a koš knihovny se vysype – jen když jsou všechny složky knihovny na místě a vzhůru a chybí nebo v koši je nejvýš 5 % (nebo méně než deset souborů)."
   },
   "xs1416": {
    "source": "Seasons and shows with nothing in them, episodes with no file, and seasons or episodes whose show or season is not there.",
@@ -11197,8 +11197,8 @@
    "text": "Znovu se zjistí, kolik je v koši"
   },
   "xs1548": {
-   "source": "a fresh copy of the database - more than 5 % of a folder in the trash: STOP, nothing emptied",
-   "text": "čerstvá kopie databáze – víc než 5 % složky v koši: STOP, nic se nevysype"
+   "source": "a fresh copy of the database - more than 5 % of a folder (and at least ten files) in the trash: STOP, nothing emptied",
+   "text": "čerstvá kopie databáze – víc než 5 % složky (a aspoň deset souborů) v koši: STOP, nic se nevysype"
   },
   "xs1549": {
    "source": "The trash emptied",
@@ -11687,6 +11687,134 @@
   "xs1670": {
    "source": "the disks cannot be woken from here (plexmon's dashboard is not running)",
    "text": "disky odsud nejde probudit (dashboard plexmonu neběží)"
+  },
+  "xs1671": {
+   "source": "A package for analysis",
+   "text": "Balíček pro analýzu"
+  },
+  "xs1672": {
+   "source": "Everything found, in full, packed as a ZIP to send on for analysis - instead of putting anything right. Nothing of Plex's is changed to make it.",
+   "text": "Všechno nalezené v plném rozsahu, zabalené do ZIPu k odeslání na analýzu – místo opravování. Plexu se kvůli tomu nic nemění."
+  },
+  "xs1673": {
+   "source": "The package is ready - it is being downloaded",
+   "text": "Balíček je hotový – stahuje se"
+  },
+  "xs1674": {
+   "source": "Make a package for analysis?",
+   "text": "Vytvořit balíček pro analýzu?"
+  },
+  "xs1675": {
+   "source": "Nothing is put right and nothing of Plex's is changed - a fresh copy of its database is read and written out in full:",
+   "text": "Nic se neopravuje a Plexu se nic nemění – přečte se čerstvá kopie jeho databáze a vypíše v plném rozsahu:"
+  },
+  "xs1676": {
+   "source": "Every finding in full",
+   "text": "Všechny nálezy v plném rozsahu"
+  },
+  "xs1677": {
+   "source": "P1 to P8 without the limit of the page: every orphan, every file under another show, every gap",
+   "text": "P1 až P8 bez omezení stránky: každý osiřelý záznam, každý soubor u jiného seriálu, každá mezera"
+  },
+  "xs1678": {
+   "source": "Every episode and file of the shows on one match",
+   "text": "Všechny epizody a soubory seriálů na jedné shodě"
+  },
+  "xs1679": {
+   "source": "to see why Plex put a file where it did",
+   "text": "aby bylo vidět, proč Plex dal soubor tam, kam ho dal"
+  },
+  "xs1680": {
+   "source": "The tables, their rows, the schema, the index check",
+   "text": "Tabulky, počty řádků, schéma, kontrola indexů"
+  },
+  "xs1681": {
+   "source": "not the database itself",
+   "text": "ne databáze samotná"
+  },
+  "xs1682": {
+   "source": "The lines of Plex's logs that matter",
+   "text": "Důležité řádky z logů Plexu"
+  },
+  "xs1683": {
+   "source": "merges, splits, scans, background jobs, errors - tokens taken out",
+   "text": "sloučení, rozdělení, skeny, úlohy na pozadí, chyby – tokeny odstraněné"
+  },
+  "xs1684": {
+   "source": "Plex, plexmon, every library folder and its disk now",
+   "text": "Plex, plexmon, každá složka knihovny a její disk teď"
+  },
+  "xs1685": {
+   "source": "and what was put right here before",
+   "text": "a co se tu dřív opravovalo"
+  },
+  "xs1686": {
+   "source": "What a fix of each case would do",
+   "text": "Co by oprava každého případu udělala"
+  },
+  "xs1687": {
+   "source": "its steps, nothing done",
+   "text": "její kroky, nic se neprovede"
+  },
+  "xs1688": {
+   "source": "It holds the names and the paths of your library - no password, no token, not the database.",
+   "text": "Obsahuje názvy a cesty vaší knihovny – žádné heslo, žádný token, ne databázi."
+  },
+  "xs1689": {
+   "source": "Make it and download it",
+   "text": "Vytvořit a stáhnout"
+  },
+  "xs1690": {
+   "source": "a package for analysis",
+   "text": "balíček pro analýzu"
+  },
+  "xs1691": {
+   "source": "the package is being made",
+   "text": "balíček se vytváří"
+  },
+  "xs1692": {
+   "source": "The tables written out",
+   "text": "Tabulky vypsány"
+  },
+  "xs1693": {
+   "source": "Plex's logs, the lines that matter",
+   "text": "Logy Plexu, důležité řádky"
+  },
+  "xs1694": {
+   "source": "Plex, the disks, plexmon",
+   "text": "Plex, disky, plexmon"
+  },
+  "xs1695": {
+   "source": "Packed",
+   "text": "Zabaleno"
+  },
+  "xs1696": {
+   "source": "the tables are written out",
+   "text": "vypisují se tabulky"
+  },
+  "xs1697": {
+   "source": "P1 in full",
+   "text": "P1 v plném rozsahu"
+  },
+  "xs1698": {
+   "source": "P2, P3 - every episode of the shows on one match",
+   "text": "P2, P3 – všechny epizody seriálů na jedné shodě"
+  },
+  "xs1699": {
+   "source": "P7, P8 in full",
+   "text": "P7, P8 v plném rozsahu"
+  },
+  "xs1700": {
+   "source": "Plex's logs - the lines that matter, tokens taken out",
+   "text": "logy Plexu – důležité řádky, tokeny odstraněné"
+  },
+  "xs1701": {
+   "source": "packed",
+   "text": "balí se"
+  },
+  "xs1702": {
+   "source": "the disks are woken - each is waited for until it turns (a set of disks can take a couple of minutes)",
+   "text": "disky se probouzejí – na každý se čeká, dokud se neroztočí (sada disků může trvat pár minut)"
   }
  },
  "patterns": {
@@ -14641,6 +14769,22 @@
   "xp0355": {
    "source": "the disks could not be woken: {0}",
    "text": "disky nejde probudit: {0}"
+  },
+  "xp0356": {
+   "source": "the disks are woken: {0} of {1} turn ({2}), {3} s",
+   "text": "disky se probouzejí: roztočeno {0} z {1} ({2}), {3} s"
+  },
+  "xp0357": {
+   "source": "{0} turns ({1} s)",
+   "text": "{0} se točí ({1} s)"
+  },
+  "xp0358": {
+   "source": "not answering after {0} s: {1} - read all the same (that wakes it)",
+   "text": "po {0} s neodpovídá: {1} – čte se i tak (to ho probudí)"
+  },
+  "xp0359": {
+   "source": "every disk turns: {0} of them in {1} s",
+   "text": "všechny disky se točí: {0} za {1} s"
   }
  },
  "rich": {

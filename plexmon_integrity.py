@@ -59,6 +59,13 @@ SKIP_DIRS = {'@eadir', '#recycle', '$recycle.bin', 'plex versions', 'lost+found'
 SHOW_TYPE, MOVIE_TYPE = 2, 1
 ROW_CAP = 400
 MOUNT_SHARE = 0.05
+MOUNT_MIN = 10          # a few files gone from a small folder are files gone, not a disk (2.11.2)
+
+
+def too_much(gone, total):
+    """More than 5 % of a folder - and at least ten files - missing or in the
+    trash: taken for a disk not mounted, not for files deleted."""
+    return bool(total) and gone >= MOUNT_MIN and gone > MOUNT_SHARE * total
 SE_RE = re.compile(r'(?i)s(\d{1,3})[ ._-]*e(\d{1,4})(?:-?e(\d{1,4}))?')
 DATE_RE = re.compile(r'\d{4}[.\-]\d{2}[.\-]\d{2}')
 SEASON_DIR_RE = re.compile(r'(?i)^(season|series|s|staffel|serie|sezona|sezóna)[ ._-]*\d+$|^specials$')
@@ -715,7 +722,12 @@ def detect_p4(orphan_items):
                           'still_orphan': mi in orphan_items})
     risky = []
     jobs.sort()
+    last = {}
     for t, item, what in sorted(ops):
+        # One request is written more than once (Plex logs it as it comes and as it ends).
+        if t - last.get((item, what), -1e9) < 30:
+            continue
+        last[(item, what)] = t
         near = [j for j in jobs if t - 600 <= j[0] <= t]
         if near:
             risky.append({'at': t, 'item': item, 'what': what,
@@ -886,31 +898,42 @@ def ffprobe_bad(path):
 SCAN_STEPS = [('snapshot', 'A copy of the database'), ('db', 'The database read'),
               ('logs', 'Plex\'s logs read'), ('wake', 'The disks woken'), ('disks', 'The disks'),
               ('report', 'The report')]
-WAKE_WAIT_S = 120
 
 
 def wake_disks(wake, monitor, roots):
-    """Asked for (2.11.1): every data disk spun up first - the dashboard's own
-    Wake (an O_DIRECT read of its probe file) - then waited for until plexmon's
-    disk monitor no longer says any of them sleeps (two minutes at most)."""
-    says('the disks are woken - a sleeping one takes about ten seconds')
+    """Asked for (2.11.1; 2.11.2 waits for real): every data disk spun up first -
+    the dashboard's own Wake and an O_DIRECT read of each disk's probe file,
+    which returns only once its platters turn. Disks behind one USB bridge
+    spin up one after another - a couple of minutes for a set of them."""
+    says('the disks are woken - each is waited for until it turns (a set of disks can take a '
+         'couple of minutes)')
+    t0 = time.time()
+
+    def told(n, total, name):
+        says('the disks are woken: %d of %d turn (%s), %d s' % (n, total, name,
+                                                             round(time.time() - t0)))
+        line('%s turns (%d s)' % (name, round(time.time() - t0)))
     try:
-        wake()
+        got = wake(progress=told)
+    except TypeError:
+        got = wake()
     except Exception as e:                              # noqa: BLE001
         line('the disks could not be woken: %s' % e)
         return
-    t0 = time.time()
-    while time.time() - t0 < WAKE_WAIT_S:
+    got = got if isinstance(got, dict) else {}
+    if got.get('slow'):
+        line('not answering after %d s: %s - read all the same (that wakes it)' % (
+            got.get('took') or 0, ', '.join(got['slow'])))
+    else:
+        line('every disk turns: %s of them in %s s' % (got.get('disks', '?'), got.get('took', '?')))
+    # And plexmon's own disk monitor told it too - a few seconds at most now.
+    t1 = time.time()
+    while time.time() - t1 < 30:
         check_stop()
         power = disk_power(monitor)
-        asleep = [r for r in roots if root_state(r, monitor, None, power)['state'] == 'asleep']
-        if not asleep and time.time() - t0 > 3:
-            line('every disk is awake (%d s)' % round(time.time() - t0))
+        if not any(root_state(r, monitor, None, power)['state'] == 'asleep' for r in roots):
             return
-        says('the disks are woken - %d folder(s) on a disk still spinning up' % len(asleep))
         time.sleep(2)
-    line('still asleep after %d s: %s - read all the same (that wakes it)' % (
-        WAKE_WAIT_S, ', '.join(asleep)))
 
 
 def scan(store, by, disks=False, monitor=None, wake=None):
@@ -1015,7 +1038,12 @@ def scan(store, by, disks=False, monitor=None, wake=None):
                     ro['missing'] = len(gone)
                     ro['looked'] = True
                     share = len(gone) / max(1, len(mine))
-                    ro['mount_problem'] = bool(mine) and share > MOUNT_SHARE
+                    try:
+                        empty = not any(True for _ in os.scandir(r['path']))
+                    except OSError:
+                        empty = True
+                    ro['mount_problem'] = bool(mine) and (too_much(len(gone), len(mine)) or
+                                                          (empty and share >= 1))
                     if gone and not ro['mount_problem']:
                         for f in gone[:ROW_CAP]:
                             _, d = show_dir(f, s['roots'])
@@ -1673,7 +1701,7 @@ def fix_scan(store, by, kind, section=None, dirs=None, trash=False, monitor=None
                 why.append('%s: %s' % (r['path'], st['why'] or st['state']))
             elif r.get('mount_problem'):
                 why.append('%s: too much of it is missing - a disk not mounted?' % r['path'])
-            elif r.get('files') and r.get('trash', 0) > MOUNT_SHARE * r['files']:
+            elif too_much(r.get('trash', 0), r.get('files') or 0):
                 why.append('%s: %d of its %d files are in Plex\'s trash - more than 5 %%' % (
                     r['path'], r['trash'], r['files']))
         if why:
@@ -1708,7 +1736,7 @@ def fix_scan(store, by, kind, section=None, dirs=None, trash=False, monitor=None
         says('how much is in the trash now - a fresh copy of the database', 3, 5)
         tr, fl = trash_now(section)
         for root, n in fl.items():
-            if n and tr.get(root, 0) > MOUNT_SHARE * n:
+            if too_much(tr.get(root, 0), n):
                 raise ValueError('the trash is NOT emptied: %d of the %d files of %s are in '
                                  'Plex\'s trash - more than 5 %%; a disk not mounted when Plex '
                                  'looked?' % (tr[root], n, root))
@@ -1861,6 +1889,235 @@ def plex_task(store, by, kind):
 
 
 # ---------------------------------------------------------------------------
+# A package for analysis (2.11.2): everything found, in full, to send on -
+# nothing is put right, nothing of Plex's is changed
+# ---------------------------------------------------------------------------
+BUNDLE_STEPS = [('snapshot', 'A copy of the database'), ('tables', 'The tables written out'),
+                ('logs', 'Plex\'s logs, the lines that matter'), ('env', 'Plex, the disks, plexmon'),
+                ('pack', 'Packed')]
+BUNDLE_KEEP = 3
+LOG_KEEP = re.compile(r'merging ID|Destroying metadata item|/library/metadata/\d+/(split|merge)|'
+                      r'LongRunningJobManager|Updating media item|found agent match|emptyTrash|'
+                      r'/library/sections/\d+/refresh|Scanner|metadata item .* deleted|'
+                      r'Fix ?match|unmatch|Migrating metadata|ERROR|WARN', re.I)
+SECRET_RE = re.compile(r'(?i)(x-plex-token|token|plexonlinetoken|authToken|password)([=:"\s]+)'
+                       r'[A-Za-z0-9_\-.~%]{6,}')
+
+
+def bundle_dir():
+    d = state_dir() / 'packages'
+    d.mkdir(parents=True, exist_ok=True)
+    os.chmod(str(d), 0o700)
+    return d
+
+
+def bundles():
+    out = []
+    for p in sorted(bundle_dir().glob('plex-integrity-*.zip'), reverse=True):
+        st = p.stat()
+        out.append({'name': p.name, 'bytes': st.st_size, 'at': st.st_mtime})
+    return out
+
+
+def _scrub(text):
+    return SECRET_RE.sub(lambda m: m.group(1) + m.group(2) + '***', text)
+
+
+def _csv(rows, cols=None):
+    import csv
+    import io
+    buf = io.StringIO()
+    if not rows:
+        return ''
+    cols = cols or list(rows[0].keys())
+    w = csv.writer(buf)
+    w.writerow(cols)
+    for r in rows:
+        w.writerow(['' if r.get(k) is None else r.get(k) for k in cols])
+    return buf.getvalue()
+
+
+def bundle(store, by, monitor=None):
+    import zipfile
+    files = {}
+    t0 = time.time()
+    with tempfile.TemporaryDirectory(dir=str(HX.plex_dir()), prefix='integrity-') as tmp:
+        phase('snapshot', 'the library database is copied (Plex goes on)', 0, 5)
+        path, size = snapshot(tmp)
+        check_stop()
+        phase('tables', 'the tables are written out', 1, 5)
+        c = _open(path)
+        try:
+            secs = sections(c)
+            ok, counts = index_ok(c)
+            tabs = []
+            for (n,) in c.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"):
+                try:
+                    tabs.append({'table': n, 'rows': c.execute('SELECT count(*) FROM "%s"' % n)
+                                 .fetchone()[0]})
+                except sqlite3.Error as e:
+                    tabs.append({'table': n, 'rows': 'error: %s' % e})
+            files['db/tables.csv'] = _csv(tabs)
+            schema = []
+            for n in ('library_sections', 'section_locations', 'metadata_items', 'media_items',
+                      'media_parts', 'media_streams'):
+                for (sql,) in c.execute("SELECT sql FROM sqlite_master WHERE tbl_name = ? AND sql "
+                                        "IS NOT NULL", (n,)):
+                    schema.append(sql + ';')
+            files['db/schema.sql'] = '\n\n'.join(schema) + '\n'
+            try:
+                uv = c.execute('PRAGMA user_version').fetchone()[0]
+            except sqlite3.Error:
+                uv = None
+            files['db/index-check.json'] = json.dumps({'index_ok': ok, 'counts': counts,
+                                                       'user_version': uv}, indent=1)
+            files['db/sections.csv'] = _csv([{'section': s['id'], 'name': s['name'], 'type':
+                                              s['type'], 'location_id': r['id'], 'root': r['path']}
+                                             for s in secs.values() for r in s['roots']])
+            says('P1 in full', 1, 5)
+            dl = ' AND mi.deleted_at IS NULL' if _has(c, 'media_items', 'deleted_at') else ''
+            files['p1-orphan-media-items.csv'] = _csv(_rows(
+                c, 'SELECT mi.id AS media_item, mi.metadata_item_id AS missing_metadata, '
+                   'mi.library_section_id AS section, mi.section_location_id AS location, '
+                   'mp.id AS part, mp.file, mp.size FROM media_items mi LEFT JOIN media_parts mp '
+                   'ON mp.media_item_id = mi.id WHERE mi.metadata_item_id IS NOT NULL AND NOT EXISTS '
+                   '(SELECT 1 FROM metadata_items m WHERE m.id = mi.metadata_item_id)' + dl +
+                   ' ORDER BY mp.file'))
+            files['p1-parts-without-item.csv'] = _csv(_rows(
+                c, 'SELECT mp.id AS part, mp.media_item_id AS media_item, mp.file, mp.size FROM '
+                   'media_parts mp WHERE NOT EXISTS (SELECT 1 FROM media_items mi WHERE mi.id = '
+                   'mp.media_item_id)'))
+            says('P2, P3 - every episode of the shows on one match', 2, 5)
+            p3 = detect_p3(c, secs)
+            files['p3-groups.csv'] = _csv(p3)
+            ids = sorted({int(i) for g in p3 for i in str(g['ids']).split(',') if i})
+            rows = []
+            dpart = ', mp.deleted_at AS part_deleted' if _has(c, 'media_parts', 'deleted_at') else ''
+            ditem = ', mi.deleted_at AS item_deleted' if _has(c, 'media_items', 'deleted_at') else ''
+            for i in range(0, len(ids), 400):
+                q = ','.join(str(x) for x in ids[i:i + 400])
+                rows += _rows(c, 'SELECT show.id AS show_id, show.title AS show_title, show.guid, '
+                                 'show.library_section_id AS section, season.id AS season_id, '
+                                 'season."index" AS s, ep.id AS episode, ep."index" AS e, ep.title '
+                                 'AS episode_title, mi.id AS media_item, mi.section_location_id AS '
+                                 'location, mp.id AS part, mp.file' + ditem + dpart +
+                              ' FROM metadata_items show JOIN metadata_items season ON '
+                              'season.parent_id = show.id JOIN metadata_items ep ON ep.parent_id '
+                              '= season.id LEFT JOIN media_items mi ON mi.metadata_item_id = ep.id '
+                              'LEFT JOIN media_parts mp ON mp.media_item_id = mi.id WHERE show.id '
+                              'IN (%s) ORDER BY show.id, season."index", ep."index"' % q)
+            files['p2-p3-episodes-of-shows-on-one-match.csv'] = _csv(rows)
+            parts = episode_parts(c)
+            p2, _, _ = detect_p2(parts, secs, p3)
+            files['p2-cases.json'] = json.dumps(p2, indent=1, ensure_ascii=False)
+            says('P7, P8 in full', 2, 5)
+            p7 = detect_p7(c)
+            files['p7.json'] = json.dumps(p7, indent=1, ensure_ascii=False)
+            for r in parts:
+                sx = secs.get(r['section'])
+                r['dir'] = show_dir(r['file'] or '', sx['roots'])[1] if sx else None
+            files['p8-gaps.json'] = json.dumps(detect_p8(c, parts), indent=1, ensure_ascii=False)
+            files['db/metadata-by-type.csv'] = _csv(_rows(
+                c, 'SELECT library_section_id AS section, metadata_type AS type, count(*) AS n '
+                   'FROM metadata_items GROUP BY 1, 2 ORDER BY 1, 2'))
+        finally:
+            c.close()
+    check_stop()
+    phase('logs', 'Plex\'s logs - the lines that matter, tokens taken out', 2, 5)
+    kept, n_files = [], 0
+    for p in sorted(log_files(), key=lambda x: x.stat().st_mtime if x.exists() else 0):
+        n_files += 1
+        try:
+            with open(str(p), 'r', encoding='utf-8', errors='replace') as f:
+                for ln in f:
+                    if LOG_KEEP.search(ln):
+                        kept.append('%s: %s' % (p.name, _scrub(ln.rstrip('\n'))[:600]))
+        except OSError:
+            continue
+    files['logs/plex-media-server-selected.txt'] = '\n'.join(kept[-30000:]) + '\n'
+    files['p4.json'] = json.dumps(detect_p4(set()), indent=1, default=str)
+    check_stop()
+    phase('env', 'Plex, the disks, plexmon', 3, 5)
+    env = {'plexmon': A.__version__, 'made': datetime.now().isoformat(timespec='seconds'),
+           'by': by, 'db_bytes': size, 'plex_sqlite': os.path.exists(HX.PLEX_SQLITE),
+           'plex_running': HX.plex_running()}
+    try:
+        env['plex'] = PX.server_info()
+    except Exception as e:                              # noqa: BLE001
+        env['plex'] = 'not answering: %s' % e
+    try:
+        env['activities'] = PX.activities()
+        env['watching'] = PX.now_playing()
+    except Exception:                                   # noqa: BLE001
+        pass
+    power = disk_power(monitor)
+    env['disk_power'] = power
+    mts = mounts()
+    env['roots'] = [dict(root_state(r['path'], monitor, mts, power), section=s['id'],
+                         path=r['path']) for s in secs.values() for r in s['roots']]
+    env['mounts'] = [m for m in mts if m['mount'].startswith(('/data', '/mnt', '/media', '/srv',
+                                                              '/home', '/'))
+                     and m['fs'] not in ('proc', 'sysfs', 'cgroup2', 'tmpfs', 'devtmpfs',
+                                         'securityfs', 'debugfs', 'tracefs', 'bpf', 'mqueue',
+                                         'devpts', 'pstore', 'configfs', 'fusectl', 'hugetlbfs',
+                                         'autofs', 'binfmt_misc', 'selinuxfs', 'rpc_pipefs')]
+    files['environment.json'] = json.dumps(env, indent=1, default=str, ensure_ascii=False)
+    rep = last_report()
+    if rep:
+        files['last-look/report.json'] = json.dumps(rep, indent=1, default=str, ensure_ascii=False)
+        files['last-look/report.txt'] = report_text(rep)
+    files['history.json'] = json.dumps(history(), indent=1, default=str, ensure_ascii=False)
+    plan = []
+    for cs in p2:
+        plan.append({'case': cs['key'], 'fixable': cs['fixable'], 'why_not': cs['why'],
+                     'steps': ['wait until /activities is empty for 30 s',
+                               'a checked copy of the database',
+                               'PUT /library/metadata/%s/split' % cs['attached']['id'],
+                               'find the new show holding only %s' % cs['dir'],
+                               'PUT /library/metadata/%s/merge?ids=<that show>' % cs['owner']['id'],
+                               'merge the remaining pieces of %s back if it had several folders'
+                               % cs['attached']['id'], 'put the locked titles back',
+                               'look again']})
+    files['what-would-be-done.json'] = json.dumps(plan, indent=1, ensure_ascii=False)
+    files['README.txt'] = (
+        'plexmon %s - a package for analysis of the integrity of the Plex library\n'
+        'made %s by %s. Nothing was put right to make it; nothing of Plex\'s was changed.\n\n'
+        'environment.json             Plex, plexmon, every library folder and its disk now\n'
+        'last-look/report.*           the last look (Library integrity), as the page shows it\n'
+        'p1-*.csv                     P1 in full: orphan media items, parts without an item\n'
+        'p2-cases.json                P2: files under another show, with the folder\'s owner\n'
+        'p2-p3-episodes-of-shows-on-one-match.csv   every episode and file of the shows on one '
+        'match (P3)\n'
+        'p3-groups.csv, p7.json, p8-gaps.json, p4.json   the other findings in full\n'
+        'what-would-be-done.json      the steps a fix of each P2 case would take\n'
+        'db/                          tables and their rows, the schema, the index check\n'
+        'logs/                        the lines of Plex\'s logs that matter (merges, splits, '
+        'scans, jobs, errors) - tokens taken out\n'
+        'history.json                 what was put right here before\n\n'
+        'Not in it: Plex\'s database itself, its token, any password. It does hold the names and '
+        'paths of the library.\n') % (A.__version__, env['made'], by)
+    phase('pack', 'packed', 4, 5)
+    name = 'plex-integrity-%s.zip' % HX._stamp()
+    dst = bundle_dir() / name
+    part = str(dst) + '.part'
+    with zipfile.ZipFile(part, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as z:
+        for k, v in files.items():
+            z.writestr('plex-integrity/' + k, v)
+    os.chmod(part, 0o600)
+    os.replace(part, str(dst))
+    for old in bundles()[BUNDLE_KEEP:]:
+        try:
+            (bundle_dir() / old['name']).unlink()
+        except OSError:
+            pass
+    HX.event(store, 'plex', '%s made a package for analysis of the library: %s (%s)' % (
+        by, name, HX.human_bytes(dst.stat().st_size)), who=by)
+    says('done', 5, 5)
+    return {'name': name, 'bytes': dst.stat().st_size, 'took': round(time.time() - t0, 1),
+            'files': len(files)}
+
+
+# ---------------------------------------------------------------------------
 # What the pages are given
 # ---------------------------------------------------------------------------
 def view(store, monitor=None):
@@ -1885,7 +2142,7 @@ def view(store, monitor=None):
     return {'report': rep, 'job': job_view(), 'history': history()[:20], 'now': time.time(),
             'plex': {'running': HX.plex_running(), 'watching': watching, 'busy': acts[:6],
                      'plex_sqlite': os.path.exists(HX.PLEX_SQLITE)},
-            'roots_now': roots, 'db_job': dict(HX.DB_JOB)}
+            'roots_now': roots, 'db_job': dict(HX.DB_JOB), 'packages': bundles()}
 
 
 def report_text(rep):

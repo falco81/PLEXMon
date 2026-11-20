@@ -29,8 +29,8 @@ var IX_P = {
     how: 'Only a scan of the folder is asked of Plex (only where nothing else is in the way, only on a disk that is awake). Names and permissions are for you - what to do is said beside each.'},
   P6: {cls: 'safe', title: 'In the database, but not on the disk', icon: 'trash',
     lede: 'Plex has a file that is not on the disk any more - moved, deleted - or a whole folder is not there: a disk not mounted.',
-    why: 'A file deleted or moved outside Plex. A folder with more than 5 % missing is taken for a disk not mounted - and then nothing is done.',
-    how: 'Its folders scanned (Plex puts them into its trash) and the library\'s trash emptied - only when every folder of the library is there and awake, and no more than 5 % of it is missing or in the trash.'},
+    why: 'A file deleted or moved outside Plex. A folder that is not there or empty, or with more than 5 % (and at least ten files) missing, is taken for a disk not mounted - and then nothing is done.',
+    how: 'Its folders scanned (Plex puts them into its trash) and the library\'s trash emptied - only when every folder of the library is there and awake, and no more than 5 % of it (or fewer than ten files) is missing or in the trash.'},
   P7: {cls: 'safe', title: 'Empty or without a parent', icon: 'list',
     lede: 'Seasons and shows with nothing in them, episodes with no file, and seasons or episodes whose show or season is not there.',
     why: 'What is left after files were deleted or moved, or after a merge.',
@@ -58,7 +58,11 @@ function ixWatch() {
       if (j.running) { IX.poll = setTimeout(step, 1000); return; }
       IX.poll = null;
       if (j.error) toast(j.error, 'bad');
-      else if (j.what) toast(txT(j.what) + ': ' + txT('done'), 'good');
+      else if (j.kind === 'bundle' && j.result && j.result.name && IX.fetchWhenDone) {
+        IX.fetchWhenDone = false;
+        toast(txT('The package is ready - it is being downloaded'), 'good');
+        ixGetPackage(j.result.name);
+      } else if (j.what) toast(txT(j.what) + ': ' + txT('done'), 'good');
       if (TAB === 'integrity') loadIntegrity();
     }).catch(function () { IX.poll = setTimeout(step, 3000); });
   };
@@ -208,6 +212,28 @@ function ixHero(d, r) {
     modes.appendChild(lab);
   });
   tools.appendChild(modes);
+  var pk = cmdButton('A package for analysis', 'archive', 'small');
+  explain(pk, 'Everything found, in full, packed as a ZIP to send on for analysis - instead of putting anything right. Nothing of Plex\'s is changed to make it.');
+  pk.disabled = ixRunning() || ixBusyDb();
+  pk.onclick = ixPackageAsk;
+  tools.appendChild(pk);
+  if ((d.packages || []).length) {
+    var pl = el('div', 'ix-packs');
+    d.packages.forEach(function (x) {
+      var row = el('div', 'ix-pack');
+      var a = el('a', 'mono small', x.name.replace('plex-integrity-', '').replace('.zip', ''));
+      a.href = '?api=integrity-package&name=' + encodeURIComponent(x.name);
+      a.title = x.name;
+      row.appendChild(ixIcon('archive', 13));
+      row.appendChild(noI18n(a));
+      row.appendChild(noI18n(el('span', 'muted small', bytes(x.bytes))));
+      var del = iconButton('trash', 'Delete it');
+      del.onclick = function () { api('integrity', {action: 'bundle-forget', name: x.name}).then(function () { loadIntegrity(); }).catch(oops); };
+      row.appendChild(del);
+      pl.appendChild(row);
+    });
+    tools.appendChild(pl);
+  }
   if (r) {
     var dl = cmdButton('Download the report', 'download', 'small');
     dl.onclick = function () { api('integrity', {action: 'report-text'}).then(function (x) { saveText(x.text, x.name); }).catch(oops); };
@@ -713,7 +739,7 @@ function ixTrashConfirm(kind, sec, scan) {
   ixConfirm('Empty the trash of "' + sec.name + '"?', '', [
     ['Wait until Plex has nothing running', ''],
     scan ? ['Its folders with files gone scanned', 'Plex puts what is not there into its trash'] : ['', ''],
-    ['How much is in the trash looked at again', 'a fresh copy of the database - more than 5 % of a folder in the trash: STOP, nothing emptied'],
+    ['How much is in the trash looked at again', 'a fresh copy of the database - more than 5 % of a folder (and at least ten files) in the trash: STOP, nothing emptied'],
     ['The trash emptied', 'Plex forgets what is not there - and what was watched of it'],
     ['Looked at again', '']].filter(function (s) { return s[0]; }),
     ['What Plex forgets cannot be brought back without a copy of the database (Settings → The database).'],
@@ -802,4 +828,25 @@ function ixHistory(d) {
     return tr;
   }, 'plain'));
   return c;
+}
+
+/* A package for analysis (2.11.2): everything found, in full, as a ZIP - nothing put right. */
+function ixGetPackage(name) {
+  var a = el('a');
+  a.href = '?api=integrity-package&name=' + encodeURIComponent(name);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function () { a.remove(); }, 1000);
+}
+function ixPackageAsk() {
+  ixConfirm('Make a package for analysis?', 'Nothing is put right and nothing of Plex\'s is changed - a fresh copy of its database is read and written out in full:', [
+    ['Every finding in full', 'P1 to P8 without the limit of the page: every orphan, every file under another show, every gap'],
+    ['Every episode and file of the shows on one match', 'to see why Plex put a file where it did'],
+    ['The tables, their rows, the schema, the index check', 'not the database itself'],
+    ['The lines of Plex\'s logs that matter', 'merges, splits, scans, background jobs, errors - tokens taken out'],
+    ['Plex, plexmon, every library folder and its disk now', 'and what was put right here before'],
+    ['What a fix of each case would do', 'its steps, nothing done']],
+    ['It holds the names and the paths of your library - no password, no token, not the database.'],
+    'Make it and download it', function () { IX.fetchWhenDone = true; ixDo({action: 'bundle'}); }, false);
 }

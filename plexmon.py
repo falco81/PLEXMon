@@ -22,7 +22,7 @@ identical. Run it with:  python3 plexmon.py           (daemon)
 """
 from __future__ import annotations
 
-__version__ = "2.11.1"
+__version__ = "2.11.2"
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -3319,7 +3319,7 @@ class Daemon:
         try:
             sys.path.insert(0, str(Path(__file__).resolve().parent))
             import plexmon_admin
-            self.admin = plexmon_admin.start(monitor=self.monitor_state, wake=self.request_wake)
+            self.admin = plexmon_admin.start(monitor=self.monitor_state, wake=self.wake_wait)
         except Exception as e:                          # noqa: BLE001
             import traceback
             log(f"Settings did not start: {e}\n{traceback.format_exc()}")
@@ -3602,6 +3602,55 @@ class Daemon:
                 # the daemon always re-reads SMART itself (it runs as root), so the
                 # page can count on fresh values — no sudo rule involved anymore
                 "refresh": True}
+
+    def wake_wait(self, progress=None, timeout: float = 300.0) -> dict:
+        """
+        Wake every data disk and come back only once each has spun up (2.11.2,
+        for Settings' library integrity): the dashboard's Wake is started (its
+        SMART pass too), and beside it an O_DIRECT read of each disk's probe
+        file - which does not return before the platters turn. A set of disks
+        behind one USB bridge spins up one after another: minutes, not seconds.
+        `progress(done, total, name)` is told as each one answers.
+        """
+        with self.lock:
+            snap_disks = list(self.snapshot.get("disks", []))
+        mounts = [(d.get("mount"), d.get("dev"), d.get("path")) for d in snap_disks
+                  if d.get("mount") and d.get("mount") != "/" and d.get("tran") != "nvme"]
+        try:
+            self.request_wake()
+        except Exception as e:                          # noqa: BLE001
+            log(f"wake for the library check: {e}")
+        t0 = time.time()
+        done, slow, lock = [], [], threading.Lock()
+
+        def spin(mp, dev, dev_path):
+            probe = Path(mp) / ".wake-probe"
+            try:
+                if not probe.is_file():
+                    probe.write_bytes(b"\0" * 65536)
+                    probe.chmod(0o644)
+            except OSError:
+                pass
+            self._probe_read(probe, dev_path)
+            with lock:
+                done.append(dev or mp)
+                n = len(done)
+            if progress:
+                try:
+                    progress(n, len(mounts), dev or mp)
+                except Exception:                       # noqa: BLE001
+                    pass
+        threads = []
+        for mp, dev, dev_path in mounts:
+            t = threading.Thread(target=spin, args=(mp, dev, dev_path), daemon=True)
+            t.start()
+            threads.append((t, dev or mp))
+        for t, name in threads:
+            t.join(timeout=max(1.0, timeout - (time.time() - t0)))
+            if t.is_alive():
+                slow.append(name)
+        return {"disks": len(mounts), "awake": len(done), "slow": slow,
+                "took": round(time.time() - t0, 1)}
 
     @staticmethod
     def _probe_read(path: Path, dev_path: Optional[str] = None) -> None:

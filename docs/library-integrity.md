@@ -12,11 +12,12 @@ puts right what can be put right safely. The problems are P1 to P8 below.
 - **A sleeping disk is never woken - unless asked.** The disks are read (P5, P6, P8 on the
   disk) with *The disks that are awake* (the default), and then only the folders of disks that
   are awake now. *All disks - wake them first* (2.11.1, asked first) spins every data disk up
-  with the dashboard's own Wake, waits until plexmon's disk monitor says none of them sleeps
-  (two minutes at most), and reads them all. *The database only* reads no disk. plexmon knows
+  with the dashboard's own Wake and waits until each disk really turns - an O_DIRECT read of
+  its probe file returns only then (2.11.2; five minutes at most) - and reads them all. *The database only* reads no disk. plexmon knows
   that from its own disk monitor; it is asked again just before each folder is read. A disk
   asleep, or one plexmon cannot tell about, is left out and named. A library folder that is
-  not there is taken for a disk not mounted, never for deleted files.
+  not there, is empty, or misses more than 5 % (and at least ten) of its files is taken for a
+  disk not mounted, never for deleted files.
 - **One write into Plex's database: P1.** Everything else goes through Plex's own HTTP API.
 - **A checked copy before anything is changed.** Before P1, P2 and Plex's own Optimize, a copy
   of Plex's database is made and checked (Settings → The database lists it, and it can be put
@@ -82,7 +83,8 @@ is a library of its own for each version: Plex matches only within one library.
 
 The trash of a library is emptied only when **every** folder of the library is there and awake,
 and after its folders were scanned a fresh copy of the database shows **no more than 5 %** of any
-folder in the trash. Otherwise nothing is emptied, and the page says why.
+folder in the trash (fewer than ten files always pass: a few files gone from a small folder are
+files gone, not a disk). Otherwise nothing is emptied, and the page says why.
 
 ## Plex's own Optimize and Clean Bundles
 
@@ -90,6 +92,16 @@ Settings → The database runs them as a job followed to the end. Optimize makes
 the database first. Both are asked of Plex, and their progress is read from `/activities` (its
 `progress`) and from the database files until Plex is done. The bar is shown beside the buttons,
 and the last run of each is listed with its time and, for Optimize, the size before and after.
+
+## A package for analysis (2.11.2)
+
+*A package for analysis* puts nothing right: a fresh copy of the database is read and written
+out in full into a ZIP to download - every finding without the page's limit, every episode and
+file of the shows on one match, the tables and their rows, the schema, the index check, the lines
+of Plex's logs that matter with tokens taken out, Plex, plexmon and every library folder with its
+disk, the history, and what a fix of each P2 case would do. Not the database, no token, no
+password; it does hold the names and paths of the library. The last three are kept in
+`/var/lib/plexmon/integrity/packages/`.
 
 ## The report
 

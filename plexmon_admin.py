@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.11.1'
+__version__ = '2.11.2'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -10277,6 +10277,18 @@ def _integrity(h):
     return IX.view(h.store, h.d.monitor)
 
 
+@route('GET', '/api/integrity/package')
+def _integrity_package(h):
+    s = h.me('fulladmin')
+    name = os.path.basename(h.arg('name') or '')
+    p = IX.bundle_dir() / name
+    if not name.startswith('plex-integrity-') or not name.endswith('.zip') or not p.is_file():
+        raise ApiError(404, 'there is no package %s' % name)
+    h.store.add_event('plex', '%s downloaded the package %s' % (s['name'], name), who=s['name'])
+    h.send_file(str(p), name, 'application/zip')
+    return None
+
+
 @route('POST', '/api/integrity')
 def _integrity_do(h):
     s = h.me('fulladmin')
@@ -10291,6 +10303,17 @@ def _integrity_do(h):
         if act == 'stop':
             return {'message': 'it stops at the next safe point' if IX.job_stop() else
                     'nothing is running'}
+        if act == 'bundle':
+            IX.job_start('bundle', 'a package for analysis', by, IX.BUNDLE_STEPS,
+                         lambda: IX.bundle(st, by, monitor=mon))
+            return {'message': 'the package is being made', 'job': IX.job_view()}
+        if act == 'bundle-forget':
+            name = os.path.basename(str(b.get('name') or ''))
+            p = IX.bundle_dir() / name
+            if not name.startswith('plex-integrity-') or not p.is_file():
+                raise ApiError(404, 'there is no package %s' % name)
+            p.unlink()
+            return {'message': 'deleted'}
         if act == 'report-text':
             return {'text': IX.report_text(IX.last_report()),
                     'name': 'plex-integrity-%s.txt' % HX._stamp()}

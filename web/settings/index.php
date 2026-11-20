@@ -302,11 +302,12 @@ if (isset($_GET['api'])) {
         echo $body ?: json_encode(['ok' => false, 'error' => 'the daemon is not answering']);
         exit;
     }
-    if (($what === 'db-file' || $what === 'rbackup-download') && !$post) {
+    if (($what === 'db-file' || $what === 'rbackup-download' || $what === 'integrity-package') && !$post) {
         /* A copy or a backup, as a download - passed through a lump at a time. */
         $q = $_GET;
         unset($q['api']);
-        $path = ($what === 'db-file' ? '/api/db/file' : '/api/rbackup/download')
+        $path = ($what === 'db-file' ? '/api/db/file' : ($what === 'integrity-package'
+            ? '/api/integrity/package' : '/api/rbackup/download'))
             . ($q ? '?' . http_build_query($q) : '');
         [$status, $body] = pm_pipe($path, '', 3600.0);
         if ($status !== 200) {
