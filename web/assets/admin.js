@@ -308,12 +308,29 @@ var UPG = {u: null, heard: Date.now(), away: 0, pagesAway: false, sawRunning: fa
            timer: null, misses: 0};
 function upgradeHeard(u) {
   if (!u || !u.state) return;
+  /* An upgrade of ten seconds is often over between two looks (2.11.10): "done" to another
+     version than these pages came with means these pages are old - the band and the one reload
+     as if it had been seen running. */
+  if (u.state === 'done' && u.version && VERSION_LOADED && u.version !== VERSION_LOADED) UPG.sawRunning = true;
+  if (UPG.u && UPG.u.local && u.state === 'running') u = Object.assign({}, u);
   UPG.u = u;
   if (u.state === 'running') UPG.sawRunning = true;
   upgradeDraw();
   if (u.state === 'running') upgradeTickOn();
   else upgradeTickOff();
   if (u.state === 'done') upgradeEnd();
+}
+/* Pressed here (2.11.10): the band at once, asked every 2 s - not left to the next look of the
+   header, which came after a short upgrade was over. */
+function upgradeStarted(p) {
+  p = p || {};
+  UPG.sawRunning = true;
+  UPG.heard = Date.now();
+  UPG.u = {state: 'running', local: true, version: p.version || '', from: VERSION_LOADED,
+           by: (typeof ME === 'object' && ME && ME.name) || '', started: Date.now() / 1000,
+           at: Date.now() / 1000, part: 1, parts: 13, downgrade: !!p.downgrade, words: 'asked'};
+  upgradeDraw();
+  upgradeTickOn();
 }
 function upgradeExpected() { return !!(UPG.u && UPG.u.state === 'running') || UPG.reloading; }
 function upgradeTickOn() {
@@ -332,7 +349,8 @@ function upgradeTick() {
     else if (UPG.u && UPG.u.state === 'running') {
       /* The file no longer believed (old), and the API answers: over, one way or the other -
          a version other than these pages' means the new one runs. */
-      if (s.version && VERSION_LOADED && s.version !== VERSION_LOADED) upgradeHeard(Object.assign({}, UPG.u, {state: 'done'}));
+      if (s.version && VERSION_LOADED && s.version !== VERSION_LOADED) upgradeHeard(Object.assign({}, UPG.u, {state: 'done', version: s.version}));
+      else if (UPG.u.local && Date.now() / 1000 - UPG.u.started < 120) { /* asked here a moment ago: root has not begun to write yet */ }
       else { UPG.u = null; upgradeTickOff(); upgradeDraw(); }
     }
   }).catch(function () {
@@ -2709,7 +2727,7 @@ function drawUpWeb(d) {
         confirmThen('Upgrade to plexmon ' + c.version + '?', htmlText('It is fetched from ' + (c.url || o.url) + ', its signature checked, and '
           + (many ? 'the nodes are upgraded one at a time - each in maintenance while it is, so the service never stops.' : 'this server is upgraded: plexmon restarts for a moment - the dashboard and these pages are back within a minute; Plex itself is not touched.')), 'Upgrade', function () {
           busy(up, true);
-          api('upgrade', {action: 'online_get', version: c.version, start: true}).then(function (x) { toast(x.message, 'good'); drawUpgrade(x); })
+          api('upgrade', {action: 'online_get', version: c.version, start: true}).then(function (x) { toast(x.message, 'good'); upgradeStarted({version: c.version}); drawUpgrade(x); })
             .catch(oops).then(function () { busy(up, false); });
         }, false);
       };
@@ -2793,7 +2811,7 @@ function drawUpDown(d) {
           go.onclick = function () {
             upDownConfirm(v.version, function () {
               busy(go, true);
-              api('upgrade', {action: 'downgrade_get', version: v.version, start: true}).then(function (r) { toast(r.message, 'good'); drawUpgrade(r); })
+              api('upgrade', {action: 'downgrade_get', version: v.version, start: true}).then(function (r) { toast(r.message, 'good'); upgradeStarted({version: v.version, downgrade: true}); drawUpgrade(r); })
                 .catch(oops).then(function () { busy(go, false); });
             });
           };
@@ -3124,13 +3142,13 @@ if ($('up-drop')) {
       var names = (d.nodes || []).filter(function (n) { return n.alive; }).map(function (n) { return n.name; });
       var many = names.length > 1;
       if (p.downgrade) { upDownConfirm(p.version, function () {
-        api('upgrade', {action: 'start'}).then(function (r) { toast(r.message, 'good'); drawUpgrade(r); }).catch(oops);
+        api('upgrade', {action: 'start'}).then(function (r) { toast(r.message, 'good'); upgradeStarted(p); drawUpgrade(r); }).catch(oops);
       }); return; }
       confirmThen(many ? 'Upgrade every node to ' + p.version : 'Upgrade this server to ' + p.version,
         many ? 'One node at a time: it is taken out of service, upgraded, checked and brought back, and only then the next one. The VPN and the load balancer use the other node meanwhile.'
-             : 'This server is the only one: while it is put in and restarted - a minute or two - nobody can sign in to the VPN, and these pages stop answering for a moment.',
+             : 'While the new version is put in and plexmon restarted - seconds, a minute at most - these pages stop answering for a moment and then load the new version by themselves. Plex Media Server goes on.',
         'Upgrade', function () {
-          api('upgrade', {action: 'start'}).then(function (r) { toast(r.message, 'good'); drawUpgrade(r); }).catch(oops);
+          api('upgrade', {action: 'start'}).then(function (r) { toast(r.message, 'good'); upgradeStarted(p); drawUpgrade(r); }).catch(oops);
         }, !many);
     };
     $('up-forget').onclick = function () {

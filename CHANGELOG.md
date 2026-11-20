@@ -4,6 +4,17 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.11.10 - 2026-11-20
+
+- **The band of an upgrade, every time**: an upgrade of ten seconds was often over between two
+  looks of the header (every five seconds) - the pages saw only "done", never "running", and
+  showed neither the band nor loaded the new version. Now the band is there the moment
+  *Upgrade this server* (or a version from the web, or going back) is pressed, asked every two
+  seconds; and "done" to a version other than the one these pages came with means these pages
+  are old - the band and the one reload, whatever was seen before (still once: no loop).
+- The confirm of an upgrade no longer speaks of a VPN (left from where the upgrade came from):
+  plexmon restarts for seconds, these pages load the new version by themselves, Plex goes on.
+
 ## 2.11.9 - 2026-11-20
 
 - **P6 in an empty folder put right - for real**: the placeholder of 2.11.8 did not help (Plex
