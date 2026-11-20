@@ -4,6 +4,25 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.11.12 - 2026-11-20
+
+Bugs found and put right:
+
+- **P1 left its files unscanned when Plex was analysing**: after Plex was started again, the scan
+  of the orphans' folders was asked only once Plex had nothing running for ten seconds - with
+  analyses of the whole library going on (credits, intros: hours on a real server) it gave up after
+  ten minutes and asked nothing, so the files stayed out of Plex. Plex queues a scan whatever it
+  does: asked at once now.
+- **"After the scan" waited for every analysis of Plex**: the waits after a scan and after the
+  trash (P1, P5, P6, P7) waited until Plex had nothing at all running - up to an hour while it
+  detected credits. Only the scan is waited for now.
+- **A job looked running after it was over** when another job of Settings → The database (a copy
+  on a schedule) started right after it: it was taken as over only when that slot was free. Over
+  when it is over now.
+- **Stop said "failed"**: a job stopped when asked is said as stopped, its steps not begun as
+  skipped.
+- Dead code taken out of the look and of the upgrade band.
+
 ## 2.11.11 - 2026-11-20
 
 - **P6 in an empty folder: the placeholder of 2.11.8 is back - it worked.** The logs of the real

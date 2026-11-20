@@ -312,7 +312,6 @@ function upgradeHeard(u) {
      version than these pages came with means these pages are old - the band and the one reload
      as if it had been seen running. */
   if (u.state === 'done' && u.version && VERSION_LOADED && u.version !== VERSION_LOADED) UPG.sawRunning = true;
-  if (UPG.u && UPG.u.local && u.state === 'running') u = Object.assign({}, u);
   UPG.u = u;
   if (u.state === 'running') UPG.sawRunning = true;
   upgradeDraw();

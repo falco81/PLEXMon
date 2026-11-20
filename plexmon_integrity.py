@@ -195,7 +195,7 @@ def job_start(kind, what, by, steps, fn):
                    scale=[], _inner_whole=None,
                    steps=[{'key': k, 'title': t, 'state': 'wait'} for k, t in steps],
                    step='', says='starting', done=0, whole=0, error='', result=None,
-                   began=time.time(), ended=0.0, by=by, stop=False, lines=[])
+                   began=time.time(), ended=0.0, by=by, stop=False, lines=[], stopped=False)
 
     def go():
         try:
@@ -203,6 +203,13 @@ def job_start(kind, what, by, steps, fn):
             for s in JOB['steps']:
                 if s['state'] == 'run':
                     s['state'] = 'done'
+        except Stopped:
+            # Stopped when asked (2.11.12): said as stopped, not as failed.
+            JOB['stopped'] = True
+            for s in JOB['steps']:
+                if s['state'] in ('run', 'wait'):
+                    s['state'] = 'skip'
+            line('stopped when asked - nothing begun was left halfway')
         except Exception as e:                          # noqa: BLE001
             JOB['error'] = str(e)[:500] or e.__class__.__name__
             for s in JOB['steps']:
@@ -210,7 +217,12 @@ def job_start(kind, what, by, steps, fn):
                     s['state'] = 'failed'
             log('%s: %s' % (what, e), 'warn')
         finally:
-            JOB.update(says='done' if not JOB['error'] else 'failed')
+            JOB.update(says='stopped' if JOB.get('stopped') else 'done' if not JOB['error']
+                       else 'failed')
+            # Over when this is over (2.11.12) - not when the slot of Settings → The database
+            # is free: a copy of the database right after kept this one "running".
+            with _LOCK:
+                JOB.update(running=False, ended=time.time())
             return JOB.get('result')
 
     try:
@@ -219,13 +231,6 @@ def job_start(kind, what, by, steps, fn):
         with _LOCK:
             JOB.update(running=False, ended=time.time())
         raise
-
-    def watch():
-        while HX.DB_JOB.get('running'):
-            time.sleep(0.5)
-        with _LOCK:
-            JOB.update(running=False, ended=time.time())
-    threading.Thread(target=watch, name='plexmon-integrity-watch', daemon=True).start()
     return JOB['id']
 
 
@@ -1022,9 +1027,6 @@ def scan(store, by, disks=False, monitor=None, wake=None):
         p3_groups.append({'section': g['section'], 'guid': g['guid'],
                           'shows': [{'id': i, 'title': titles.get(i, ''),
                                      'dirs': sorted(dirs_of.get(i) or [])} for i in ids]})
-    for g in p3_groups:
-        if any(not s['title'] for s in g['shows']):
-            pass
     phase('logs', 'Plex\'s logs are read', 3, 6)
     p4 = detect_p4(set(p1['ids']))
     check_stop()
@@ -1193,11 +1195,19 @@ def busy_now():
     return [a for a in PX.activities() if a.get('type')]
 
 
-def wait_idle(timeout=3600, quiet=30, why=''):
+SCAN_ACT = re.compile(r'library\.(update|refresh)|scan|emptying|trash', re.I)
+
+
+def wait_idle(timeout=3600, quiet=30, why='', only=None):
+    """Until Plex has nothing running for `quiet` seconds - or, with `only`, nothing of
+    that kind (a scan): analyses of the whole library can go on for hours (2.11.12)."""
     t0, calm = time.time(), None
     while time.time() - t0 < timeout:
         check_stop()
         acts = busy_now()
+        if only is not None:
+            acts = [a for a in acts if only.search('%s %s' % (a.get('type') or '',
+                                                            a.get('title') or ''))]
         if not acts:
             calm = calm or time.time()
             left = quiet - (time.time() - calm)
@@ -1223,11 +1233,14 @@ def wait_scan_done(why='after the scan', timeout=3600):
     t0 = time.time()
     while time.time() - t0 < 20:
         check_stop()
-        if busy_now():
+        if [a for a in busy_now() if SCAN_ACT.search('%s %s' % (a.get('type') or '',
+                                                               a.get('title') or ''))]:
             break
         says('%s - waiting for Plex to begin' % why)
         time.sleep(1)
-    return wait_idle(timeout=timeout, quiet=10, why=why)
+    # Only the scan is waited for (2.11.12): Plex's analyses (credits, intros, thumbnails)
+    # can run for hours and have nothing to do with it.
+    return wait_idle(timeout=timeout, quiet=10, why=why, only=SCAN_ACT)
 
 
 def plex_answers(timeout=180):
@@ -1508,7 +1521,9 @@ def fix_p1(store, by, ids, part_ids, monitor=None, wake=None, final=True):
     dirs = sorted({(r.get('section'), r.get('dir') or os.path.dirname(r.get('file') or ''))
                    for r in rows if r.get('file')})
     scanned, asleep = [], []
-    if dirs and wait_idle(timeout=600, quiet=10, why='before the scan'):
+    # Plex queues a scan whatever it is doing (2.11.12): with analyses running all the time a
+    # "quiet first" left these folders unscanned after ten minutes - and the files unseen.
+    if dirs:
         for sec, d in dirs:
             if not sec or not d:
                 continue

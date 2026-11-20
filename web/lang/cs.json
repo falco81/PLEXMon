@@ -11943,6 +11943,10 @@
   "xs1734": {
    "source": "While the new version is put in and plexmon restarted - seconds, a minute at most - these pages stop answering for a moment and then load the new version by themselves. Plex Media Server goes on.",
    "text": "Zatímco se nová verze instaluje a plexmon restartuje – sekundy, nejvýš minuta – tyto stránky na chvíli přestanou odpovídat a pak samy načtou novou verzi. Plex Media Server běží dál."
+  },
+  "xs1735": {
+   "source": "stopped when asked - nothing begun was left halfway",
+   "text": "zastaveno na žádost – nic rozdělaného nezůstalo napůl"
   }
  },
  "patterns": {

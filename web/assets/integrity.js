@@ -57,7 +57,8 @@ function ixWatch() {
       ixDrawJob();
       if (j.running) { IX.poll = setTimeout(step, 1000); return; }
       IX.poll = null;
-      if (j.error) toast(j.error, 'bad');
+      if (j.stopped) toast(txT(j.what) + ': ' + txT('stopped'), 'good');
+      else if (j.error) toast(j.error, 'bad');
       else if (j.kind === 'bundle' && j.result && j.result.name && IX.fetchWhenDone) {
         IX.fetchWhenDone = false;
         toast(txT('The package is ready - it is being downloaded'), 'good');
@@ -270,7 +271,7 @@ function ixDrawJob() {
   var h = el('div', 'ix-job-h');
   var t = el('b', '', j.what);
   h.appendChild(t);
-  h.appendChild(el('span', 'tag ' + (j.running ? 'info' : j.error ? 'crit' : 'ok'), j.running ? 'under way' : j.error ? 'failed' : 'done'));
+  h.appendChild(el('span', 'tag ' + (j.running ? 'info' : j.stopped ? 'dim' : j.error ? 'crit' : 'ok'), j.running ? 'under way' : j.stopped ? 'stopped' : j.error ? 'failed' : 'done'));
   if (j.running && j.nostop) h.appendChild(el('span', 'tag warn', 'past the split - it is finished, not stopped'));
   if (j.running && !j.nostop) {
     var el2 = noI18n(el('span', 'muted small', ''));
