@@ -604,6 +604,8 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
 <div class="tabs" role="tablist">
   <button role="tab" aria-selected="false" data-tab="library" data-icon="list"
           title="The movies and shows of this Plex server: their posters and details, and the tools - the default audio and subtitles, watched, labels, titles in another language, the watchlist, the ratings.">Plex library</button>
+  <button role="tab" aria-selected="false" data-tab="integrity" data-icon="search" class="fulladmin-only"
+          title="Where Plex's library no longer agrees with itself or with the disks - found on a copy of its database, put right safely.">Library integrity</button>
   <button role="tab" aria-selected="false" data-tab="events" data-icon="history"
           title="Every sign-in, every change of a setting, every certificate put in - and the daemon’s own log.">Events</button>
   <!-- Settings always the last one, at the right (2.6.8). -->
@@ -614,6 +616,16 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
 <!-- ===================== Plex library ===================== -->
 <section class="panel" id="tab-library" hidden>
   <div class="px" id="px-root"></div>
+</section>
+
+<!-- ===================== Library integrity (a tab of its own, 2.11.1) ===================== -->
+<section class="panel ix-tab" id="tab-integrity" hidden>
+    <div class="ctl-head"><h2 class="ctl-title">Library integrity</h2>
+      <p class="ctl-lede">Where Plex Media Server's library no longer agrees with itself or with the disks: a
+        file Plex shows nowhere, a file under another show, a file on the disk Plex has not taken in, a file
+        Plex has that is gone. Found on a copy of its database - Plex goes on; put right only after a checked
+        copy of the database, and a sleeping disk is never woken.</p></div>
+    <div id="ix-host"></div>
 </section>
 
 <!-- ===================== Events ===================== -->
@@ -664,7 +676,6 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
     <button type="button" class="fulladmin-only" data-pane="osup" data-icon="download" title="The operating system's packages updated by dnf; a restart offered when one is needed.">System updates</button>
     <div class="ctl-group">Data</div>
     <button type="button" class="fulladmin-only" data-pane="db" data-icon="db" title="plexmon's database and Plex Media Server's own: copies, a check, putting one back.">The database</button>
-    <button type="button" class="fulladmin-only" data-pane="integrity" data-icon="search" title="Where Plex's library no longer agrees with itself or with the disks - found on a copy of its database, put right safely.">Library integrity</button>
     <button type="button" class="fulladmin-only" data-pane="backup" data-icon="archive" title="Backups of everything to another machine - FTP, FTPS, SFTP, SCP, SMB or a folder - locked with a password, on a schedule, Plex's database in them too.">Backups</button>
     <div class="ctl-group">The server</div>
     <button type="button" class="fulladmin-only" data-pane="upgrade" data-icon="up" title="A new version, put in from here - from the web or as a file.">Upgrades</button>
@@ -916,14 +927,6 @@ plexmon --upgrade-status                   # an upgrade started on these pages</
     <div class="card full"><h2>plexmon's database <span class="right" id="odb-tools"></span></h2>
       <div id="odb-host"></div></div>
     <div class="card full"><h2>Copies of plexmon's database, and what is kept</h2><div id="sect-db"></div></div>
-  </div>
-  <div class="ctl-pane" id="pane-integrity" hidden>
-    <div class="ctl-head"><h2 class="ctl-title">Library integrity</h2>
-      <p class="ctl-lede">Where Plex Media Server's library no longer agrees with itself or with the disks: a
-        file Plex shows nowhere, a file under another show, a file on the disk Plex has not taken in, a file
-        Plex has that is gone. Found on a copy of its database - Plex goes on; put right only after a checked
-        copy of the database, and a sleeping disk is never woken.</p></div>
-    <div id="ix-host"></div>
   </div>
   <div class="ctl-pane" id="pane-backup" hidden>
     <div class="ctl-head"><h2 class="ctl-title">Backups</h2>

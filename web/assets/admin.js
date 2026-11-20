@@ -45,7 +45,7 @@ dressButtons(document);
 }());
 
 /* ---- tabs ------------------------------------------------------------------ */
-var TABS = ['library', 'events', 'settings'];
+var TABS = ['library', 'integrity', 'events', 'settings'];
 window.optShowTab = function (name) {
   if (TABS.indexOf(name) < 0) name = 'settings';
   var btn = document.querySelector('.tabs button[data-tab="' + name + '"]');
@@ -70,6 +70,7 @@ function writeHash() {
 function onTab(name) {
   explainWhatWasDrawn(document);
   if (name === 'events') loadEvents();
+  if (name === 'integrity' && typeof loadIntegrity === 'function') loadIntegrity();
   if (window.PXLIB) { if (name === 'library') window.PXLIB.show(); else window.PXLIB.hide(); }
   if (name === 'settings') loadSettings(!Object.keys(DIRTY || {}).length && !Object.keys(PENDING || {}).length);
 }
@@ -959,7 +960,6 @@ function showPane(name) {
   if (name === 'power' && typeof loadPower === 'function') loadPower();
   if (name === 'osup' && typeof loadOsup === 'function') loadOsup();
   if (name === 'db' && typeof loadDb === 'function') loadDb();
-  if (name === 'integrity' && typeof loadIntegrity === 'function') loadIntegrity();
   if (name === 'backup' && typeof loadRbackup === 'function') loadRbackup();
   if (name === 'web') { loadWeb(); osrLoad(); }
   if (name === 'selinux') loadSelinux(); else if (typeof sePoll === 'function') sePoll(false);
@@ -4459,6 +4459,7 @@ function drawPush(d) {
 /* ---- starting ------------------------------------------------------------ */
 (function start() {
   var h = (location.hash || '#library').slice(1).split('/');
+  if (h[0] === 'settings' && h[1] === 'integrity') h = ['integrity'];   /* where it was in 2.11.0 */
   if (h[0] === 'settings' && h[1]) PANE = h[1];
   if (STATUS) paintHeader(STATUS);
   if (STATUS && STATUS.upgrading) upgradeHeard(STATUS.upgrading);
@@ -4474,6 +4475,7 @@ function drawPush(d) {
   explainWhatWasDrawn(document);
   window.addEventListener('hashchange', function () {
     var g = (location.hash || '#library').slice(1).split('/');
+    if (g[0] === 'settings' && g[1] === 'integrity') { showTab('integrity'); return; }
     if (TABS.indexOf(g[0]) < 0) return;
     if (g[0] === 'library') { if (g[0] !== TAB) showTab('library'); return; }
     if (g[0] === 'settings' && g[1] && g[1] !== PANE && typeof showPane === 'function'

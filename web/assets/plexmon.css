@@ -3544,8 +3544,8 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .ix-hero{display:grid;grid-template-columns:auto 1fr auto;gap:26px;align-items:center;padding:22px 26px;
   background:radial-gradient(120% 140% at 0% 0%,rgba(88,166,255,.10),transparent 55%),var(--panel)}
 .ix-ring{position:relative;width:118px;height:118px;flex:none}
-.ix-ring svg{width:118px;height:118px;transform:rotate(-90deg)}
-.ix-ring circle{fill:none;stroke-width:9}
+.ix-ring>svg{width:118px;height:118px;transform:rotate(-90deg)}
+.ix-ring>svg circle{fill:none;stroke-width:9}
 .ix-ring .bg{stroke:var(--panel2)}
 .ix-ring .fg{stroke:var(--tx-mut);stroke-linecap:round;transition:stroke-dasharray .8s ease}
 .ix-ring.ok .fg{stroke:var(--ok)} .ix-ring.info .fg{stroke:var(--info)}
@@ -3564,7 +3564,10 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
 .ix-plex{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
 .ix-hero-tools{display:flex;flex-direction:column;align-items:stretch;gap:10px;min-width:230px}
 .ix-check{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--tx-dim);cursor:pointer;user-select:none}
-.ix-check input{accent-color:var(--info);width:15px;height:15px}
+.ix-check input{accent-color:var(--info);width:15px;height:15px;margin:0}
+.ix-modes{display:flex;flex-direction:column;gap:2px;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+.ix-modes .ix-check{padding:5px 8px;border-radius:7px}
+.ix-modes .ix-check.on{background:var(--info-bg);color:var(--tx)}
 @media (max-width:900px){.ix-hero{grid-template-columns:1fr;justify-items:start}.ix-hero-tools{width:100%}}
 
 .ix-job{border-color:rgba(88,166,255,.35);display:flex;flex-direction:column;gap:12px}

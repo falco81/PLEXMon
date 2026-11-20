@@ -4,6 +4,19 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.11.1 - 2026-11-20
+
+- **Library integrity is a tab of its own** at the top, after Plex library (full administrators);
+  #settings/integrity still leads to it.
+- **All disks - wake them first**: besides "the database only" and "the disks that are awake"
+  (the default; remembered per browser), every data disk can be spun up first - the
+  dashboard's own Wake - and then every folder of every library read, P5 and P6 on all of them.
+  Asked first; plexmon waits until its disk monitor says none of them sleeps (two minutes at
+  most). The disks go back to sleep by themselves. A folder that is not there is still taken for
+  a disk not mounted.
+- The icon in the ring before the first look is drawn as it should be; an activity of Plex with
+  no progress (-1) no longer says "-1 %".
+
 ## 2.11.0 - 2026-11-20
 
 - **Settings → Library integrity** (new; docs/library-integrity.md): where Plex's library no

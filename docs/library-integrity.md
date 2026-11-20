@@ -1,4 +1,4 @@
-# Library integrity (Settings → Library integrity, 2.11.0)
+# Library integrity (the Library integrity tab, 2.11.0)
 
 Finds where Plex Media Server's library no longer agrees with itself or with the disks, and
 puts right what can be put right safely. The problems are P1 to P8 below.
@@ -9,8 +9,11 @@ puts right what can be put right safely. The problems are P1 to P8 below.
   SQLite's own online backup (read-only on Plex's file). Plex goes on; nothing of its file is
   written to look. The copy is made where the copies of Plex's database are kept and deleted
   after.
-- **A sleeping disk is never woken.** The disks are read (P5, P6, P8 on the disk) only when
-  *The disks too* is ticked, and only the folders of disks that are awake now. plexmon knows
+- **A sleeping disk is never woken - unless asked.** The disks are read (P5, P6, P8 on the
+  disk) with *The disks that are awake* (the default), and then only the folders of disks that
+  are awake now. *All disks - wake them first* (2.11.1, asked first) spins every data disk up
+  with the dashboard's own Wake, waits until plexmon's disk monitor says none of them sleeps
+  (two minutes at most), and reads them all. *The database only* reads no disk. plexmon knows
   that from its own disk monitor; it is asked again just before each folder is read. A disk
   asleep, or one plexmon cannot tell about, is left out and named. A library folder that is
   not there is taken for a disk not mounted, never for deleted files.

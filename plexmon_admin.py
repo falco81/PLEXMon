@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.11.0'
+__version__ = '2.11.1'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -10295,9 +10295,14 @@ def _integrity_do(h):
             return {'text': IX.report_text(IX.last_report()),
                     'name': 'plex-integrity-%s.txt' % HX._stamp()}
         if act == 'scan':
-            disks = bool(b.get('disks'))
+            wake = bool(b.get('wake'))
+            disks = bool(b.get('disks')) or wake
+            if wake and not getattr(h.d, 'wake', None):
+                raise ApiError(400, 'the disks cannot be woken from here (plexmon\'s dashboard is '
+                               'not running)')
             IX.job_start('scan', 'the library looked through', by, IX.SCAN_STEPS,
-                         lambda: IX.scan(st, by, disks=disks, monitor=mon))
+                         lambda: IX.scan(st, by, disks=disks, monitor=mon,
+                                         wake=h.d.wake if wake else None))
             return {'message': 'the library is looked through', 'job': IX.job_view()}
         if act == 'fix-p1':
             if not b.get('force'):
@@ -11476,8 +11481,9 @@ class ApiHttpServer(ThreadingHTTPServer):
 class Admin(object):
     """Started by plexmon.py's daemon (or by itself, plexmon --admin-only)."""
 
-    def __init__(self, monitor=None):
+    def __init__(self, monitor=None, wake=None):
         self.monitor = monitor              # () -> what the dashboard's daemon says
+        self.wake = wake                    # () -> spins the data disks up (the dashboard's Wake)
         self.store = open_store(restore=True)
         self.started = time.time()
         STARTED[0] = self.started
@@ -11756,9 +11762,9 @@ def publish_lang():
         pass
 
 
-def start(monitor=None):
+def start(monitor=None, wake=None):
     """What plexmon.py calls: Settings started beside the dashboard's daemon."""
-    a = Admin(monitor)
+    a = Admin(monitor, wake)
     a.start()
     return a
 

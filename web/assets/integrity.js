@@ -3,7 +3,8 @@
    docs/library-integrity.md - found on a copy of its database, and put right where it can
    be put right safely: a checked copy of the database before anything is changed, a
    sleeping disk never woken. */
-var IX = {d: null, poll: null, off: {}, open: {}, disks: true};
+var IX = {d: null, poll: null, off: {}, open: {}, mode: 'awake'};
+try { IX.mode = localStorage.getItem('plexmon-ix-mode') || 'awake'; } catch (e) { }
 var IX_CLASS = {safe: ['Put right safely', 'ok'], confirm: ['Needs your yes', 'warn'], info: ['For your information', 'info']};
 var IX_P = {
   P1: {cls: 'safe', title: 'Files Plex shows nowhere', icon: 'eye',
@@ -58,7 +59,7 @@ function ixWatch() {
       IX.poll = null;
       if (j.error) toast(j.error, 'bad');
       else if (j.what) toast(txT(j.what) + ': ' + txT('done'), 'good');
-      if (TAB === 'settings' && PANE === 'integrity') loadIntegrity();
+      if (TAB === 'integrity') loadIntegrity();
     }).catch(function () { IX.poll = setTimeout(step, 3000); });
   };
   step();
@@ -151,7 +152,7 @@ function ixHero(d, r) {
     m.appendChild(noI18n(el('span', '', ' · ' + (r.by || '') + ' · ' + (r.took || 0) + ' s · ' + bytes(r.db_bytes || 0))));
     txt.appendChild(m);
     var lo = el('div', 'ix-meta');
-    lo.appendChild(el('span', '', r.disks_looked ? 'The disks were looked at too (only those awake).' : 'From the database alone - the disks were not looked at.'));
+    lo.appendChild(el('span', '', r.woken ? 'Every disk was woken and looked at.' : r.disks_looked ? 'The disks were looked at too (only those awake).' : 'From the database alone - the disks were not looked at.'));
     txt.appendChild(lo);
   } else {
     txt.appendChild(el('p', 'ix-lede', 'A copy of Plex\'s database is read - Plex goes on, nothing of its own file is written. The disks only when asked, and only those awake: a sleeping disk is never woken.'));
@@ -164,7 +165,7 @@ function ixHero(d, r) {
     var a = p.busy[0];
     var bt = el('span', 'tag info');
     bt.appendChild(el('span', '', 'Plex is busy:'));
-    bt.appendChild(noI18n(el('span', '', ' ' + (a.title || a.type) + (a.progress != null ? ' ' + Math.round(a.progress) + ' %' : ''))));
+    bt.appendChild(noI18n(el('span', '', ' ' + (a.title || a.type) + (a.progress != null && a.progress >= 0 ? ' ' + Math.round(a.progress) + ' %' : ''))));
     pl.appendChild(bt);
   }
   if (!p.plex_sqlite) {
@@ -178,17 +179,35 @@ function ixHero(d, r) {
   var go = cmdButton(r ? 'Look through again' : 'Look through the library', 'search', 'primary');
   go.disabled = ixRunning() || ixBusyDb();
   if (ixBusyDb()) explain(go, 'Settings → The database is busy (' + (d.db_job.what || '') + ') - once it is done.');
-  go.onclick = function () { ixDo({action: 'scan', disks: IX.disks ? 1 : 0}); };
+  go.onclick = function () {
+    if (IX.mode === 'wake') {
+      confirmThen('Wake every disk and look through all of them?', htmlText('Every data disk is spun up first (as the dashboard\'s Wake does) and then every folder of every library is read - P5 and P6 on all of them. The disks go back to sleep by themselves, after their own idle time. Nothing else is changed.'),
+        'Wake them and look', function () { ixDo({action: 'scan', disks: 1, wake: 1}); }, false);
+      return;
+    }
+    ixDo({action: 'scan', disks: IX.mode === 'db' ? 0 : 1});
+  };
   tools.appendChild(go);
-  var lab = el('label', 'ix-check');
-  var cb = el('input');
-  cb.type = 'checkbox';
-  cb.checked = IX.disks;
-  cb.onchange = function () { IX.disks = cb.checked; };
-  lab.appendChild(cb);
-  lab.appendChild(el('span', '', 'The disks too (only those awake)'));
-  explain(lab, 'Is every file of the database on the disk (P6), and every video file on the disk in the database (P5)? Only the folders of disks that are awake now are read - a sleeping disk is left out and named, never woken.');
-  tools.appendChild(lab);
+  var modes = el('div', 'ix-modes');
+  [['db', 'The database only', 'Only Plex\'s database (a copy of it) and its logs - no disk is read. P5 and P6 are left out.'],
+   ['awake', 'The disks that are awake', 'Is every file of the database on the disk (P6), and every video file on the disk in the database (P5)? Only the folders of disks that are awake now are read - a sleeping disk is left out and named, never woken.'],
+   ['wake', 'All disks - wake them first', 'Every data disk is spun up first, then all of them are read. For when the whole library is to be looked through, once in a while.']].forEach(function (m) {
+    var lab = el('label', 'ix-check' + (IX.mode === m[0] ? ' on' : ''));
+    var rb = el('input');
+    rb.type = 'radio';
+    rb.name = 'ix-mode';
+    rb.checked = IX.mode === m[0];
+    rb.onchange = function () {
+      IX.mode = m[0];
+      try { localStorage.setItem('plexmon-ix-mode', m[0]); } catch (e) { }
+      modes.querySelectorAll('.ix-check').forEach(function (x) { x.classList.toggle('on', x === lab); });
+    };
+    lab.appendChild(rb);
+    lab.appendChild(el('span', '', m[1]));
+    explain(lab, m[2]);
+    modes.appendChild(lab);
+  });
+  tools.appendChild(modes);
   if (r) {
     var dl = cmdButton('Download the report', 'download', 'small');
     dl.onclick = function () { api('integrity', {action: 'report-text'}).then(function (x) { saveText(x.text, x.name); }).catch(oops); };

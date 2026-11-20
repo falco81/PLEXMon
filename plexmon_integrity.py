@@ -884,12 +884,39 @@ def ffprobe_bad(path):
 # The look: everything, from a copy
 # ---------------------------------------------------------------------------
 SCAN_STEPS = [('snapshot', 'A copy of the database'), ('db', 'The database read'),
-              ('logs', 'Plex\'s logs read'), ('disks', 'The disks'), ('report', 'The report')]
+              ('logs', 'Plex\'s logs read'), ('wake', 'The disks woken'), ('disks', 'The disks'),
+              ('report', 'The report')]
+WAKE_WAIT_S = 120
 
 
-def scan(store, by, disks=False, monitor=None):
+def wake_disks(wake, monitor, roots):
+    """Asked for (2.11.1): every data disk spun up first - the dashboard's own
+    Wake (an O_DIRECT read of its probe file) - then waited for until plexmon's
+    disk monitor no longer says any of them sleeps (two minutes at most)."""
+    says('the disks are woken - a sleeping one takes about ten seconds')
+    try:
+        wake()
+    except Exception as e:                              # noqa: BLE001
+        line('the disks could not be woken: %s' % e)
+        return
     t0 = time.time()
-    rep = {'at': t0, 'by': by, 'disks_looked': bool(disks), 'version': A.__version__}
+    while time.time() - t0 < WAKE_WAIT_S:
+        check_stop()
+        power = disk_power(monitor)
+        asleep = [r for r in roots if root_state(r, monitor, None, power)['state'] == 'asleep']
+        if not asleep and time.time() - t0 > 3:
+            line('every disk is awake (%d s)' % round(time.time() - t0))
+            return
+        says('the disks are woken - %d folder(s) on a disk still spinning up' % len(asleep))
+        time.sleep(2)
+    line('still asleep after %d s: %s - read all the same (that wakes it)' % (
+        WAKE_WAIT_S, ', '.join(asleep)))
+
+
+def scan(store, by, disks=False, monitor=None, wake=None):
+    t0 = time.time()
+    rep = {'at': t0, 'by': by, 'disks_looked': bool(disks), 'woken': bool(wake),
+           'version': A.__version__}
     with tempfile.TemporaryDirectory(dir=str(HX.plex_dir()), prefix='integrity-') as tmp:
         phase('snapshot', 'the library database is copied (Plex goes on)', 0, 6)
         path, size = snapshot(tmp)
@@ -945,6 +972,11 @@ def scan(store, by, disks=False, monitor=None):
     phase('logs', 'Plex\'s logs are read', 3, 6)
     p4 = detect_p4(set(p1['ids']))
     check_stop()
+    if wake:
+        phase('wake', 'the disks are woken', 4, 6)
+        wake_disks(wake, monitor, [r['path'] for s in secs.values() for r in s['roots']])
+    else:
+        skip('wake')
     phase('disks', 'the disks', 4, 6)
     mts = mounts()
     power = disk_power(monitor)
@@ -959,6 +991,11 @@ def scan(store, by, disks=False, monitor=None):
         files = all_files.get(sid) or set()
         for r in s['roots']:
             st = root_state(r['path'], monitor, mts, power)
+            if wake and st['state'] in ('asleep', 'unknown'):
+                # Woken when asked: read whatever its disk says now.
+                st = dict(st, state='awake' if os.path.isdir(r['path']) else 'missing', why='' if
+                          os.path.isdir(r['path']) else 'the folder is not there - a disk not '
+                          'mounted?')
             mine = [f for f in files if f.startswith(r['path'].rstrip('/') + '/')]
             ro = dict(st, path=r['path'], id=r['id'], files=len(mine), trash=trash.get(r['path'], 0),
                       looked=False, missing=0)
@@ -966,9 +1003,10 @@ def scan(store, by, disks=False, monitor=None):
                 ro['mount_problem'] = True
                 ro['missing'] = len(mine)
             if disks and st['state'] == 'awake':
-                # Again, just before: a disk that fell asleep meanwhile stays asleep.
+                # Again, just before: a disk that fell asleep meanwhile stays asleep
+                # (unless waking was asked for).
                 st2 = root_state(r['path'], monitor, None, disk_power(monitor))
-                if st2['state'] != 'awake':
+                if st2['state'] != 'awake' and not (wake and st2['state'] in ('asleep', 'unknown')):
                     ro.update(st2)
                 else:
                     says('P6 - %s: is every file there?' % r['path'], 4, 6)

@@ -11635,6 +11635,58 @@
   "xs1657": {
    "source": ".plexignore",
    "text": ".plexignore"
+  },
+  "xs1658": {
+   "source": "The database only",
+   "text": "Jen databáze"
+  },
+  "xs1659": {
+   "source": "The disks that are awake",
+   "text": "Disky, které jsou vzhůru"
+  },
+  "xs1660": {
+   "source": "All disks - wake them first",
+   "text": "Všechny disky – nejdřív je probudit"
+  },
+  "xs1661": {
+   "source": "Only Plex's database (a copy of it) and its logs - no disk is read. P5 and P6 are left out.",
+   "text": "Jen databáze Plexu (její kopie) a jeho logy – žádný disk se nečte. P5 a P6 se vynechají."
+  },
+  "xs1662": {
+   "source": "Every data disk is spun up first, then all of them are read. For when the whole library is to be looked through, once in a while.",
+   "text": "Nejdřív se roztočí všechny datové disky, pak se přečtou všechny. Na občasné prověření celé knihovny."
+  },
+  "xs1663": {
+   "source": "Wake every disk and look through all of them?",
+   "text": "Probudit všechny disky a prověřit je všechny?"
+  },
+  "xs1664": {
+   "source": "Every data disk is spun up first (as the dashboard's Wake does) and then every folder of every library is read - P5 and P6 on all of them. The disks go back to sleep by themselves, after their own idle time. Nothing else is changed.",
+   "text": "Nejdřív se roztočí všechny datové disky (jako tlačítko Probudit na dashboardu) a pak se přečtou všechny složky všech knihoven – P5 a P6 na všech. Disky zase usnou samy po své době nečinnosti. Nic jiného se nemění."
+  },
+  "xs1665": {
+   "source": "Wake them and look",
+   "text": "Probudit a prověřit"
+  },
+  "xs1666": {
+   "source": "Every disk was woken and looked at.",
+   "text": "Všechny disky byly probuzeny a prověřeny."
+  },
+  "xs1667": {
+   "source": "The disks woken",
+   "text": "Disky probuzeny"
+  },
+  "xs1668": {
+   "source": "the disks are woken",
+   "text": "disky se probouzejí"
+  },
+  "xs1669": {
+   "source": "the disks are woken - a sleeping one takes about ten seconds",
+   "text": "disky se probouzejí – spící disk potřebuje asi deset sekund"
+  },
+  "xs1670": {
+   "source": "the disks cannot be woken from here (plexmon's dashboard is not running)",
+   "text": "disky odsud nejde probudit (dashboard plexmonu neběží)"
   }
  },
  "patterns": {
@@ -14573,6 +14625,22 @@
   "xp0351": {
    "source": "Plex's user may not go into {0}: chmod 755 the folder",
    "text": "uživatel Plexu nesmí do {0}: chmod 755 na složku"
+  },
+  "xp0352": {
+   "source": "the disks are woken - {0} folder(s) on a disk still spinning up",
+   "text": "disky se probouzejí – {0} složek na disku, který se ještě roztáčí"
+  },
+  "xp0353": {
+   "source": "every disk is awake ({0} s)",
+   "text": "všechny disky jsou vzhůru ({0} s)"
+  },
+  "xp0354": {
+   "source": "still asleep after {0} s: {1} - read all the same (that wakes it)",
+   "text": "po {0} s stále spí: {1} – čte se i tak (to ho probudí)"
+  },
+  "xp0355": {
+   "source": "the disks could not be woken: {0}",
+   "text": "disky nejde probudit: {0}"
   }
  },
  "rich": {

@@ -22,7 +22,7 @@ identical. Run it with:  python3 plexmon.py           (daemon)
 """
 from __future__ import annotations
 
-__version__ = "2.11.0"
+__version__ = "2.11.1"
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -3319,7 +3319,7 @@ class Daemon:
         try:
             sys.path.insert(0, str(Path(__file__).resolve().parent))
             import plexmon_admin
-            self.admin = plexmon_admin.start(monitor=self.monitor_state)
+            self.admin = plexmon_admin.start(monitor=self.monitor_state, wake=self.request_wake)
         except Exception as e:                          # noqa: BLE001
             import traceback
             log(f"Settings did not start: {e}\n{traceback.format_exc()}")
