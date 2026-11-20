@@ -4,6 +4,17 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.11.4 - 2026-11-20
+
+- P2 waits for Plex to be quiet for up to **four hours** (was half an hour): after merges, splits
+  and scans Plex analyses the library - credits, intros, thumbnails, loudness - for an hour or
+  more ("CreditsDetector: 40 pending" in a real log), and a split must not come in the middle of
+  it (P4). Stop stops the wait; nothing is done before the split.
+- **Past the split there is no Stop** - the job is finished, never left with a show split
+  halfway; the page says so in place of the button. The merge of the show's own folders back
+  together waits the same four hours.
+- An activity of Plex with no progress (-1) no longer says "-1 %" in what the job waits for.
+
 ## 2.11.3 - 2026-11-20
 
 - An empty library folder on a disk of its own that is mounted (`/data4/Youtube` made ready, not

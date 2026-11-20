@@ -191,7 +191,7 @@ def job_start(kind, what, by, steps, fn):
     with _LOCK:
         if JOB['running']:
             raise ValueError('%s is under way - wait for it' % (JOB['what'] or 'something'))
-        JOB.update(running=True, id=os.urandom(5).hex(), kind=kind, what=what,
+        JOB.update(running=True, id=os.urandom(5).hex(), kind=kind, what=what, nostop=False,
                    steps=[{'key': k, 'title': t, 'state': 'wait'} for k, t in steps],
                    step='', says='starting', done=0, whole=0, error='', result=None,
                    began=time.time(), ended=0.0, by=by, stop=False, lines=[])
@@ -281,7 +281,8 @@ class Stopped(Exception):
 
 
 def check_stop():
-    if stop_asked():
+    # Past the point of no return (a split done): finished, never left halfway.
+    if stop_asked() and not JOB.get('nostop'):
         raise Stopped('stopped when asked')
 
 
@@ -1177,7 +1178,8 @@ def wait_idle(timeout=3600, quiet=30, why=''):
             a = acts[0]
             says('%swaiting for Plex: %s%s' % ((why + ' - ') if why else '', a.get('title') or
                                              a.get('type'), (' %d %%' % int(a['progress']))
-                                             if isinstance(a.get('progress'), (int, float)) else ''))
+                                             if isinstance(a.get('progress'), (int, float)) and
+                                             a['progress'] >= 0 else ''))
         time.sleep(2 if os.environ.get('PLEXMON_TEST') else 5)
     return False
 
@@ -1522,6 +1524,7 @@ def _detail(sid):
     return md
 
 
+P2_WAIT_S = 4 * 3600
 FIX_P2_STEPS = [('idle', 'Plex has nothing running'), ('copy', 'A checked copy of the database'),
                 ('look', 'The shows as they are now'), ('split', 'Split'),
                 ('find', 'The new shows found by their folders'),
@@ -1546,8 +1549,10 @@ def fix_p2(store, by, key, monitor=None):
         line(what)
 
     phase('idle', 'waiting until Plex has nothing running', 0, 9)
-    if not wait_idle(timeout=1800, quiet=30, why='before the split'):
-        raise ValueError('Plex did not stop working for half an hour - nothing done; try at night')
+    # Analyses of the whole library (credits, intros, thumbnails) can keep Plex busy for
+    # hours after a merge or a scan: waited for - up to four hours, Stop stops it.
+    if not wait_idle(timeout=P2_WAIT_S, quiet=30, why='before the split'):
+        raise ValueError('Plex did not stop working for four hours - nothing done; try at night')
     phase('copy', 'a checked copy of Plex\'s database (Plex goes on)', 1, 9)
     cp = HX.plex_copy(store, by + ' (before P2 was put right)', check=True)
     if (cp.get('check') or {}).get('ok') is False:
@@ -1585,10 +1590,12 @@ def fix_p2(store, by, key, monitor=None):
         k, v['title'], v['eps'], ', '.join(v['dirs'])) for k, v in snap.items()), snapshot=snap)
     check_stop()
     phase('split', 'Split of "%s"' % snap[attached]['title'], 3, 9)
+    JOB['nostop'] = True
+    line('from here on it is finished, not stopped - a show left split halfway helps nobody')
     PX.put('/library/metadata/%s/split' % attached)
     did('PUT /library/metadata/%s/split' % attached)
     phase('find', 'the new shows found by their folders', 4, 9)
-    if not wait_idle(timeout=1800, quiet=30, why='after the split'):
+    if not wait_idle(timeout=P2_WAIT_S, quiet=30, why='after the split'):
         raise ValueError('after the split Plex did not stop working - STOP: nothing more done; '
                          'the shows are split, merge them by hand in Plex')
     after_ids = api_group(sec, guid)
@@ -1627,7 +1634,7 @@ def fix_p2(store, by, key, monitor=None):
         primary = attached if attached in remainder else max(
             remainder, key=lambda s: len([r for r in after if r['show'] == s]))
         others = [s for s in remainder if s != primary]
-        wait_idle(timeout=1800, quiet=30, why='before the merge')
+        wait_idle(timeout=P2_WAIT_S, quiet=30, why='before the merge')
         PX.put('/library/metadata/%s/merge' % primary, {'ids': ','.join(others)})
         did('PUT /library/metadata/%s/merge?ids=%s' % (primary, ','.join(others)))
     else:

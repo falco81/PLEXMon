@@ -11085,8 +11085,8 @@
    "text": "Počkat, až Plex nic nedělá"
   },
   "xs1520": {
-   "source": "analyses, scans - otherwise a merge risks P4 and P1; not quiet within half an hour: nothing is done",
-   "text": "analýzy, skeny – jinak sloučení riskuje P4 a P1; když se do půl hodiny neutiší, nic se neudělá"
+   "source": "analyses, scans - otherwise a merge risks P4 and P1; after merges Plex can analyse for hours: waited for up to four hours, Stop stops it; nothing is done before",
+   "text": "analýzy, skeny – jinak sloučení riskuje P4 a P1; po sloučeních může Plex analyzovat hodiny: čeká se až čtyři hodiny, Zastavit to přeruší; do té doby se nic neudělá"
   },
   "xs1521": {
    "source": "kept in Settings → The database",
@@ -11815,6 +11815,18 @@
   "xs1702": {
    "source": "the disks are woken - each is waited for until it turns (a set of disks can take a couple of minutes)",
    "text": "disky se probouzejí – na každý se čeká, dokud se neroztočí (sada disků může trvat pár minut)"
+  },
+  "xs1703": {
+   "source": "past the split - it is finished, not stopped",
+   "text": "po rozdělení – dokončí se, nezastaví"
+  },
+  "xs1704": {
+   "source": "from here on it is finished, not stopped - a show left split halfway helps nobody",
+   "text": "odsud se to dokončí, nezastaví – seriál rozdělený napůl nikomu nepomůže"
+  },
+  "xs1705": {
+   "source": "Plex did not stop working for four hours - nothing done; try at night",
+   "text": "Plex za čtyři hodiny nepřestal pracovat – nic se neudělalo; zkuste to v noci"
   }
  },
  "patterns": {

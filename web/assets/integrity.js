@@ -255,7 +255,8 @@ function ixDrawJob() {
   var t = el('b', '', j.what);
   h.appendChild(t);
   h.appendChild(el('span', 'tag ' + (j.running ? 'info' : j.error ? 'crit' : 'ok'), j.running ? 'under way' : j.error ? 'failed' : 'done'));
-  if (j.running) {
+  if (j.running && j.nostop) h.appendChild(el('span', 'tag warn', 'past the split - it is finished, not stopped'));
+  if (j.running && !j.nostop) {
     var el2 = noI18n(el('span', 'muted small', ''));
     el2.textContent = Math.round(Date.now() / 1000 - j.began) + ' s';
     h.appendChild(el2);
@@ -576,7 +577,7 @@ function ixP2(body, p, r, d) {
 }
 function ixFixP2(cs) {
   ixConfirm('Put P2 right through Plex?', 'Only Plex\'s own API - its database is not written by plexmon:', [
-    ['Wait until Plex has nothing running', 'analyses, scans - otherwise a merge risks P4 and P1; not quiet within half an hour: nothing is done'],
+    ['Wait until Plex has nothing running', 'analyses, scans - otherwise a merge risks P4 and P1; after merges Plex can analyse for hours: waited for up to four hours, Stop stops it; nothing is done before'],
     ['A checked copy of Plex\'s database', 'kept in Settings → The database'],
     ['"' + cs.attached.title + '" split', 'Plex makes a show of each of its folders'],
     ['The new show of ' + cs.dir.split('/').pop() + ' found by its folder', 'never by its number - anything unexpected: STOP, nothing merged'],

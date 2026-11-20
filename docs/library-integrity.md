@@ -26,7 +26,9 @@ puts right what can be put right safely. The problems are P1 to P8 below.
   back from there). If the database is not whole even now, nothing is done.
 - **Never a file deleted.** `DELETE /library/metadata/{id}/media/{mediaId}` is never called.
 - **Merge and Split only when Plex is quiet.** `/activities` must stay empty for a while
-  (30 s, 60 s before the last look). If Plex is not quiet within half an hour, nothing is done.
+  (30 s, 60 s before the last look). P2 waits up to four hours (2.11.4): after merges and scans
+  Plex analyses the library for an hour or more. Before the split, Stop stops it and nothing is
+  done; past the split the job is finished, never stopped halfway.
 - **One job at a time**, shared with Settings → The database: no copy or restore of Plex's
   database runs during a fix, and no fix runs during one. Every step goes to Events, and the
   fixes are listed under *What was put right here*.
