@@ -342,7 +342,7 @@ if (isset($_GET['api'])) {
         'rbackup' => '/api/rbackup', 'acme-push' => '/api/acme-push',
         'passkey-state' => '/api/auth/passkey/state', 'passkeys' => '/api/auth/passkeys',
         'load' => '/api/load', 'tasks' => '/api/tasks', 'selinux' => '/api/selinux',
-        'osroots' => '/api/osroots', 'integrity' => '/api/integrity',
+        'osroots' => '/api/osroots', 'integrity' => '/api/integrity', 'insights' => '/api/insights',
     ];
     $writes = [
         'settings' => '/api/settings', 'users' => '/api/users', 'sessions' => '/api/sessions',
@@ -355,7 +355,7 @@ if (isset($_GET['api'])) {
         'rbackup' => '/api/rbackup', 'proxy' => '/api/proxy', 'acme-push' => '/api/acme-push',
         'passkey-begin' => '/api/auth/passkey/begin', 'passkey-register' => '/api/auth/passkey/register',
         'passkeys' => '/api/auth/passkeys', 'tasks' => '/api/tasks', 'selinux' => '/api/selinux',
-        'osroots' => '/api/osroots', 'integrity' => '/api/integrity',
+        'osroots' => '/api/osroots', 'integrity' => '/api/integrity', 'insights' => '/api/insights',
     ];
     if ($post) {
         if (!isset($writes[$what])) {
@@ -607,6 +607,8 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
           title="The movies and shows of this Plex server: their posters and details, and the tools - the default audio and subtitles, watched, labels, titles in another language, the watchlist, the ratings.">Plex library</button>
   <button role="tab" aria-selected="false" data-tab="integrity" data-icon="search" class="fulladmin-only"
           title="Where Plex's library no longer agrees with itself or with the disks - found on a copy of its database, put right safely.">Library integrity</button>
+  <button role="tab" aria-selected="false" data-tab="insights" data-icon="chart"
+          title="Who watched what and how, what makes Plex transcode, the episodes missing and coming, subtitles and audio, duplicates, the new files, and Plex Media Server itself.">Insights</button>
   <button role="tab" aria-selected="false" data-tab="events" data-icon="history"
           title="Every sign-in, every change of a setting, every certificate put in - and the daemon’s own log.">Events</button>
   <!-- Settings always the last one, at the right (2.6.8). -->
@@ -627,6 +629,11 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
         Plex has that is gone. Found on a copy of its database - Plex goes on; put right only after a checked
         copy of the database, and a sleeping disk is never woken.</p></div>
     <div id="ix-host"></div>
+</section>
+
+<!-- ===================== Insights (2.12.0) ===================== -->
+<section class="panel nx-tab" id="tab-insights" hidden>
+    <div id="nx-host"></div>
 </section>
 
 <!-- ===================== Events ===================== -->
@@ -677,6 +684,7 @@ if ($me && ($_COOKIE['plexmon_lang'] ?? '') !== $lang) {
     <button type="button" class="fulladmin-only" data-pane="osup" data-icon="download" title="The operating system's packages updated by dnf; a restart offered when one is needed.">System updates</button>
     <div class="ctl-group">Data</div>
     <button type="button" class="fulladmin-only" data-pane="db" data-icon="db" title="plexmon's database and Plex Media Server's own: copies, a check, putting one back.">The database</button>
+    <button type="button" class="fulladmin-only" data-pane="notify" data-icon="bell" title="Messages by e-mail, Telegram or ntfy: the disks, Plex Media Server, the backups, the library, the certificates - and the look through the library on a schedule.">Notifications</button>
     <button type="button" class="fulladmin-only" data-pane="backup" data-icon="archive" title="Backups of everything to another machine - FTP, FTPS, SFTP, SCP, SMB or a folder - locked with a password, on a schedule, Plex's database in them too.">Backups</button>
     <div class="ctl-group">The server</div>
     <button type="button" class="fulladmin-only" data-pane="upgrade" data-icon="up" title="A new version, put in from here - from the web or as a file.">Upgrades</button>
@@ -929,6 +937,19 @@ plexmon --upgrade-status                   # an upgrade started on these pages</
       <div id="odb-host"></div></div>
     <div class="card full"><h2>Copies of plexmon's database, and what is kept</h2><div id="sect-db"></div></div>
   </div>
+  <div class="ctl-pane" id="pane-notify" hidden>
+    <div class="ctl-head"><h2 class="ctl-title">Notifications</h2>
+      <p class="ctl-lede">A message when something needs you: a disk the dashboard warns of, Plex Media Server
+        that stopped answering, a backup that failed, new problems of the library, a certificate. Sent by
+        e-mail, Telegram or ntfy - any of them, or all. The same thing is said once in six hours at most,
+        twenty messages an hour at most.</p></div>
+    <div id="nf-top"></div>
+    <div class="card full fulladmin-only"><h2>How they are sent</h2><div id="sect-notify"></div></div>
+    <div class="card full fulladmin-only"><h2>What is sent</h2><div id="sect-notifyon"></div></div>
+    <div class="card full fulladmin-only"><h2>Plex Media Server watched</h2><div id="sect-plexwatch"></div></div>
+    <div class="card full fulladmin-only"><h2>Library integrity on a schedule</h2><div id="sect-ixauto"></div></div>
+    <div class="card full fulladmin-only"><h2>What was sent <span class="right" id="nf-log-tools"></span></h2><div id="nf-log"></div></div>
+  </div>
   <div class="ctl-pane" id="pane-backup" hidden>
     <div class="ctl-head"><h2 class="ctl-title">Backups</h2>
       <p class="ctl-lede">A backup is everything plexmon is: its database (accounts, settings, the
@@ -993,6 +1014,7 @@ var PHP_SAFETY = <?= ($me['role'] ?? '') === 'fulladmin' ? json_encode(pm_php_sa
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/cols.js?v=<?= h(PM_VERSION) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/admin.js?v=<?= h(PM_VERSION) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/host.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/host.js')) ?>"></script>
+<script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/insights.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/insights.js')) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/integrity.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/integrity.js')) ?>"></script>
 <script nonce="<?= h($nonce) ?>" src="<?= h($base) ?>assets/plexlib.js?v=<?= h(PM_VERSION . '-' . (int) @filemtime(dirname(__DIR__) . '/assets/plexlib.js')) ?>"></script>
 <?php if (!empty($pm_meter)): ?>

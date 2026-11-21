@@ -31,6 +31,8 @@ the same behaviour - narrowed to what a Plex server needs:
 | Automatic certificates | Let's Encrypt or another ACME CA, HTTP-01 and DNS-01 (deSEC, Cloudflare, RFC 2136, acme-dns, by hand), renewal by itself, *In your DNS*, *Try port 80*, *Back to the one before* |
 | SELinux | how SELinux is on the server, what plexmon needs of it, the way from disabled through permissive to enforcing - the data disks never relabelled, enforcing only once nothing was refused; a report for whoever writes the module ([docs/selinux.md](docs/selinux.md)) |
 | Library integrity | where Plex's library no longer agrees with itself or with the disks (P1 to P8: a file Plex shows nowhere, a file under another show, on the disk but not in Plex, in Plex but not on the disk, ...), found on a copy of its database, the disks only when awake; put right safely - a checked copy of the database first, Plex SQLite as Plex's own user with Plex stopped for the one write, everything else through Plex's API ([docs/library-integrity.md](docs/library-integrity.md)) |
+| Insights | who watched what and how, what makes Plex transcode, missing and coming episodes (TVmaze), subtitles and audio, duplicates, each new file read by ffprobe, a watchdog of Plex Media Server, its new version and its caches ([docs/insights.md](docs/insights.md)) |
+| Notifications | e-mail, Telegram or ntfy: disks, Plex, backups, the library, certificates; Library integrity on a schedule ([docs/insights.md](docs/insights.md)) |
 | Upgrades | a new version from the web in one click (it looks into `release/` of this repository daily) or from a file; Ed25519 signature, every file verified; back to an older version (only a safe one) |
 | About | the version, what it runs on, the language of the pages (Czech / English - `lang/*.json`, editable), the console after root signs in, the debug log |
 | Events | every sign-in, change, certificate, upgrade |
@@ -86,5 +88,6 @@ newest one is unpacked in the root of this repository.
 - [docs/upgrades.md](docs/upgrades.md) - upgrades from the web, signature, going back, releasing a version
 - [docs/selinux.md](docs/selinux.md) - SELinux and the system's trusted roots
 - [docs/library-integrity.md](docs/library-integrity.md) - library integrity (P1 to P8)
+- [docs/insights.md](docs/insights.md) - Insights and notifications
 - [docs/console.md](docs/console.md) - the console
 - [CONFIG.md](CONFIG.md) - dashboard settings (`/etc/plex-status/config.json`)

@@ -637,7 +637,18 @@ var ICONS = {
   flag: '<path d="M5 21V4"/><path d="M5 5h11l-2 3.5L16 12H5z"/>',
   pin: '<path d="M9 4h6l-1 6 3 3H7l3-3z"/><path d="M12 13v7"/>',
   broom: '<path d="M14 3l7 7"/><path d="M12.5 5.5L18.5 11.5"/>'
-    + '<path d="M11 7L4 14v6h6l7-7z"/><path d="M8 12l4 4"/>'
+    + '<path d="M11 7L4 14v6h6l7-7z"/><path d="M8 12l4 4"/>',
+  /* Insights (2.12.0) */
+  calendar: '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>',
+  film: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/>',
+  server: '<rect x="3.5" y="4" width="17" height="7" rx="1.5"/><rect x="3.5" y="13" width="17" height="7" rx="1.5"/>'
+    + '<path d="M7 7.5h.01M7 16.5h.01M11 7.5h6M11 16.5h6"/>',
+  star: '<path d="M12 3.5l2.6 5.3 5.9.9-4.25 4.1 1 5.8L12 16.9l-5.25 2.7 1-5.8L3.5 9.7l5.9-.9z"/>',
+  tv: '<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  music: '<path d="M9 18V6l11-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+  off: '<path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/>',
+  send: '<path d="M21 3L10 14"/><path d="M21 3l-7 18-4-7-7-4z"/>'
 };
 
 function iconMarkup(key, size) {

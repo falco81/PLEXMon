@@ -4,6 +4,43 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.12.0 - 2026-11-21
+
+New: **Insights** - a tab of its own after Library integrity - and **Settings → Notifications**.
+Plex is only read (its API on 127.0.0.1 and a copy of its database); a sleeping disk is never
+woken; nothing of the library is ever deleted.
+
+- **Watching**: what plays now (who, on what, direct play / direct stream / transcode and why,
+  hardware or not, how far), plays per day, how they were played, watched most, people, players,
+  what was played lately. Plex's own history plus a look at its sessions once a minute, kept in
+  plexmon's database for 400 days.
+- **Transcoding**: what Plex really transcoded and why, and which files of the library are likely
+  to be (HEVC, AV1, 4K, a high bit rate, TrueHD/DTS, picture subtitles, old containers), with what
+  helps - a remux, an extra audio track, text subtitles.
+- **Episodes**: every show looked up on TVmaze - aired episodes not in Plex, and an agenda of what
+  comes in the next 60 days.
+- **Subtitles and audio**: where the languages wanted (default: Czech subtitles) are missing, per
+  show and season, and per film.
+- **Duplicates**: films and episodes in more than one version, the one worth keeping marked, the
+  space the others take; films twice on one match. Information only.
+- **New files**: every file Plex takes in is read once by ffprobe - does it open, is there a
+  picture, is it as long as Plex says. Only on a disk known to be awake, never a file written in
+  the last ten minutes; a file on a sleeping disk waits.
+- **Plex server**: does it answer, its processor and memory, what it is busy with; a watchdog
+  (a message, or a restart, after a set time without an answer - never in maintenance, never
+  while plexmon has stopped Plex itself); a new version of plexmediaserver looked for daily
+  through dnf and put in only by a button; the size of Plex's folder and a cleanup of its caches
+  only (small pictures, transcoder leftovers, crash reports, old installers) - symlinks never
+  followed, nothing outside Plex's folder touched.
+- **Notifications** by e-mail (SMTP), Telegram or ntfy: the dashboard's warnings (SMART,
+  temperature, space), Plex not answering, a failed backup, new problems of the library, a
+  certificate, a new file that does not read, a new Plex version. The same thing once in six
+  hours at most, twenty messages an hour at most; a test button for each way; what was sent is
+  listed.
+- **Library integrity on a schedule**: every night or every week, the database only or the
+  awake disks too; nothing is put right by itself, a message only when it finds more than the
+  last look. Optionally Plex's Optimize on the first of the month, a checked copy first.
+
 ## 2.11.12 - 2026-11-20
 
 Bugs found and put right:

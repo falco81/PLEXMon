@@ -58,7 +58,7 @@ from urllib.parse import parse_qs, urlparse
 
 import sqlite3
 
-__version__ = '2.11.12'
+__version__ = '2.12.0'
 # The oldest version this one may go back to (as otp's DOWNGRADE_FLOOR).
 DOWNGRADE_FLOOR = '2.0.0'
 
@@ -212,12 +212,29 @@ DEFAULTS = {
     'power_auto_day': '7',
     'power_auto_at': '05:40',
     'power_auto_needed': 1,
+    # --- notifications (2.12.0) ---------------------------------------------------------
+    'notify_email': 0, 'notify_smtp_host': '', 'notify_smtp_port': 587,
+    'notify_smtp_tls': 'starttls', 'notify_smtp_user': '', 'notify_smtp_password': '',
+    'notify_from': '', 'notify_to': '',
+    'notify_telegram': 0, 'notify_tg_token': '', 'notify_tg_chat': '',
+    'notify_ntfy': 0, 'notify_ntfy_url': '', 'notify_ntfy_token': '',
+    'notify_on_disks': 1, 'notify_on_plex': 1, 'notify_on_backup': 1, 'notify_on_integrity': 1,
+    'notify_on_cert': 1, 'notify_on_newfiles': 1, 'notify_on_update': 1,
+    'proxy_notify': 0,
+    # --- Plex Media Server watched, Insights (2.12.0) ------------------------------------
+    'plex_watch': 'notify', 'plex_watch_min': 5, 'plex_update_check': 1,
+    'ins_newfiles': 1, 'ins_sub_langs': 'cs', 'ins_audio_langs': '',
+    # --- Library integrity on a schedule (2.12.0) ----------------------------------------
+    'ix_auto': 0, 'ix_auto_every': 'daily', 'ix_auto_day': '7', 'ix_auto_at': '03:20',
+    'ix_auto_mode': 'db', 'ix_auto_optimize': 0,
 }
 
 FILE_ONLY_KEYS = ()
+EVENT_HOOKS = []    # (kind, words, level) of every event - the notifications (2.12.0)
 SECRET_KEYS = ('acme_dns_tsig_secret', 'acme_dns_token', 'acme_dns_key', 'acme_desec_token',
                'plex_tmdb_key', 'plex_omdb_key', 'plex_trakt_id', 'rbackup_password',
-               'proxy_password')
+               'proxy_password', 'notify_smtp_password', 'notify_tg_token',
+               'notify_ntfy_token')
 SEALED_KEYS = SECRET_KEYS
 
 TUNABLE = {
@@ -250,6 +267,16 @@ TUNABLE = {
     'power_auto': (0, 1), 'power_auto_every': ('weekly', 'monthly'), 'power_auto_day': ('1', '2', '3', '4', '5', '6', '7'),
     'power_auto_needed': (0, 1),
     'plex_tvmaze': (0, 1),
+    'notify_email': (0, 1), 'notify_smtp_port': (1, 65535),
+    'notify_smtp_tls': ('starttls', 'ssl', 'none'), 'notify_telegram': (0, 1), 'notify_ntfy': (0, 1),
+    'notify_on_disks': (0, 1), 'notify_on_plex': (0, 1), 'notify_on_backup': (0, 1),
+    'notify_on_integrity': (0, 1), 'notify_on_cert': (0, 1), 'notify_on_newfiles': (0, 1),
+    'notify_on_update': (0, 1), 'proxy_notify': (0, 1),
+    'plex_watch': ('notify', 'restart', 'off'), 'plex_watch_min': (2, 60),
+    'plex_update_check': (0, 1), 'ins_newfiles': (0, 1),
+    'ix_auto': (0, 1), 'ix_auto_every': ('daily', 'weekly'),
+    'ix_auto_day': ('1', '2', '3', '4', '5', '6', '7'), 'ix_auto_mode': ('db', 'awake'),
+    'ix_auto_optimize': (0, 1),
     'plex_title_lang': ('en', 'cs', 'ar', 'bg', 'ca', 'zh', 'hr', 'da', 'nl', 'et', 'fi', 'fr',
                         'de', 'el', 'he', 'hi', 'hu', 'id', 'it', 'ja', 'ko', 'lv', 'lt', 'ms',
                         'nb', 'fa', 'pl', 'pt', 'pt-BR', 'ro', 'ru', 'sr', 'sk', 'sl', 'es',
@@ -299,6 +326,15 @@ CHOICE_WORDS = {
                          'rsa2048': 'RSA 2048 (RS256)', 'rsa3072': 'RSA 3072 (RS256)',
                          'rsa4096': 'RSA 4096 (RS256)'},
     'ui_lang': {'cs': 'Čeština', 'en': 'English'},
+    'notify_smtp_tls': {'starttls': 'STARTTLS (port 587)', 'ssl': 'TLS from the start (port 465)',
+                        'none': 'none (only inside a trusted network)'},
+    'plex_watch': {'notify': 'a message only', 'restart': 'restarted, and a message',
+                   'off': 'not watched'},
+    'ix_auto_every': {'daily': 'every night', 'weekly': 'every week, on the day below'},
+    'ix_auto_day': {'1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', '4': 'Thursday',
+                    '5': 'Friday', '6': 'Saturday', '7': 'Sunday'},
+    'ix_auto_mode': {'db': 'the database only - no disk is read',
+                     'awake': 'the disks that are awake too - a sleeping one is never woken'},
 }
 
 NAMES = {
@@ -384,6 +420,29 @@ NAMES = {
     'power_auto': 'A restart on a schedule', 'power_auto_every': 'How often',
     'power_auto_day': 'On the day', 'power_auto_at': 'At',
     'power_auto_needed': 'Only when an update needs it',
+    'notify_email': 'By e-mail', 'notify_smtp_host': 'SMTP server', 'notify_smtp_port': 'Port',
+    'notify_smtp_tls': 'Encryption', 'notify_smtp_user': 'User name',
+    'notify_smtp_password': 'Password', 'notify_from': 'From', 'notify_to': 'To',
+    'notify_telegram': 'By Telegram', 'notify_tg_token': 'The bot’s token',
+    'notify_tg_chat': 'Chat ID',
+    'notify_ntfy': 'By ntfy', 'notify_ntfy_url': 'The topic’s address',
+    'notify_ntfy_token': 'Access token',
+    'notify_on_disks': 'Disks: SMART, temperature, space',
+    'notify_on_plex': 'Plex Media Server does not answer or stopped',
+    'notify_on_backup': 'A backup or a copy of a database failed',
+    'notify_on_integrity': 'New problems of the library (on a schedule)',
+    'notify_on_cert': 'Certificates: a renewal failed, one runs out',
+    'notify_on_newfiles': 'A new file that does not read right',
+    'notify_on_update': 'A new version of Plex Media Server',
+    'proxy_notify': 'Notifications (Telegram, ntfy)',
+    'plex_watch': 'When Plex Media Server stops answering',
+    'plex_watch_min': '...for this long (min)',
+    'plex_update_check': 'Look for a new version of Plex Media Server every day',
+    'ins_newfiles': 'Read each new file once with ffprobe',
+    'ins_sub_langs': 'Subtitles wanted', 'ins_audio_langs': 'Audio wanted',
+    'ix_auto': 'Look through the library on a schedule', 'ix_auto_every': 'How often',
+    'ix_auto_day': 'On the day', 'ix_auto_at': 'At', 'ix_auto_mode': 'What is read',
+    'ix_auto_optimize': 'Plex optimizes its database on the first of the month',
 }
 
 SAYS = {
@@ -404,6 +463,39 @@ SAYS = {
     'proxy_discover': 'Plex library: the watchlist (discover.provider.plex.tv) and the posters '
                       'fetched from plex.tv and TMDB.',
     'proxy_ratings': 'Plex library → Ratings: TMDB, OMDb, Trakt and TVmaze.',
+    'proxy_notify': 'Notifications by Telegram and ntfy. E-mail goes straight to its SMTP server.',
+    'notify_email': 'A message to a mailbox through an SMTP server - your provider’s, or Gmail '
+                    'with an app password.',
+    'notify_smtp_host': '<code>smtp.example.cz</code>',
+    'notify_smtp_password': 'Kept sealed, like the other passwords.',
+    'notify_from': 'Empty: the user name.',
+    'notify_to': 'One address, or more separated by commas.',
+    'notify_telegram': 'A bot of your own: @BotFather gives its token; write to the bot once, '
+                       'then its chat ID is in <code>https://api.telegram.org/botTOKEN/getUpdates</code>.',
+    'notify_tg_token': 'Kept sealed.',
+    'notify_ntfy': 'A push to the ntfy app on a phone - ntfy.sh or a server of your own.',
+    'notify_ntfy_url': '<code>https://ntfy.sh/a-long-secret-topic</code> - anyone who knows the '
+                       'topic reads it, so make it long.',
+    'notify_ntfy_token': 'Where the server asks for one. Kept sealed.',
+    'notify_on_disks': 'What the dashboard warns of: a message when something new comes, one '
+                       'when all is well again.',
+    'notify_on_plex': 'After the time set under Insights → Plex server.',
+    'notify_on_integrity': 'Only when the look on a schedule finds more than the last one.',
+    'plex_watch': 'Plex runs, but its own address does not answer. <i>Restarted</i>: once in '
+                  'half an hour at most, never in maintenance, never while plexmon itself has '
+                  'stopped Plex or puts its database back.',
+    'plex_watch_min': 'Each minute is asked once; a short hiccup is never taken for a hang.',
+    'plex_update_check': '<code>dnf check-update plexmediaserver</code> - only looked for. It is '
+                         'put in only by the button under Insights → Plex server.',
+    'ins_newfiles': 'Every hour, up to twenty files Plex took in - only on a disk that is awake, '
+                    'never one just being written. Needs ffprobe (<code>dnf install ffmpeg</code>).',
+    'ins_sub_langs': 'Language codes separated by commas, like <code>cs, sk</code>. Empty: not '
+                     'looked at.',
+    'ins_audio_langs': 'Like <code>cs</code>. Empty: not looked at.',
+    'ix_auto': 'As <i>Look through it</i> in Library integrity - nothing is put right by itself. '
+               'A message only when it finds more than the last look.',
+    'ix_auto_optimize': 'Plex’s own Optimize, a checked copy of its database before it - at the '
+                        'time above.',
     'session_hours': 'How long an administrator stays signed in, however busy.',
     'session_idle_min': 'How long a sign-in may sit without anything being asked before it '
                         'has to be done again.',
@@ -587,7 +679,8 @@ SAYS_SHORT = {}
 # Which settings sit on which page of Settings, in order.
 PANES = {
     'proxy': ['proxy', 'proxy_url', 'proxy_user', 'proxy_password', 'proxy_no', 'proxy_upgrade',
-              'proxy_os', 'proxy_acme', 'proxy_dnsapi', 'proxy_discover', 'proxy_ratings'],
+              'proxy_os', 'proxy_acme', 'proxy_dnsapi', 'proxy_discover', 'proxy_ratings',
+              'proxy_notify'],
     'people': ['session_hours', 'session_idle_min', 'login_tries', 'login_wait_min',
                'admin_2fa', 'admin_2fa_app', 'passkeys', 'passkey_is_2fa'],
     'web': ['plex_cert', 'plex_cert_domain', 'plex_cert_restart'],
@@ -609,13 +702,33 @@ PANES = {
              'osup_auto_day', 'osup_auto_at', 'osup_auto_reboot', 'osup_plex'],
     'power': ['power_auto', 'power_auto_every', 'power_auto_day', 'power_auto_at',
               'power_auto_needed'],
+    'notify': ['notify_email', 'notify_smtp_host', 'notify_smtp_port', 'notify_smtp_tls',
+               'notify_smtp_user', 'notify_smtp_password', 'notify_from', 'notify_to',
+               'notify_telegram', 'notify_tg_token', 'notify_tg_chat',
+               'notify_ntfy', 'notify_ntfy_url', 'notify_ntfy_token'],
+    'notifyon': ['notify_on_disks', 'notify_on_plex', 'notify_on_backup', 'notify_on_integrity',
+                 'notify_on_cert', 'notify_on_newfiles', 'notify_on_update'],
+    'plexwatch': ['plex_watch', 'plex_watch_min', 'plex_update_check', 'ins_newfiles',
+                  'ins_sub_langs', 'ins_audio_langs'],
+    'ixauto': ['ix_auto', 'ix_auto_every', 'ix_auto_day', 'ix_auto_at', 'ix_auto_mode',
+               'ix_auto_optimize'],
 }
 
 ONLY_WHEN = {
     'proxy_url': ['proxy', '1'], 'proxy_user': ['proxy', '1'], 'proxy_password': ['proxy', '1'],
     'proxy_no': ['proxy', '1'], 'proxy_upgrade': ['proxy', '1'], 'proxy_os': ['proxy', '1'],
     'proxy_acme': ['proxy', '1'], 'proxy_dnsapi': ['proxy', '1'], 'proxy_discover': ['proxy', '1'],
-    'proxy_ratings': ['proxy', '1'],
+    'proxy_ratings': ['proxy', '1'], 'proxy_notify': ['proxy', '1'],
+    'notify_smtp_host': ['notify_email', '1'], 'notify_smtp_port': ['notify_email', '1'],
+    'notify_smtp_tls': ['notify_email', '1'], 'notify_smtp_user': ['notify_email', '1'],
+    'notify_smtp_password': ['notify_email', '1'], 'notify_from': ['notify_email', '1'],
+    'notify_to': ['notify_email', '1'], 'notify_tg_token': ['notify_telegram', '1'],
+    'notify_tg_chat': ['notify_telegram', '1'], 'notify_ntfy_url': ['notify_ntfy', '1'],
+    'notify_ntfy_token': ['notify_ntfy', '1'],
+    'plex_watch_min': ['plex_watch', 'off-not'],
+    'ix_auto_every': ['ix_auto', '1'], 'ix_auto_day': ['ix_auto_every', 'weekly'],
+    'ix_auto_at': ['ix_auto', '1'], 'ix_auto_mode': ['ix_auto', '1'],
+    'ix_auto_optimize': ['ix_auto', '1'],
     'backup_keep': ['backup_daily', '1'], 'backup_at': ['backup_daily', '1'],
     'plex_db_every': ['plex_db_daily', '1'], 'plex_db_day': ['plex_db_every', 'weekly'],
     'plex_db_at': ['plex_db_daily', '1'],
@@ -723,12 +836,28 @@ def check_setting(key, value):
     if key in SECRET_KEYS and any(ord(ch) < 32 or ord(ch) == 127 for ch in str(got or '')):
         raise BadSetting('%s: no line breaks or other control characters' % key)
     if key in ('backup_at', 'plex_db_at', 'rbackup_at', 'osup_check_at', 'osup_auto_at',
-               'power_auto_at') and not re.match(r'^([01]?\d|2[0-3]):[0-5]\d\Z', str(got).strip()):
+               'power_auto_at', 'ix_auto_at') and not re.match(r'^([01]?\d|2[0-3]):[0-5]\d\Z', str(got).strip()):
         raise BadSetting('%s: a time of day as HH:MM, like 03:30' % key)
     if key == 'plex_db_dir' and str(got).strip() and (
             not str(got).startswith('/') or re.search(r'(^|/)\.\.(/|$)', str(got))
             or str(got).rstrip('/') in ('', '/etc', '/usr', '/boot', '/proc', '/sys', '/dev')):
         raise BadSetting('plex_db_dir: a whole path of a folder on this machine (/mnt/backup/plex)')
+    if key in ('notify_from', 'notify_to') and str(got).strip() and not all(
+            re.match(r'^[^@\s<>",]{1,64}@[A-Za-z0-9.-]{1,253}\.[A-Za-z]{2,63}\Z', w.strip())
+            for w in str(got).split(',') if w.strip()):
+        raise BadSetting('%s: a mail address (more separated by commas)' % key)
+    if key == 'notify_smtp_host' and str(got).strip() and \
+            not re.match(r'^[A-Za-z0-9.\-:\[\]]{1,260}\Z', str(got).strip()):
+        raise BadSetting('notify_smtp_host: a name or an address')
+    if key == 'notify_ntfy_url' and str(got).strip() and \
+            not re.match(r'^https?://[^\s"<>]+/[^\s"<>/]+\Z', str(got).strip()):
+        raise BadSetting('notify_ntfy_url: the address of the topic, https://ntfy.sh/topic')
+    if key == 'notify_tg_chat' and str(got).strip() and \
+            not re.match(r'^(-?\d{1,20}|@[A-Za-z0-9_]{4,64})\Z', str(got).strip()):
+        raise BadSetting('notify_tg_chat: a number (-100… for a group) or @channel')
+    if key in ('ins_sub_langs', 'ins_audio_langs') and str(got).strip() and \
+            not re.match(r'^[A-Za-z]{2,3}([\s,;]+[A-Za-z]{2,3})*[\s,;]*\Z', str(got).strip()):
+        raise BadSetting('%s: language codes separated by commas, like cs, sk' % key)
     if key == 'acme_resolvers':
         for one in [w for w in re.split(r'[\s,;]+', str(got)) if w]:
             try:
@@ -1706,6 +1835,11 @@ class Storage(object):
         self.db.run('DELETE FROM settings WHERE k = ?', (k,))
 
     def add_event(self, kind, words, level='info', who=''):
+        for fn in EVENT_HOOKS:
+            try:
+                fn(kind, words, level)
+            except Exception:                           # noqa: BLE001
+                pass
         try:
             self.db.insert('events', {'ts': time.time(), 'kind': str(kind)[:60],
                                       'node': node_name(), 'level': level,
@@ -3343,7 +3477,7 @@ def plex_view(store):
 # command line), 'acme' (the ACME CA), 'dnsapi' (deSEC, Cloudflare, acme-dns),
 # 'discover' (Plex Discover, posters from the internet), 'ratings' (TMDB, OMDb,
 # Trakt, TVmaze). Whatever is left off goes out exactly as before 2.4.0.
-PROXY_PURPOSES = ('upgrade', 'os', 'acme', 'dnsapi', 'discover', 'ratings')
+PROXY_PURPOSES = ('upgrade', 'os', 'acme', 'dnsapi', 'discover', 'ratings', 'notify')
 def proxy_on(purpose='upgrade'):
     """Whether this purpose goes through the proxy: the proxy on, with an
     address, and this purpose switched on. 'any' - the proxy itself, for Try it."""
@@ -10271,6 +10405,101 @@ def _db_do(h):
     raise ApiError(400, 'no such thing to do')
 
 
+@route('GET', '/api/insights')
+def _insights(h):
+    """Insights (2.12.0): part = overview | watching | health | newfiles."""
+    h.me()
+    part = str(h.arg('part') or 'overview')
+    st = h.store
+    try:
+        if part == 'watching':
+            return NX.watching(st, int(h.arg('days') or 30))
+        if part == 'health':
+            return NX.health_view(st)
+        if part == 'newfiles':
+            return NX.newfiles_view(st)
+        return NX.view(st)
+    except ValueError as e:
+        raise ApiError(400, str(e))
+
+
+@route('POST', '/api/insights')
+def _insights_do(h):
+    s = h.me('fulladmin')
+    by = s['name']
+    b = h.body()
+    act = str(b.get('action') or '')
+    st = h.store
+    try:
+        if act == 'job':
+            return {'job': NX.job_view()}
+        if act == 'stop':
+            return {'message': 'it stops at the next safe point' if NX.job_stop() else
+                    'nothing is running'}
+        if act == 'analyse':
+            NX.job_start('analyse', 'the files of the library looked through', by,
+                         lambda: NX.analyse(st, by), heavy=True)
+            return {'message': 'the files of the library are looked through', 'job': NX.job_view()}
+        if act == 'episodes':
+            NX.job_start('episodes', 'the episodes looked up on TVmaze', by,
+                         lambda: NX.episodes(st, by), heavy=True)
+            return {'message': 'the episodes are looked up', 'job': NX.job_view()}
+        if act == 'newfiles':
+            NX.job_start('newfiles', 'the new files read', by,
+                         lambda: NX.newfiles(st, by, limit=int(b.get('limit') or 40)))
+            return {'message': 'the new files are read', 'job': NX.job_view()}
+        if act == 'newfiles-again':
+            part = str(b.get('part') or '')
+            st.db.run('DELETE FROM filecheck WHERE part = ?', (part,))
+            return {'message': 'it is read again at the next look'}
+        if act == 'sizes':
+            NX.job_start('sizes', 'the size of Plex\'s folders', by, lambda: NX.plex_sizes(st, by))
+            return {'message': 'Plex\'s folders are measured', 'job': NX.job_view()}
+        if act == 'clean':
+            which = [str(x) for x in b.get('which') or [] if str(x) in [c[0] for c in NX.CLEAN]]
+            if not which:
+                raise ValueError('nothing chosen')
+            NX.job_start('clean', 'Plex\'s caches cleaned', by, lambda: NX.plex_clean(st, by, which))
+            return {'message': 'Plex\'s caches are cleaned', 'job': NX.job_view()}
+        if act == 'plex-check':
+            NX.job_start('plex-check', 'a new Plex Media Server looked for', by,
+                         lambda: NX.check_plex_update(st, by))
+            return {'message': 'a new version is looked for', 'job': NX.job_view()}
+        if act == 'plex-update':
+            if not b.get('force'):
+                n = PX.now_playing()
+                if n:
+                    return {'confirm': 'playing', 'playing': n}
+            NX.job_start('plex-update', 'Plex Media Server updated', by,
+                         lambda: NX.update_plex(st, by))
+            return {'message': 'Plex Media Server is updated', 'job': NX.job_view()}
+        if act == 'plex-restart':
+            if not b.get('force'):
+                n = PX.now_playing()
+                if n:
+                    return {'confirm': 'playing', 'playing': n}
+            st.add_event('plex', '%s restarted Plex Media Server' % by, 'warn', who=by)
+            rc, out = HX.host_run([SYSTEMCTL, 'restart', PLEX_SERVICE], 300)
+            if rc != 0:
+                raise ValueError(out.strip()[-300:] or 'systemctl said %s' % rc)
+            NX.remember_restart('restarted by %s' % by)
+            return {'message': 'Plex Media Server is restarted'}
+        if act == 'notify-test':
+            ch = [c for c in (b.get('channels') or NX.channels()) if c in ('email', 'telegram',
+                                                                         'ntfy')]
+            if not ch:
+                raise ValueError('no way of sending is switched on and filled in - save it first')
+            res = NX.send_all('test', 'A test from plexmon', 'If this came, notifications work. '
+                              '(%s, %s)' % (by, stamp(time.time())), only=ch)
+            st.add_event('settings', '%s sent a test notification: %s' % (
+                by, ', '.join('%s %s' % kv for kv in res.items())), who=by)
+            return {'message': ', '.join('%s: %s' % kv for kv in res.items()), 'res': res,
+                    'notified': NX.view(st)['notified']}
+    except ValueError as e:
+        raise ApiError(400, str(e))
+    raise ApiError(400, 'no such action')
+
+
 @route('GET', '/api/integrity')
 def _integrity(h):
     h.me('fulladmin')
@@ -11745,6 +11974,8 @@ class Admin(object):
         threading.Thread(target=web_loop, args=(self.store, self.stop), name='plexmon-web',
                          daemon=True).start()
         threading.Thread(target=self.loop, name='plexmon-admin', daemon=True).start()
+        threading.Thread(target=NX.loop, args=(self.store, self.stop, self.monitor, self.wake),
+                         name='plexmon-insights', daemon=True).start()
         floor = self.store.get_meta('downgrade:floor:' + node_name()) or '0.0.0'
         if _ver_tuple(DOWNGRADE_FLOOR) > _ver_tuple(floor):
             self.store.set_meta('downgrade:floor:' + node_name(), DOWNGRADE_FLOOR)
@@ -13177,6 +13408,8 @@ import plexmon_host as HX  # noqa: E402
 HX.bind(sys.modules[__name__])
 import plexmon_integrity as IX  # noqa: E402
 IX.bind(sys.modules[__name__], HX, PX)
+import plexmon_insights as NX  # noqa: E402
+NX.bind(sys.modules[__name__], HX, PX, IX)
 
 
 def build_parser():

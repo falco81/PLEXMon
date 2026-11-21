@@ -146,3 +146,10 @@ the disks (P1 to P8), on a copy of its database, and puts right what can be put 
 see [library-integrity.md](library-integrity.md). Settings → The database follows Plex's own
 Optimize and Clean Bundles to the end, with their progress beside the buttons; Optimize makes a
 checked copy of the database first.
+
+## Insights and notifications (2.12.0)
+
+The Insights tab (after Library integrity) and Settings → Notifications - who watched what and
+how, transcoding, episodes from TVmaze, subtitles and audio, duplicates, new files read by
+ffprobe, a watchdog of Plex Media Server, its new version and caches; notifications by e-mail,
+Telegram or ntfy; Library integrity on a schedule. See [insights.md](insights.md).

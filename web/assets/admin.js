@@ -45,7 +45,7 @@ dressButtons(document);
 }());
 
 /* ---- tabs ------------------------------------------------------------------ */
-var TABS = ['library', 'integrity', 'events', 'settings'];
+var TABS = ['library', 'integrity', 'insights', 'events', 'settings'];
 window.optShowTab = function (name) {
   if (TABS.indexOf(name) < 0) name = 'settings';
   var btn = document.querySelector('.tabs button[data-tab="' + name + '"]');
@@ -71,6 +71,7 @@ function onTab(name) {
   explainWhatWasDrawn(document);
   if (name === 'events') loadEvents();
   if (name === 'integrity' && typeof loadIntegrity === 'function') loadIntegrity();
+  if (typeof nxTab === 'function') nxTab(name === 'insights');
   if (window.PXLIB) { if (name === 'library') window.PXLIB.show(); else window.PXLIB.hide(); }
   if (name === 'settings') loadSettings(!Object.keys(DIRTY || {}).length && !Object.keys(PENDING || {}).length);
 }
@@ -978,6 +979,7 @@ function showPane(name) {
   if (name === 'osup' && typeof loadOsup === 'function') loadOsup();
   if (name === 'db' && typeof loadDb === 'function') loadDb();
   if (name === 'backup' && typeof loadRbackup === 'function') loadRbackup();
+  if (name === 'notify' && typeof loadNotify === 'function') loadNotify();
   if (name === 'web') { loadWeb(); osrLoad(); }
   if (name === 'selinux') loadSelinux(); else if (typeof sePoll === 'function') sePoll(false);
   markDirtyCount();

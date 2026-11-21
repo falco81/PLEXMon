@@ -249,7 +249,7 @@ py_newest() {
     if [ -n "$missing" ]; then
         warn "python $want lacks:$missing - the daemon stays on $have"; return 0
     fi
-    for m in plexmon.py plexmon_admin.py plexmon_plex.py plexmon_host.py plexmon_integrity.py deploy/plexmon_upgrade.py; do
+    for m in plexmon.py plexmon_admin.py plexmon_plex.py plexmon_host.py plexmon_integrity.py plexmon_insights.py deploy/plexmon_upgrade.py; do
         [ -f "$HERE/$m" ] || continue
         if ! "$cand" -c 'import ast, sys; ast.parse(open(sys.argv[1]).read())' "$HERE/$m" 2>/dev/null; then
             warn "python $want does not read $m - the daemon stays on $have"; return 0
@@ -549,6 +549,7 @@ install -m 755 "$HERE/plexmon.py" "$LIB/plexmon.py"
 install -m 644 "$HERE/plexmon_admin.py" "$LIB/plexmon_admin.py"
 install -m 644 "$HERE/plexmon_plex.py" "$LIB/plexmon_plex.py"
 install -m 644 "$HERE/plexmon_integrity.py" "$LIB/plexmon_integrity.py"
+install -m 644 "$HERE/plexmon_insights.py" "$LIB/plexmon_insights.py"
 install -m 644 "$HERE/plexmon_host.py" "$LIB/plexmon_host.py"
 install -m 755 "$HERE/deploy/plexmon_upgrade.py" "$LIB/plexmon_upgrade.py"
 install -m 644 "$HERE/CHANGELOG.md" "$LIB/CHANGELOG.md"

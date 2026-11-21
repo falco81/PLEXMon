@@ -11947,6 +11947,1066 @@
   "xs1735": {
    "source": "stopped when asked - nothing begun was left halfway",
    "text": "zastaveno na žádost – nic rozdělaného nezůstalo napůl"
+  },
+  "xs1736": {
+   "source": "Insights",
+   "text": "Přehledy"
+  },
+  "xs1737": {
+   "source": "Who watched what and how, what makes Plex transcode, the episodes missing and coming, subtitles and audio, duplicates, the new files, and Plex Media Server itself.",
+   "text": "Kdo co sledoval a jak, co nutí Plex překódovávat, chybějící a nadcházející díly, titulky a zvuk, duplicity, nové soubory a samotný Plex Media Server."
+  },
+  "xs1738": {
+   "source": "Notifications",
+   "text": "Upozornění"
+  },
+  "xs1739": {
+   "source": "Messages by e-mail, Telegram or ntfy: the disks, Plex Media Server, the backups, the library, the certificates - and the look through the library on a schedule.",
+   "text": "Zprávy e-mailem, Telegramem nebo ntfy: disky, Plex Media Server, zálohy, knihovna, certifikáty - a kontrola knihovny podle plánu."
+  },
+  "xs1740": {
+   "source": "A message when something needs you: a disk the dashboard warns of, Plex Media Server\n        that stopped answering, a backup that failed, new problems of the library, a certificate. Sent by\n        e-mail, Telegram or ntfy - any of them, or all. The same thing is said once in six hours at most,\n        twenty messages an hour at most.",
+   "text": "Zpráva, když je potřeba vás: disk, před kterým varuje dashboard, Plex Media Server, který přestal odpovídat, zálohu, která selhala, nové problémy knihovny, certifikát. Posílá se e-mailem, Telegramem nebo ntfy - kterýmkoli z nich nebo všemi. Totéž nejvýš jednou za šest hodin, nejvýš dvacet zpráv za hodinu."
+  },
+  "xs1741": {
+   "source": "How they are sent",
+   "text": "Jak se posílají"
+  },
+  "xs1742": {
+   "source": "What is sent",
+   "text": "Co se posílá"
+  },
+  "xs1743": {
+   "source": "Plex Media Server watched",
+   "text": "Hlídání Plex Media Serveru"
+  },
+  "xs1744": {
+   "source": "Library integrity on a schedule",
+   "text": "Integrita knihovny podle plánu"
+  },
+  "xs1745": {
+   "source": "Watching",
+   "text": "Sledování"
+  },
+  "xs1746": {
+   "source": "Transcoding",
+   "text": "Překódování"
+  },
+  "xs1747": {
+   "source": "Episodes",
+   "text": "Díly"
+  },
+  "xs1748": {
+   "source": "Subtitles and audio",
+   "text": "Titulky a zvuk"
+  },
+  "xs1749": {
+   "source": "Duplicates",
+   "text": "Duplicity"
+  },
+  "xs1750": {
+   "source": "New files",
+   "text": "Nové soubory"
+  },
+  "xs1751": {
+   "source": "Who watched what, when and how - with what is playing now.",
+   "text": "Kdo co sledoval, kdy a jak - i to, co se přehrává právě teď."
+  },
+  "xs1752": {
+   "source": "What made Plex transcode, and which files of the library are likely to.",
+   "text": "Co Plex přimělo překódovávat a které soubory knihovny k tomu nejspíš povedou."
+  },
+  "xs1753": {
+   "source": "Aired episodes that are not in Plex, and what comes next - from TVmaze.",
+   "text": "Odvysílané díly, které v Plexu nejsou, a co přijde dál - z TVmaze."
+  },
+  "xs1754": {
+   "source": "Where the subtitles or the audio in the languages wanted are missing.",
+   "text": "Kde chybějí titulky nebo zvuk v požadovaných jazycích."
+  },
+  "xs1755": {
+   "source": "One film or episode in more than one version - which to keep.",
+   "text": "Jeden film nebo díl ve více verzích - kterou si nechat."
+  },
+  "xs1756": {
+   "source": "Each file Plex took in, read once by ffprobe - only on a disk that is awake.",
+   "text": "Každý soubor, který Plex převzal, jednou přečtený ffprobe - jen na disku, který je vzhůru."
+  },
+  "xs1757": {
+   "source": "Is it answering, how hard it works, a new version, its caches.",
+   "text": "Jestli odpovídá, jak moc pracuje, nová verze, jeho mezipaměti."
+  },
+  "xs1758": {
+   "source": "What happens on this Plex server - read from its own API and a copy of its database. Nothing of Plex is changed by looking, and a sleeping disk is never woken.",
+   "text": "Co se na tomto Plex serveru děje - čteno z jeho vlastního API a z kopie jeho databáze. Prohlížením se v Plexu nic nemění a spící disk se nikdy nebudí."
+  },
+  "xs1759": {
+   "source": "Loading…",
+   "text": "Načítám…"
+  },
+  "xs1760": {
+   "source": "Show all",
+   "text": "Zobrazit vše"
+  },
+  "xs1761": {
+   "source": "Show fewer",
+   "text": "Zobrazit méně"
+  },
+  "xs1762": {
+   "source": "Playing now",
+   "text": "Právě se přehrává"
+  },
+  "xs1763": {
+   "source": "Nobody is watching.",
+   "text": "Nikdo se nedívá."
+  },
+  "xs1764": {
+   "source": "outside",
+   "text": "zvenku"
+  },
+  "xs1765": {
+   "source": "hardware",
+   "text": "hardwarově"
+  },
+  "xs1766": {
+   "source": "7 days",
+   "text": "7 dní"
+  },
+  "xs1767": {
+   "source": "30 days",
+   "text": "30 dní"
+  },
+  "xs1768": {
+   "source": "90 days",
+   "text": "90 dní"
+  },
+  "xs1769": {
+   "source": "A year",
+   "text": "Rok"
+  },
+  "xs1770": {
+   "source": "The plays from Plex's own history; how they were played from plexmon's look at Plex every minute (from 2.12.0 on).",
+   "text": "Přehrání z vlastní historie Plexu; jak se přehrávala, z toho, jak se plexmon každou minutu dívá do Plexu (od verze 2.12.0)."
+  },
+  "xs1771": {
+   "source": "Plays",
+   "text": "Přehrání"
+  },
+  "xs1772": {
+   "source": "in Plex's history",
+   "text": "v historii Plexu"
+  },
+  "xs1773": {
+   "source": "Hours watched",
+   "text": "Hodin sledování"
+  },
+  "xs1774": {
+   "source": "seen by plexmon",
+   "text": "viděno plexmonem"
+  },
+  "xs1775": {
+   "source": "People",
+   "text": "Lidé"
+  },
+  "xs1776": {
+   "source": "Transcoded",
+   "text": "Překódováno"
+  },
+  "xs1777": {
+   "source": "From outside",
+   "text": "Zvenku"
+  },
+  "xs1778": {
+   "source": "Of the plays plexmon saw, how many Plex had to transcode the picture of. Direct play and direct stream cost the processor almost nothing.",
+   "text": "Z přehrání, která plexmon viděl, u kolika musel Plex překódovat obraz. Přímé přehrávání a přímý stream procesor skoro nic nestojí."
+  },
+  "xs1779": {
+   "source": "Plays from a player that is not on this network.",
+   "text": "Přehrání z přehrávače, který není v této síti."
+  },
+  "xs1780": {
+   "source": "Plays per day",
+   "text": "Přehrání za den"
+  },
+  "xs1781": {
+   "source": "Direct play",
+   "text": "Přímé přehrávání"
+  },
+  "xs1782": {
+   "source": "Direct stream",
+   "text": "Přímý stream"
+  },
+  "xs1783": {
+   "source": "Transcode",
+   "text": "Překódování"
+  },
+  "xs1784": {
+   "source": "Not seen by plexmon",
+   "text": "Neviděno plexmonem"
+  },
+  "xs1785": {
+   "source": "How it was played",
+   "text": "Jak se přehrávalo"
+  },
+  "xs1786": {
+   "source": "without transcoding",
+   "text": "bez překódování"
+  },
+  "xs1787": {
+   "source": "Nothing seen yet - plexmon looks at Plex once a minute, from now on.",
+   "text": "Zatím nic neviděno - plexmon se od teď dívá do Plexu jednou za minutu."
+  },
+  "xs1788": {
+   "source": "Why Plex transcoded",
+   "text": "Proč Plex překódovával"
+  },
+  "xs1789": {
+   "source": "Watched most",
+   "text": "Nejsledovanější"
+  },
+  "xs1790": {
+   "source": "TV show",
+   "text": "seriál"
+  },
+  "xs1791": {
+   "source": "Film",
+   "text": "film"
+  },
+  "xs1792": {
+   "source": "Nothing watched in this time.",
+   "text": "V této době se nic nesledovalo."
+  },
+  "xs1793": {
+   "source": "Hours",
+   "text": "Hodiny"
+  },
+  "xs1794": {
+   "source": "Nobody yet.",
+   "text": "Zatím nikdo."
+  },
+  "xs1795": {
+   "source": "Players",
+   "text": "Přehrávače"
+  },
+  "xs1796": {
+   "source": "What was played lately",
+   "text": "Co se nedávno přehrávalo"
+  },
+  "xs1797": {
+   "source": "plexmon has not seen anything played yet - it looks at Plex once a minute.",
+   "text": "plexmon zatím neviděl nic přehrávat - do Plexu se dívá jednou za minutu."
+  },
+  "xs1798": {
+   "source": "What makes Plex transcode",
+   "text": "Co nutí Plex překódovávat"
+  },
+  "xs1799": {
+   "source": "Transcoding costs the processor - a 4K picture may be more than a small one keeps up with. Below: what Plex really transcoded, seen once a minute - and which files of the library are likely to be, read from a copy of its database.",
+   "text": "Překódování stojí procesor - 4K obraz může být víc, než malý procesor zvládne. Níže: co Plex skutečně překódovával (viděno jednou za minutu) - a které soubory knihovny k tomu nejspíš povedou, přečteno z kopie jeho databáze."
+  },
+  "xs1800": {
+   "source": "Look through the files",
+   "text": "Prověřit soubory"
+  },
+  "xs1801": {
+   "source": "Look through the files again",
+   "text": "Prověřit soubory znovu"
+  },
+  "xs1802": {
+   "source": "One look through a copy of Plex's database gives Transcoding, Subtitles and audio, and Duplicates together. Plex goes on; no disk is read.",
+   "text": "Jedno prověření kopie databáze Plexu dá zároveň Překódování, Titulky a zvuk i Duplicity. Plex běží dál; žádný disk se nečte."
+  },
+  "xs1803": {
+   "source": "Transcoded plays",
+   "text": "Překódovaná přehrání"
+  },
+  "xs1804": {
+   "source": "Files likely to be transcoded",
+   "text": "Soubory, které se nejspíš budou překódovávat"
+  },
+  "xs1805": {
+   "source": "files in all",
+   "text": "souborů celkem"
+  },
+  "xs1806": {
+   "source": "4K files",
+   "text": "Soubory 4K"
+  },
+  "xs1807": {
+   "source": "With picture subtitles",
+   "text": "S obrázkovými titulky"
+  },
+  "xs1808": {
+   "source": "Transcoded lately",
+   "text": "Nedávno překódováno"
+  },
+  "xs1809": {
+   "source": "Nothing transcoded in this time - or not seen yet.",
+   "text": "V této době se nic nepřekódovávalo - nebo to zatím nebylo vidět."
+  },
+  "xs1810": {
+   "source": "The library, by what may need transcoding",
+   "text": "Knihovna podle toho, co může vyžadovat překódování"
+  },
+  "xs1811": {
+   "source": "Nothing in the library is likely to be transcoded on a common player.",
+   "text": "Nic v knihovně se na běžném přehrávači nejspíš nebude překódovávat."
+  },
+  "xs1812": {
+   "source": "What helps",
+   "text": "Co pomůže"
+  },
+  "xs1813": {
+   "source": "Not looked through yet.",
+   "text": "Zatím neprověřeno."
+  },
+  "xs1814": {
+   "source": "Find a title or a reason…",
+   "text": "Hledat název nebo důvod…"
+  },
+  "xs1815": {
+   "source": "The picture is in a codec the player cannot play: a player that knows it (Apple TV 4K, Shield, a recent TV app) plays it directly; otherwise only a version in H.264 helps (Plex → Optimize, or ffmpeg).",
+   "text": "Obraz je v kodeku, který přehrávač neumí: přehrávač, který ho zná (Apple TV 4K, Shield, novější aplikace v televizi), ho přehraje přímo; jinak pomůže jen verze v H.264 (Plex → Optimalizovat, nebo ffmpeg)."
+  },
+  "xs1816": {
+   "source": "A 4K picture to a 1080p player, or over a slow line: a 1080p version beside it (Plex → Optimize → Optimized for TV), or the player set to original quality.",
+   "text": "4K obraz do 1080p přehrávače nebo po pomalé lince: verze 1080p vedle něj (Plex → Optimalizovat → Optimalizováno pro TV), nebo přehrávač nastavený na původní kvalitu."
+  },
+  "xs1817": {
+   "source": "A bit rate higher than the player or the line allows: the quality of the player set to original / maximum, or a version with a lower bit rate.",
+   "text": "Datový tok vyšší, než přehrávač nebo linka dovolí: kvalita přehrávače nastavená na původní / maximální, nebo verze s nižším datovým tokem."
+  },
+  "xs1818": {
+   "source": "The audio is TrueHD or DTS, which few players decode: a second audio track in AC-3/E-AC-3 beside it costs nothing to play - ffmpeg -i in.mkv -map 0 -c copy -map 0:a:0 -c:a:1 eac3 out.mkv",
+   "text": "Zvuk je TrueHD nebo DTS, který dekóduje málo přehrávačů: druhá zvuková stopa v AC-3/E-AC-3 vedle něj se přehraje bez práce - ffmpeg -i in.mkv -map 0 -c copy -map 0:a:0 -c:a:1 eac3 out.mkv"
+  },
+  "xs1819": {
+   "source": "Picture subtitles (PGS, VobSub) are burned into the picture for most players - the whole film transcoded. Subtitles as text (SRT) beside them, or turned into text (Subtitle Edit, OCR).",
+   "text": "Obrázkové titulky (PGS, VobSub) se pro většinu přehrávačů vpalují do obrazu - celý film se překóduje. Pomohou textové titulky (SRT) vedle nich, nebo převod na text (Subtitle Edit, OCR)."
+  },
+  "xs1820": {
+   "source": "An old container: remuxed to MKV or MP4 without touching the picture - ffmpeg -i in.avi -c copy out.mkv",
+   "text": "Starý kontejner: přebalit do MKV nebo MP4 bez sáhnutí na obraz - ffmpeg -i in.avi -c copy out.mkv"
+  },
+  "xs1821": {
+   "source": "Missing and coming episodes",
+   "text": "Chybějící a nadcházející díly"
+  },
+  "xs1822": {
+   "source": "Every show of Plex looked up on TVmaze (no key, no account): the episodes that have aired and are not in Plex, and the ones that come next. Specials (season 0) are left out. A show is asked again after a day - a show that has ended after a week.",
+   "text": "Každý seriál Plexu vyhledaný na TVmaze (bez klíče, bez účtu): díly, které se odvysílaly a v Plexu nejsou, a ty, které přijdou. Speciály (řada 0) se vynechávají. Seriál se znovu ptá po dni - ukončený po týdnu."
+  },
+  "xs1823": {
+   "source": "Look them up on TVmaze",
+   "text": "Vyhledat na TVmaze"
+  },
+  "xs1824": {
+   "source": "Look them up again",
+   "text": "Vyhledat znovu"
+  },
+  "xs1825": {
+   "source": "TVmaze is switched off - Settings → Plex library.",
+   "text": "TVmaze je vypnuté - Nastavení → Knihovna Plexu."
+  },
+  "xs1826": {
+   "source": "Not looked up yet",
+   "text": "Zatím nevyhledáno"
+  },
+  "xs1827": {
+   "source": "The first look asks TVmaze about every show - a few minutes for a big library; after that only what is not fresh.",
+   "text": "První hledání se ptá TVmaze na každý seriál - u velké knihovny pár minut; potom jen na to, co už není čerstvé."
+  },
+  "xs1828": {
+   "source": "Shows found on TVmaze",
+   "text": "Seriálů nalezených na TVmaze"
+  },
+  "xs1829": {
+   "source": "not found",
+   "text": "nenalezeno"
+  },
+  "xs1830": {
+   "source": "Complete",
+   "text": "Kompletní"
+  },
+  "xs1831": {
+   "source": "Aired episodes missing",
+   "text": "Chybějících odvysílaných dílů"
+  },
+  "xs1832": {
+   "source": "Coming in 60 days",
+   "text": "Přijde do 60 dní"
+  },
+  "xs1833": {
+   "source": "Shows with episodes missing",
+   "text": "Seriály s chybějícími díly"
+  },
+  "xs1834": {
+   "source": "Find a show…",
+   "text": "Hledat seriál…"
+  },
+  "xs1835": {
+   "source": "Every aired episode is in Plex.",
+   "text": "Každý odvysílaný díl je v Plexu."
+  },
+  "xs1836": {
+   "source": "Next:",
+   "text": "Další:"
+  },
+  "xs1837": {
+   "source": "Coming",
+   "text": "Přijde"
+  },
+  "xs1838": {
+   "source": "Nothing in the next 60 days.",
+   "text": "V příštích 60 dnech nic."
+  },
+  "xs1839": {
+   "source": "tomorrow",
+   "text": "zítra"
+  },
+  "xs1840": {
+   "source": "Not found on TVmaze",
+   "text": "Nenalezeno na TVmaze"
+  },
+  "xs1841": {
+   "source": "Plex has no TheTVDB or IMDb number for them, or TVmaze does not know them - fix the match in Plex.",
+   "text": "Plex pro ně nemá číslo TheTVDB ani IMDb, nebo je TVmaze nezná - opravte shodu v Plexu."
+  },
+  "xs1842": {
+   "source": "Which episodes and films miss the subtitles or the audio in the languages wanted - read from the tracks Plex knows of (a subtitle file beside the video counts too).",
+   "text": "Kterým dílům a filmům chybějí titulky nebo zvuk v požadovaných jazycích - čteno ze stop, o kterých Plex ví (počítá se i soubor titulků vedle videa)."
+  },
+  "xs1843": {
+   "source": "Subtitles wanted:",
+   "text": "Požadované titulky:"
+  },
+  "xs1844": {
+   "source": "Audio wanted:",
+   "text": "Požadovaný zvuk:"
+  },
+  "xs1845": {
+   "source": "One look through a copy of Plex's database gives this, Transcoding and Duplicates together.",
+   "text": "Jedno prověření kopie databáze Plexu dá zároveň tohle, Překódování i Duplicity."
+  },
+  "xs1846": {
+   "source": "The languages wanted were changed since the last look - look through the files again.",
+   "text": "Požadované jazyky se od posledního prověření změnily - prověřte soubory znovu."
+  },
+  "xs1847": {
+   "source": "Episodes with subtitles",
+   "text": "Díly s titulky"
+  },
+  "xs1848": {
+   "source": "Films with subtitles",
+   "text": "Filmy s titulky"
+  },
+  "xs1849": {
+   "source": "Episodes with the audio",
+   "text": "Díly se zvukem"
+  },
+  "xs1850": {
+   "source": "Films with the audio",
+   "text": "Filmy se zvukem"
+  },
+  "xs1851": {
+   "source": "No language wanted",
+   "text": "Žádný požadovaný jazyk"
+  },
+  "xs1852": {
+   "source": "Set the languages of the subtitles and the audio in Settings → Notifications → Plex Media Server watched, then look through the files again.",
+   "text": "Nastavte jazyky titulků a zvuku v Nastavení → Upozornění → Hlídání Plex Media Serveru a pak prověřte soubory znovu."
+  },
+  "xs1853": {
+   "source": "Films",
+   "text": "Filmy"
+  },
+  "xs1854": {
+   "source": "no subtitles wanted",
+   "text": "chybí titulky"
+  },
+  "xs1855": {
+   "source": "no audio wanted",
+   "text": "chybí zvuk"
+  },
+  "xs1856": {
+   "source": "The same thing more than once",
+   "text": "Totéž víckrát"
+  },
+  "xs1857": {
+   "source": "A film or an episode in more than one version, and a film twice in one library on the same match. The version worth keeping is marked: the highest resolution, then the highest bit rate. Nothing is deleted here - only shown.",
+   "text": "Film nebo díl ve více verzích a film dvakrát v jedné knihovně na stejné shodě. Verze, kterou stojí za to nechat, je označená: nejvyšší rozlišení, pak nejvyšší datový tok. Nic se tu nemaže - jen ukazuje."
+  },
+  "xs1858": {
+   "source": "In more than one version",
+   "text": "Ve více verzích"
+  },
+  "xs1859": {
+   "source": "Taken by the other versions",
+   "text": "Zabírají ostatní verze"
+  },
+  "xs1860": {
+   "source": "Films twice on one match",
+   "text": "Filmy dvakrát na jedné shodě"
+  },
+  "xs1861": {
+   "source": "Nothing twice",
+   "text": "Nic dvakrát"
+  },
+  "xs1862": {
+   "source": "Every film and episode is there once.",
+   "text": "Každý film a díl je tu jednou."
+  },
+  "xs1863": {
+   "source": "to gain",
+   "text": "k získání"
+  },
+  "xs1864": {
+   "source": "keep",
+   "text": "nechat"
+  },
+  "xs1865": {
+   "source": "spare",
+   "text": "navíc"
+  },
+  "xs1866": {
+   "source": "Two items of one library with the same match - two copies Plex did not merge. Merge them in Plex (Merge), or delete the one not wanted.",
+   "text": "Dvě položky jedné knihovny se stejnou shodou - dvě kopie, které Plex nespojil. Spojte je v Plexu (Sloučit), nebo smažte tu nechtěnou."
+  },
+  "xs1867": {
+   "source": "Every hour the files Plex has taken in lately are read once by ffprobe: does the file open, is there a picture, is it as long as Plex says (a download not finished)? Only on a disk that is awake - a file on a sleeping one waits for it - and never a file written less than ten minutes ago.",
+   "text": "Každou hodinu se soubory, které Plex nedávno převzal, jednou přečtou ffprobe: otevře se soubor, je v něm obraz, je tak dlouhý, jak Plex říká (nedostažené stahování)? Jen na disku, který je vzhůru - soubor na spícím disku na něj počká - a nikdy soubor zapsaný před méně než deseti minutami."
+  },
+  "xs1868": {
+   "source": "Read the new files now",
+   "text": "Přečíst nové soubory teď"
+  },
+  "xs1869": {
+   "source": "ffprobe is not on this machine",
+   "text": "ffprobe na tomto stroji není"
+  },
+  "xs1870": {
+   "source": "It comes with ffmpeg: dnf install ffmpeg (from RPM Fusion) - then the new files are read by themselves.",
+   "text": "Je součástí ffmpeg: dnf install ffmpeg (z RPM Fusion) - pak se nové soubory čtou samy."
+  },
+  "xs1871": {
+   "source": "Switched off in Settings → Notifications - read only when asked here.",
+   "text": "Vypnuto v Nastavení → Upozornění - čte se jen na požádání tady."
+  },
+  "xs1872": {
+   "source": "Read right",
+   "text": "Čte se správně"
+  },
+  "xs1873": {
+   "source": "With a warning",
+   "text": "S varováním"
+  },
+  "xs1874": {
+   "source": "Damaged or short",
+   "text": "Poškozené nebo zkrácené"
+  },
+  "xs1875": {
+   "source": "Waiting",
+   "text": "Čeká"
+  },
+  "xs1876": {
+   "source": "a sleeping disk, or still written",
+   "text": "spící disk nebo se ještě zapisuje"
+  },
+  "xs1877": {
+   "source": "What was read",
+   "text": "Co se přečetlo"
+  },
+  "xs1878": {
+   "source": "Nothing read yet.",
+   "text": "Zatím nic nepřečteno."
+  },
+  "xs1879": {
+   "source": "Read it again at the next look",
+   "text": "Přečíst znovu při příští kontrole"
+  },
+  "xs1880": {
+   "source": "reads right",
+   "text": "čte se správně"
+  },
+  "xs1881": {
+   "source": "reads, with a warning",
+   "text": "čte se, s varováním"
+  },
+  "xs1882": {
+   "source": "shorter than it should be",
+   "text": "kratší, než má být"
+  },
+  "xs1883": {
+   "source": "its disk sleeps",
+   "text": "jeho disk spí"
+  },
+  "xs1884": {
+   "source": "processor",
+   "text": "procesor"
+  },
+  "xs1885": {
+   "source": "Plex Media Server answers",
+   "text": "Plex Media Server odpovídá"
+  },
+  "xs1886": {
+   "source": "Plex Media Server runs, but does not answer",
+   "text": "Plex Media Server běží, ale neodpovídá"
+  },
+  "xs1887": {
+   "source": "Playing",
+   "text": "Přehrává se"
+  },
+  "xs1888": {
+   "source": "The processor used by Plex Media Server, once a minute, the last two hours - of all its cores together.",
+   "text": "Procesor využitý Plex Media Serverem, jednou za minutu, poslední dvě hodiny - všech jader dohromady."
+  },
+  "xs1889": {
+   "source": "It is stopped and started again - about half a minute. Whoever is watching is stopped.",
+   "text": "Zastaví se a znovu spustí - asi půl minuty. Kdo se dívá, tomu se přehrávání zastaví."
+  },
+  "xs1890": {
+   "source": "Restart it",
+   "text": "Restartovat"
+  },
+  "xs1891": {
+   "source": "Restart it anyway",
+   "text": "Přesto restartovat"
+  },
+  "xs1892": {
+   "source": "Plex is busy with",
+   "text": "Plex právě dělá"
+  },
+  "xs1893": {
+   "source": "The watchdog",
+   "text": "Hlídač"
+  },
+  "xs1894": {
+   "source": "A message when it stops answering",
+   "text": "Zpráva, když přestane odpovídat"
+  },
+  "xs1895": {
+   "source": "Restarted when it stops answering",
+   "text": "Restart, když přestane odpovídat"
+  },
+  "xs1896": {
+   "source": "Not watched",
+   "text": "Nehlídá se"
+  },
+  "xs1897": {
+   "source": "Plex's own address is asked once a minute. Only when it has not answered for the whole time set, while its service runs, is it taken for hung - never while plexmon itself has stopped Plex, puts its database back, or in maintenance.",
+   "text": "Vlastní adresa Plexu se ptá jednou za minutu. Za zaseknutý se považuje, až když neodpovídá celou nastavenou dobu, zatímco jeho služba běží - nikdy když Plex zastavil sám plexmon, když vrací jeho databázi, ani v údržbě."
+  },
+  "xs1898": {
+   "source": "Restarts",
+   "text": "Restarty"
+  },
+  "xs1899": {
+   "source": "Settings of the watchdog",
+   "text": "Nastavení hlídače"
+  },
+  "xs1900": {
+   "source": "Plex Media Server is not looked after by dnf on this machine.",
+   "text": "Plex Media Server se na tomto stroji nespravuje přes dnf."
+  },
+  "xs1901": {
+   "source": "New",
+   "text": "Nová"
+  },
+  "xs1902": {
+   "source": "The newest",
+   "text": "Nejnovější"
+  },
+  "xs1903": {
+   "source": "Update Plex Media Server",
+   "text": "Aktualizovat Plex Media Server"
+  },
+  "xs1904": {
+   "source": "dnf upgrade plexmediaserver - Plex is restarted by it, about a minute; whoever is watching is stopped. Its database is left as it is (Plex updates it itself when it starts).",
+   "text": "dnf upgrade plexmediaserver - Plex se tím restartuje, asi minutu; kdo se dívá, tomu se přehrávání zastaví. Jeho databáze zůstane, jak je (Plex si ji při startu aktualizuje sám)."
+  },
+  "xs1905": {
+   "source": "Update it",
+   "text": "Aktualizovat"
+  },
+  "xs1906": {
+   "source": "Update it anyway",
+   "text": "Přesto aktualizovat"
+  },
+  "xs1907": {
+   "source": "Somebody is watching",
+   "text": "Někdo se dívá"
+  },
+  "xs1908": {
+   "source": "Plex's folder",
+   "text": "Složka Plexu"
+  },
+  "xs1909": {
+   "source": "Measure it",
+   "text": "Změřit"
+  },
+  "xs1910": {
+   "source": "Measure again",
+   "text": "Změřit znovu"
+  },
+  "xs1911": {
+   "source": "Not measured yet - its size, folder by folder, and what of its caches can go. Takes a minute on a big library (only Plex's own folder is read, never a data disk).",
+   "text": "Zatím nezměřeno - její velikost složku po složce a co z mezipamětí může pryč. U velké knihovny to trvá minutu (čte se jen vlastní složka Plexu, nikdy datový disk)."
+  },
+  "xs1912": {
+   "source": "in all",
+   "text": "celkem"
+  },
+  "xs1913": {
+   "source": "free on its disk",
+   "text": "volno na jejím disku"
+  },
+  "xs1914": {
+   "source": "What can go",
+   "text": "Co může pryč"
+  },
+  "xs1915": {
+   "source": "Posters and pictures made smaller",
+   "text": "Zmenšené plakáty a obrázky"
+  },
+  "xs1916": {
+   "source": "made again by Plex when they are needed",
+   "text": "Plex je vytvoří znovu, když je bude potřebovat"
+  },
+  "xs1917": {
+   "source": "Pieces left by transcoding",
+   "text": "Zbytky po překódování"
+  },
+  "xs1918": {
+   "source": "only when nobody is watching",
+   "text": "jen když se nikdo nedívá"
+  },
+  "xs1919": {
+   "source": "Crash reports",
+   "text": "Hlášení o pádech"
+  },
+  "xs1920": {
+   "source": "kept for Plex's developers only",
+   "text": "uchovávají se jen pro vývojáře Plexu"
+  },
+  "xs1921": {
+   "source": "Diagnostics",
+   "text": "Diagnostika"
+  },
+  "xs1922": {
+   "source": "what Plex packed to send",
+   "text": "co Plex zabalil k odeslání"
+  },
+  "xs1923": {
+   "source": "Downloaded installers of Plex",
+   "text": "Stažené instalátory Plexu"
+  },
+  "xs1924": {
+   "source": "the versions already put in",
+   "text": "verze, které už jsou nainstalované"
+  },
+  "xs1925": {
+   "source": "every file",
+   "text": "všechny soubory"
+  },
+  "xs1926": {
+   "source": "Chosen:",
+   "text": "Vybráno:"
+  },
+  "xs1927": {
+   "source": "Clean what is chosen",
+   "text": "Vyčistit vybrané"
+  },
+  "xs1928": {
+   "source": "Clean Plex's caches?",
+   "text": "Vyčistit mezipaměti Plexu?"
+  },
+  "xs1929": {
+   "source": "Clean them",
+   "text": "Vyčistit"
+  },
+  "xs1930": {
+   "source": "off, or not filled in",
+   "text": "vypnuto nebo nevyplněno"
+  },
+  "xs1931": {
+   "source": "Send a test",
+   "text": "Poslat test"
+  },
+  "xs1932": {
+   "source": "Switch it on below, fill it in and save first.",
+   "text": "Nejdřív to níže zapněte, vyplňte a uložte."
+  },
+  "xs1933": {
+   "source": "Nothing sent yet.",
+   "text": "Zatím nic neodesláno."
+  },
+  "xs1934": {
+   "source": "Library integrity is looked through by itself:",
+   "text": "Integrita knihovny se prověřuje sama:"
+  },
+  "xs1935": {
+   "source": "every week",
+   "text": "každý týden"
+  },
+  "xs1936": {
+   "source": "every night",
+   "text": "každou noc"
+  },
+  "xs1937": {
+   "source": "Library integrity is looked through only when asked.",
+   "text": "Integrita knihovny se prověřuje jen na požádání."
+  },
+  "xs1938": {
+   "source": "By e-mail",
+   "text": "E-mailem"
+  },
+  "xs1939": {
+   "source": "SMTP server",
+   "text": "SMTP server"
+  },
+  "xs1940": {
+   "source": "Encryption",
+   "text": "Šifrování"
+  },
+  "xs1941": {
+   "source": "User name",
+   "text": "Uživatelské jméno"
+  },
+  "xs1942": {
+   "source": "By Telegram",
+   "text": "Telegramem"
+  },
+  "xs1943": {
+   "source": "The bot’s token",
+   "text": "Token bota"
+  },
+  "xs1944": {
+   "source": "Chat ID",
+   "text": "ID chatu"
+  },
+  "xs1945": {
+   "source": "By ntfy",
+   "text": "Přes ntfy"
+  },
+  "xs1946": {
+   "source": "The topic’s address",
+   "text": "Adresa tématu"
+  },
+  "xs1947": {
+   "source": "Access token",
+   "text": "Přístupový token"
+  },
+  "xs1948": {
+   "source": "Disks: SMART, temperature, space",
+   "text": "Disky: SMART, teplota, místo"
+  },
+  "xs1949": {
+   "source": "Plex Media Server does not answer or stopped",
+   "text": "Plex Media Server neodpovídá nebo se zastavil"
+  },
+  "xs1950": {
+   "source": "A backup or a copy of a database failed",
+   "text": "Selhala záloha nebo kopie databáze"
+  },
+  "xs1951": {
+   "source": "New problems of the library (on a schedule)",
+   "text": "Nové problémy knihovny (podle plánu)"
+  },
+  "xs1952": {
+   "source": "Certificates: a renewal failed, one runs out",
+   "text": "Certifikáty: obnova selhala, některý vyprší"
+  },
+  "xs1953": {
+   "source": "A new file that does not read right",
+   "text": "Nový soubor, který se nečte správně"
+  },
+  "xs1954": {
+   "source": "A new version of Plex Media Server",
+   "text": "Nová verze Plex Media Serveru"
+  },
+  "xs1955": {
+   "source": "Notifications (Telegram, ntfy)",
+   "text": "Upozornění (Telegram, ntfy)"
+  },
+  "xs1956": {
+   "source": "When Plex Media Server stops answering",
+   "text": "Když Plex Media Server přestane odpovídat"
+  },
+  "xs1957": {
+   "source": "...for this long (min)",
+   "text": "...po tuto dobu (min)"
+  },
+  "xs1958": {
+   "source": "Look for a new version of Plex Media Server every day",
+   "text": "Každý den hledat novou verzi Plex Media Serveru"
+  },
+  "xs1959": {
+   "source": "Read each new file once with ffprobe",
+   "text": "Každý nový soubor jednou přečíst ffprobe"
+  },
+  "xs1960": {
+   "source": "Subtitles wanted",
+   "text": "Požadované titulky"
+  },
+  "xs1961": {
+   "source": "Audio wanted",
+   "text": "Požadovaný zvuk"
+  },
+  "xs1962": {
+   "source": "Look through the library on a schedule",
+   "text": "Prověřovat knihovnu podle plánu"
+  },
+  "xs1963": {
+   "source": "What is read",
+   "text": "Co se čte"
+  },
+  "xs1964": {
+   "source": "Plex optimizes its database on the first of the month",
+   "text": "Plex optimalizuje svou databázi prvního v měsíci"
+  },
+  "xs1965": {
+   "source": "STARTTLS (port 587)",
+   "text": "STARTTLS (port 587)"
+  },
+  "xs1966": {
+   "source": "TLS from the start (port 465)",
+   "text": "TLS od začátku (port 465)"
+  },
+  "xs1967": {
+   "source": "none (only inside a trusted network)",
+   "text": "žádné (jen v důvěryhodné síti)"
+  },
+  "xs1968": {
+   "source": "a message only",
+   "text": "jen zpráva"
+  },
+  "xs1969": {
+   "source": "restarted, and a message",
+   "text": "restart a zpráva"
+  },
+  "xs1970": {
+   "source": "not watched",
+   "text": "nehlídá se"
+  },
+  "xs1971": {
+   "source": "the database only - no disk is read",
+   "text": "jen databáze - nečte se žádný disk"
+  },
+  "xs1972": {
+   "source": "the disks that are awake too - a sleeping one is never woken",
+   "text": "i disky, které jsou vzhůru - spící se nikdy nebudí"
+  },
+  "xs1973": {
+   "source": "the files of the library looked through",
+   "text": "soubory knihovny prověřeny"
+  },
+  "xs1974": {
+   "source": "the files of the library are looked through",
+   "text": "soubory knihovny se prověřují"
+  },
+  "xs1975": {
+   "source": "the episodes looked up on TVmaze",
+   "text": "díly vyhledány na TVmaze"
+  },
+  "xs1976": {
+   "source": "the episodes are looked up",
+   "text": "díly se vyhledávají"
+  },
+  "xs1977": {
+   "source": "the new files read",
+   "text": "nové soubory přečteny"
+  },
+  "xs1978": {
+   "source": "the new files are read",
+   "text": "nové soubory se čtou"
+  },
+  "xs1979": {
+   "source": "the size of Plex's folders",
+   "text": "velikost složek Plexu"
+  },
+  "xs1980": {
+   "source": "Plex's folders are measured",
+   "text": "složky Plexu se měří"
+  },
+  "xs1981": {
+   "source": "Plex's caches cleaned",
+   "text": "mezipaměti Plexu vyčištěny"
+  },
+  "xs1982": {
+   "source": "Plex's caches are cleaned",
+   "text": "mezipaměti Plexu se čistí"
+  },
+  "xs1983": {
+   "source": "a new Plex Media Server looked for",
+   "text": "hledání nového Plex Media Serveru"
+  },
+  "xs1984": {
+   "source": "a new version is looked for",
+   "text": "hledá se nová verze"
+  },
+  "xs1985": {
+   "source": "Plex Media Server updated",
+   "text": "Plex Media Server aktualizován"
+  },
+  "xs1986": {
+   "source": "Plex Media Server is updated",
+   "text": "Plex Media Server se aktualizuje"
+  },
+  "xs1987": {
+   "source": "Plex Media Server is restarted",
+   "text": "Plex Media Server je restartován"
+  },
+  "xs1988": {
+   "source": "it is read again at the next look",
+   "text": "při příští kontrole se přečte znovu"
+  },
+  "xs1989": {
+   "source": "no way of sending is switched on and filled in - save it first",
+   "text": "žádný způsob odesílání není zapnutý a vyplněný - nejdřív ho uložte"
+  },
+  "xs1990": {
+   "source": "a copy of Plex's database (Plex goes on)",
+   "text": "kopie databáze Plexu (Plex běží dál)"
+  },
+  "xs1991": {
+   "source": "what is in the library",
+   "text": "co je v knihovně"
+  },
+  "xs1992": {
+   "source": "the files and their sizes",
+   "text": "soubory a jejich velikosti"
+  },
+  "xs1993": {
+   "source": "the audio and subtitle tracks",
+   "text": "zvukové a titulkové stopy"
+  },
+  "xs1994": {
+   "source": "worked out",
+   "text": "spočítáno"
+  },
+  "xs1995": {
+   "source": "the shows of Plex",
+   "text": "seriály Plexu"
+  },
+  "xs1996": {
+   "source": "TVmaze is switched off (Settings → Plex library)",
+   "text": "TVmaze je vypnuté (Nastavení → Knihovna Plexu)"
+  },
+  "xs1997": {
+   "source": "dnf upgrades plexmediaserver - Plex restarts",
+   "text": "dnf aktualizuje plexmediaserver - Plex se restartuje"
+  },
+  "xs1998": {
+   "source": "waiting for Plex to answer again",
+   "text": "čeká se, až Plex znovu odpoví"
+  },
+  "xs1999": {
+   "source": "someone is watching with transcoding now - its pieces stay",
+   "text": "někdo se teď dívá s překódováním - jeho zbytky zůstanou"
+  },
+  "xs2000": {
+   "source": "Plex Media Server is not running",
+   "text": "Plex Media Server neběží"
   }
  },
  "patterns": {
@@ -14985,6 +16045,42 @@
   "xp0376": {
    "source": "{0} of the {1} files gone: {2} taken away by Plex, {3} in its trash",
    "text": "{0} z {1} chybějících souborů: {2} odebral Plex, {3} je v jeho koši"
+  },
+  "xp0377": {
+   "source": "{0} files in all",
+   "text": "{0} souborů celkem"
+  },
+  "xp0378": {
+   "source": "{0} not found",
+   "text": "{0} nenalezeno"
+  },
+  "xp0379": {
+   "source": "older than {0} days",
+   "text": "starší než {0} dní"
+  },
+  "xp0380": {
+   "source": "It has not answered for {0} min",
+   "text": "Neodpovídá {0} min"
+  },
+  "xp0381": {
+   "source": "Update Plex Media Server to {0}?",
+   "text": "Aktualizovat Plex Media Server na {0}?"
+  },
+  "xp0382": {
+   "source": "TVmaze: {0}",
+   "text": "TVmaze: {0}"
+  },
+  "xp0383": {
+   "source": "the size of {0}",
+   "text": "velikost {0}"
+  },
+  "xp0384": {
+   "source": "what of {0} can go",
+   "text": "co z {0} může pryč"
+  },
+  "xp0385": {
+   "source": "{0}: {1} given back",
+   "text": "{0}: uvolněno {1}"
   }
  },
  "rich": {
@@ -15163,6 +16259,94 @@
   "xr0026": {
    "source": "<code>http://proxy.example.cz:3128</code>",
    "text": "<code>http://proxy.example.cz:3128</code>"
+  },
+  "xr0027": {
+   "source": "Notifications by Telegram and ntfy. E-mail goes straight to its SMTP server.",
+   "text": "Upozornění přes Telegram a ntfy. E-mail jde rovnou na svůj SMTP server."
+  },
+  "xr0028": {
+   "source": "A message to a mailbox through an SMTP server - your provider’s, or Gmail with an app password.",
+   "text": "Zpráva do schránky přes SMTP server - vašeho poskytovatele, nebo Gmail s heslem aplikace."
+  },
+  "xr0029": {
+   "source": "<code>smtp.example.cz</code>",
+   "text": "<code>smtp.example.cz</code>"
+  },
+  "xr0030": {
+   "source": "Kept sealed, like the other passwords.",
+   "text": "Uloženo zapečetěné, jako ostatní hesla."
+  },
+  "xr0031": {
+   "source": "Empty: the user name.",
+   "text": "Prázdné: uživatelské jméno."
+  },
+  "xr0032": {
+   "source": "One address, or more separated by commas.",
+   "text": "Jedna adresa, nebo víc oddělených čárkami."
+  },
+  "xr0033": {
+   "source": "A bot of your own: @BotFather gives its token; write to the bot once, then its chat ID is in <code>https://api.telegram.org/botTOKEN/getUpdates</code>.",
+   "text": "Vlastní bot: token dá @BotFather; napište botovi jednou, pak je ID chatu v <code>https://api.telegram.org/botTOKEN/getUpdates</code>."
+  },
+  "xr0034": {
+   "source": "Kept sealed.",
+   "text": "Uloženo zapečetěné."
+  },
+  "xr0035": {
+   "source": "A push to the ntfy app on a phone - ntfy.sh or a server of your own.",
+   "text": "Push do aplikace ntfy v telefonu - ntfy.sh nebo vlastní server."
+  },
+  "xr0036": {
+   "source": "<code>https://ntfy.sh/a-long-secret-topic</code> - anyone who knows the topic reads it, so make it long.",
+   "text": "<code>https://ntfy.sh/dlouhe-tajne-tema</code> - kdo téma zná, ten ho čte, tak ať je dlouhé."
+  },
+  "xr0037": {
+   "source": "Where the server asks for one. Kept sealed.",
+   "text": "Kde ho server vyžaduje. Uloženo zapečetěné."
+  },
+  "xr0038": {
+   "source": "What the dashboard warns of: a message when something new comes, one when all is well again.",
+   "text": "Před čím varuje dashboard: zpráva, když přijde něco nového, a jedna, když je zase vše v pořádku."
+  },
+  "xr0039": {
+   "source": "After the time set under Insights → Plex server.",
+   "text": "Po době nastavené v Přehledy → Plex server."
+  },
+  "xr0040": {
+   "source": "Only when the look on a schedule finds more than the last one.",
+   "text": "Jen když kontrola podle plánu najde víc než ta minulá."
+  },
+  "xr0041": {
+   "source": "Plex runs, but its own address does not answer. <i>Restarted</i>: once in half an hour at most, never in maintenance, never while plexmon itself has stopped Plex or puts its database back.",
+   "text": "Plex běží, ale jeho vlastní adresa neodpovídá. <i>Restart</i>: nejvýš jednou za půl hodiny, nikdy v údržbě, nikdy když Plex zastavil sám plexmon nebo vrací jeho databázi."
+  },
+  "xr0042": {
+   "source": "Each minute is asked once; a short hiccup is never taken for a hang.",
+   "text": "Každou minutu jeden dotaz; krátký výpadek se nikdy nebere jako zaseknutí."
+  },
+  "xr0043": {
+   "source": "<code>dnf check-update plexmediaserver</code> - only looked for. It is put in only by the button under Insights → Plex server.",
+   "text": "<code>dnf check-update plexmediaserver</code> - jen se hledá. Nainstaluje se jen tlačítkem v Přehledy → Plex server."
+  },
+  "xr0044": {
+   "source": "Every hour, up to twenty files Plex took in - only on a disk that is awake, never one just being written. Needs ffprobe (<code>dnf install ffmpeg</code>).",
+   "text": "Každou hodinu až dvacet souborů, které Plex převzal - jen na disku, který je vzhůru, nikdy ten, který se právě zapisuje. Potřebuje ffprobe (<code>dnf install ffmpeg</code>)."
+  },
+  "xr0045": {
+   "source": "Language codes separated by commas, like <code>cs, sk</code>. Empty: not looked at.",
+   "text": "Kódy jazyků oddělené čárkami, třeba <code>cs, sk</code>. Prázdné: nekontroluje se."
+  },
+  "xr0046": {
+   "source": "Like <code>cs</code>. Empty: not looked at.",
+   "text": "Třeba <code>cs</code>. Prázdné: nekontroluje se."
+  },
+  "xr0047": {
+   "source": "As <i>Look through it</i> in Library integrity - nothing is put right by itself. A message only when it finds more than the last look.",
+   "text": "Jako <i>Prověřit</i> v Integritě knihovny - nic se samo neopravuje. Zpráva jen když najde víc než minulá kontrola."
+  },
+  "xr0048": {
+   "source": "Plex’s own Optimize, a checked copy of its database before it - at the time above.",
+   "text": "Vlastní Optimalizace Plexu, před ní ověřená kopie jeho databáze - v čase výše."
   }
  }
 }
