@@ -13007,6 +13007,22 @@
   "xs2000": {
    "source": "Plex Media Server is not running",
    "text": "Plex Media Server neběží"
+  },
+  "xs2001": {
+   "source": "Nothing matches.",
+   "text": "Nic neodpovídá."
+  },
+  "xs2002": {
+   "source": "Nothing here.",
+   "text": "Nic tu není."
+  },
+  "xs2003": {
+   "source": "Previous",
+   "text": "Předchozí"
+  },
+  "xs2004": {
+   "source": "Find a film…",
+   "text": "Hledat film…"
   }
  },
  "patterns": {

@@ -25,15 +25,22 @@ function nxTab(on) {
   if (!on) return;
   nxLoad();
   NX.live = setInterval(function () {
-    if (!NX.on || document.hidden) return;
+    if (!NX.on || document.hidden || nxTyping()) return;
     if (NX.sub === 'watching') nxLoadPart('watching', true);
     if (NX.sub === 'server') nxLoadPart('health', true);
   }, 20000);
 }
+/* Somebody is typing on the page: nothing is redrawn under their hands (2.12.1). */
+function nxTyping() {
+  var a = document.activeElement;
+  return !!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.closest && a.closest('#nx-host'));
+}
 function nxLoad() {
   api('insights').then(function (d) {
     NX.d = d;
-    nxDraw();
+    /* Drawn whole only the first time; after that the body is drawn again in place, at
+       the same scroll position - the page never jumps when a job ends. */
+    if (!$('nx-body')) nxDraw(); else { nxPills(); nxDrawBody(); }
     if (d.job && d.job.running) nxWatch();
     nxLoadSub();
   }).catch(oops);
@@ -49,7 +56,10 @@ function nxLoadPart(part, quiet) {
     if (part === 'watching') NX.w = x;
     if (part === 'health') NX.h = x;
     if (part === 'newfiles') NX.nf = x;
-    nxDrawBody();
+    if (quiet && nxTyping()) return;
+    var want = {watching: ['watching', 'transcode'], health: ['server'], newfiles: ['newfiles']}[part] || [];
+    if (want.indexOf(NX.sub) >= 0) nxDrawBody();
+    nxPills();
   }).catch(function (e) { if (!quiet) oops(e); });
 }
 function nxWatch() {
@@ -59,6 +69,7 @@ function nxWatch() {
       var j = x.job || {};
       if (NX.d) NX.d.job = j;
       nxDrawJob();
+      nxPills();
       if (j.running) { NX.poll = setTimeout(step, 1000); return; }
       NX.poll = null;
       if (j.says === 'stopped') toast(txT(j.what) + ': ' + txT('stopped'), 'good');
@@ -72,7 +83,7 @@ function nxWatch() {
 }
 function nxDo(body, after) {
   return api('insights', body).then(function (x) {
-    if (x.job) { if (NX.d) NX.d.job = x.job; toast(x.message || 'started', 'good'); nxDrawJob(); nxWatch(); }
+    if (x.job) { if (NX.d) NX.d.job = x.job; toast(x.message || 'started', 'good'); nxDrawBody(); nxPills(); nxWatch(); }
     else if (x.message && !x.confirm) toast(x.message, 'good');
     if (after) after(x);
     return x;
@@ -92,8 +103,38 @@ function nxHours(h) {
   if (numDecimal() === ',') t = t.replace('.', ',');
   return t;
 }
+/* Which sub-tab a job belongs to: its bar is drawn there, under that tab's own top. */
+var NX_JOB_SUBS = {analyse: ['transcode', 'langs', 'dups'], episodes: ['episodes'], newfiles: ['newfiles'],
+  sizes: ['server'], clean: ['server'], 'plex-check': ['server'], 'plex-update': ['server']};
+function nxJobSubs() {
+  var j = (NX.d && NX.d.job) || {};
+  return NX_JOB_SUBS[j.kind] || [];
+}
+function nxJobShown() {
+  var j = (NX.d && NX.d.job) || {};
+  return !!j.what && (j.running || j.error || (Date.now() / 1000 - (j.ended || 0)) < 120);
+}
+function nxJobPct(j) {
+  var pc = j.whole ? Math.round(100 * j.done / j.whole) : (j.running ? 4 : 100);
+  if (!j.running && !j.error) pc = 100;
+  return Math.max(0, Math.min(100, pc));
+}
+/* The scroller of the page: the panel when the page is framed, the window when not. */
+function nxScroller() {
+  var pn = $('tab-insights');
+  return pn && pn.scrollHeight > pn.clientHeight && getComputedStyle(pn).overflowY !== 'visible' ? pn : null;
+}
+function nxKeepPlace(fn) {
+  var pn = nxScroller(), st = pn ? pn.scrollTop : 0, wy = window.scrollY;
+  var body = $('nx-body');
+  if (body) body.style.minHeight = body.offsetHeight + 'px';
+  fn();
+  if (pn) pn.scrollTop = st;
+  window.scrollTo(window.scrollX, wy);
+  if (body) requestAnimationFrame(function () { body.style.minHeight = ''; if (pn && pn.scrollTop !== st) pn.scrollTop = st; });
+}
 
-/* ---- the frame: a title, the pills, the job, the body ------------------------------ */
+/* ---- the frame: a title, the pills, the body --------------------------------------- */
 function nxDraw() {
   var host = $('nx-host');
   if (!host) return;
@@ -105,7 +146,20 @@ function nxDraw() {
   head.appendChild(ht);
   host.appendChild(head);
   var nav = el('div', 'nx-nav');
+  nav.id = 'nx-nav';
   nav.setAttribute('role', 'tablist');
+  host.appendChild(nav);
+  var body = el('div', 'nx-body');
+  body.id = 'nx-body';
+  host.appendChild(body);
+  nxPills();
+  nxDrawBody();
+}
+function nxPills() {
+  var nav = $('nx-nav');
+  if (!nav) return;
+  var subs = nxJobShown() ? nxJobSubs() : [], j = (NX.d && NX.d.job) || {};
+  clear(nav);
   NX_SUBS.forEach(function (s) {
     var b = el('button', 'nx-pill' + (NX.sub === s[0] ? ' on' : ''));
     b.type = 'button';
@@ -113,82 +167,120 @@ function nxDraw() {
     b.setAttribute('aria-selected', NX.sub === s[0] ? 'true' : 'false');
     b.appendChild(nxIcon(s[2], 16));
     b.appendChild(el('span', '', s[1]));
-    b.title = txT(s[3]);
-    var badge = nxBadge(s[0]);
-    if (badge) b.appendChild(badge);
+    explain(b, s[3]);
+    if (subs.indexOf(s[0]) >= 0) {
+      /* The job of this tab, seen from any other: a turning ring and how far it is. */
+      var run = el('span', 'nx-run ' + (j.running ? 'on' : j.error ? 'failed' : 'done'));
+      run.appendChild(el('i', 'nx-spin'));
+      run.appendChild(noI18n(el('b', '', j.running ? nxJobPct(j) + ' %' : j.error ? '!' : '✓')));
+      b.appendChild(run);
+      b.classList.add('has-job');
+      var line = el('span', 'nx-pill-bar');
+      line.style.width = (j.running ? nxJobPct(j) : 100) + '%';
+      b.appendChild(line);
+    } else {
+      var badge = nxBadge(s[0]);
+      if (badge) b.appendChild(badge);
+    }
     b.onclick = function () {
+      if (NX.sub === s[0]) return;
       NX.sub = s[0];
       try { localStorage.setItem('plexmon-nx-sub', s[0]); } catch (e) { }
-      nav.querySelectorAll('.nx-pill').forEach(function (x) { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b ? 'true' : 'false'); });
-      nxDrawBody();
+      nxPills();
+      var pn = nxScroller(), body = $('nx-body');
+      nxDrawBody(true);
+      /* A new tab starts at its own top, never in the middle of the one before. */
+      if (body) {
+        var gap = body.getBoundingClientRect().top - nav.getBoundingClientRect().bottom - 14;
+        if (gap < 0) { if (pn) pn.scrollTop += gap; else window.scrollBy(0, gap); }
+      }
       nxLoadSub();
     };
     nav.appendChild(b);
   });
-  host.appendChild(nav);
-  var jb = el('div', 'nx-jobhost');
-  jb.id = 'nx-job';
-  host.appendChild(jb);
-  var body = el('div', 'nx-body');
-  body.id = 'nx-body';
-  host.appendChild(body);
-  nxDrawJob();
-  nxDrawBody();
+  dressButtons(nav);
 }
 function nxBadge(sub) {
   var d = NX.d || {}, n = 0, cls = 'dim';
   if (sub === 'episodes' && d.episodes) { n = d.episodes.totals.missing; cls = n ? 'warn' : 'dim'; }
-  if (sub === 'dups' && d.library) { n = (d.library.dups || []).length; cls = 'dim'; }
+  if (sub === 'dups' && d.library) { n = d.library.dup_count != null ? d.library.dup_count : (d.library.dups || []).length; cls = 'dim'; }
   if (sub === 'watching' && NX.w) { n = (NX.w.live || []).length; cls = n ? 'ok live' : 'dim'; }
+  if (sub === 'newfiles' && NX.nf && NX.nf.counts) { n = (NX.nf.counts.damaged || 0) + (NX.nf.counts['short'] || 0); cls = n ? 'crit' : 'dim'; }
   if (!n) return null;
   return noI18n(el('span', 'nx-badge ' + cls, num(n)));
 }
-function nxDrawBody() {
+function nxDrawBody(fresh) {
   var body = $('nx-body');
   if (!body) return;
-  clear(body);
-  var fn = {watching: nxWatching, transcode: nxTranscode, episodes: nxEpisodes, langs: nxLangs, dups: nxDups,
-    newfiles: nxNewfiles, server: nxServer}[NX.sub] || nxWatching;
-  fn(body);
-  dressButtons(body);
-  explainWhatWasDrawn && explainWhatWasDrawn(body);
+  var draw = function () {
+    var frag = document.createDocumentFragment();
+    var fn = {watching: nxWatching, transcode: nxTranscode, episodes: nxEpisodes, langs: nxLangs, dups: nxDups,
+      newfiles: nxNewfiles, server: nxServer}[NX.sub] || nxWatching;
+    var holder = el('div', 'nx-body-in');
+    fn(holder);
+    /* The job's bar right under the top of the tab it belongs to (2.12.1). */
+    var jh = el('div', 'nx-jobhost');
+    jh.id = 'nx-job';
+    var first = holder.querySelector('.nx-hero, .ix-hero');
+    if (first && first.parentNode === holder) { holder.insertBefore(jh, first.nextSibling); first.classList.add('nx-hero-top'); }
+    else holder.insertBefore(jh, holder.firstChild);
+    while (holder.firstChild) frag.appendChild(holder.firstChild);
+    clear(body);
+    body.appendChild(frag);
+    nxDrawJob();
+    dressButtons(body);
+    if (typeof explainWhatWasDrawn === 'function') explainWhatWasDrawn(body);
+  };
+  if (fresh) draw(); else nxKeepPlace(draw);
 }
 
-/* The job: a bar, what it says, Stop. */
+/* The job: a bar, what it says, Stop - in its own tab, joined to its top. */
 function nxDrawJob() {
   var host = $('nx-job');
   if (!host || !NX.d) return;
   var j = NX.d.job || {};
-  clear(host);
-  if (!j.what || (!j.running && !j.error && (Date.now() / 1000 - (j.ended || 0)) > 120)) return;
-  var c = el('div', 'card full ix-job nx-job' + (j.running ? ' on' : j.error ? ' failed' : ' done'));
-  var h = el('div', 'ix-job-h');
-  h.appendChild(el('b', '', j.what));
-  h.appendChild(el('span', 'tag ' + (j.running ? 'info' : j.says === 'stopped' ? 'dim' : j.error ? 'crit' : 'ok'),
-    j.running ? 'under way' : j.says === 'stopped' ? 'stopped' : j.error ? 'failed' : 'done'));
-  if (j.running) {
-    h.appendChild(noI18n(el('span', 'muted small', Math.round(Date.now() / 1000 - j.began) + ' s')));
+  var mine = nxJobShown() && nxJobSubs().indexOf(NX.sub) >= 0;
+  var prev = host.previousElementSibling;
+  if (prev && prev.classList.contains('nx-hero-top')) prev.classList.toggle('joined', mine);
+  if (!mine) { clear(host); return; }
+  var c = host.firstChild;
+  if (!c || c._kind !== j.kind + j.began) {
+    clear(host);
+    c = el('div', 'card full ix-job nx-job');
+    c._kind = j.kind + j.began;
+    var h = el('div', 'ix-job-h');
+    h.appendChild(el('b', 'nx-job-t', j.what));
+    h.appendChild(el('span', 'tag nx-job-tag', ''));
+    h.appendChild(noI18n(el('span', 'muted small nx-job-s', '')));
     if (ADMIN) {
       var stp = cmdButton('Stop', 'cancel', 'small');
-      stp.classList.add('right');
+      stp.classList.add('right', 'nx-job-stop');
       stp.onclick = function () { busy(stp, true); api('insights', {action: 'stop'}).then(function (x) { toast(x.message, 'good'); }).catch(oops); };
       h.appendChild(stp);
     }
+    c.appendChild(h);
+    var bar = el('div', 'ix-bar');
+    bar.appendChild(el('span', ''));
+    c.appendChild(bar);
+    var says = el('div', 'ix-says');
+    says.appendChild(el('span', 'nx-job-says', ''));
+    says.appendChild(noI18n(el('span', 'right muted nx-job-pc', '')));
+    c.appendChild(says);
+    host.appendChild(c);
+    dressButtons(c);
   }
-  c.appendChild(h);
-  var pc = j.whole ? Math.round(100 * j.done / j.whole) : (j.running ? 4 : 100);
-  if (!j.running && !j.error) pc = 100;
-  var bar = el('div', 'ix-bar');
-  var fill = el('span', '');
-  fill.style.width = Math.max(2, Math.min(100, pc)) + '%';
-  bar.appendChild(fill);
-  c.appendChild(bar);
-  var says = el('div', 'ix-says');
-  says.appendChild(el('span', '', j.error ? j.error : (j.says || '')));
-  says.appendChild(noI18n(el('span', 'right muted', pc + ' %')));
-  c.appendChild(says);
-  host.appendChild(c);
-  dressButtons(c);
+  /* Updated in place every second - the card keeps its size, nothing below it moves. */
+  c.className = 'card full ix-job nx-job' + (j.running ? ' on' : j.error ? ' failed' : ' done');
+  var pc = nxJobPct(j);
+  var tag = c.querySelector('.nx-job-tag');
+  tag.className = 'tag nx-job-tag ' + (j.running ? 'info' : j.says === 'stopped' ? 'dim' : j.error ? 'crit' : 'ok');
+  tag.textContent = txT(j.running ? 'under way' : j.says === 'stopped' ? 'stopped' : j.error ? 'failed' : 'done');
+  c.querySelector('.nx-job-s').textContent = j.running ? Math.round(Date.now() / 1000 - j.began) + ' s' : '';
+  var stop = c.querySelector('.nx-job-stop');
+  if (stop) stop.hidden = !j.running;
+  c.querySelector('.ix-bar span').style.width = Math.max(2, pc) + '%';
+  c.querySelector('.nx-job-says').textContent = j.error ? j.error : txT(j.says || '');
+  c.querySelector('.nx-job-pc').textContent = pc + ' %';
 }
 
 /* ---- pieces drawn everywhere ------------------------------------------------------- */
@@ -349,30 +441,90 @@ function nxDecTag(dec) {
   var x = NX_DEC[dec] || [dec || '?', 'dim'];
   return el('span', 'nx-dec ' + x[1], x[0]);
 }
-function nxFilter(key, placeholder, after) {
-  var i = el('input');
-  i.type = 'search';
-  i.className = 'nx-find';
-  i.placeholder = txT(placeholder || 'Find…');
-  i.value = NX.q[key] || '';
-  i.oninput = function () { NX.q[key] = i.value; clearTimeout(i._t); i._t = setTimeout(after, 200); };
-  return i;
-}
-function nxMatch(key, text) {
-  var q = (NX.q[key] || '').trim().toLowerCase();
-  return !q || String(text || '').toLowerCase().indexOf(q) >= 0;
-}
-function nxMore(list, cap, draw, host, key) {
-  var shown = NX.open[key] ? list : list.slice(0, cap);
-  shown.forEach(function (x, i) { host.appendChild(draw(x, i)); });
-  if (list.length > cap) {
-    var b = el('button', 'btn small nx-more', NX.open[key] ? 'Show fewer' : 'Show all');
-    b.type = 'button';
-    b.appendChild(noI18n(el('span', 'muted', ' (' + num(list.length) + ')')));
-    b.onclick = function () { NX.open[key] = !NX.open[key]; nxDrawBody(); };
-    return b;
+/* A long list in pages, with its own search (2.12.1). Typing redraws only the rows of this
+   list - never the page, never the box being typed in - and the list keeps the height it had
+   while a search narrows it, so nothing below or above moves under the hand. No scroll bar of
+   its own: the page has the only one. */
+NX.page = NX.page || {};
+function nxPaged(card, key, all, draw, opts) {
+  opts = opts || {};
+  var per = opts.per || 20;
+  var head = card.querySelector('.nx-card-h');
+  var count = noI18n(el('span', 'nx-count-chip', ''));
+  if (head) head.insertBefore(count, head.querySelector('.nx-card-x'));
+  var list = el('div', opts.cls || 'nx-list');
+  var foot = el('div', 'nx-pager');
+  var held = 0;
+  if (opts.text && all.length > 6 && head) {
+    var x = el('div', 'nx-card-x');
+    var i = el('input');
+    i.type = 'search';
+    i.className = 'nx-find';
+    i.placeholder = txT(opts.placeholder || 'Find…');
+    i.value = NX.q[key] || '';
+    i.oninput = function () {
+      if (!held && i.value) held = list.offsetHeight;
+      NX.q[key] = i.value;
+      NX.page[key] = 0;
+      clearTimeout(i._t);
+      i._t = setTimeout(function () { render(false); }, 150);
+    };
+    x.appendChild(i);
+    head.appendChild(x);
   }
-  return null;
+  var render = function (jump) {
+    var q = (NX.q[key] || '').trim().toLowerCase();
+    var rows = q && opts.text ? all.filter(function (r) { return String(opts.text(r)).toLowerCase().indexOf(q) >= 0; }) : all;
+    var pages = Math.max(1, Math.ceil(rows.length / per));
+    var pg = Math.min(NX.page[key] || 0, pages - 1);
+    NX.page[key] = pg;
+    var top = card.getBoundingClientRect().top;
+    list.style.minHeight = q && held ? held + 'px' : '';
+    if (!q) held = 0;
+    var frag = document.createDocumentFragment();
+    rows.slice(pg * per, pg * per + per).forEach(function (r, n) { frag.appendChild(draw(r, pg * per + n)); });
+    if (!rows.length) frag.appendChild(el('div', 'nx-none', q ? 'Nothing matches.' : (opts.empty || 'Nothing here.')));
+    clear(list);
+    list.appendChild(frag);
+    count.textContent = q ? num(rows.length) + ' / ' + num(all.length) : num(all.length);
+    clear(foot);
+    foot.hidden = pages < 2;
+    if (pages > 1) {
+      var go = function (n) { NX.page[key] = n; render(true); };
+      var prev = iconButton('prev', txT('Previous'));
+      prev.disabled = pg === 0;
+      prev.onclick = function () { go(pg - 1); };
+      foot.appendChild(prev);
+      var nums = el('div', 'nx-pages');
+      var want = [0, pages - 1, pg - 2, pg - 1, pg, pg + 1, pg + 2].filter(function (n, k, a) { return n >= 0 && n < pages && a.indexOf(n) === k; }).sort(function (a, b) { return a - b; });
+      want.forEach(function (n, k) {
+        if (k && n - want[k - 1] > 1) nums.appendChild(el('span', 'nx-gap', '…'));
+        var b = noI18n(el('button', 'nx-pg' + (n === pg ? ' on' : ''), String(n + 1)));
+        b.type = 'button';
+        b.onclick = function () { go(n); };
+        nums.appendChild(b);
+      });
+      foot.appendChild(nums);
+      var next = iconButton('next', txT('Next'));
+      next.disabled = pg >= pages - 1;
+      next.onclick = function () { go(pg + 1); };
+      foot.appendChild(next);
+      foot.appendChild(noI18n(el('span', 'nx-pg-of', num(pg * per + 1) + '–' + num(Math.min(rows.length, pg * per + per)) + ' / ' + num(rows.length))));
+    }
+    dressButtons(card);
+    /* Another page: the list starts where the eye is - its card's top stays where it was,
+       or comes into view if it had gone above. */
+    if (jump) {
+      var now = card.getBoundingClientRect().top, pn = nxScroller();
+      var nv = $('nx-nav'), limit = nv ? nv.getBoundingClientRect().bottom : (pn ? pn.getBoundingClientRect().top : 0);
+      var want2 = Math.max(limit + 8, Math.min(top, now));
+      if (pn) pn.scrollTop += now - want2; else window.scrollBy(0, now - want2);
+    }
+  };
+  card.appendChild(list);
+  card.appendChild(foot);
+  render(false);
+  return card;
 }
 
 /* ---- Watching --------------------------------------------------------------------- */
@@ -668,10 +820,8 @@ function nxTranscode(body) {
   grid.appendChild(c2);
   body.appendChild(grid);
   if (lib && (lib.risky || []).length) {
-    var c3 = nxCard('Files likely to be transcoded', 'film', [nxFilter('risky', 'Find a title or a reason…', nxDrawBody)]);
-    var list = el('div', 'nx-list');
-    var rows = lib.risky.filter(function (x) { return nxMatch('risky', x.show + ' ' + x.title + ' ' + x.reasons.join(' ') + ' ' + x.file); });
-    var more = nxMore(rows, 40, function (x) {
+    var c3 = nxCard('Files likely to be transcoded', 'film');
+    nxPaged(c3, 'risky', lib.risky, function (x) {
       var row = el('div', 'nx-row');
       row.appendChild(nxIcon(x.kind === 'episode' ? 'tv' : 'film', 16));
       var b = el('div', 'nx-row-b');
@@ -684,9 +834,7 @@ function nxTranscode(body) {
       b.appendChild(noI18n(el('span', 'mono ix-file muted', x.file)));
       row.appendChild(b);
       return row;
-    }, list, 'risky');
-    c3.appendChild(list);
-    if (more) c3.appendChild(more);
+    }, {per: 25, placeholder: 'Find a title or a reason…', text: function (x) { return x.show + ' ' + x.title + ' ' + x.reasons.join(' ') + ' ' + x.file; }});
     body.appendChild(c3);
   }
 }
@@ -720,11 +868,9 @@ function nxEpisodes(body) {
     {cls: 'violet', icon: 'calendar', value: num((ep.upcoming || []).length), label: 'Coming in 60 days', zero: !(ep.upcoming || []).length}
   ]));
   var grid = el('div', 'nx-grid2 wide-left');
-  var c1 = nxCard('Shows with episodes missing', 'list', [nxFilter('eps', 'Find a show…', nxDrawBody)]);
-  var miss = ep.shows.filter(function (s) { return s.n_missing && nxMatch('eps', s.title); });
-  if (!miss.length) c1.appendChild(el('p', 'muted small', 'Every aired episode is in Plex.'));
-  var list = el('div', 'nx-shows');
-  var more = nxMore(miss, 25, function (s) {
+  var c1 = nxCard('Shows with episodes missing', 'list');
+  var miss = ep.shows.filter(function (s) { return s.n_missing; });
+  nxPaged(c1, 'eps', miss, function (s) {
     var x = el('div', 'nx-show');
     var h = el('div', 'nx-show-h');
     h.appendChild(noI18n(el('b', '', s.title)));
@@ -745,17 +891,21 @@ function nxEpisodes(body) {
     pr.appendChild(noI18n(el('span', 'nx-bar-n', num(s.have) + ' / ' + num(s.aired))));
     x.appendChild(pr);
     var ch = el('div', 'ix-chips');
-    var key = 'ep:' + s.title;
-    var ms = NX.open[key] ? s.missing : s.missing.slice(0, 18);
-    ms.forEach(function (e) {
+    var chip = function (e) {
       var c = noI18n(el('span', 'ix-chip warn', nxSE(e[0], e[1])));
       c.title = (e[2] || '') + (e[3] ? ' · ' + e[3] : '');
-      ch.appendChild(c);
-    });
-    if (s.n_missing > ms.length) {
-      var mb = noI18n(el('button', 'ix-chip found', '+' + (s.n_missing - ms.length)));
+      return c;
+    };
+    s.missing.slice(0, 14).forEach(function (e) { ch.appendChild(chip(e)); });
+    if (s.n_missing > 14) {
+      /* The rest opened right here - nothing else on the page is drawn again. */
+      var mb = noI18n(el('button', 'ix-chip found', '+' + (s.n_missing - 14)));
       mb.type = 'button';
-      mb.onclick = function () { NX.open[key] = true; nxDrawBody(); };
+      mb.onclick = function () {
+        mb.remove();
+        s.missing.slice(14).forEach(function (e) { ch.appendChild(chip(e)); });
+        if (s.n_missing > s.missing.length) ch.appendChild(noI18n(el('span', 'ix-chip', '+' + (s.n_missing - s.missing.length))));
+      };
       ch.appendChild(mb);
     }
     x.appendChild(ch);
@@ -767,41 +917,29 @@ function nxEpisodes(body) {
       x.appendChild(nx);
     }
     return x;
-  }, list, 'eps');
-  c1.appendChild(list);
-  if (more) c1.appendChild(more);
+  }, {per: 12, cls: 'nx-shows', placeholder: 'Find a show…', text: function (s) { return s.title + ' ' + (s.network || ''); }, empty: 'Every aired episode is in Plex.'});
   grid.appendChild(c1);
   var c2 = nxCard('Coming', 'calendar');
   var up = ep.upcoming || [];
-  if (!up.length) c2.appendChild(el('p', 'muted small', 'Nothing in the next 60 days.'));
-  var agenda = el('div', 'nx-agenda');
-  var lastDay = '';
-  up.slice(0, NX.open.up ? 200 : 40).forEach(function (u) {
-    if (u.date !== lastDay) {
-      lastDay = u.date;
+  nxPaged(c2, 'up', up, function (u, i) {
+    var wrap = el('div', 'nx-agenda-i');
+    if (i % 20 === 0 || up[i - 1].date !== u.date) {
       var dh = el('div', 'nx-day');
       var d = new Date(u.date + 'T12:00:00');
-      var big = noI18n(el('b', '', String(d.getDate())));
-      dh.appendChild(big);
+      dh.appendChild(noI18n(el('b', '', String(d.getDate()))));
       dh.appendChild(el('span', '', ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][d.getDay()]));
       dh.appendChild(noI18n(el('small', 'muted', nxDate(u.date))));
       var days = Math.round((d - new Date()) / 86400000);
       if (days <= 1) dh.appendChild(el('span', 'tag ok', days <= 0 ? 'today' : 'tomorrow'));
-      agenda.appendChild(dh);
+      wrap.appendChild(dh);
     }
     var row = el('div', 'nx-agenda-r');
     row.appendChild(noI18n(el('b', '', u.show)));
     row.appendChild(noI18n(el('span', 'ix-chip', nxSE(u.s, u.e))));
     if (u.name) row.appendChild(noI18n(el('span', 'muted small', u.name)));
-    agenda.appendChild(row);
-  });
-  c2.appendChild(agenda);
-  if (up.length > 40) {
-    var b2 = el('button', 'btn small nx-more', NX.open.up ? 'Show fewer' : 'Show all');
-    b2.type = 'button';
-    b2.onclick = function () { NX.open.up = !NX.open.up; nxDrawBody(); };
-    c2.appendChild(b2);
-  }
+    wrap.appendChild(row);
+    return wrap;
+  }, {per: 20, cls: 'nx-agenda', empty: 'Nothing in the next 60 days.'});
   grid.appendChild(c2);
   body.appendChild(grid);
   if ((ep.unknown || []).length) {
@@ -857,17 +995,21 @@ function nxLangs(body) {
   }
   if (!tiles.length) { body.appendChild(nxEmpty('chat', 'No language wanted', 'Set the languages of the subtitles and the audio in Settings → Notifications → Plex Media Server watched, then look through the files again.')); return; }
   body.appendChild(nxTiles(tiles));
-  var c1 = nxCard('Shows', 'tv', [nxFilter('langs', 'Find a show…', nxDrawBody)]);
-  var shows = (L.shows || []).filter(function (s) { return nxMatch('langs', s.show); });
-  var list = el('div', 'nx-shows');
-  var more = nxMore(shows, 30, function (s) {
-    var x = el('div', 'nx-show');
-    var h = el('div', 'nx-show-h');
-    h.appendChild(noI18n(el('b', '', s.show)));
-    h.appendChild(noI18n(el('span', 'muted small', num(s.n))));
-    x.appendChild(h);
+  var c1 = nxCard('Shows', 'tv');
+  var shows = (L.shows || []).filter(function (s) { return s.subs < s.n || s.audio < s.n || !(L.subs || []).length || !(L.audio || []).length; });
+  nxPaged(c1, 'langs', shows, function (s) {
+    /* One line per show: its name, then a bar for each language wanted, and under it the
+       seasons that miss it - compact, so that a long list reads down. */
+    var x = el('div', 'nx-lrow');
+    var cols = ((L.subs || []).length ? 1 : 0) + ((L.audio || []).length ? 1 : 0);
+    x.style.gridTemplateColumns = 'minmax(180px,1fr)' + new Array(cols + 1).join(' minmax(0,2fr)');
+    var nm = el('div', 'nx-lrow-n');
+    nm.appendChild(noI18n(el('b', '', s.show)));
+    nm.appendChild(noI18n(el('span', 'muted small', num(s.n) + ' ×')));
+    x.appendChild(nm);
     [['subs', 'Subtitles', 'info', L.subs], ['audio', 'Audio', 'violet', L.audio]].forEach(function (k) {
       if (!(k[3] || []).length) return;
+      var col = el('div', 'nx-lrow-c');
       var pr = el('div', 'nx-show-p');
       pr.appendChild(el('span', 'nx-show-k', k[1]));
       var tr = el('span', 'nx-bar-t');
@@ -876,7 +1018,7 @@ function nxLangs(body) {
       tr.appendChild(f);
       pr.appendChild(tr);
       pr.appendChild(noI18n(el('span', 'nx-bar-n', nxPct(s[k[0]], s.n) + ' %')));
-      x.appendChild(pr);
+      col.appendChild(pr);
       var miss = s['miss_' + k[0]] || [];
       if (miss.length && s[k[0]] < s.n) {
         var ch = el('div', 'ix-chips');
@@ -884,21 +1026,18 @@ function nxLangs(body) {
         miss.forEach(function (m2) { (seasons[m2[0]] = seasons[m2[0]] || []).push(m2[1]); });
         Object.keys(seasons).forEach(function (sn) {
           var eps = seasons[sn];
-          var c = noI18n(el('span', 'ix-chip', 'S' + pad2(+sn) + (eps.length > 4 ? ' · ' + eps.length + '×' : ' · E' + eps.map(function (z) { return pad2(+z); }).join(', E'))));
-          ch.appendChild(c);
+          ch.appendChild(noI18n(el('span', 'ix-chip small', 'S' + pad2(+sn) + (eps.length > 4 ? ' · ' + eps.length + '×' : ' · E' + eps.map(function (z) { return pad2(+z); }).join(', E')))));
         });
-        x.appendChild(ch);
+        col.appendChild(ch);
       }
+      x.appendChild(col);
     });
     return x;
-  }, list, 'langs');
-  c1.appendChild(list);
-  if (more) c1.appendChild(more);
+  }, {per: 15, cls: 'nx-shows compact', placeholder: 'Find a show…', text: function (s) { return s.show; }});
   body.appendChild(c1);
   if ((L.movies_missing || []).length) {
     var c2 = nxCard('Films', 'film');
-    var l2 = el('div', 'nx-list');
-    var more2 = nxMore(L.movies_missing, 30, function (f2) {
+    nxPaged(c2, 'mmiss', L.movies_missing, function (f2) {
       var row = el('div', 'nx-row');
       row.appendChild(nxIcon('film', 16));
       var b = el('div', 'nx-row-b');
@@ -913,9 +1052,7 @@ function nxLangs(body) {
       b.appendChild(have);
       row.appendChild(b);
       return row;
-    }, l2, 'mmiss');
-    c2.appendChild(l2);
-    if (more2) c2.appendChild(more2);
+    }, {per: 20, placeholder: 'Find a film…', text: function (f2) { return f2.title; }});
     body.appendChild(c2);
   }
 }
@@ -958,10 +1095,8 @@ function nxDups(body) {
     return;
   }
   if (dups.length) {
-    var c1 = nxCard('In more than one version', 'copy', [nxFilter('dups', 'Find…', nxDrawBody)]);
-    var list = el('div', 'nx-dups');
-    var rows = dups.filter(function (d) { return nxMatch('dups', d.show + ' ' + d.title); });
-    var more = nxMore(rows, 20, function (d) {
+    var c1 = nxCard('In more than one version', 'copy');
+    nxPaged(c1, 'dups', dups, function (d) {
       var x = el('div', 'nx-dup');
       var h = el('div', 'nx-show-h');
       h.appendChild(nxIcon(d.kind === 'episode' ? 'tv' : 'film', 16));
@@ -986,25 +1121,21 @@ function nxDups(body) {
       });
       x.appendChild(vs);
       return x;
-    }, list, 'dups');
-    c1.appendChild(list);
-    if (more) c1.appendChild(more);
+    }, {per: 10, cls: 'nx-dups', placeholder: 'Find…', text: function (d) { return d.show + ' ' + d.title; }});
     body.appendChild(c1);
   }
   if (twins.length) {
     var c2 = nxCard('Films twice on one match', 'film');
     c2.appendChild(el('p', 'muted small', 'Two items of one library with the same match - two copies Plex did not merge. Merge them in Plex (Merge), or delete the one not wanted.'));
-    var l2 = el('div', 'nx-list');
-    twins.forEach(function (t) {
+    nxPaged(c2, 'twins', twins, function (t) {
       var row = el('div', 'nx-row');
       row.appendChild(nxIcon('copy', 16));
       var b = el('div', 'nx-row-b');
       b.appendChild(noI18n(el('b', '', t.items[0].title)));
       t.items.forEach(function (i) { b.appendChild(noI18n(el('span', 'mono ix-file muted', i.file + (i.bytes ? '  ·  ' + bytes(i.bytes) : '')))); });
       row.appendChild(b);
-      l2.appendChild(row);
-    });
-    c2.appendChild(l2);
+      return row;
+    }, {per: 15, placeholder: 'Find a film…', text: function (t) { return t.items[0].title; }});
     body.appendChild(c2);
   }
 }
@@ -1046,15 +1177,13 @@ function nxNewfiles(body) {
     {cls: 'crit', icon: 'cancel', value: num((c.damaged || 0) + (c['short'] || 0)), label: 'Damaged or short', zero: !((c.damaged || 0) + (c['short'] || 0))},
     {cls: 'dim', icon: 'clock', value: num((c.waiting || 0) + (c.busy || 0)), label: 'Waiting', sub: txT('a sleeping disk, or still written'), zero: !((c.waiting || 0) + (c.busy || 0))}
   ]));
-  var card = nxCard('What was read', 'film', [nxFilter('nf', 'Find…', nxDrawBody)]);
-  var rows = (v.rows || []).filter(function (r) { return nxMatch('nf', r.title + ' ' + r.file + ' ' + r.said); });
+  var card = nxCard('What was read', 'film');
+  var rows = (v.rows || []).slice();
   rows.sort(function (a, b) {
     var o = {damaged: 0, 'short': 0, warn: 1, busy: 2, waiting: 3, ok: 4, gone: 5};
     return (o[a.state] - o[b.state]) || (b.added - a.added);
   });
-  if (!rows.length) card.appendChild(el('p', 'muted small', 'Nothing read yet.'));
-  var list = el('div', 'nx-list');
-  var more = nxMore(rows, 40, function (r) {
+  nxPaged(card, 'nf', rows, function (r) {
     var s = NX_NF[r.state] || [r.state, 'dim', 'info'];
     var row = el('div', 'nx-row nf-' + s[1]);
     var ic = nxIcon(s[2], 16);
@@ -1079,9 +1208,7 @@ function nxNewfiles(body) {
     }
     row.appendChild(rt);
     return row;
-  }, list, 'nf');
-  card.appendChild(list);
-  if (more) card.appendChild(more);
+  }, {per: 25, placeholder: 'Find…', text: function (r) { return r.title + ' ' + r.file + ' ' + r.said; }, empty: 'Nothing read yet.'});
   body.appendChild(card);
 }
 

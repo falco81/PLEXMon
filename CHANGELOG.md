@@ -4,6 +4,26 @@ Every version is a package in `release/` (the newest ten), signed with the
 release key; Settings → Upgrades offers a newer one by itself. The entries are
 read by Settings → Upgrades (*What changed*), so each starts `## X.Y.Z`.
 
+## 2.12.1 - 2026-11-22
+
+- **The page no longer moves under the hand while typing - anywhere.** Typing into a search
+  narrowed what is drawn around the box; the page got shorter, its scroller was pulled up and
+  the box slid away (Events, Plex library, Insights). For a moment after each keystroke the box
+  being typed in is now held where it is on the screen, with room kept at the foot of the page
+  until it is left; a scroll by the person themselves is never fought.
+- **Insights: a search lost the box after the first letter** - it redrew the whole tab. Now only
+  the rows of that list are drawn again; a refresh of the tab (every 20 s, at the end of a job)
+  keeps the scroll position, and nothing is refreshed while somebody types.
+- **Insights: long lists in pages** - files likely to be transcoded, shows with episodes missing,
+  what is coming, subtitles and audio, films, duplicates, new files: a count beside each title,
+  its own search, numbered pages; the list keeps its height while a search narrows it, and a
+  new page starts at the top of its card. No list scrolls inside itself. Subtitles and audio is
+  one compact line per show. The counts are no longer cut at 300.
+- **Insights: a job's progress is drawn in its own tab**, joined to the top of that tab
+  (Episodes for TVmaze, Transcoding / Subtitles and audio / Duplicates for the look through the
+  files, New files, Plex server). Seen from any other tab, its tab shows a turning ring and how
+  far it is, and a line under it.
+
 ## 2.12.0 - 2026-11-21
 
 New: **Insights** - a tab of its own after Library integrity - and **Settings → Notifications**.

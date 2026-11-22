@@ -3983,3 +3983,49 @@ body.app-shell #pane-mailq > .card.held{flex:1 1 auto;min-height:320px;max-heigh
   .nx-feed-at{flex-direction:row;gap:8px;width:100%;justify-content:flex-start;padding-left:2px}
   .nx-pill{padding:7px 10px;font-size:12.5px}
 }
+/* 2.12.1: long lists in pages, the job beside its own tab */
+.nx-pager{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;padding-top:4px}
+.nx-pager[hidden]{display:none}
+.nx-pages{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.nx-pg{appearance:none;min-width:32px;height:30px;padding:0 9px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);
+  color:var(--tx-dim);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;font-variant-numeric:tabular-nums}
+.nx-pg:hover{color:var(--tx);border-color:rgba(88,166,255,.4)}
+.nx-pg.on{background:var(--info-bg);border-color:rgba(88,166,255,.55);color:var(--tx)}
+.nx-gap{color:var(--tx-mut);padding:0 2px}
+.nx-pg-of{font-size:12px;color:var(--tx-mut);margin-left:6px;font-variant-numeric:tabular-nums}
+.nx-count-chip{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--panel2);color:var(--tx-dim);font-variant-numeric:tabular-nums}
+.nx-none{padding:18px;text-align:center;color:var(--tx-dim);font-size:13px}
+.nx-list>.nx-none{border:0}
+.ix-chip.small{font-size:10.5px;padding:2px 7px}
+.nx-lrow{display:grid;grid-template-columns:minmax(180px,1.2fr) repeat(2,minmax(0,1fr));gap:6px 18px;align-items:start;
+  padding:9px 12px;border-bottom:1px solid var(--line)}
+.nx-shows.compact{gap:0;border:1px solid var(--line);border-radius:12px;background:var(--panel2);overflow:hidden}
+.nx-shows.compact>.nx-lrow:last-child{border-bottom:0}
+.nx-lrow:hover{background:rgba(255,255,255,.015)}
+.nx-lrow-n{display:flex;gap:8px;align-items:baseline;min-width:0;padding-top:1px}
+.nx-lrow-n b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nx-lrow-c{display:flex;flex-direction:column;gap:5px;min-width:0}
+.nx-lrow .nx-show-k{min-width:58px;font-size:11px}
+@media (max-width:760px){.nx-lrow{grid-template-columns:1fr}}
+.nx-agenda-i{display:flex;flex-direction:column}
+/* the job joined to the top of its own tab */
+.nx-jobhost:empty{display:none}
+.nx-hero-top.joined{border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-color:transparent}
+.nx-hero-top.joined + .nx-jobhost{margin-top:-14px}
+.nx-hero-top.joined + .nx-jobhost>.nx-job{border-top-left-radius:0;border-top-right-radius:0;border-top:1px dashed var(--line);
+  margin:0;background:linear-gradient(180deg,rgba(88,166,255,.06),transparent 70%),var(--panel)}
+.nx-job{margin:0}
+/* a tab whose job runs, seen from another: a turning ring and how far it is */
+.nx-pill{position:relative;overflow:hidden}
+.nx-run{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:1px 8px 1px 5px;border-radius:99px;
+  background:var(--info-bg);color:var(--info);font-variant-numeric:tabular-nums}
+.nx-run.done{background:var(--ok-bg);color:var(--ok)} .nx-run.failed{background:var(--crit-bg);color:var(--crit)}
+.nx-spin{width:11px;height:11px;border-radius:50%;border:2px solid rgba(88,166,255,.3);border-top-color:var(--info);animation:nxspin .9s linear infinite}
+.nx-run.done .nx-spin,.nx-run.failed .nx-spin{display:none}
+@keyframes nxspin{to{transform:rotate(360deg)}}
+.nx-pill-bar{position:absolute;left:0;bottom:0;height:2px;background:var(--info);transition:width .6s ease;border-radius:2px}
+.nx-pill.on .nx-pill-bar{display:none}
+.nx-nav{box-shadow:0 8px 18px -10px rgba(0,0,0,.6)}
+.nx-list>.nx-row{padding:8px 13px}
+.nx-list .ix-file{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+@media (max-width:760px){.nx-lrow{grid-template-columns:1fr !important}}

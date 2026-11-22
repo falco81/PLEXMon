@@ -56,7 +56,7 @@ LANGS = {'cs': ('cs', 'cze', 'ces'), 'sk': ('sk', 'slo', 'slk'), 'en': ('en', 'e
          'uk': ('uk', 'ukr'), 'ja': ('ja', 'jpn'), 'ko': ('ko', 'kor'), 'zh': ('zh', 'chi', 'zho'),
          'pt': ('pt', 'por'), 'nl': ('nl', 'dut', 'nld'), 'sv': ('sv', 'swe'),
          'da': ('da', 'dan'), 'fi': ('fi', 'fin'), 'no': ('no', 'nor', 'nb', 'nob')}
-ROW_CAP = 300
+ROW_CAP = 5000
 
 
 def bind(admin, host, plex, ix):
@@ -651,7 +651,7 @@ def analyse(store, by):
                      'episodes': {'n': sum(s['n'] for s in shows), 'subs': sum(s['subs'] for s in shows),
                                   'audio': sum(s['audio'] for s in shows)}},
            'dups': dups[:ROW_CAP], 'twins': twins[:ROW_CAP],
-           'dup_spare': sum(d['spare'] for d in dups)}
+           'dup_spare': sum(d['spare'] for d in dups), 'dup_count': len(dups)}
     jwrite('library.json', out)
     ev(store, 'plex', '%s looked through the files of the library: %d files, %d likely to be '
              'transcoded, %d in more than one version' % (by, len(items), len(risky), len(dups)),

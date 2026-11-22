@@ -2556,3 +2556,81 @@ function mfaWay(body, d, kind) {
   body.appendChild(drow);
   body.appendChild(sent);
 }
+
+/* ---- The box being typed in stays where it is (2.12.1) -----------------------------------
+   Typing into a search narrows what is drawn around it; the page then got shorter, the
+   scroller was pulled up and the box slid away under the hand. For a moment after every
+   keystroke the box is held where it was on the screen: the scroller (the shown panel, or the
+   window) is moved by exactly what the box moved, and where the page has become too short for
+   that, room is kept at its foot until the box is left. A scroll by the person themselves
+   (wheel, touch, keys) is never fought: the box is held from wherever they put it. */
+(function () {
+  var hold = {el: null, top: 0, until: 0, raf: 0, pad: null};
+  function scroller(node) {
+    for (var n = node && node.parentElement; n && n !== document.body; n = n.parentElement) {
+      var cs = getComputedStyle(n);
+      if (cs.position === 'fixed') return null;              /* a popup: it does not scroll the page */
+      if (/(auto|scroll)/.test(cs.overflowY) &&
+          n.classList.contains('panel')) return n;
+    }
+    return document.scrollingElement || document.documentElement;
+  }
+  function spacer(sc) {
+    if (hold.pad && hold.pad.parentNode === (sc === document.scrollingElement ? document.body : sc)) return hold.pad;
+    if (hold.pad) hold.pad.remove();
+    hold.pad = document.createElement('div');
+    hold.pad.className = 'type-hold';
+    hold.pad.setAttribute('aria-hidden', 'true');
+    hold.pad.style.cssText = 'height:0;flex:none;pointer-events:none';
+    (sc === document.scrollingElement ? document.body : sc).appendChild(hold.pad);
+    return hold.pad;
+  }
+  function loop() {
+    hold.raf = 0;
+    var e = hold.el;
+    if (!e || !e.isConnected || document.activeElement !== e || Date.now() > hold.until) return;
+    var now = e.getBoundingClientRect().top, d = now - hold.top;
+    if (Math.abs(d) >= 1) {
+      var sc = scroller(e);
+      if (sc) {
+        var room = sc.scrollHeight - sc.clientHeight - sc.scrollTop;
+        if (d > 0 && room < d) {
+          var p = spacer(sc);
+          p.style.height = ((parseFloat(p.style.height) || 0) + d - room + 2) + 'px';
+        }
+        sc.scrollTop += d;
+      }
+    }
+    hold.raf = requestAnimationFrame(loop);
+  }
+  function arm(e) {
+    if (!e || !/^(INPUT|TEXTAREA)$/.test(e.tagName)) return;
+    if (hold.el !== e) { hold.el = e; }
+    hold.top = e.getBoundingClientRect().top;
+    hold.until = Date.now() + 2500;
+    if (!hold.raf) hold.raf = requestAnimationFrame(loop);
+  }
+  document.addEventListener('keydown', function (ev) {
+    var t = ev.target;
+    if (/^(PageUp|PageDown|Home|End)$/.test(ev.key) && !(t && /^(INPUT|TEXTAREA)$/.test(t.tagName))) { hold.until = 0; return; }
+    if (t && /^(INPUT|TEXTAREA)$/.test(t.tagName) && !ev.isComposing && Date.now() > hold.until) arm(t);
+  }, true);
+  document.addEventListener('input', function (ev) {
+    if (Date.now() > hold.until || hold.el !== ev.target) arm(ev.target);
+    else hold.until = Date.now() + 2500;
+  }, true);
+  /* The person scrolls: the box is held from where they leave it. */
+  ['wheel', 'touchmove'].forEach(function (k) {
+    window.addEventListener(k, function () {
+      if (hold.el && Date.now() <= hold.until) setTimeout(function () { if (hold.el) hold.top = hold.el.getBoundingClientRect().top; }, 60);
+    }, {passive: true, capture: true});
+  });
+  document.addEventListener('focusout', function (ev) {
+    if (ev.target !== hold.el) return;
+    hold.el = null;
+    hold.until = 0;
+    /* The room kept at the foot goes only once nothing is typed - it never moves the page
+       while typing. */
+    if (hold.pad) { var p = hold.pad; hold.pad = null; setTimeout(function () { p.remove(); }, 400); }
+  }, true);
+}());
